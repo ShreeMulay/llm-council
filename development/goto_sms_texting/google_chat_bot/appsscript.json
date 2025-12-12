@@ -1,0 +1,15 @@
+{
+  "timeZone": "America/New_York",
+  "dependencies": {},
+  "exceptionLogging": "STACKDRIVER",
+  "runtimeVersion": "V8",
+  "chat": {
+    "addToSpaceFallbackMessage": "Thank you for adding the GoTo SMS Bot! Type /help to see available commands."
+  },
+  "oauthScopes": [
+    "https://www.googleapis.com/auth/chat.bot",
+    "https://www.googleapis.com/auth/script.external_request",
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/userinfo.email"
+  ]
+}
