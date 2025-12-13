@@ -1,0 +1,1478 @@
+{
+  "version": "1.0",
+  "generated_at": "2025-12-02T19:04:21.866169",
+  "base_dir": "domains",
+  "links": [
+    {
+      "target": "Clinical Measurements and Biomarkers",
+      "display": "Clinical Measurements and Biomarkers",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "clinical-measurements-and-biomarkers"
+    },
+    {
+      "target": "Disease Classifications and Syndromes",
+      "display": "Disease Classifications and Syndromes",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "disease-classifications-and-syndromes"
+    },
+    {
+      "target": "Treatment Modalities and Procedures",
+      "display": "Treatment Modalities and Procedures",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "treatment-modalities-and-procedures"
+    },
+    {
+      "target": "Nephrology Pharmacology",
+      "display": "Nephrology Pharmacology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-pharmacology"
+    },
+    {
+      "target": "Regulatory and Compliance Terminology",
+      "display": "Regulatory and Compliance Terminology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "regulatory-and-compliance-terminology"
+    },
+    {
+      "target": "Business and Operations Terminology",
+      "display": "Business and Operations Terminology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "business-and-operations-terminology"
+    },
+    {
+      "target": "Dialysis-Specific Technical Terms",
+      "display": "Dialysis-Specific Technical Terms",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-specific-technical-terms"
+    },
+    {
+      "target": "CKD Management",
+      "display": "CKD Management",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ckd-management"
+    },
+    {
+      "target": "Hemodialysis Care Model",
+      "display": "Hemodialysis Care Model",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hemodialysis-care-model"
+    },
+    {
+      "target": "ESRD Quality Incentive Program (QIP)",
+      "display": "ESRD Quality Incentive Program (QIP)",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-quality-incentive-program-qip"
+    },
+    {
+      "target": "Billing and Coding",
+      "display": "Billing and Coding",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding"
+    },
+    {
+      "target": "Value-Based Kidney Care Models",
+      "display": "Value-Based Kidney Care Models",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-kidney-care-models"
+    },
+    {
+      "target": "Chronic Kidney Disease (CKD) Management",
+      "display": "Chronic Kidney Disease (CKD) Management",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "chronic-kidney-disease-ckd-management"
+    },
+    {
+      "target": "Acute Kidney Injury (AKI)",
+      "display": "Acute Kidney Injury (AKI)",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "acute-kidney-injury-aki"
+    },
+    {
+      "target": "End-Stage Renal Disease (ESRD) and Dialysis",
+      "display": "End-Stage Renal Disease (ESRD) and Dialysis",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "end-stage-renal-disease-esrd-and-dialysis"
+    },
+    {
+      "target": "Kidney Transplantation",
+      "display": "Kidney Transplantation",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "kidney-transplantation"
+    },
+    {
+      "target": "Hypertension in Kidney Disease",
+      "display": "Hypertension in Kidney Disease",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hypertension-in-kidney-disease"
+    },
+    {
+      "target": "Diabetes and Kidney Disease",
+      "display": "Diabetes and Kidney Disease",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "diabetes-and-kidney-disease"
+    },
+    {
+      "target": "Electrolyte and Acid-Base Disorders",
+      "display": "Electrolyte and Acid-Base Disorders",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "electrolyte-and-acid-base-disorders"
+    },
+    {
+      "target": "Nephrology Pharmacology",
+      "display": "Nephrology Pharmacology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-pharmacology"
+    },
+    {
+      "target": "CKD Care Models",
+      "display": "CKD Care Models",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ckd-care-models"
+    },
+    {
+      "target": "ESRD Conditions for Coverage",
+      "display": "ESRD Conditions for Coverage",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-conditions-for-coverage"
+    },
+    {
+      "target": "Value-Based Care in Nephrology",
+      "display": "Value-Based Care in Nephrology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-in-nephrology"
+    },
+    {
+      "target": "Novel Therapies for CKD",
+      "display": "Novel Therapies for CKD",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "novel-therapies-for-ckd"
+    },
+    {
+      "target": "Nephrology Terminology",
+      "display": "Nephrology Terminology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-terminology"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Home Dialysis Program Management",
+      "display": "Home Dialysis Program Management",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "home-dialysis-program-management"
+    },
+    {
+      "target": "Multidisciplinary Care Team Model",
+      "display": "Multidisciplinary Care Team Model",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "multidisciplinary-care-team-model"
+    },
+    {
+      "target": "Care Coordination and Transitions of Care",
+      "display": "Care Coordination and Transitions of Care",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "care-coordination-and-transitions-of-care"
+    },
+    {
+      "target": "Patient Education and Engagement",
+      "display": "Patient Education and Engagement",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "patient-education-and-engagement"
+    },
+    {
+      "target": "Telehealth and Remote Patient Monitoring",
+      "display": "Telehealth and Remote Patient Monitoring",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-and-remote-patient-monitoring"
+    },
+    {
+      "target": "Quality Improvement Initiatives",
+      "display": "Quality Improvement Initiatives",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-improvement-initiatives"
+    },
+    {
+      "target": "Chronic Kidney Disease (CKD) Management",
+      "display": "Chronic Kidney Disease (CKD) Management",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "chronic-kidney-disease-ckd-management"
+    },
+    {
+      "target": "HIPAA Compliance",
+      "display": "HIPAA Compliance",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hipaa-compliance"
+    },
+    {
+      "target": "Billing and Coding for Nephrology",
+      "display": "Billing and Coding for Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding-for-nephrology"
+    },
+    {
+      "target": "Artificial Intelligence in Nephrology",
+      "display": "Artificial Intelligence in Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "artificial-intelligence-in-nephrology"
+    },
+    {
+      "target": "Conditions for Coverage for ESRD Facilities",
+      "display": "Conditions for Coverage for ESRD Facilities",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "conditions-for-coverage-for-esrd-facilities"
+    },
+    {
+      "target": "ESRD Quality Incentive Program (QIP)",
+      "display": "ESRD Quality Incentive Program (QIP)",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-quality-incentive-program-qip"
+    },
+    {
+      "target": "Medicare and Medicaid Requirements for Nephrology Practices",
+      "display": "Medicare and Medicaid Requirements for Nephrology Practices",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "medicare-and-medicaid-requirements-for-nephrology-practices"
+    },
+    {
+      "target": "Dialysis Facility Compare and Star Ratings",
+      "display": "Dialysis Facility Compare and Star Ratings",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-facility-compare-and-star-ratings"
+    },
+    {
+      "target": "HIPAA and Patient Privacy in Nephrology",
+      "display": "HIPAA and Patient Privacy in Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hipaa-and-patient-privacy-in-nephrology"
+    },
+    {
+      "target": "Emergency Preparedness for Dialysis Facilities",
+      "display": "Emergency Preparedness for Dialysis Facilities",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "emergency-preparedness-for-dialysis-facilities"
+    },
+    {
+      "target": "State-Specific Regulations and Licensure",
+      "display": "State-Specific Regulations and Licensure",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "state-specific-regulations-and-licensure"
+    },
+    {
+      "target": "Federal Register Monitoring and Rulemaking",
+      "display": "Federal Register Monitoring and Rulemaking",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "federal-register-monitoring-and-rulemaking"
+    },
+    {
+      "target": "Billing and Coding for Nephrology",
+      "display": "Billing and Coding for Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding-for-nephrology"
+    },
+    {
+      "target": "Quality Assessment and Performance Improvement (QAPI)",
+      "display": "Quality Assessment and Performance Improvement (QAPI)",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-assessment-and-performance-improvement-qapi"
+    },
+    {
+      "target": "Dialysis Water Treatment Systems",
+      "display": "Dialysis Water Treatment Systems",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-water-treatment-systems"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Anemia Management in ESRD",
+      "display": "Anemia Management in ESRD",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "anemia-management-in-esrd"
+    },
+    {
+      "target": "Revenue Cycle Management for Nephrology",
+      "display": "Revenue Cycle Management for Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "revenue-cycle-management-for-nephrology"
+    },
+    {
+      "target": "ESRD Prospective Payment System (PPS)",
+      "display": "ESRD Prospective Payment System (PPS)",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-prospective-payment-system-pps"
+    },
+    {
+      "target": "Nephrology Coding and Billing",
+      "display": "Nephrology Coding and Billing",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-coding-and-billing"
+    },
+    {
+      "target": "Payer Contracting and Credentialing",
+      "display": "Payer Contracting and Credentialing",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "payer-contracting-and-credentialing"
+    },
+    {
+      "target": "Dialysis Facility Operations and Management",
+      "display": "Dialysis Facility Operations and Management",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-facility-operations-and-management"
+    },
+    {
+      "target": "Staffing Models and Human Resources",
+      "display": "Staffing Models and Human Resources",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "staffing-models-and-human-resources"
+    },
+    {
+      "target": "Quality and Financial Reporting",
+      "display": "Quality and Financial Reporting",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-and-financial-reporting"
+    },
+    {
+      "target": "ESRD Conditions for Coverage",
+      "display": "ESRD Conditions for Coverage",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-conditions-for-coverage"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Telehealth in Nephrology",
+      "display": "Telehealth in Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-in-nephrology"
+    },
+    {
+      "target": "Anemia Management in CKD and ESRD",
+      "display": "Anemia Management in CKD and ESRD",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "anemia-management-in-ckd-and-esrd"
+    },
+    {
+      "target": "Glossary of Nephrology Billing Terms",
+      "display": "Glossary of Nephrology Billing Terms",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "glossary-of-nephrology-billing-terms"
+    },
+    {
+      "target": "AI and Machine Learning in Nephrology",
+      "display": "AI and Machine Learning in Nephrology",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ai-and-machine-learning-in-nephrology"
+    },
+    {
+      "target": "Precision Nephrology and Genomics",
+      "display": "Precision Nephrology and Genomics",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "precision-nephrology-and-genomics"
+    },
+    {
+      "target": "Digital Health and Remote Patient Monitoring",
+      "display": "Digital Health and Remote Patient Monitoring",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "digital-health-and-remote-patient-monitoring"
+    },
+    {
+      "target": "Novel Therapeutics for Kidney Disease",
+      "display": "Novel Therapeutics for Kidney Disease",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "novel-therapeutics-for-kidney-disease"
+    },
+    {
+      "target": "Clinical Trials and Pipeline Drugs",
+      "display": "Clinical Trials and Pipeline Drugs",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "clinical-trials-and-pipeline-drugs"
+    },
+    {
+      "target": "Wearable and Implantable Kidney Devices",
+      "display": "Wearable and Implantable Kidney Devices",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "wearable-and-implantable-kidney-devices"
+    },
+    {
+      "target": "Health Equity in Nephrology",
+      "display": "Health Equity in Nephrology",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "health-equity-in-nephrology"
+    },
+    {
+      "target": "SGLT2 Inhibitors",
+      "display": "SGLT2 Inhibitors",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "sglt2-inhibitors"
+    },
+    {
+      "target": "Telehealth Services",
+      "display": "Telehealth Services",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-services"
+    },
+    {
+      "target": "Value-Based Care Models",
+      "display": "Value-Based Care Models",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models"
+    },
+    {
+      "target": "FDA Drug Approval Process",
+      "display": "FDA Drug Approval Process",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "fda-drug-approval-process"
+    },
+    {
+      "target": "APOL1-Mediated Kidney Disease",
+      "display": "APOL1-Mediated Kidney Disease",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "apol1-mediated-kidney-disease"
+    }
+  ],
+  "by_target": {
+    "Clinical Measurements and Biomarkers": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Disease Classifications and Syndromes": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Treatment Modalities and Procedures": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Nephrology Pharmacology": [
+      "domains/00-glossary/_index.md",
+      "domains/01-clinical/_index.md"
+    ],
+    "Regulatory and Compliance Terminology": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Business and Operations Terminology": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Dialysis-Specific Technical Terms": [
+      "domains/00-glossary/_index.md"
+    ],
+    "CKD Management": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Hemodialysis Care Model": [
+      "domains/00-glossary/_index.md"
+    ],
+    "ESRD Quality Incentive Program (QIP)": [
+      "domains/00-glossary/_index.md",
+      "domains/03-regulatory/_index.md"
+    ],
+    "Billing and Coding": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Value-Based Kidney Care Models": [
+      "domains/00-glossary/_index.md"
+    ],
+    "Chronic Kidney Disease (CKD) Management": [
+      "domains/01-clinical/_index.md",
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Acute Kidney Injury (AKI)": [
+      "domains/01-clinical/_index.md"
+    ],
+    "End-Stage Renal Disease (ESRD) and Dialysis": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Kidney Transplantation": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Hypertension in Kidney Disease": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Diabetes and Kidney Disease": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Electrolyte and Acid-Base Disorders": [
+      "domains/01-clinical/_index.md"
+    ],
+    "CKD Care Models": [
+      "domains/01-clinical/_index.md"
+    ],
+    "ESRD Conditions for Coverage": [
+      "domains/01-clinical/_index.md",
+      "domains/04-business/_index.md"
+    ],
+    "Value-Based Care in Nephrology": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Novel Therapies for CKD": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Nephrology Terminology": [
+      "domains/01-clinical/_index.md"
+    ],
+    "Value-Based Care Models in Nephrology": [
+      "domains/02-care-delivery/_index.md",
+      "domains/03-regulatory/_index.md",
+      "domains/04-business/_index.md"
+    ],
+    "Home Dialysis Program Management": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Multidisciplinary Care Team Model": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Care Coordination and Transitions of Care": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Patient Education and Engagement": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Telehealth and Remote Patient Monitoring": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Quality Improvement Initiatives": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "HIPAA Compliance": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Billing and Coding for Nephrology": [
+      "domains/02-care-delivery/_index.md",
+      "domains/03-regulatory/_index.md"
+    ],
+    "Artificial Intelligence in Nephrology": [
+      "domains/02-care-delivery/_index.md"
+    ],
+    "Conditions for Coverage for ESRD Facilities": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Medicare and Medicaid Requirements for Nephrology Practices": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Dialysis Facility Compare and Star Ratings": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "HIPAA and Patient Privacy in Nephrology": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Emergency Preparedness for Dialysis Facilities": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "State-Specific Regulations and Licensure": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Federal Register Monitoring and Rulemaking": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Quality Assessment and Performance Improvement (QAPI)": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Dialysis Water Treatment Systems": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Anemia Management in ESRD": [
+      "domains/03-regulatory/_index.md"
+    ],
+    "Revenue Cycle Management for Nephrology": [
+      "domains/04-business/_index.md"
+    ],
+    "ESRD Prospective Payment System (PPS)": [
+      "domains/04-business/_index.md"
+    ],
+    "Nephrology Coding and Billing": [
+      "domains/04-business/_index.md"
+    ],
+    "Payer Contracting and Credentialing": [
+      "domains/04-business/_index.md"
+    ],
+    "Dialysis Facility Operations and Management": [
+      "domains/04-business/_index.md"
+    ],
+    "Staffing Models and Human Resources": [
+      "domains/04-business/_index.md"
+    ],
+    "Quality and Financial Reporting": [
+      "domains/04-business/_index.md"
+    ],
+    "Telehealth in Nephrology": [
+      "domains/04-business/_index.md"
+    ],
+    "Anemia Management in CKD and ESRD": [
+      "domains/04-business/_index.md"
+    ],
+    "Glossary of Nephrology Billing Terms": [
+      "domains/04-business/_index.md"
+    ],
+    "AI and Machine Learning in Nephrology": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Precision Nephrology and Genomics": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Digital Health and Remote Patient Monitoring": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Novel Therapeutics for Kidney Disease": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Clinical Trials and Pipeline Drugs": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Wearable and Implantable Kidney Devices": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Health Equity in Nephrology": [
+      "domains/05-emerging/_index.md"
+    ],
+    "SGLT2 Inhibitors": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Telehealth Services": [
+      "domains/05-emerging/_index.md"
+    ],
+    "Value-Based Care Models": [
+      "domains/05-emerging/_index.md"
+    ],
+    "FDA Drug Approval Process": [
+      "domains/05-emerging/_index.md"
+    ],
+    "APOL1-Mediated Kidney Disease": [
+      "domains/05-emerging/_index.md"
+    ]
+  },
+  "by_source": {
+    "domains/00-glossary/_index.md": [
+      "Clinical Measurements and Biomarkers",
+      "Disease Classifications and Syndromes",
+      "Treatment Modalities and Procedures",
+      "Nephrology Pharmacology",
+      "Regulatory and Compliance Terminology",
+      "Business and Operations Terminology",
+      "Dialysis-Specific Technical Terms",
+      "CKD Management",
+      "Hemodialysis Care Model",
+      "ESRD Quality Incentive Program (QIP)",
+      "Billing and Coding",
+      "Value-Based Kidney Care Models"
+    ],
+    "domains/01-clinical/_index.md": [
+      "Chronic Kidney Disease (CKD) Management",
+      "Acute Kidney Injury (AKI)",
+      "End-Stage Renal Disease (ESRD) and Dialysis",
+      "Kidney Transplantation",
+      "Hypertension in Kidney Disease",
+      "Diabetes and Kidney Disease",
+      "Electrolyte and Acid-Base Disorders",
+      "Nephrology Pharmacology",
+      "CKD Care Models",
+      "ESRD Conditions for Coverage",
+      "Value-Based Care in Nephrology",
+      "Novel Therapies for CKD",
+      "Nephrology Terminology"
+    ],
+    "domains/02-care-delivery/_index.md": [
+      "Value-Based Care Models in Nephrology",
+      "Home Dialysis Program Management",
+      "Multidisciplinary Care Team Model",
+      "Care Coordination and Transitions of Care",
+      "Patient Education and Engagement",
+      "Telehealth and Remote Patient Monitoring",
+      "Quality Improvement Initiatives",
+      "Chronic Kidney Disease (CKD) Management",
+      "HIPAA Compliance",
+      "Billing and Coding for Nephrology",
+      "Artificial Intelligence in Nephrology"
+    ],
+    "domains/03-regulatory/_index.md": [
+      "Conditions for Coverage for ESRD Facilities",
+      "ESRD Quality Incentive Program (QIP)",
+      "Medicare and Medicaid Requirements for Nephrology Practices",
+      "Dialysis Facility Compare and Star Ratings",
+      "HIPAA and Patient Privacy in Nephrology",
+      "Emergency Preparedness for Dialysis Facilities",
+      "State-Specific Regulations and Licensure",
+      "Federal Register Monitoring and Rulemaking",
+      "Billing and Coding for Nephrology",
+      "Quality Assessment and Performance Improvement (QAPI)",
+      "Dialysis Water Treatment Systems",
+      "Value-Based Care Models in Nephrology",
+      "Anemia Management in ESRD"
+    ],
+    "domains/04-business/_index.md": [
+      "Revenue Cycle Management for Nephrology",
+      "ESRD Prospective Payment System (PPS)",
+      "Nephrology Coding and Billing",
+      "Payer Contracting and Credentialing",
+      "Dialysis Facility Operations and Management",
+      "Staffing Models and Human Resources",
+      "Quality and Financial Reporting",
+      "ESRD Conditions for Coverage",
+      "Value-Based Care Models in Nephrology",
+      "Telehealth in Nephrology",
+      "Anemia Management in CKD and ESRD",
+      "Glossary of Nephrology Billing Terms"
+    ],
+    "domains/05-emerging/_index.md": [
+      "AI and Machine Learning in Nephrology",
+      "Precision Nephrology and Genomics",
+      "Digital Health and Remote Patient Monitoring",
+      "Novel Therapeutics for Kidney Disease",
+      "Clinical Trials and Pipeline Drugs",
+      "Wearable and Implantable Kidney Devices",
+      "Health Equity in Nephrology",
+      "SGLT2 Inhibitors",
+      "Telehealth Services",
+      "Value-Based Care Models",
+      "FDA Drug Approval Process",
+      "APOL1-Mediated Kidney Disease"
+    ]
+  },
+  "broken_links": [
+    {
+      "target": "Clinical Measurements and Biomarkers",
+      "display": "Clinical Measurements and Biomarkers",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "clinical-measurements-and-biomarkers"
+    },
+    {
+      "target": "Disease Classifications and Syndromes",
+      "display": "Disease Classifications and Syndromes",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "disease-classifications-and-syndromes"
+    },
+    {
+      "target": "Treatment Modalities and Procedures",
+      "display": "Treatment Modalities and Procedures",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "treatment-modalities-and-procedures"
+    },
+    {
+      "target": "Nephrology Pharmacology",
+      "display": "Nephrology Pharmacology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-pharmacology"
+    },
+    {
+      "target": "Regulatory and Compliance Terminology",
+      "display": "Regulatory and Compliance Terminology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "regulatory-and-compliance-terminology"
+    },
+    {
+      "target": "Business and Operations Terminology",
+      "display": "Business and Operations Terminology",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "business-and-operations-terminology"
+    },
+    {
+      "target": "Dialysis-Specific Technical Terms",
+      "display": "Dialysis-Specific Technical Terms",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-specific-technical-terms"
+    },
+    {
+      "target": "CKD Management",
+      "display": "CKD Management",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ckd-management"
+    },
+    {
+      "target": "Hemodialysis Care Model",
+      "display": "Hemodialysis Care Model",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hemodialysis-care-model"
+    },
+    {
+      "target": "ESRD Quality Incentive Program (QIP)",
+      "display": "ESRD Quality Incentive Program (QIP)",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-quality-incentive-program-qip"
+    },
+    {
+      "target": "Billing and Coding",
+      "display": "Billing and Coding",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding"
+    },
+    {
+      "target": "Value-Based Kidney Care Models",
+      "display": "Value-Based Kidney Care Models",
+      "source_file": "domains/00-glossary/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-kidney-care-models"
+    },
+    {
+      "target": "Chronic Kidney Disease (CKD) Management",
+      "display": "Chronic Kidney Disease (CKD) Management",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "chronic-kidney-disease-ckd-management"
+    },
+    {
+      "target": "Acute Kidney Injury (AKI)",
+      "display": "Acute Kidney Injury (AKI)",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "acute-kidney-injury-aki"
+    },
+    {
+      "target": "End-Stage Renal Disease (ESRD) and Dialysis",
+      "display": "End-Stage Renal Disease (ESRD) and Dialysis",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "end-stage-renal-disease-esrd-and-dialysis"
+    },
+    {
+      "target": "Kidney Transplantation",
+      "display": "Kidney Transplantation",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "kidney-transplantation"
+    },
+    {
+      "target": "Hypertension in Kidney Disease",
+      "display": "Hypertension in Kidney Disease",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hypertension-in-kidney-disease"
+    },
+    {
+      "target": "Diabetes and Kidney Disease",
+      "display": "Diabetes and Kidney Disease",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "diabetes-and-kidney-disease"
+    },
+    {
+      "target": "Electrolyte and Acid-Base Disorders",
+      "display": "Electrolyte and Acid-Base Disorders",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "electrolyte-and-acid-base-disorders"
+    },
+    {
+      "target": "Nephrology Pharmacology",
+      "display": "Nephrology Pharmacology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-pharmacology"
+    },
+    {
+      "target": "CKD Care Models",
+      "display": "CKD Care Models",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ckd-care-models"
+    },
+    {
+      "target": "ESRD Conditions for Coverage",
+      "display": "ESRD Conditions for Coverage",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-conditions-for-coverage"
+    },
+    {
+      "target": "Value-Based Care in Nephrology",
+      "display": "Value-Based Care in Nephrology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-in-nephrology"
+    },
+    {
+      "target": "Novel Therapies for CKD",
+      "display": "Novel Therapies for CKD",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "novel-therapies-for-ckd"
+    },
+    {
+      "target": "Nephrology Terminology",
+      "display": "Nephrology Terminology",
+      "source_file": "domains/01-clinical/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-terminology"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Home Dialysis Program Management",
+      "display": "Home Dialysis Program Management",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "home-dialysis-program-management"
+    },
+    {
+      "target": "Multidisciplinary Care Team Model",
+      "display": "Multidisciplinary Care Team Model",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "multidisciplinary-care-team-model"
+    },
+    {
+      "target": "Care Coordination and Transitions of Care",
+      "display": "Care Coordination and Transitions of Care",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "care-coordination-and-transitions-of-care"
+    },
+    {
+      "target": "Patient Education and Engagement",
+      "display": "Patient Education and Engagement",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "patient-education-and-engagement"
+    },
+    {
+      "target": "Telehealth and Remote Patient Monitoring",
+      "display": "Telehealth and Remote Patient Monitoring",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-and-remote-patient-monitoring"
+    },
+    {
+      "target": "Quality Improvement Initiatives",
+      "display": "Quality Improvement Initiatives",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-improvement-initiatives"
+    },
+    {
+      "target": "Chronic Kidney Disease (CKD) Management",
+      "display": "Chronic Kidney Disease (CKD) Management",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "chronic-kidney-disease-ckd-management"
+    },
+    {
+      "target": "HIPAA Compliance",
+      "display": "HIPAA Compliance",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hipaa-compliance"
+    },
+    {
+      "target": "Billing and Coding for Nephrology",
+      "display": "Billing and Coding for Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding-for-nephrology"
+    },
+    {
+      "target": "Artificial Intelligence in Nephrology",
+      "display": "Artificial Intelligence in Nephrology",
+      "source_file": "domains/02-care-delivery/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "artificial-intelligence-in-nephrology"
+    },
+    {
+      "target": "Conditions for Coverage for ESRD Facilities",
+      "display": "Conditions for Coverage for ESRD Facilities",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "conditions-for-coverage-for-esrd-facilities"
+    },
+    {
+      "target": "ESRD Quality Incentive Program (QIP)",
+      "display": "ESRD Quality Incentive Program (QIP)",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-quality-incentive-program-qip"
+    },
+    {
+      "target": "Medicare and Medicaid Requirements for Nephrology Practices",
+      "display": "Medicare and Medicaid Requirements for Nephrology Practices",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "medicare-and-medicaid-requirements-for-nephrology-practices"
+    },
+    {
+      "target": "Dialysis Facility Compare and Star Ratings",
+      "display": "Dialysis Facility Compare and Star Ratings",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-facility-compare-and-star-ratings"
+    },
+    {
+      "target": "HIPAA and Patient Privacy in Nephrology",
+      "display": "HIPAA and Patient Privacy in Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "hipaa-and-patient-privacy-in-nephrology"
+    },
+    {
+      "target": "Emergency Preparedness for Dialysis Facilities",
+      "display": "Emergency Preparedness for Dialysis Facilities",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "emergency-preparedness-for-dialysis-facilities"
+    },
+    {
+      "target": "State-Specific Regulations and Licensure",
+      "display": "State-Specific Regulations and Licensure",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "state-specific-regulations-and-licensure"
+    },
+    {
+      "target": "Federal Register Monitoring and Rulemaking",
+      "display": "Federal Register Monitoring and Rulemaking",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "federal-register-monitoring-and-rulemaking"
+    },
+    {
+      "target": "Billing and Coding for Nephrology",
+      "display": "Billing and Coding for Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "billing-and-coding-for-nephrology"
+    },
+    {
+      "target": "Quality Assessment and Performance Improvement (QAPI)",
+      "display": "Quality Assessment and Performance Improvement (QAPI)",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-assessment-and-performance-improvement-qapi"
+    },
+    {
+      "target": "Dialysis Water Treatment Systems",
+      "display": "Dialysis Water Treatment Systems",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-water-treatment-systems"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Anemia Management in ESRD",
+      "display": "Anemia Management in ESRD",
+      "source_file": "domains/03-regulatory/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "anemia-management-in-esrd"
+    },
+    {
+      "target": "Revenue Cycle Management for Nephrology",
+      "display": "Revenue Cycle Management for Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "revenue-cycle-management-for-nephrology"
+    },
+    {
+      "target": "ESRD Prospective Payment System (PPS)",
+      "display": "ESRD Prospective Payment System (PPS)",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-prospective-payment-system-pps"
+    },
+    {
+      "target": "Nephrology Coding and Billing",
+      "display": "Nephrology Coding and Billing",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "nephrology-coding-and-billing"
+    },
+    {
+      "target": "Payer Contracting and Credentialing",
+      "display": "Payer Contracting and Credentialing",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "payer-contracting-and-credentialing"
+    },
+    {
+      "target": "Dialysis Facility Operations and Management",
+      "display": "Dialysis Facility Operations and Management",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "dialysis-facility-operations-and-management"
+    },
+    {
+      "target": "Staffing Models and Human Resources",
+      "display": "Staffing Models and Human Resources",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "staffing-models-and-human-resources"
+    },
+    {
+      "target": "Quality and Financial Reporting",
+      "display": "Quality and Financial Reporting",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "quality-and-financial-reporting"
+    },
+    {
+      "target": "ESRD Conditions for Coverage",
+      "display": "ESRD Conditions for Coverage",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "esrd-conditions-for-coverage"
+    },
+    {
+      "target": "Value-Based Care Models in Nephrology",
+      "display": "Value-Based Care Models in Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models-in-nephrology"
+    },
+    {
+      "target": "Telehealth in Nephrology",
+      "display": "Telehealth in Nephrology",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-in-nephrology"
+    },
+    {
+      "target": "Anemia Management in CKD and ESRD",
+      "display": "Anemia Management in CKD and ESRD",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "anemia-management-in-ckd-and-esrd"
+    },
+    {
+      "target": "Glossary of Nephrology Billing Terms",
+      "display": "Glossary of Nephrology Billing Terms",
+      "source_file": "domains/04-business/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "glossary-of-nephrology-billing-terms"
+    },
+    {
+      "target": "AI and Machine Learning in Nephrology",
+      "display": "AI and Machine Learning in Nephrology",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "ai-and-machine-learning-in-nephrology"
+    },
+    {
+      "target": "Precision Nephrology and Genomics",
+      "display": "Precision Nephrology and Genomics",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "precision-nephrology-and-genomics"
+    },
+    {
+      "target": "Digital Health and Remote Patient Monitoring",
+      "display": "Digital Health and Remote Patient Monitoring",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "digital-health-and-remote-patient-monitoring"
+    },
+    {
+      "target": "Novel Therapeutics for Kidney Disease",
+      "display": "Novel Therapeutics for Kidney Disease",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "novel-therapeutics-for-kidney-disease"
+    },
+    {
+      "target": "Clinical Trials and Pipeline Drugs",
+      "display": "Clinical Trials and Pipeline Drugs",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "clinical-trials-and-pipeline-drugs"
+    },
+    {
+      "target": "Wearable and Implantable Kidney Devices",
+      "display": "Wearable and Implantable Kidney Devices",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "wearable-and-implantable-kidney-devices"
+    },
+    {
+      "target": "Health Equity in Nephrology",
+      "display": "Health Equity in Nephrology",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "health-equity-in-nephrology"
+    },
+    {
+      "target": "SGLT2 Inhibitors",
+      "display": "SGLT2 Inhibitors",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "sglt2-inhibitors"
+    },
+    {
+      "target": "Telehealth Services",
+      "display": "Telehealth Services",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "telehealth-services"
+    },
+    {
+      "target": "Value-Based Care Models",
+      "display": "Value-Based Care Models",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "value-based-care-models"
+    },
+    {
+      "target": "FDA Drug Approval Process",
+      "display": "FDA Drug Approval Process",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "fda-drug-approval-process"
+    },
+    {
+      "target": "APOL1-Mediated Kidney Disease",
+      "display": "APOL1-Mediated Kidney Disease",
+      "source_file": "domains/05-emerging/_index.md",
+      "resolved_path": null,
+      "is_broken": true,
+      "normalized_target": "apol1-mediated-kidney-disease"
+    }
+  ],
+  "orphan_targets": [],
+  "statistics": {
+    "total_files": 6,
+    "total_links": 73,
+    "unique_targets": 66,
+    "broken_count": 73
+  }
+}

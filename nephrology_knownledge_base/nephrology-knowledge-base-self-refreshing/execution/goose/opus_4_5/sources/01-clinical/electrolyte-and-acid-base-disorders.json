@@ -1,0 +1,58 @@
+{
+  "topic": "Electrolyte and Acid-Base Disorders",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:25:24.051895",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Covers metabolic acidosis management in CKD and mineral bone disorders"
+    },
+    {
+      "name": "KDIGO 2017 Clinical Practice Guideline Update for the Diagnosis, Evaluation, Prevention, and Treatment of Chronic Kidney Disease-Mineral and Bone Disorder",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-mbd/",
+      "version": "2017",
+      "reliability": "primary",
+      "relevance": "Authoritative guidance on calcium, phosphorus, and magnesium disorders in CKD"
+    },
+    {
+      "name": "Disorders of Plasma Sodium - Causes, Consequences, and Correction",
+      "type": "journal",
+      "organization": "New England Journal of Medicine",
+      "url": "https://www.nejm.org/doi/full/10.1056/NEJMra1404489",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of hyponatremia and hypernatremia diagnosis and management"
+    },
+    {
+      "name": "Hyperkalemia: Pathophysiology, Risk Factors and Consequences",
+      "type": "journal",
+      "organization": "Nephrology Dialysis Transplantation",
+      "url": "https://academic.oup.com/ndt/article/35/suppl_3/iii13/5911492",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Evidence-based approach to potassium disorders in nephrology practice"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Brenner and Rector's The Kidney, 11th Edition",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/books/brenner-and-rectors-the-kidney/yu/978-0-323-53271-8",
+      "version": "2020",
+      "reliability": "secondary",
+      "relevance": "Comprehensive textbook covering pathophysiology of all electrolyte and acid-base disorders"
+    }
+  ],
+  "gaps": [
+    "Limited recent KDIGO guidelines specifically addressing acute electrolyte emergencies",
+    "Need for updated consensus on mixed acid-base disorder interpretation algorithms"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "checkpoint_id": "pass-1-04-business",
+  "timestamp": "2025-12-02T18:53:05.414749",
+  "pass_number": 1,
+  "completed_items": [
+    "00-glossary",
+    "01-clinical",
+    "02-care-delivery",
+    "03-regulatory",
+    "04-business"
+  ],
+  "pending_items": [
+    "05-emerging"
+  ],
+  "files_created": [
+    "domains/00-glossary/_index.md",
+    "domains/01-clinical/_index.md",
+    "domains/02-care-delivery/_index.md",
+    "domains/03-regulatory/_index.md",
+    "domains/04-business/_index.md"
+  ],
+  "files_modified": [],
+  "state": {},
+  "errors": [],
+  "can_resume": true
+}

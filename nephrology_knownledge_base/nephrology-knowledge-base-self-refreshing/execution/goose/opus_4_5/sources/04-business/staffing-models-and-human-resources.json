@@ -1,0 +1,59 @@
+{
+  "topic": "Staffing Models and Human Resources",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:29:08.499411",
+  "primary_sources": [
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Establishes minimum staffing requirements and qualifications for dialysis facilities"
+    },
+    {
+      "name": "ANNA Core Curriculum for Nephrology Nursing",
+      "type": "textbook",
+      "organization": "American Nephrology Nurses Association",
+      "url": "https://www.annanurse.org/resources/core-curriculum",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Defines competency standards and training requirements for nephrology nursing staff"
+    },
+    {
+      "name": "AAKP Dialysis Facility Compare Database",
+      "type": "website",
+      "organization": "American Association of Kidney Patients",
+      "url": "https://www.medicare.gov/care-compare/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Provides staffing ratio benchmarks and quality metrics for dialysis facilities"
+    },
+    {
+      "name": "MGMA Physician Compensation and Production Survey",
+      "type": "website",
+      "organization": "Medical Group Management Association",
+      "url": "https://www.mgma.com/data/benchmarking-data/provider-compensation",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Offers nephrology-specific compensation benchmarking data for physicians and APPs"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Joint Commission Standards for Ambulatory Health Care",
+      "type": "guideline",
+      "organization": "The Joint Commission",
+      "url": "https://www.jointcommission.org/standards/",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Provides human resources and staffing standards for accredited healthcare facilities"
+    }
+  ],
+  "gaps": [
+    "Limited recent research on optimal physician-to-patient ratios in outpatient nephrology",
+    "Insufficient data on retention strategies specific to dialysis technicians",
+    "Lack of standardized competency frameworks for nephrology advanced practice providers"
+  ]
+}

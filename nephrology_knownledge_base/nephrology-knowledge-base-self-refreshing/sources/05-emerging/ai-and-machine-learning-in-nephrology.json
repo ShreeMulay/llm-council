@@ -1,0 +1,59 @@
+{
+  "topic": "AI and Machine Learning in Nephrology",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:29:29.035115",
+  "primary_sources": [
+    {
+      "name": "Artificial Intelligence in Nephrology: Core Concepts, Clinical Applications, and Perspectives",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(21)00878-4/fulltext",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of AI applications across all nephrology domains including AKI prediction and CKD management"
+    },
+    {
+      "name": "Machine Learning for Acute Kidney Injury: Changing the Traditional Disease Prediction Paradigm",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(22)00234-1/fulltext",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Focuses specifically on ML algorithms for AKI prediction and early detection models"
+    },
+    {
+      "name": "Artificial Intelligence in Kidney Disease: A Comprehensive Review and Future Directions",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/34/2/193",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Covers AI applications in kidney pathology interpretation, imaging analysis, and personalized treatment approaches"
+    },
+    {
+      "name": "Digital Health and Artificial Intelligence in Kidney Disease: Current Applications and Future Perspectives",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/18/1/85",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Addresses operational AI applications including dialysis unit management and workflow optimization"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "FDA Guidance on Software as Medical Device for AI/ML-Based Medical Devices",
+      "type": "regulation",
+      "organization": "FDA",
+      "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Regulatory framework for AI/ML medical devices applicable to nephrology applications"
+    }
+  ],
+  "gaps": [
+    "No specific KDIGO guidelines exist yet for AI/ML implementation in nephrology practice",
+    "Limited CMS guidance on reimbursement for AI-assisted nephrology care",
+    "Absence of standardized validation frameworks for nephrology AI applications"
+  ]
+}

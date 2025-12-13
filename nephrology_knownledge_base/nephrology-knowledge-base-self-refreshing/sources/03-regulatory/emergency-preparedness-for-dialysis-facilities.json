@@ -1,0 +1,55 @@
+{
+  "topic": "Emergency Preparedness for Dialysis Facilities",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:45.474820",
+  "primary_sources": [
+    {
+      "name": "CMS Emergency Preparedness Requirements for Medicare and Medicaid Participating Providers and Suppliers",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/SurveyCertEmergPrep/Emergency-Prep-Rule",
+      "version": "2016 Final Rule with updates",
+      "reliability": "primary",
+      "relevance": "Establishes mandatory emergency preparedness requirements for dialysis facilities including risk assessment, communication plans, and training requirements"
+    },
+    {
+      "name": "42 CFR 494.62 - Condition for Coverage: Emergency Preparedness",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-494/subpart-C/section-494.62",
+      "version": "Current",
+      "reliability": "primary",
+      "relevance": "Specific regulatory text detailing emergency preparedness requirements for ESRD facilities"
+    },
+    {
+      "name": "CMS Emergency Preparedness Checklist for Dialysis Facilities",
+      "type": "guideline",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/qso-20-15-esrd.pdf",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Provides implementation guidance and compliance checklist for dialysis facility emergency preparedness programs"
+    },
+    {
+      "name": "Kidney Community Emergency Response (KCER) Coalition Resources",
+      "type": "website",
+      "organization": "KCER",
+      "url": "https://www.kcercoalition.com/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Specialized emergency preparedness resources and tools specifically developed for the kidney care community"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Emergency Preparedness for Patients on Dialysis",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/15/11/1567",
+      "version": "2020",
+      "reliability": "secondary",
+      "relevance": "Clinical perspective on emergency preparedness challenges and solutions for dialysis patients"
+    }
+  ],
+  "gaps": []
+}

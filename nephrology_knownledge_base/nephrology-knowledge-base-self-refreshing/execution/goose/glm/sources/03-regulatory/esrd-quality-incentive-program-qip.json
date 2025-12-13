@@ -1,0 +1,55 @@
+{
+  "topic": "ESRD Quality Incentive Program (QIP)",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:04.862289",
+  "primary_sources": [
+    {
+      "name": "CMS ESRD QIP Final Rule and Annual Updates",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official CMS regulations defining QIP measures, TPS calculation, and payment adjustments"
+    },
+    {
+      "name": "CMS ESRD QIP Summary Report",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/esrd-qip-summary-report-py-2024.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Annual performance data and facility-level payment reduction information"
+    },
+    {
+      "name": "CROWNWeb Data Submission Manual",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/research-statistics-data-systems/crownweb",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Technical specifications for clinical data submission and reporting requirements"
+    },
+    {
+      "name": "NHSN Dialysis Event Surveillance Manual",
+      "type": "regulation",
+      "organization": "CDC",
+      "url": "https://www.cdc.gov/nhsn/dialysis/index.html",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Infection surveillance reporting requirements for QIP healthcare-associated infection measures"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases QIP Analysis Studies",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Peer-reviewed analyses of QIP impact on dialysis quality and outcomes"
+    }
+  ],
+  "gaps": []
+}

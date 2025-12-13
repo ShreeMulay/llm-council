@@ -1,0 +1,58 @@
+{
+  "topic": "Quality and Financial Reporting",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:29:17.771092",
+  "primary_sources": [
+    {
+      "name": "CMS ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines QIP measures, scoring methodology, and payment adjustments for dialysis facilities"
+    },
+    {
+      "name": "Merit-based Incentive Payment System (MIPS) Overview",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://qpp.cms.gov/mips/overview",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Establishes MIPS reporting requirements and quality measures for nephrology clinicians"
+    },
+    {
+      "name": "Dialysis Facility Reports (DFR)",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/research-statistics-data-systems/dialysis-facility-reports",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Provides standardized quality and safety data for ESRD facilities with benchmarking capabilities"
+    },
+    {
+      "name": "USRDS Annual Data Report",
+      "type": "website",
+      "organization": "NIDDK",
+      "url": "https://adr.usrds.org/2023",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive national data on ESRD outcomes, costs, and quality metrics for benchmarking"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Healthcare Financial Management Association (HFMA) Revenue Cycle Resources",
+      "type": "website",
+      "organization": "HFMA",
+      "url": "https://www.hfma.org/revenue-cycle",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Best practices for financial KPIs including days in A/R and net collection rates"
+    }
+  ],
+  "gaps": [
+    "Limited recent literature on nephrology-specific financial benchmarking standards",
+    "Lack of standardized industry benchmarks for dialysis facility financial performance metrics"
+  ]
+}

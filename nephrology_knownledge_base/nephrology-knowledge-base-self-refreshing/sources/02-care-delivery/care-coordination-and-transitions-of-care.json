@@ -1,0 +1,58 @@
+{
+  "topic": "Care Coordination and Transitions of Care",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:26:13.561920",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Provides comprehensive guidance on CKD care transitions and coordination across disease stages"
+    },
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Establishes regulatory requirements for care coordination and discharge planning in ESRD facilities"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Includes recommendations for transitioning patients to dialysis and care coordination protocols"
+    },
+    {
+      "name": "Transitional Care Interventions to Prevent Readmissions for Persons with Heart Failure",
+      "type": "journal",
+      "organization": "Annals of Internal Medicine",
+      "url": "https://www.acpjournals.org/doi/10.7326/M14-1456",
+      "version": "2013",
+      "reliability": "primary",
+      "relevance": "Evidence-based framework for care transitions applicable to CKD patients with comorbidities"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - Care Coordination Special Issues",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org/",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Multiple articles on nephrology care coordination and transition strategies"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidelines specifically addressing post-transplant care coordination",
+    "Lack of standardized protocols for warm handoffs between nephrology and primary care"
+  ]
+}

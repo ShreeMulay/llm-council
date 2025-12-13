@@ -1,0 +1,58 @@
+{
+  "topic": "Acute Kidney Injury (AKI)",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:24:31.068544",
+  "primary_sources": [
+    {
+      "name": "KDIGO Clinical Practice Guideline for Acute Kidney Injury",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/acute-kidney-injury/",
+      "version": "2012",
+      "reliability": "primary",
+      "relevance": "Definitive guidelines for AKI definition, staging, diagnosis, and management including RRT indications"
+    },
+    {
+      "name": "Acute Kidney Injury: Epidemiology, Outcomes, Complications, and Therapeutic Strategies",
+      "type": "journal",
+      "organization": "Seminars in Nephrology",
+      "url": "https://www.seminarsinnephrology.org/",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of AKI pathophysiology, management, and transition to CKD"
+    },
+    {
+      "name": "Acute Kidney Injury Network: Report of an Initiative to Improve Outcomes in Acute Kidney Injury",
+      "type": "journal",
+      "organization": "Critical Care",
+      "url": "https://ccforum.biomedcentral.com/",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Updated consensus on AKI classification, biomarkers, and clinical management protocols"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Guidance on AKI-CKD transition care and long-term management considerations"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Brenner and Rector's The Kidney",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/",
+      "version": "2020",
+      "reliability": "secondary",
+      "relevance": "Comprehensive textbook covering AKI pathophysiology and differential diagnosis"
+    }
+  ],
+  "gaps": [
+    "Limited recent updates to KDIGO AKI guidelines since 2012",
+    "Need for more specific guidance on novel biomarkers and precision medicine approaches"
+  ]
+}

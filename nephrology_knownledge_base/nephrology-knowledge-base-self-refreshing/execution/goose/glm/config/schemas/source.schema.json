@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Source Discovery Schema",
+  "description": "Schema for Pass 2 source discovery output",
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "description": "Topic name"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain identifier"
+    },
+    "source_discovery_date": {
+      "type": "string",
+      "description": "ISO 8601 timestamp"
+    },
+    "primary_sources": {
+      "type": "array",
+      "description": "Primary authoritative sources",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full source title"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique identifier in kebab-case"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["guideline", "regulation", "journal", "textbook", "website"],
+            "description": "Source type"
+          },
+          "organization": {
+            "type": "string",
+            "description": "Publishing organization"
+          },
+          "url": {
+            "type": "string",
+            "description": "Source URL"
+          },
+          "version": {
+            "type": "string",
+            "description": "Version or publication year"
+          },
+          "reliability": {
+            "type": "string",
+            "enum": ["primary", "secondary", "tertiary"],
+            "description": "Reliability tier"
+          },
+          "relevance": {
+            "type": "string",
+            "description": "How this source covers the topic"
+          },
+          "key_sections": {
+            "type": "array",
+            "description": "Relevant chapters or sections",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "type", "organization", "reliability", "relevance"],
+        "additionalProperties": false
+      }
+    },
+    "secondary_sources": {
+      "type": "array",
+      "description": "Secondary sources",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "id": {"type": "string"},
+          "type": {
+            "type": "string",
+            "enum": ["guideline", "regulation", "journal", "textbook", "website"]
+          },
+          "organization": {"type": "string"},
+          "url": {"type": "string"},
+          "version": {"type": "string"},
+          "reliability": {
+            "type": "string",
+            "enum": ["primary", "secondary", "tertiary"]
+          },
+          "relevance": {"type": "string"},
+          "key_sections": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "required": ["name", "type", "reliability", "relevance"],
+        "additionalProperties": false
+      }
+    },
+    "tertiary_sources": {
+      "type": "array",
+      "description": "Tertiary sources",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {"type": "string"},
+          "id": {"type": "string"},
+          "type": {
+            "type": "string",
+            "enum": ["guideline", "regulation", "journal", "textbook", "website"]
+          },
+          "organization": {"type": "string"},
+          "url": {"type": "string"},
+          "version": {"type": "string"},
+          "reliability": {
+            "type": "string",
+            "enum": ["primary", "secondary", "tertiary"]
+          },
+          "relevance": {"type": "string"},
+          "key_sections": {
+            "type": "array",
+            "items": {"type": "string"}
+          }
+        },
+        "required": ["name", "type", "reliability", "relevance"],
+        "additionalProperties": false
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "description": "Subtopics lacking good sources",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["topic", "domain", "source_discovery_date", "primary_sources"],
+  "additionalProperties": false
+}

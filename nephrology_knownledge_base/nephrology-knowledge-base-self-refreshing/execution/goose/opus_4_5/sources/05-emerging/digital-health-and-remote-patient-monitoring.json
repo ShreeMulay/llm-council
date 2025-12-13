@@ -1,0 +1,59 @@
+{
+  "topic": "Digital Health and Remote Patient Monitoring",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:29:48.638447",
+  "primary_sources": [
+    {
+      "name": "CMS Innovation Center Remote Patient Monitoring Guidelines",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://innovation.cms.gov/innovation-models/comprehensive-care-for-kidney-disease",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Covers reimbursement and implementation of RPM for kidney disease patients"
+    },
+    {
+      "name": "Digital Health Technologies for Kidney Disease: A Systematic Review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00789-4/fulltext",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of digital health interventions in nephrology"
+    },
+    {
+      "name": "Telehealth and Remote Monitoring in Dialysis Care: Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/telehealth-dialysis",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Specific guidance on telehealth implementation for dialysis patients"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Remote Patient Monitoring in Chronic Kidney Disease: A Narrative Review",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(21)00892-1/fulltext",
+      "version": "2021",
+      "reliability": "secondary",
+      "relevance": "Reviews evidence for RPM effectiveness in CKD management"
+    },
+    {
+      "name": "Digital Health Innovation in Nephrology",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/33/12/2159",
+      "version": "2022",
+      "reliability": "secondary",
+      "relevance": "Discusses emerging digital technologies and their applications in kidney care"
+    }
+  ],
+  "gaps": [
+    "Limited KDIGO-specific guidelines on digital health integration",
+    "Evolving regulatory landscape for patient-generated health data",
+    "Standardization of remote monitoring protocols across different CKD stages"
+  ]
+}

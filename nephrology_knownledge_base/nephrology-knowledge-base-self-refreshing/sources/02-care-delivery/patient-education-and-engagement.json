@@ -1,0 +1,58 @@
+{
+  "topic": "Patient Education and Engagement",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:26:23.170152",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidance on patient education and shared decision-making for CKD management"
+    },
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Regulatory requirements for patient education and care planning in dialysis facilities"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Guidelines on patient education for dialysis adequacy and self-management"
+    },
+    {
+      "name": "Patient education and engagement in chronic kidney disease: a systematic review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Evidence-based review of patient education interventions and digital engagement tools"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "National Kidney Foundation Patient Education Materials",
+      "type": "website",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/patients",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Comprehensive patient education resources and culturally competent materials"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidelines specifically addressing digital patient engagement tools",
+    "Need for updated evidence on peer mentoring program effectiveness"
+  ]
+}

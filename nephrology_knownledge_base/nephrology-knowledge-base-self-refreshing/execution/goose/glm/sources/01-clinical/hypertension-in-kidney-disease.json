@@ -1,0 +1,58 @@
+{
+  "topic": "Hypertension in Kidney Disease",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:25:02.564660",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2021 Clinical Practice Guideline for the Management of Blood Pressure in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/blood-pressure-in-ckd/",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Comprehensive evidence-based recommendations for BP targets and antihypertensive therapy in CKD patients"
+    },
+    {
+      "name": "KDOQI Clinical Practice Guideline for Cardiovascular Disease in Dialysis Patients",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/cardiovascular-disease-dialysis",
+      "version": "2005",
+      "reliability": "primary",
+      "relevance": "Specific guidance for blood pressure management in dialysis patients"
+    },
+    {
+      "name": "2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults",
+      "type": "guideline",
+      "organization": "ACC/AHA",
+      "url": "https://www.ahajournals.org/doi/10.1161/HYP.0000000000000065",
+      "version": "2017",
+      "reliability": "primary",
+      "relevance": "General hypertension management with specific CKD considerations and ABPM recommendations"
+    },
+    {
+      "name": "Kidney International Supplements - KDIGO BP in CKD Guideline",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(20)31270-2/fulltext",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Full scientific rationale and evidence review supporting KDIGO BP recommendations"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "KDIGO Clinical Practice Guideline for the Care of Kidney Transplant Recipients",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/transplant-recipient/",
+      "version": "2009",
+      "reliability": "secondary",
+      "relevance": "Post-transplant hypertension management recommendations"
+    }
+  ],
+  "gaps": [
+    "Updated post-transplant hypertension guidelines (KDIGO 2009 needs revision)",
+    "Specific resistant hypertension protocols in CKD patients"
+  ]
+}

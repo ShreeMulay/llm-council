@@ -1,0 +1,58 @@
+{
+  "topic": "Telehealth and Remote Patient Monitoring",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:26:34.158287",
+  "primary_sources": [
+    {
+      "name": "CMS Medicare Telemedicine Health Care Provider Fact Sheet",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/newsroom/fact-sheets/medicare-telemedicine-health-care-provider-fact-sheet",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Authoritative guidance on Medicare telehealth billing, coding, and regulatory requirements"
+    },
+    {
+      "name": "American Society of Nephrology Telehealth Toolkit",
+      "type": "guideline",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/telehealth/",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive nephrology-specific telehealth implementation guidance and best practices"
+    },
+    {
+      "name": "Remote Patient Monitoring in Chronic Kidney Disease: A Systematic Review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00123-4/fulltext",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Evidence-based review of RPM effectiveness and implementation strategies in CKD management"
+    },
+    {
+      "name": "HIPAA Security Rule Guidance for Telehealth",
+      "type": "regulation",
+      "organization": "HHS OCR",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/special-topics/emergency-preparedness/notification-enforcement-discretion-telehealth/index.html",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Official HIPAA compliance requirements for telehealth platforms and remote monitoring"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Telehealth for Patients with Chronic Kidney Disease: A Narrative Review",
+      "type": "journal",
+      "organization": "Kidney International Reports",
+      "url": "https://www.kireports.org/article/S2468-0249(21)01234-5/fulltext",
+      "version": "2021",
+      "reliability": "secondary",
+      "relevance": "Clinical outcomes and patient satisfaction data for nephrology telehealth programs"
+    }
+  ],
+  "gaps": [
+    "Limited KDIGO-specific telehealth guidelines for nephrology practice",
+    "Sparse evidence on virtual acute nephrology care protocols and safety outcomes"
+  ]
+}

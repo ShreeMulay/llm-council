@@ -1,0 +1,58 @@
+{
+  "topic": "Dialysis Facility Operations and Management",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:28:58.158169",
+  "primary_sources": [
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Federal regulatory requirements for dialysis facility operations, safety, and quality standards"
+    },
+    {
+      "name": "AAMI Standards and Recommended Practices for Dialysis",
+      "type": "guideline",
+      "organization": "AAMI",
+      "url": "https://www.aami.org/standards-guidelines/dialysis",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Technical standards for water treatment systems and equipment maintenance in dialysis facilities"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Hemodialysis Adequacy",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Clinical guidelines that inform operational protocols and quality metrics for dialysis delivery"
+    },
+    {
+      "name": "CDC Guidelines for Infection Prevention and Control in Outpatient Hemodialysis Facilities",
+      "type": "guideline",
+      "organization": "CDC",
+      "url": "https://www.cdc.gov/dialysis/prevention/index.html",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Infection control protocols essential for daily facility operations and emergency preparedness"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Handbook of Dialysis",
+      "type": "textbook",
+      "organization": "Wolters Kluwer",
+      "url": "https://www.lww.com/Product/9781975150181",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Comprehensive reference covering technical and operational aspects of dialysis facility management"
+    }
+  ],
+  "gaps": [
+    "Limited recent publications specifically addressing supply chain optimization for dialysis facilities",
+    "Sparse guidance on patient scheduling algorithms and chair utilization metrics"
+  ]
+}

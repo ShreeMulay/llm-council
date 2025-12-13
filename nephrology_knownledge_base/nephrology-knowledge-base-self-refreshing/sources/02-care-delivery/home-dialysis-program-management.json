@@ -1,0 +1,58 @@
+{
+  "topic": "Home Dialysis Program Management",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:25:53.196092",
+  "primary_sources": [
+    {
+      "name": "KDOQI Clinical Practice Guideline for Home Dialysis",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/home-dialysis",
+      "version": "2019",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidance on patient selection, training, and program management for both PD and HHD"
+    },
+    {
+      "name": "CMS End-Stage Renal Disease Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/prospective-payment-systems/esrd-pps",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines reimbursement structure and billing requirements for home dialysis services"
+    },
+    {
+      "name": "International Society for Peritoneal Dialysis Guidelines",
+      "type": "guideline",
+      "organization": "ISPD",
+      "url": "https://ispd.org/guidelines/",
+      "version": "2020-2023",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for PD program implementation, patient training, and clinical management"
+    },
+    {
+      "name": "Home Hemodialysis: A Comprehensive Review of Patient-Centered and Economic Considerations",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Systematic review of HHD program models, patient outcomes, and implementation strategies"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Kidney Disease: Improving Global Outcomes (KDIGO) Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "General CKD management principles applicable to home dialysis patient care"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidance on staffing models and workflow optimization for home dialysis programs",
+    "Insufficient regulatory guidance on telehealth integration for home dialysis monitoring"
+  ]
+}

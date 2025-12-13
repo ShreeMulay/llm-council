@@ -1,0 +1,58 @@
+{
+  "topic": "Revenue Cycle Management for Nephrology",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:28:16.086604",
+  "primary_sources": [
+    {
+      "name": "CMS End-Stage Renal Disease Prospective Payment System",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/ESRDpayment",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines reimbursement methodology and billing requirements for dialysis services"
+    },
+    {
+      "name": "Medicare Claims Processing Manual Chapter 8 - Outpatient ESRD",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/clm104c08.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Provides detailed billing and claims submission requirements for nephrology services"
+    },
+    {
+      "name": "Healthcare Financial Management Association Revenue Cycle Best Practices",
+      "type": "guideline",
+      "organization": "HFMA",
+      "url": "https://www.hfma.org/revenue-cycle/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Establishes industry standards for revenue cycle optimization and denial management"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases Revenue Cycle Studies",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Publishes research on financial aspects of nephrology practice management"
+    },
+    {
+      "name": "Kidney Care Quality Alliance Payment Reform Resources",
+      "type": "website",
+      "organization": "KCQA",
+      "url": "https://kidneycare.org",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Provides guidance on value-based care and alternative payment models in nephrology"
+    }
+  ],
+  "gaps": [
+    "Limited specialty-specific revenue cycle management guidelines for nephrology practices",
+    "Lack of standardized metrics for nephrology revenue cycle performance benchmarking"
+  ]
+}

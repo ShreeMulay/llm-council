@@ -1,0 +1,57 @@
+{
+  "topic": "Business and Operations Terminology",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:24:00.678119",
+  "primary_sources": [
+    {
+      "name": "Medicare Claims Processing Manual",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Internet-Only-Manuals-IOMs",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines CPT, ICD-10, and prior authorization requirements for nephrology services"
+    },
+    {
+      "name": "ICD-10-CM Official Guidelines for Coding and Reporting",
+      "type": "regulation",
+      "organization": "CDC/CMS",
+      "url": "https://www.cdc.gov/nchs/icd/icd-10-cm.htm",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Authoritative source for ICD-10 coding definitions and nephrology-specific codes"
+    },
+    {
+      "name": "CPT Professional Edition",
+      "type": "regulation",
+      "organization": "AMA",
+      "url": "https://www.ama-assn.org/practice-management/cpt",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official definitions of Current Procedural Terminology codes for nephrology procedures"
+    },
+    {
+      "name": "Value-Based Care Quality Payment Program Guidelines",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://qpp.cms.gov/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines value-based care metrics and payment models for nephrology practices"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Revenue Cycle Management Best Practices for Nephrology",
+      "type": "website",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Professional guidance on RCM terminology and processes specific to nephrology"
+    }
+  ],
+  "gaps": [
+    "Limited nephrology-specific RCM terminology resources from authoritative medical organizations"
+  ]
+}

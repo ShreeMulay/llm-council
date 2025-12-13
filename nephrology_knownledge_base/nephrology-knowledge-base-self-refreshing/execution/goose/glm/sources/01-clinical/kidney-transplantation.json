@@ -1,0 +1,58 @@
+{
+  "topic": "Kidney Transplantation",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:24:52.030171",
+  "primary_sources": [
+    {
+      "name": "KDIGO Clinical Practice Guideline for the Care of Kidney Transplant Recipients",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/kidney-transplant-recipients/",
+      "version": "2009 (updated 2020)",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidelines covering immunosuppression, monitoring, and complication management"
+    },
+    {
+      "name": "AST/ASTS Guidelines for Kidney Transplantation",
+      "type": "guideline",
+      "organization": "American Society of Transplantation",
+      "url": "https://www.myast.org/guidelines",
+      "version": "2020-2023",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for transplant evaluation, surgery, and post-transplant care"
+    },
+    {
+      "name": "OPTN/UNOS Policies for Kidney Allocation and Transplantation",
+      "type": "regulation",
+      "organization": "OPTN/UNOS",
+      "url": "https://optn.transplant.hrsa.gov/policies-bylaws/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Federal regulations governing transplant candidate evaluation, listing, and allocation"
+    },
+    {
+      "name": "CMS Conditions for Coverage for Transplant Centers",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/transplant-centers",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Medicare requirements for transplant center operations and patient care standards"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - Transplant Reviews",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Peer-reviewed research on transplant outcomes and clinical practices"
+    }
+  ],
+  "gaps": [
+    "Updated KDIGO transplant guidelines (current version from 2009 with limited updates)",
+    "Standardized protocols for living donor evaluation across centers"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "Dialysis-Specific Technical Terms",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:24:11.619449",
+  "primary_sources": [
+    {
+      "name": "KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Defines key dialysis technical terms including dialysate, ultrafiltration, and adequacy measures"
+    },
+    {
+      "name": "KDOQI Clinical Practice Guideline for Vascular Access: 2019 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/vascular-access",
+      "version": "2019",
+      "reliability": "primary",
+      "relevance": "Authoritative definitions for access recirculation and vascular access terminology"
+    },
+    {
+      "name": "Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Regulatory definitions for dialysis operations including dry weight and treatment parameters"
+    },
+    {
+      "name": "Handbook of Dialysis",
+      "type": "textbook",
+      "organization": "Wolters Kluwer",
+      "url": "https://www.lww.com/Product/9781975150143",
+      "version": "6th Edition 2022",
+      "reliability": "primary",
+      "relevance": "Comprehensive technical definitions for dialyzer membranes and dialysis equipment terminology"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases Dialysis Terminology Review",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Recent updates on standardized dialysis terminology and technical definitions"
+    }
+  ],
+  "gaps": [
+    "Limited recent updates to standardized technical terminology definitions",
+    "Emerging membrane technology terms may not be covered in older guidelines"
+  ]
+}

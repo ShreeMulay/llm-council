@@ -1,0 +1,55 @@
+{
+  "topic": "Diabetes and Kidney Disease",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:25:12.954055",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/diabetes-ckd/",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidance on diabetes management in CKD including glycemic targets, SGLT2 inhibitors, and cardiovascular risk reduction"
+    },
+    {
+      "name": "ADA/ESC Consensus Report on Novel Therapies for Cardiovascular and Kidney Protection in Patients with Diabetes",
+      "type": "guideline",
+      "organization": "ADA/ESC",
+      "url": "https://care.diabetesjournals.org/content/45/11/2718",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for SGLT2 inhibitors and GLP-1 receptor agonists in diabetic kidney disease"
+    },
+    {
+      "name": "KDOQI Clinical Practice Guideline for Diabetes and CKD: 2012 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/diabetes",
+      "version": "2012",
+      "reliability": "primary",
+      "relevance": "Screening protocols for diabetic kidney disease and management strategies"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Diabetic Kidney Disease: Challenges, Progress, and Possibilities",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/12/12/2032",
+      "version": "2020",
+      "reliability": "secondary",
+      "relevance": "Comprehensive review of pathophysiology and emerging therapies for diabetic kidney disease"
+    },
+    {
+      "name": "Kidney Disease: Improving Global Outcomes Diabetes Work Group Clinical Practice Guideline Implementation",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00804-1/fulltext",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Practical implementation strategies for KDIGO diabetes-CKD guidelines in clinical practice"
+    }
+  ],
+  "gaps": []
+}

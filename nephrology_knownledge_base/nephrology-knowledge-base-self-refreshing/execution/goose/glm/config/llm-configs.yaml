@@ -1,0 +1,124 @@
+# LLM Configuration for Nephrology Knowledge Base
+# Each pass uses specific models optimized for that task
+
+api_keys:
+  anthropic: "${ANTHROPIC_API_KEY}"
+  google: "${GOOGLE_AI_API_KEY}"
+  openrouter: "${OPENROUTER_API_KEY}"
+
+models:
+  # Anthropic models via OpenRouter (primary choice)
+  claude-sonnet-4-5:
+    provider: openrouter
+    model_id: anthropic/claude-sonnet-4
+    max_tokens: 8192
+    supports_structured_output: true
+    cost_per_1k_input: 0.003
+    cost_per_1k_output: 0.015
+    
+  claude-opus-4-5:
+    provider: openrouter
+    model_id: anthropic/claude-opus-4
+    max_tokens: 8192
+    supports_structured_output: true
+    cost_per_1k_input: 0.015
+    cost_per_1k_output: 0.075
+
+  # Google models (fallback)
+  gemini-2-5-flash:
+    provider: google
+    model_id: gemini-2.5-flash
+    max_tokens: 8192
+    supports_structured_output: true
+    cost_per_1k_input: 0.00025
+    cost_per_1k_output: 0.001
+
+  gemini-2-5-pro:
+    provider: google
+    model_id: gemini-2.5-pro
+    max_tokens: 8192
+    supports_structured_output: true
+    cost_per_1k_input: 0.00125
+    cost_per_1k_output: 0.01
+
+passes:
+  pass-1-skeleton:
+    name: "Skeleton Generation"
+    description: "Generate high-level structure with topic outlines"
+    primary_llm: claude-sonnet-4-5  # Sonnet via OpenRouter
+    fallback_llm: gemini-2-5-pro
+    temperature: 0.3
+    max_tokens: 8192
+    prompt_template: "config/prompts/pass-1-skeleton.md"
+    schema: "config/schemas/domain.schema.json"
+    checkpoint_after: each_domain
+    
+  pass-2-source-discovery:
+    name: "Source Discovery"
+    description: "Find and retrieve authoritative sources for each topic"
+    primary_llm: claude-sonnet-4-5  # Sonnet via OpenRouter
+    fallback_llm: gemini-2-5-pro
+    temperature: 0.2
+    max_tokens: 8192
+    prompt_template: "config/prompts/pass-2-sources.md"
+    schema: "config/schemas/source.schema.json"
+    checkpoint_after: each_topic
+    
+  pass-3-content-generation:
+    name: "Citation-First Content Generation"
+    description: "Generate content only from discovered sources with citations"
+    primary_llm: claude-sonnet-4-5  # Sonnet via OpenRouter
+    fallback_llm: gemini-2-5-pro
+    temperature: 0.2
+    max_tokens: 8192
+    prompt_template: "config/prompts/pass-3-content.md"
+    schema: "config/schemas/topic.schema.json"
+    checkpoint_after: each_topic
+    strict_citation: true
+    
+  pass-4-validation:
+    name: "Cross-LLM Validation"
+    description: "Validate content accuracy using multiple LLMs"
+    primary_llm: claude-opus-4-5  # Opus via OpenRouter for validation
+    secondary_llm: claude-sonnet-4-5  # Cross-validate with Sonnet
+    tertiary_llm: gemini-2-5-pro  # Third opinion from Gemini
+    temperature: 0.1
+    max_tokens: 4096
+    prompt_template: "config/prompts/pass-4-validate.md"
+    schema: "config/schemas/validation-report.schema.json"
+    min_concurrence: 0.8
+    checkpoint_after: each_topic
+    
+  pass-5-cross-linking:
+    name: "Cross-Linking"
+    description: "Build knowledge graph and add cross-references"
+    primary_llm: claude-sonnet-4-5  # Sonnet via OpenRouter
+    fallback_llm: gemini-2-5-flash
+    temperature: 0.2
+    max_tokens: 2048
+    prompt_template: "config/prompts/pass-5-link.md"
+    checkpoint_after: completion
+
+concurrence:
+  enabled: true
+  min_agreement: 0.8
+  models:
+    - claude-opus-4-5    # Opus via OpenRouter
+    - claude-sonnet-4-5  # Sonnet via OpenRouter
+    - gemini-2-5-pro     # Gemini for diversity
+  on_disagreement: flag_for_review
+
+retry:
+  max_attempts: 3
+  backoff_base: 2
+  backoff_max: 60
+  retryable_errors:
+    - rate_limit
+    - timeout
+    - server_error
+
+logging:
+  level: INFO
+  file: "passes/generation.log"
+  include_prompts: false
+  include_responses: true

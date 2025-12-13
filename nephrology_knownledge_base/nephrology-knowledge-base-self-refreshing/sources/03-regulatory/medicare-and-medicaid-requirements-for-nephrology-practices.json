@@ -1,0 +1,58 @@
+{
+  "topic": "Medicare and Medicaid Requirements for Nephrology Practices",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:15.005529",
+  "primary_sources": [
+    {
+      "name": "Medicare Benefit Policy Manual Chapter 11 - End Stage Renal Disease Services",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/bp102c11.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines MCP billing requirements and ESRD service coverage rules"
+    },
+    {
+      "name": "CY 2024 Physician Fee Schedule Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/physician-fee-schedule/physician-fee-schedule-overview",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Establishes MIPS requirements and payment adjustments for nephrology practices"
+    },
+    {
+      "name": "Medicare Claims Processing Manual Chapter 8 - Outpatient ESRD Services",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/clm104c08.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Provides billing and documentation requirements for dialysis facility services"
+    },
+    {
+      "name": "Stark Law and Anti-Kickback Statute Final Rules",
+      "type": "regulation",
+      "organization": "CMS/OIG",
+      "url": "https://www.cms.gov/Medicare/Fraud-and-Abuse/PhysicianSelfReferral",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Defines compliance requirements for physician self-referral and kickback prevention in nephrology"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "ASN Practice Management Guidelines for Nephrology",
+      "type": "guideline",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Provides practical guidance on Medicare billing and compliance for nephrology practices"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidance on APP billing specifically for nephrology services",
+    "Evolving telehealth billing requirements post-COVID for nephrology practices"
+  ]
+}

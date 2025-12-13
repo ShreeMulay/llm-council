@@ -1,0 +1,58 @@
+{
+  "topic": "Dialysis Facility Compare and Star Ratings",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:25.050218",
+  "primary_sources": [
+    {
+      "name": "CMS Dialysis Facility Compare Star Ratings Methodology",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/dialysis-facility-compare/star-ratings",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official methodology for calculating and assigning star ratings to dialysis facilities"
+    },
+    {
+      "name": "CMS Quality Reporting Program for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-reporting-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive overview of quality measures and reporting requirements for dialysis facilities"
+    },
+    {
+      "name": "Impact of CMS Star Ratings on Dialysis Facility Performance",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(23)00456-7/fulltext",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Analysis of how star ratings affect facility operations and patient outcomes"
+    },
+    {
+      "name": "Dialysis Facility Compare Technical Notes",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/dfc-technical-notes.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Detailed technical specifications for quality measures and data collection methods"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Kidney Disease Outcomes Quality Initiative Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Clinical context for quality measures used in star ratings"
+    }
+  ],
+  "gaps": [
+    "Limited peer-reviewed research on patient decision-making using star ratings",
+    "Insufficient data on long-term impact of star ratings on industry consolidation"
+  ]
+}

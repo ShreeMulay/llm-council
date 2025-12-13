@@ -1,0 +1,58 @@
+{
+  "topic": "Clinical Trials and Pipeline Drugs",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:30:07.051971",
+  "primary_sources": [
+    {
+      "name": "ClinicalTrials.gov Database",
+      "type": "website",
+      "organization": "NIH/NLM",
+      "url": "https://clinicaltrials.gov/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive registry of ongoing and completed clinical trials for kidney diseases"
+    },
+    {
+      "name": "Journal of the American Society of Nephrology",
+      "type": "journal",
+      "organization": "ASN",
+      "url": "https://jasn.asnjournals.org/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Publishes high-impact clinical trial results and drug development studies in nephrology"
+    },
+    {
+      "name": "Kidney International",
+      "type": "journal",
+      "organization": "International Society of Nephrology",
+      "url": "https://www.kidney-international.org/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Leading journal for nephrology clinical trials and therapeutic advances"
+    },
+    {
+      "name": "American Journal of Kidney Diseases",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Publishes clinical trial outcomes and drug development research for kidney diseases"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "FDA Drug Approvals and Databases",
+      "type": "website",
+      "organization": "FDA",
+      "url": "https://www.fda.gov/drugs/",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Regulatory information on approved and investigational drugs for kidney diseases"
+    }
+  ],
+  "gaps": [
+    "Limited consolidated guidelines specifically addressing pipeline drug evaluation criteria",
+    "Need for standardized endpoints across nephrology clinical trials"
+  ]
+}

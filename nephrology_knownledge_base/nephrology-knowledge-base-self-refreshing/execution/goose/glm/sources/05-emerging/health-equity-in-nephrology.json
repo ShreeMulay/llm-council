@@ -1,0 +1,58 @@
+{
+  "topic": "Health Equity in Nephrology",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:30:27.118290",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Includes recommendations on addressing health disparities and social determinants in CKD care"
+    },
+    {
+      "name": "American Society of Nephrology Health Equity Framework",
+      "type": "guideline",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/health-equity/",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive framework for addressing racial and ethnic disparities in kidney disease"
+    },
+    {
+      "name": "CMS ESRD Treatment Choices Model Health Equity Plan",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://innovation.cms.gov/innovation-models/esrd-treatment-choices-model",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Federal initiative to reduce disparities in ESRD care and improve equity in treatment options"
+    },
+    {
+      "name": "Health Disparities in Kidney Disease: A Scientific Statement from the American Heart Association",
+      "type": "journal",
+      "organization": "American Heart Association",
+      "url": "https://www.ahajournals.org/doi/10.1161/CIR.0000000000001019",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Evidence-based review of social determinants and strategies for reducing kidney disease disparities"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "National Kidney Foundation Health Equity Toolkit",
+      "type": "website",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/health-equity",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Practical resources for implementing culturally competent nephrology care"
+    }
+  ],
+  "gaps": [
+    "Limited formal guidelines specifically addressing diversity in nephrology clinical trial design",
+    "Emerging research on telehealth equity in nephrology care post-COVID-19"
+  ]
+}

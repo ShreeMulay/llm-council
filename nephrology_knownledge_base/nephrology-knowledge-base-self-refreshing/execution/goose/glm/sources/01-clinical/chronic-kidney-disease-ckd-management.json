@@ -1,0 +1,58 @@
+{
+  "topic": "Chronic Kidney Disease (CKD) Management",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:24:21.877167",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive CKD staging, progression management, and complications"
+    },
+    {
+      "name": "KDIGO 2017 Clinical Practice Guideline Update for the Diagnosis, Evaluation, Prevention, and Treatment of Chronic Kidney Disease–Mineral and Bone Disorder (CKD-MBD)",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-mbd/",
+      "version": "2017",
+      "reliability": "primary",
+      "relevance": "Authoritative guidance on CKD-MBD management and monitoring"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/anemia-in-ckd/",
+      "version": "2012",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for CKD anemia diagnosis and treatment"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guideline for Nutrition in CKD: 2020 Update",
+      "type": "guideline",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.kidney.org/professionals/guidelines/nutrition",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Comprehensive dietary management recommendations for CKD patients"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - CKD Management Reviews",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Peer-reviewed research on emerging CKD therapies and management strategies"
+    }
+  ],
+  "gaps": [
+    "Updated KDIGO anemia guidelines (2012 version may need supplementation with recent literature)",
+    "Specific guidance on newer SGLT2 inhibitor use in CKD may require recent journal articles"
+  ]
+}

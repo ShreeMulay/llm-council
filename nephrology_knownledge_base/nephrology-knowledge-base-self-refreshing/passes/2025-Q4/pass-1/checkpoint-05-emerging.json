@@ -1,0 +1,22 @@
+{
+  "checkpoint_id": "pass-1-05-emerging",
+  "timestamp": "2025-12-02T19:03:10.790991",
+  "pass_number": 1,
+  "completed_items": [
+    "05-emerging"
+  ],
+  "pending_items": [
+    "00-glossary",
+    "01-clinical",
+    "02-care-delivery",
+    "03-regulatory",
+    "04-business"
+  ],
+  "files_created": [
+    "domains/05-emerging/_index.md"
+  ],
+  "files_modified": [],
+  "state": {},
+  "errors": [],
+  "can_resume": true
+}

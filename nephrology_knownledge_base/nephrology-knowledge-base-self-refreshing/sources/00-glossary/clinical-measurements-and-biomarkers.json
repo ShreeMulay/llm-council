@@ -1,0 +1,55 @@
+{
+  "topic": "Clinical Measurements and Biomarkers",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:23:12.580651",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive definitions of GFR, ACR, and staging criteria for CKD assessment"
+    },
+    {
+      "name": "KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "version": "2015",
+      "reliability": "primary",
+      "relevance": "Authoritative definitions and targets for Kt/V and URR in dialysis adequacy"
+    },
+    {
+      "name": "Laboratory Assessment of Kidney Disease: Glomerular Filtration Rate, Urinalysis, and Proteinuria",
+      "type": "journal",
+      "organization": "KDIGO",
+      "url": "https://www.kidney-international.org/article/S0085-2538(21)00946-3/fulltext",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Detailed technical specifications for GFR estimation equations and ACR measurement"
+    },
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Regulatory definitions and minimum standards for dialysis adequacy measurements"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - Laboratory Values in CKD",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org/",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Clinical interpretation of BUN and serum creatinine in various patient populations"
+    }
+  ],
+  "gaps": []
+}

@@ -1,0 +1,1791 @@
+{
+  "version": "1.0",
+  "updated_at": "2025-12-02T20:30:27.158487",
+  "sources": {
+    "kdigo-2024-clinical-practice-guideline-for-the-eva": {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Measurements and Biomarkers",
+        "Disease Classifications and Syndromes",
+        "Nephrology Pharmacology",
+        "Chronic Kidney Disease (CKD) Management",
+        "Electrolyte and Acid-Base Disorders",
+        "Multidisciplinary Care Team Model",
+        "Care Coordination and Transitions of Care",
+        "Patient Education and Engagement",
+        "Precision Nephrology and Genomics",
+        "Health Equity in Nephrology"
+      ]
+    },
+    "kdoqi-clinical-practice-guideline-for-hemodialysis": {
+      "name": "KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Measurements and Biomarkers",
+        "Dialysis-Specific Technical Terms"
+      ]
+    },
+    "laboratory-assessment-of-kidney-disease:-glomerula": {
+      "name": "Laboratory Assessment of Kidney Disease: Glomerular Filtration Rate, Urinalysis, and Proteinuria",
+      "type": "journal",
+      "organization": "KDIGO",
+      "url": "https://www.kidney-international.org/article/S0085-2538(21)00946-3/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Measurements and Biomarkers"
+      ]
+    },
+    "cms-conditions-for-coverage-for-end-stage-renal-di": {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Measurements and Biomarkers",
+        "Multidisciplinary Care Team Model",
+        "Care Coordination and Transitions of Care",
+        "Patient Education and Engagement",
+        "State-Specific Regulations and Licensure",
+        "Dialysis Facility Operations and Management",
+        "Staffing Models and Human Resources"
+      ]
+    },
+    "american-journal-of-kidney-diseases---laboratory-v": {
+      "name": "American Journal of Kidney Diseases - Laboratory Values in CKD",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Clinical Measurements and Biomarkers"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-acute-kidney": {
+      "name": "KDIGO Clinical Practice Guideline for Acute Kidney Injury",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/acute-kidney-injury/",
+      "reliability": "primary",
+      "cited_by": [
+        "Disease Classifications and Syndromes",
+        "Acute Kidney Injury (AKI)"
+      ]
+    },
+    "kdigo-2021-clinical-practice-guideline-for-the-man": {
+      "name": "KDIGO 2021 Clinical Practice Guideline for the Management of Glomerular Diseases",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/glomerular-diseases/",
+      "reliability": "primary",
+      "cited_by": [
+        "Disease Classifications and Syndromes",
+        "Hypertension in Kidney Disease",
+        "Novel Therapeutics for Kidney Disease"
+      ]
+    },
+    "nkf-kdoqi-clinical-practice-guidelines-and-clinica": {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Diabetes and Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines",
+      "reliability": "primary",
+      "cited_by": [
+        "Disease Classifications and Syndromes",
+        "Treatment Modalities and Procedures",
+        "Acute Kidney Injury (AKI)",
+        "Multidisciplinary Care Team Model",
+        "Quality Improvement Initiatives",
+        "Dialysis Facility Operations and Management"
+      ]
+    },
+    "comprehensive-clinical-nephrology": {
+      "name": "Comprehensive Clinical Nephrology",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/books/comprehensive-clinical-nephrology/feehally/978-0-323-47794-5",
+      "reliability": "secondary",
+      "cited_by": [
+        "Disease Classifications and Syndromes"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-the-evaluati": {
+      "name": "KDIGO Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "reliability": "primary",
+      "cited_by": [
+        "Treatment Modalities and Procedures"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-on-acute-kidney-": {
+      "name": "KDIGO Clinical Practice Guideline on Acute Kidney Injury",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/acute-kidney-injury/",
+      "reliability": "primary",
+      "cited_by": [
+        "Treatment Modalities and Procedures"
+      ]
+    },
+    "nkf-kdoqi-clinical-practice-guidelines-for-periton": {
+      "name": "NKF KDOQI Clinical Practice Guidelines for Peritoneal Dialysis Adequacy",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/peritoneal-dialysis",
+      "reliability": "primary",
+      "cited_by": [
+        "Treatment Modalities and Procedures"
+      ]
+    },
+    "american-journal-of-kidney-diseases---dialysis-ter": {
+      "name": "American Journal of Kidney Diseases - Dialysis Terminology Review",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Treatment Modalities and Procedures"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-anemia-in-ch": {
+      "name": "KDIGO Clinical Practice Guideline for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/anemia-in-ckd/",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology",
+        "Chronic Kidney Disease (CKD) Management",
+        "Novel Therapeutics for Kidney Disease"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-the-care-of-": {
+      "name": "KDIGO Clinical Practice Guideline for the Care of Kidney Transplant Recipients",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/transplant-recipient/",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology",
+        "Kidney Transplantation",
+        "Hypertension in Kidney Disease",
+        "Quality Improvement Initiatives"
+      ]
+    },
+    "kdigo-2017-clinical-practice-guideline-update-for-": {
+      "name": "KDIGO 2017 Clinical Practice Guideline Update for the Diagnosis, Evaluation, Prevention, and Treatment of Chronic Kidney Disease-Mineral and Bone Disorder",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-mbd/",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology",
+        "Chronic Kidney Disease (CKD) Management",
+        "Electrolyte and Acid-Base Disorders"
+      ]
+    },
+    "american-journal-of-kidney-diseases": {
+      "name": "American Journal of Kidney Diseases",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Nephrology Pharmacology",
+        "Clinical Trials and Pipeline Drugs"
+      ]
+    },
+    "cms-esrd-quality-incentive-program": {
+      "name": "CMS ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "reliability": "primary",
+      "cited_by": [
+        "Regulatory and Compliance Terminology",
+        "Quality Improvement Initiatives",
+        "Quality and Financial Reporting"
+      ]
+    },
+    "cms-esrd-prospective-payment-system-final-rule": {
+      "name": "CMS ESRD Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/prospective-payment-systems/esrd-pps",
+      "reliability": "primary",
+      "cited_by": [
+        "Regulatory and Compliance Terminology",
+        "Federal Register Monitoring and Rulemaking"
+      ]
+    },
+    "cms-conditions-for-coverage---esrd-facilities": {
+      "name": "CMS Conditions for Coverage - ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/som107c05pdf.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Regulatory and Compliance Terminology"
+      ]
+    },
+    "cms-kidney-care-choices-model": {
+      "name": "CMS Kidney Care Choices Model",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/priorities/innovation/innovation-models/kidney-care-choices-kcc-model",
+      "reliability": "primary",
+      "cited_by": [
+        "Regulatory and Compliance Terminology",
+        "Value-Based Care Models in Nephrology"
+      ]
+    },
+    "cms-merit-based-incentive-payment-system": {
+      "name": "CMS Merit-based Incentive Payment System",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/mips",
+      "reliability": "secondary",
+      "cited_by": [
+        "Regulatory and Compliance Terminology"
+      ]
+    },
+    "medicare-claims-processing-manual": {
+      "name": "Medicare Claims Processing Manual",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Internet-Only-Manuals-IOMs",
+      "reliability": "primary",
+      "cited_by": [
+        "Business and Operations Terminology"
+      ]
+    },
+    "icd-10-cm-official-guidelines-for-coding-and-repor": {
+      "name": "ICD-10-CM Official Guidelines for Coding and Reporting",
+      "type": "regulation",
+      "organization": "CDC/CMS",
+      "url": "https://www.cdc.gov/nchs/icd/icd-10-cm.htm",
+      "reliability": "primary",
+      "cited_by": [
+        "Business and Operations Terminology",
+        "Nephrology Coding and Billing"
+      ]
+    },
+    "cpt-professional-edition": {
+      "name": "CPT Professional Edition",
+      "type": "regulation",
+      "organization": "AMA",
+      "url": "https://www.ama-assn.org/practice-management/cpt",
+      "reliability": "primary",
+      "cited_by": [
+        "Business and Operations Terminology"
+      ]
+    },
+    "value-based-care-quality-payment-program-guideline": {
+      "name": "Value-Based Care Quality Payment Program Guidelines",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://qpp.cms.gov/",
+      "reliability": "primary",
+      "cited_by": [
+        "Business and Operations Terminology"
+      ]
+    },
+    "revenue-cycle-management-best-practices-for-nephro": {
+      "name": "Revenue Cycle Management Best Practices for Nephrology",
+      "type": "website",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Business and Operations Terminology"
+      ]
+    },
+    "kdoqi-clinical-practice-guideline-for-vascular-acc": {
+      "name": "KDOQI Clinical Practice Guideline for Vascular Access: 2019 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/vascular-access",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis-Specific Technical Terms"
+      ]
+    },
+    "conditions-for-coverage-for-end-stage-renal-diseas": {
+      "name": "Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis-Specific Technical Terms"
+      ]
+    },
+    "handbook-of-dialysis": {
+      "name": "Handbook of Dialysis",
+      "type": "textbook",
+      "organization": "Wolters Kluwer",
+      "url": "https://www.lww.com/Product/9781975150143",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis-Specific Technical Terms",
+        "Dialysis Facility Operations and Management"
+      ]
+    },
+    "american-journal-of-kidney-diseases-dialysis-termi": {
+      "name": "American Journal of Kidney Diseases Dialysis Terminology Review",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "Dialysis-Specific Technical Terms"
+      ]
+    },
+    "nkf-kdoqi-clinical-practice-guideline-for-nutritio": {
+      "name": "NKF KDOQI Clinical Practice Guideline for Nutrition in CKD: 2020 Update",
+      "type": "guideline",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.kidney.org/professionals/guidelines/nutrition",
+      "reliability": "primary",
+      "cited_by": [
+        "Chronic Kidney Disease (CKD) Management"
+      ]
+    },
+    "american-journal-of-kidney-diseases---ckd-manageme": {
+      "name": "American Journal of Kidney Diseases - CKD Management Reviews",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Chronic Kidney Disease (CKD) Management"
+      ]
+    },
+    "acute-kidney-injury:-epidemiology,-outcomes,-compl": {
+      "name": "Acute Kidney Injury: Epidemiology, Outcomes, Complications, and Therapeutic Strategies",
+      "type": "journal",
+      "organization": "Seminars in Nephrology",
+      "url": "https://www.seminarsinnephrology.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Acute Kidney Injury (AKI)"
+      ]
+    },
+    "acute-kidney-injury-network:-report-of-an-initiati": {
+      "name": "Acute Kidney Injury Network: Report of an Initiative to Improve Outcomes in Acute Kidney Injury",
+      "type": "journal",
+      "organization": "Critical Care",
+      "url": "https://ccforum.biomedcentral.com/",
+      "reliability": "primary",
+      "cited_by": [
+        "Acute Kidney Injury (AKI)"
+      ]
+    },
+    "brenner-and-rector's-the-kidney": {
+      "name": "Brenner and Rector's The Kidney",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Acute Kidney Injury (AKI)"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-hemodialysis": {
+      "name": "KDIGO Clinical Practice Guideline for Hemodialysis Adequacy",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/hemodialysis-adequacy/",
+      "reliability": "primary",
+      "cited_by": [
+        "End-Stage Renal Disease (ESRD) and Dialysis"
+      ]
+    },
+    "kdigo-clinical-practice-guideline-for-peritoneal-d": {
+      "name": "KDIGO Clinical Practice Guideline for Peritoneal Dialysis",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/peritoneal-dialysis/",
+      "reliability": "primary",
+      "cited_by": [
+        "End-Stage Renal Disease (ESRD) and Dialysis"
+      ]
+    },
+    "nkf-kdoqi-clinical-practice-guidelines-for-vascula": {
+      "name": "NKF KDOQI Clinical Practice Guidelines for Vascular Access",
+      "type": "guideline",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/vascular-access",
+      "reliability": "primary",
+      "cited_by": [
+        "End-Stage Renal Disease (ESRD) and Dialysis"
+      ]
+    },
+    "cms-esrd-conditions-for-coverage": {
+      "name": "CMS ESRD Conditions for Coverage",
+      "type": "regulation",
+      "organization": "Centers for Medicare & Medicaid Services",
+      "url": "https://www.cms.gov/medicare/quality/end-stage-renal-disease",
+      "reliability": "primary",
+      "cited_by": [
+        "End-Stage Renal Disease (ESRD) and Dialysis"
+      ]
+    },
+    "american-journal-of-kidney-diseases---dialysis-mod": {
+      "name": "American Journal of Kidney Diseases - Dialysis Modality Selection Review",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "End-Stage Renal Disease (ESRD) and Dialysis"
+      ]
+    },
+    "ast/asts-guidelines-for-kidney-transplantation": {
+      "name": "AST/ASTS Guidelines for Kidney Transplantation",
+      "type": "guideline",
+      "organization": "American Society of Transplantation",
+      "url": "https://www.myast.org/guidelines",
+      "reliability": "primary",
+      "cited_by": [
+        "Kidney Transplantation"
+      ]
+    },
+    "optn/unos-policies-for-kidney-allocation-and-trans": {
+      "name": "OPTN/UNOS Policies for Kidney Allocation and Transplantation",
+      "type": "regulation",
+      "organization": "OPTN/UNOS",
+      "url": "https://optn.transplant.hrsa.gov/policies-bylaws/",
+      "reliability": "primary",
+      "cited_by": [
+        "Kidney Transplantation"
+      ]
+    },
+    "cms-conditions-for-coverage-for-transplant-centers": {
+      "name": "CMS Conditions for Coverage for Transplant Centers",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/transplant-centers",
+      "reliability": "primary",
+      "cited_by": [
+        "Kidney Transplantation"
+      ]
+    },
+    "american-journal-of-kidney-diseases---transplant-r": {
+      "name": "American Journal of Kidney Diseases - Transplant Reviews",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Kidney Transplantation"
+      ]
+    },
+    "kdoqi-clinical-practice-guideline-for-cardiovascul": {
+      "name": "KDOQI Clinical Practice Guideline for Cardiovascular Disease in Dialysis Patients",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/cardiovascular-disease-dialysis",
+      "reliability": "primary",
+      "cited_by": [
+        "Hypertension in Kidney Disease"
+      ]
+    },
+    "2017-acc/aha/aapa/abc/acpm/ags/apha/ash/aspc/nma/p": {
+      "name": "2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults",
+      "type": "guideline",
+      "organization": "ACC/AHA",
+      "url": "https://www.ahajournals.org/doi/10.1161/HYP.0000000000000065",
+      "reliability": "primary",
+      "cited_by": [
+        "Hypertension in Kidney Disease"
+      ]
+    },
+    "kidney-international-supplements---kdigo-bp-in-ckd": {
+      "name": "Kidney International Supplements - KDIGO BP in CKD Guideline",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(20)31270-2/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Hypertension in Kidney Disease"
+      ]
+    },
+    "kdigo-2022-clinical-practice-guideline-for-diabete": {
+      "name": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/diabetes-ckd/",
+      "reliability": "primary",
+      "cited_by": [
+        "Diabetes and Kidney Disease",
+        "Novel Therapeutics for Kidney Disease"
+      ]
+    },
+    "ada/esc-consensus-report-on-novel-therapies-for-ca": {
+      "name": "ADA/ESC Consensus Report on Novel Therapies for Cardiovascular and Kidney Protection in Patients with Diabetes",
+      "type": "guideline",
+      "organization": "ADA/ESC",
+      "url": "https://care.diabetesjournals.org/content/45/11/2718",
+      "reliability": "primary",
+      "cited_by": [
+        "Diabetes and Kidney Disease"
+      ]
+    },
+    "kdoqi-clinical-practice-guideline-for-diabetes-and": {
+      "name": "KDOQI Clinical Practice Guideline for Diabetes and CKD: 2012 Update",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/diabetes",
+      "reliability": "primary",
+      "cited_by": [
+        "Diabetes and Kidney Disease"
+      ]
+    },
+    "diabetic-kidney-disease:-challenges,-progress,-and": {
+      "name": "Diabetic Kidney Disease: Challenges, Progress, and Possibilities",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/12/12/2032",
+      "reliability": "secondary",
+      "cited_by": [
+        "Diabetes and Kidney Disease"
+      ]
+    },
+    "kidney-disease:-improving-global-outcomes-diabetes": {
+      "name": "Kidney Disease: Improving Global Outcomes Diabetes Work Group Clinical Practice Guideline Implementation",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00804-1/fulltext",
+      "reliability": "secondary",
+      "cited_by": [
+        "Diabetes and Kidney Disease"
+      ]
+    },
+    "disorders-of-plasma-sodium---causes,-consequences,": {
+      "name": "Disorders of Plasma Sodium - Causes, Consequences, and Correction",
+      "type": "journal",
+      "organization": "New England Journal of Medicine",
+      "url": "https://www.nejm.org/doi/full/10.1056/NEJMra1404489",
+      "reliability": "primary",
+      "cited_by": [
+        "Electrolyte and Acid-Base Disorders"
+      ]
+    },
+    "hyperkalemia:-pathophysiology,-risk-factors-and-co": {
+      "name": "Hyperkalemia: Pathophysiology, Risk Factors and Consequences",
+      "type": "journal",
+      "organization": "Nephrology Dialysis Transplantation",
+      "url": "https://academic.oup.com/ndt/article/35/suppl_3/iii13/5911492",
+      "reliability": "primary",
+      "cited_by": [
+        "Electrolyte and Acid-Base Disorders"
+      ]
+    },
+    "brenner-and-rector's-the-kidney,-11th-edition": {
+      "name": "Brenner and Rector's The Kidney, 11th Edition",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/books/brenner-and-rectors-the-kidney/yu/978-0-323-53271-8",
+      "reliability": "secondary",
+      "cited_by": [
+        "Electrolyte and Acid-Base Disorders"
+      ]
+    },
+    "drug-dosing-adjustments-in-patients-with-chronic-k": {
+      "name": "Drug Dosing Adjustments in Patients with Chronic Kidney Disease",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(20)30897-1/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology"
+      ]
+    },
+    "nephrotoxicity-of-common-drugs-used-in-clinical-pr": {
+      "name": "Nephrotoxicity of Common Drugs Used in Clinical Practice",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(21)00456-8/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology"
+      ]
+    },
+    "kdoqi-clinical-practice-guidelines-for-medication-": {
+      "name": "KDOQI Clinical Practice Guidelines for Medication Management in Patients with CKD",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/medication-management-ckd",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Pharmacology"
+      ]
+    },
+    "pharmacokinetics-and-drug-dosing-in-patients-with-": {
+      "name": "Pharmacokinetics and Drug Dosing in Patients with Kidney Disease",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/32/6/1326",
+      "reliability": "secondary",
+      "cited_by": [
+        "Nephrology Pharmacology"
+      ]
+    },
+    "quality-payment-program-final-rule": {
+      "name": "Quality Payment Program Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/value-based-programs/quality-payment-program",
+      "reliability": "primary",
+      "cited_by": [
+        "Value-Based Care Models in Nephrology"
+      ]
+    },
+    "value-based-care-in-nephrology:-a-systematic-revie": {
+      "name": "Value-based care in nephrology: A systematic review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "reliability": "primary",
+      "cited_by": [
+        "Value-Based Care Models in Nephrology"
+      ]
+    },
+    "esrd-quality-incentive-program": {
+      "name": "ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/end-stage-renal-disease/esrd-quality-incentive-program",
+      "reliability": "primary",
+      "cited_by": [
+        "Value-Based Care Models in Nephrology"
+      ]
+    },
+    "american-society-of-nephrology-value-based-care-to": {
+      "name": "American Society of Nephrology Value-Based Care Toolkit",
+      "type": "website",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/value-based-care/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Value-Based Care Models in Nephrology"
+      ]
+    },
+    "kdoqi-clinical-practice-guideline-for-home-dialysi": {
+      "name": "KDOQI Clinical Practice Guideline for Home Dialysis",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/home-dialysis",
+      "reliability": "primary",
+      "cited_by": [
+        "Home Dialysis Program Management"
+      ]
+    },
+    "cms-end-stage-renal-disease-prospective-payment-sy": {
+      "name": "CMS End-Stage Renal Disease Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/prospective-payment-systems/esrd-pps",
+      "reliability": "primary",
+      "cited_by": [
+        "Home Dialysis Program Management",
+        "Revenue Cycle Management for Nephrology"
+      ]
+    },
+    "international-society-for-peritoneal-dialysis-guid": {
+      "name": "International Society for Peritoneal Dialysis Guidelines",
+      "type": "guideline",
+      "organization": "ISPD",
+      "url": "https://ispd.org/guidelines/",
+      "reliability": "primary",
+      "cited_by": [
+        "Home Dialysis Program Management"
+      ]
+    },
+    "home-hemodialysis:-a-comprehensive-review-of-patie": {
+      "name": "Home Hemodialysis: A Comprehensive Review of Patient-Centered and Economic Considerations",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Home Dialysis Program Management"
+      ]
+    },
+    "kidney-disease:-improving-global-outcomes-(kdigo)-": {
+      "name": "Kidney Disease: Improving Global Outcomes (KDIGO) Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Home Dialysis Program Management"
+      ]
+    },
+    "multidisciplinary-care-in-chronic-kidney-disease:-": {
+      "name": "Multidisciplinary care in chronic kidney disease: a systematic review and meta-analysis",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org",
+      "reliability": "primary",
+      "cited_by": [
+        "Multidisciplinary Care Team Model"
+      ]
+    },
+    "team-based-care-coordination-in-nephrology-practic": {
+      "name": "Team-based care coordination in nephrology practice",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "Multidisciplinary Care Team Model"
+      ]
+    },
+    "nkf-kdoqi-clinical-practice-guideline-for-hemodial": {
+      "name": "NKF KDOQI Clinical Practice Guideline for Hemodialysis Adequacy: 2015 Update",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/hemodialysis2015",
+      "reliability": "primary",
+      "cited_by": [
+        "Care Coordination and Transitions of Care",
+        "Patient Education and Engagement"
+      ]
+    },
+    "transitional-care-interventions-to-prevent-readmis": {
+      "name": "Transitional Care Interventions to Prevent Readmissions for Persons with Heart Failure",
+      "type": "journal",
+      "organization": "Annals of Internal Medicine",
+      "url": "https://www.acpjournals.org/doi/10.7326/M14-1456",
+      "reliability": "primary",
+      "cited_by": [
+        "Care Coordination and Transitions of Care"
+      ]
+    },
+    "american-journal-of-kidney-diseases---care-coordin": {
+      "name": "American Journal of Kidney Diseases - Care Coordination Special Issues",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Care Coordination and Transitions of Care"
+      ]
+    },
+    "patient-education-and-engagement-in-chronic-kidney": {
+      "name": "Patient education and engagement in chronic kidney disease: a systematic review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Patient Education and Engagement"
+      ]
+    },
+    "national-kidney-foundation-patient-education-mater": {
+      "name": "National Kidney Foundation Patient Education Materials",
+      "type": "website",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/patients",
+      "reliability": "secondary",
+      "cited_by": [
+        "Patient Education and Engagement"
+      ]
+    },
+    "cms-medicare-telemedicine-health-care-provider-fac": {
+      "name": "CMS Medicare Telemedicine Health Care Provider Fact Sheet",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/newsroom/fact-sheets/medicare-telemedicine-health-care-provider-fact-sheet",
+      "reliability": "primary",
+      "cited_by": [
+        "Telehealth and Remote Patient Monitoring"
+      ]
+    },
+    "american-society-of-nephrology-telehealth-toolkit": {
+      "name": "American Society of Nephrology Telehealth Toolkit",
+      "type": "guideline",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/telehealth/",
+      "reliability": "primary",
+      "cited_by": [
+        "Telehealth and Remote Patient Monitoring"
+      ]
+    },
+    "remote-patient-monitoring-in-chronic-kidney-diseas": {
+      "name": "Remote Patient Monitoring in Chronic Kidney Disease: A Systematic Review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00123-4/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Telehealth and Remote Patient Monitoring",
+        "Digital Health and Remote Patient Monitoring"
+      ]
+    },
+    "hipaa-security-rule-guidance-for-telehealth": {
+      "name": "HIPAA Security Rule Guidance for Telehealth",
+      "type": "regulation",
+      "organization": "HHS OCR",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/special-topics/emergency-preparedness/notification-enforcement-discretion-telehealth/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "Telehealth and Remote Patient Monitoring"
+      ]
+    },
+    "telehealth-for-patients-with-chronic-kidney-diseas": {
+      "name": "Telehealth for Patients with Chronic Kidney Disease: A Narrative Review",
+      "type": "journal",
+      "organization": "Kidney International Reports",
+      "url": "https://www.kireports.org/article/S2468-0249(21)01234-5/fulltext",
+      "reliability": "secondary",
+      "cited_by": [
+        "Telehealth and Remote Patient Monitoring"
+      ]
+    },
+    "quality-improvement-in-nephrology:-core-curriculum": {
+      "name": "Quality improvement in nephrology: Core Curriculum 2019",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org/article/S0272-6386(18)31008-X/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Quality Improvement Initiatives"
+      ]
+    },
+    "institute-for-healthcare-improvement-model-for-imp": {
+      "name": "Institute for Healthcare Improvement Model for Improvement",
+      "type": "website",
+      "organization": "IHI",
+      "url": "https://www.ihi.org/resources/Pages/HowtoImprove/default.aspx",
+      "reliability": "secondary",
+      "cited_by": [
+        "Quality Improvement Initiatives"
+      ]
+    },
+    "42-cfr-494---conditions-for-coverage-for-end-stage": {
+      "name": "42 CFR 494 - Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-494",
+      "reliability": "primary",
+      "cited_by": [
+        "Conditions for Coverage for ESRD Facilities"
+      ]
+    },
+    "cms-state-operations-manual---appendix-v:-interpre": {
+      "name": "CMS State Operations Manual - Appendix V: Interpretive Guidelines for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/som107ap_v_esrd.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Conditions for Coverage for ESRD Facilities"
+      ]
+    },
+    "esrd-conditions-for-coverage-final-rule": {
+      "name": "ESRD Conditions for Coverage Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/documents/2008/04/15/E8-7319/medicare-and-medicaid-programs-conditions-for-coverage-for-end-stage-renal-disease-facilities",
+      "reliability": "primary",
+      "cited_by": [
+        "Conditions for Coverage for ESRD Facilities"
+      ]
+    },
+    "cms-esrd-facility-certification-and-compliance": {
+      "name": "CMS ESRD Facility Certification and Compliance",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/CertificationandComplianc/ESRDfacilities",
+      "reliability": "primary",
+      "cited_by": [
+        "Conditions for Coverage for ESRD Facilities"
+      ]
+    },
+    "aami-standards-and-recommended-practices-for-dialy": {
+      "name": "AAMI Standards and Recommended Practices for Dialysis",
+      "type": "guideline",
+      "organization": "AAMI",
+      "url": "https://www.aami.org/standards-committees/working-groups/dialysis",
+      "reliability": "secondary",
+      "cited_by": [
+        "Conditions for Coverage for ESRD Facilities",
+        "Dialysis Facility Operations and Management"
+      ]
+    },
+    "cms-esrd-qip-final-rule-and-annual-updates": {
+      "name": "CMS ESRD QIP Final Rule and Annual Updates",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Quality Incentive Program (QIP)"
+      ]
+    },
+    "cms-esrd-qip-summary-report": {
+      "name": "CMS ESRD QIP Summary Report",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/esrd-qip-summary-report-py-2024.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Quality Incentive Program (QIP)"
+      ]
+    },
+    "crownweb-data-submission-manual": {
+      "name": "CROWNWeb Data Submission Manual",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/research-statistics-data-systems/crownweb",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Quality Incentive Program (QIP)"
+      ]
+    },
+    "nhsn-dialysis-event-surveillance-manual": {
+      "name": "NHSN Dialysis Event Surveillance Manual",
+      "type": "regulation",
+      "organization": "CDC",
+      "url": "https://www.cdc.gov/nhsn/dialysis/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Quality Incentive Program (QIP)"
+      ]
+    },
+    "american-journal-of-kidney-diseases-qip-analysis-s": {
+      "name": "American Journal of Kidney Diseases QIP Analysis Studies",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "ESRD Quality Incentive Program (QIP)"
+      ]
+    },
+    "medicare-benefit-policy-manual-chapter-11---end-st": {
+      "name": "Medicare Benefit Policy Manual Chapter 11 - End Stage Renal Disease Services",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/bp102c11.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Medicare and Medicaid Requirements for Nephrology Practices"
+      ]
+    },
+    "cy-2024-physician-fee-schedule-final-rule": {
+      "name": "CY 2024 Physician Fee Schedule Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/physician-fee-schedule/physician-fee-schedule-overview",
+      "reliability": "primary",
+      "cited_by": [
+        "Medicare and Medicaid Requirements for Nephrology Practices"
+      ]
+    },
+    "medicare-claims-processing-manual-chapter-8---outp": {
+      "name": "Medicare Claims Processing Manual Chapter 8 - Outpatient ESRD Services",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/clm104c08.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Medicare and Medicaid Requirements for Nephrology Practices",
+        "Revenue Cycle Management for Nephrology",
+        "ESRD Prospective Payment System (PPS)"
+      ]
+    },
+    "stark-law-and-anti-kickback-statute-final-rules": {
+      "name": "Stark Law and Anti-Kickback Statute Final Rules",
+      "type": "regulation",
+      "organization": "CMS/OIG",
+      "url": "https://www.cms.gov/Medicare/Fraud-and-Abuse/PhysicianSelfReferral",
+      "reliability": "primary",
+      "cited_by": [
+        "Medicare and Medicaid Requirements for Nephrology Practices"
+      ]
+    },
+    "asn-practice-management-guidelines-for-nephrology": {
+      "name": "ASN Practice Management Guidelines for Nephrology",
+      "type": "guideline",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Medicare and Medicaid Requirements for Nephrology Practices"
+      ]
+    },
+    "cms-dialysis-facility-compare-star-ratings-methodo": {
+      "name": "CMS Dialysis Facility Compare Star Ratings Methodology",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/dialysis-facility-compare/star-ratings",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis Facility Compare and Star Ratings"
+      ]
+    },
+    "cms-quality-reporting-program-for-esrd-facilities": {
+      "name": "CMS Quality Reporting Program for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-reporting-program",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis Facility Compare and Star Ratings"
+      ]
+    },
+    "impact-of-cms-star-ratings-on-dialysis-facility-pe": {
+      "name": "Impact of CMS Star Ratings on Dialysis Facility Performance",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(23)00456-7/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis Facility Compare and Star Ratings"
+      ]
+    },
+    "dialysis-facility-compare-technical-notes": {
+      "name": "Dialysis Facility Compare Technical Notes",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/dfc-technical-notes.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis Facility Compare and Star Ratings"
+      ]
+    },
+    "kidney-disease-outcomes-quality-initiative-clinica": {
+      "name": "Kidney Disease Outcomes Quality Initiative Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines",
+      "reliability": "secondary",
+      "cited_by": [
+        "Dialysis Facility Compare and Star Ratings"
+      ]
+    },
+    "hipaa-privacy-rule": {
+      "name": "HIPAA Privacy Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/privacy/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "HIPAA and Patient Privacy in Nephrology"
+      ]
+    },
+    "hipaa-security-rule": {
+      "name": "HIPAA Security Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/security/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "HIPAA and Patient Privacy in Nephrology"
+      ]
+    },
+    "cms-conditions-for-coverage-for-esrd-facilities": {
+      "name": "CMS Conditions for Coverage for ESRD Facilities",
+      "type": "regulation",
+      "organization": "Centers for Medicare & Medicaid Services",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "reliability": "primary",
+      "cited_by": [
+        "HIPAA and Patient Privacy in Nephrology"
+      ]
+    },
+    "hipaa-breach-notification-rule": {
+      "name": "HIPAA Breach Notification Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "HIPAA and Patient Privacy in Nephrology"
+      ]
+    },
+    "hipaa-compliance-guidelines-for-healthcare-provide": {
+      "name": "HIPAA Compliance Guidelines for Healthcare Providers",
+      "type": "guideline",
+      "organization": "American Health Information Management Association",
+      "url": "https://www.ahima.org/topics/hipaa-privacy-security",
+      "reliability": "secondary",
+      "cited_by": [
+        "HIPAA and Patient Privacy in Nephrology"
+      ]
+    },
+    "cms-emergency-preparedness-requirements-for-medica": {
+      "name": "CMS Emergency Preparedness Requirements for Medicare and Medicaid Participating Providers and Suppliers",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/SurveyCertEmergPrep/Emergency-Prep-Rule",
+      "reliability": "primary",
+      "cited_by": [
+        "Emergency Preparedness for Dialysis Facilities"
+      ]
+    },
+    "42-cfr-494.62---condition-for-coverage:-emergency-": {
+      "name": "42 CFR 494.62 - Condition for Coverage: Emergency Preparedness",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-494/subpart-C/section-494.62",
+      "reliability": "primary",
+      "cited_by": [
+        "Emergency Preparedness for Dialysis Facilities"
+      ]
+    },
+    "cms-emergency-preparedness-checklist-for-dialysis-": {
+      "name": "CMS Emergency Preparedness Checklist for Dialysis Facilities",
+      "type": "guideline",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/files/document/qso-20-15-esrd.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Emergency Preparedness for Dialysis Facilities"
+      ]
+    },
+    "kidney-community-emergency-response-(kcer)-coaliti": {
+      "name": "Kidney Community Emergency Response (KCER) Coalition Resources",
+      "type": "website",
+      "organization": "KCER",
+      "url": "https://www.kcercoalition.com/",
+      "reliability": "primary",
+      "cited_by": [
+        "Emergency Preparedness for Dialysis Facilities"
+      ]
+    },
+    "emergency-preparedness-for-patients-on-dialysis": {
+      "name": "Emergency Preparedness for Patients on Dialysis",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/15/11/1567",
+      "reliability": "secondary",
+      "cited_by": [
+        "Emergency Preparedness for Dialysis Facilities"
+      ]
+    },
+    "state-operations-manual---appendix-v:-survey-proce": {
+      "name": "State Operations Manual - Appendix V: Survey Procedures and Interpretive Guidance for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/som107ap_v_esrd.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "State-Specific Regulations and Licensure"
+      ]
+    },
+    "national-conference-of-state-legislatures-health-p": {
+      "name": "National Conference of State Legislatures Health Professional Licensing Database",
+      "type": "website",
+      "organization": "NCSL",
+      "url": "https://www.ncsl.org/health/health-professional-licensing",
+      "reliability": "primary",
+      "cited_by": [
+        "State-Specific Regulations and Licensure"
+      ]
+    },
+    "certificate-of-need-state-health-laws-and-programs": {
+      "name": "Certificate of Need State Health Laws and Programs",
+      "type": "regulation",
+      "organization": "National Health Policy Forum",
+      "url": "https://www.nhpf.org/library/the-basics/Basics_CertificateOfNeed_01-12-18.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "State-Specific Regulations and Licensure"
+      ]
+    },
+    "state-health-department-dialysis-facility-regulati": {
+      "name": "State Health Department Dialysis Facility Regulations Compendium",
+      "type": "regulation",
+      "organization": "Various State Health Departments",
+      "url": "https://www.cdc.gov/dialysis/prevention/state-regulations.html",
+      "reliability": "secondary",
+      "cited_by": [
+        "State-Specific Regulations and Licensure"
+      ]
+    },
+    "federal-register---cms-rules-and-regulations": {
+      "name": "Federal Register - CMS Rules and Regulations",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/agencies/centers-for-medicare-medicaid-services",
+      "reliability": "primary",
+      "cited_by": [
+        "Federal Register Monitoring and Rulemaking"
+      ]
+    },
+    "medicare-physician-fee-schedule-final-rule": {
+      "name": "Medicare Physician Fee Schedule Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/fee-schedules/physician",
+      "reliability": "primary",
+      "cited_by": [
+        "Federal Register Monitoring and Rulemaking"
+      ]
+    },
+    "regulations.gov-public-comment-portal": {
+      "name": "Regulations.gov Public Comment Portal",
+      "type": "website",
+      "organization": "GSA",
+      "url": "https://www.regulations.gov",
+      "reliability": "primary",
+      "cited_by": [
+        "Federal Register Monitoring and Rulemaking"
+      ]
+    },
+    "american-society-of-nephrology-policy-updates": {
+      "name": "American Society of Nephrology Policy Updates",
+      "type": "website",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Federal Register Monitoring and Rulemaking"
+      ]
+    },
+    "healthcare-financial-management-association-revenu": {
+      "name": "Healthcare Financial Management Association Revenue Cycle Best Practices",
+      "type": "guideline",
+      "organization": "HFMA",
+      "url": "https://www.hfma.org/revenue-cycle/",
+      "reliability": "primary",
+      "cited_by": [
+        "Revenue Cycle Management for Nephrology"
+      ]
+    },
+    "american-journal-of-kidney-diseases-revenue-cycle-": {
+      "name": "American Journal of Kidney Diseases Revenue Cycle Studies",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "Revenue Cycle Management for Nephrology"
+      ]
+    },
+    "kidney-care-quality-alliance-payment-reform-resour": {
+      "name": "Kidney Care Quality Alliance Payment Reform Resources",
+      "type": "website",
+      "organization": "KCQA",
+      "url": "https://kidneycare.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "Revenue Cycle Management for Nephrology"
+      ]
+    },
+    "medicare-program;-end-stage-renal-disease-prospect": {
+      "name": "Medicare Program; End-Stage Renal Disease Prospective Payment System, Payment for Renal Dialysis Services; Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/documents/2010/08/12/2010-18468/medicare-program-end-stage-renal-disease-prospective-payment-system-payment-for-renal-dialysis",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Prospective Payment System (PPS)"
+      ]
+    },
+    "cy-2024-end-stage-renal-disease-prospective-paymen": {
+      "name": "CY 2024 End-Stage Renal Disease Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/fee-schedules/esrd-pps",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Prospective Payment System (PPS)"
+      ]
+    },
+    "esrd-quality-incentive-program-technical-specifica": {
+      "name": "ESRD Quality Incentive Program Technical Specifications",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "reliability": "primary",
+      "cited_by": [
+        "ESRD Prospective Payment System (PPS)"
+      ]
+    },
+    "the-economics-of-dialysis-care-under-medicare's-bu": {
+      "name": "The Economics of Dialysis Care Under Medicare's Bundled Payment System",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "reliability": "secondary",
+      "cited_by": [
+        "ESRD Prospective Payment System (PPS)"
+      ]
+    },
+    "medicare-benefit-policy-manual---chapter-11:-end-s": {
+      "name": "Medicare Benefit Policy Manual - Chapter 11: End Stage Renal Disease (ESRD)",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/bp102c11.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Coding and Billing"
+      ]
+    },
+    "cpt-professional-edition-2024": {
+      "name": "CPT Professional Edition 2024",
+      "type": "guideline",
+      "organization": "American Medical Association",
+      "url": "https://www.ama-assn.org/practice-management/cpt/cpt-2024-professional-edition",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Coding and Billing"
+      ]
+    },
+    "medicare-claims-processing-manual---chapter-8:-out": {
+      "name": "Medicare Claims Processing Manual - Chapter 8: Outpatient ESRD Hospital, Independent and Provider-Based Renal Dialysis Facility Claims",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/clm104c08.pdf",
+      "reliability": "primary",
+      "cited_by": [
+        "Nephrology Coding and Billing"
+      ]
+    },
+    "american-society-of-nephrology-coding-and-billing-": {
+      "name": "American Society of Nephrology Coding and Billing Resources",
+      "type": "website",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/business/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Nephrology Coding and Billing"
+      ]
+    },
+    "cms-medicare-provider-enrollment-and-certification": {
+      "name": "CMS Medicare Provider Enrollment and Certification",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification",
+      "reliability": "primary",
+      "cited_by": [
+        "Payer Contracting and Credentialing"
+      ]
+    },
+    "caqh-universal-provider-datasource-guidelines": {
+      "name": "CAQH Universal Provider Datasource Guidelines",
+      "type": "website",
+      "organization": "CAQH",
+      "url": "https://www.caqh.org/solutions/universal-provider-datasource",
+      "reliability": "primary",
+      "cited_by": [
+        "Payer Contracting and Credentialing"
+      ]
+    },
+    "medicare-advantage-and-part-d-contract-guidance": {
+      "name": "Medicare Advantage and Part D Contract Guidance",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/health-drug-plans/medicareadvtgspecratestats",
+      "reliability": "primary",
+      "cited_by": [
+        "Payer Contracting and Credentialing"
+      ]
+    },
+    "national-committee-for-quality-assurance-(ncqa)-cr": {
+      "name": "National Committee for Quality Assurance (NCQA) Credentialing Standards",
+      "type": "guideline",
+      "organization": "NCQA",
+      "url": "https://www.ncqa.org/programs/health-plans/credentialing/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Payer Contracting and Credentialing"
+      ]
+    },
+    "american-medical-association-practice-management-g": {
+      "name": "American Medical Association Practice Management Guidelines",
+      "type": "guideline",
+      "organization": "AMA",
+      "url": "https://www.ama-assn.org/practice-management/payment-delivery-models",
+      "reliability": "secondary",
+      "cited_by": [
+        "Payer Contracting and Credentialing"
+      ]
+    },
+    "cdc-guidelines-for-infection-prevention-and-contro": {
+      "name": "CDC Guidelines for Infection Prevention and Control in Outpatient Hemodialysis Facilities",
+      "type": "guideline",
+      "organization": "CDC",
+      "url": "https://www.cdc.gov/dialysis/prevention/index.html",
+      "reliability": "primary",
+      "cited_by": [
+        "Dialysis Facility Operations and Management"
+      ]
+    },
+    "anna-core-curriculum-for-nephrology-nursing": {
+      "name": "ANNA Core Curriculum for Nephrology Nursing",
+      "type": "textbook",
+      "organization": "American Nephrology Nurses Association",
+      "url": "https://www.annanurse.org/resources/core-curriculum",
+      "reliability": "primary",
+      "cited_by": [
+        "Staffing Models and Human Resources"
+      ]
+    },
+    "aakp-dialysis-facility-compare-database": {
+      "name": "AAKP Dialysis Facility Compare Database",
+      "type": "website",
+      "organization": "American Association of Kidney Patients",
+      "url": "https://www.medicare.gov/care-compare/",
+      "reliability": "primary",
+      "cited_by": [
+        "Staffing Models and Human Resources"
+      ]
+    },
+    "mgma-physician-compensation-and-production-survey": {
+      "name": "MGMA Physician Compensation and Production Survey",
+      "type": "website",
+      "organization": "Medical Group Management Association",
+      "url": "https://www.mgma.com/data/benchmarking-data/provider-compensation",
+      "reliability": "primary",
+      "cited_by": [
+        "Staffing Models and Human Resources"
+      ]
+    },
+    "joint-commission-standards-for-ambulatory-health-c": {
+      "name": "Joint Commission Standards for Ambulatory Health Care",
+      "type": "guideline",
+      "organization": "The Joint Commission",
+      "url": "https://www.jointcommission.org/standards/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Staffing Models and Human Resources"
+      ]
+    },
+    "merit-based-incentive-payment-system-(mips)-overvi": {
+      "name": "Merit-based Incentive Payment System (MIPS) Overview",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://qpp.cms.gov/mips/overview",
+      "reliability": "primary",
+      "cited_by": [
+        "Quality and Financial Reporting"
+      ]
+    },
+    "dialysis-facility-reports-(dfr)": {
+      "name": "Dialysis Facility Reports (DFR)",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/research-statistics-data-systems/dialysis-facility-reports",
+      "reliability": "primary",
+      "cited_by": [
+        "Quality and Financial Reporting"
+      ]
+    },
+    "usrds-annual-data-report": {
+      "name": "USRDS Annual Data Report",
+      "type": "website",
+      "organization": "NIDDK",
+      "url": "https://adr.usrds.org/2023",
+      "reliability": "primary",
+      "cited_by": [
+        "Quality and Financial Reporting"
+      ]
+    },
+    "healthcare-financial-management-association-(hfma)": {
+      "name": "Healthcare Financial Management Association (HFMA) Revenue Cycle Resources",
+      "type": "website",
+      "organization": "HFMA",
+      "url": "https://www.hfma.org/revenue-cycle",
+      "reliability": "secondary",
+      "cited_by": [
+        "Quality and Financial Reporting"
+      ]
+    },
+    "artificial-intelligence-in-nephrology:-core-concep": {
+      "name": "Artificial Intelligence in Nephrology: Core Concepts, Clinical Applications, and Perspectives",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(21)00878-4/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "AI and Machine Learning in Nephrology"
+      ]
+    },
+    "machine-learning-for-acute-kidney-injury:-changing": {
+      "name": "Machine Learning for Acute Kidney Injury: Changing the Traditional Disease Prediction Paradigm",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(22)00234-1/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "AI and Machine Learning in Nephrology"
+      ]
+    },
+    "artificial-intelligence-in-kidney-disease:-a-compr": {
+      "name": "Artificial Intelligence in Kidney Disease: A Comprehensive Review and Future Directions",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/34/2/193",
+      "reliability": "primary",
+      "cited_by": [
+        "AI and Machine Learning in Nephrology"
+      ]
+    },
+    "digital-health-and-artificial-intelligence-in-kidn": {
+      "name": "Digital Health and Artificial Intelligence in Kidney Disease: Current Applications and Future Perspectives",
+      "type": "journal",
+      "organization": "Clinical Journal of the American Society of Nephrology",
+      "url": "https://cjasn.asnjournals.org/content/18/1/85",
+      "reliability": "primary",
+      "cited_by": [
+        "AI and Machine Learning in Nephrology"
+      ]
+    },
+    "fda-guidance-on-software-as-medical-device-for-ai/": {
+      "name": "FDA Guidance on Software as Medical Device for AI/ML-Based Medical Devices",
+      "type": "regulation",
+      "organization": "FDA",
+      "url": "https://www.fda.gov/medical-devices/software-medical-device-samd/artificial-intelligence-and-machine-learning-aiml-enabled-medical-devices",
+      "reliability": "secondary",
+      "cited_by": [
+        "AI and Machine Learning in Nephrology"
+      ]
+    },
+    "precision-medicine-in-nephrology:-a-systematic-app": {
+      "name": "Precision Medicine in Nephrology: A Systematic Approach",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/34/8/1312",
+      "reliability": "primary",
+      "cited_by": [
+        "Precision Nephrology and Genomics"
+      ]
+    },
+    "apol1-genetic-testing-in-clinical-practice:-curren": {
+      "name": "APOL1 Genetic Testing in Clinical Practice: Current Evidence and Implementation",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(23)00234-5/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Precision Nephrology and Genomics"
+      ]
+    },
+    "pharmacogenomics-in-kidney-transplantation:-clinic": {
+      "name": "Pharmacogenomics in Kidney Transplantation: Clinical Implementation Guide",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00789-4/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Precision Nephrology and Genomics"
+      ]
+    },
+    "polygenic-risk-scores-for-chronic-kidney-disease:-": {
+      "name": "Polygenic Risk Scores for Chronic Kidney Disease: Current State and Future Directions",
+      "type": "journal",
+      "organization": "Nature Reviews Nephrology",
+      "url": "https://www.nature.com/articles/s41581-023-00721-0",
+      "reliability": "secondary",
+      "cited_by": [
+        "Precision Nephrology and Genomics"
+      ]
+    },
+    "cms-innovation-center-remote-patient-monitoring-gu": {
+      "name": "CMS Innovation Center Remote Patient Monitoring Guidelines",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://innovation.cms.gov/innovation-models/comprehensive-care-for-kidney-disease",
+      "reliability": "primary",
+      "cited_by": [
+        "Digital Health and Remote Patient Monitoring"
+      ]
+    },
+    "digital-health-technologies-for-kidney-disease:-a-": {
+      "name": "Digital Health Technologies for Kidney Disease: A Systematic Review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00789-4/fulltext",
+      "reliability": "primary",
+      "cited_by": [
+        "Digital Health and Remote Patient Monitoring"
+      ]
+    },
+    "telehealth-and-remote-monitoring-in-dialysis-care:": {
+      "name": "Telehealth and Remote Monitoring in Dialysis Care: Clinical Practice Guidelines",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/telehealth-dialysis",
+      "reliability": "primary",
+      "cited_by": [
+        "Digital Health and Remote Patient Monitoring"
+      ]
+    },
+    "digital-health-innovation-in-nephrology": {
+      "name": "Digital Health Innovation in Nephrology",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/33/12/2159",
+      "reliability": "secondary",
+      "cited_by": [
+        "Digital Health and Remote Patient Monitoring"
+      ]
+    },
+    "finerenone-in-patients-with-chronic-kidney-disease": {
+      "name": "Finerenone in Patients with Chronic Kidney Disease and Type 2 Diabetes (FIDELITY)",
+      "type": "journal",
+      "organization": "New England Journal of Medicine",
+      "url": "https://www.nejm.org/doi/full/10.1056/NEJMoa2110956",
+      "reliability": "primary",
+      "cited_by": [
+        "Novel Therapeutics for Kidney Disease"
+      ]
+    },
+    "american-journal-of-kidney-diseases-novel-therapeu": {
+      "name": "American Journal of Kidney Diseases Novel Therapeutics Review Series",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Novel Therapeutics for Kidney Disease"
+      ]
+    },
+    "clinicaltrials.gov-database": {
+      "name": "ClinicalTrials.gov Database",
+      "type": "website",
+      "organization": "NIH/NLM",
+      "url": "https://clinicaltrials.gov/",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Trials and Pipeline Drugs"
+      ]
+    },
+    "journal-of-the-american-society-of-nephrology": {
+      "name": "Journal of the American Society of Nephrology",
+      "type": "journal",
+      "organization": "ASN",
+      "url": "https://jasn.asnjournals.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Trials and Pipeline Drugs"
+      ]
+    },
+    "kidney-international": {
+      "name": "Kidney International",
+      "type": "journal",
+      "organization": "International Society of Nephrology",
+      "url": "https://www.kidney-international.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Clinical Trials and Pipeline Drugs"
+      ]
+    },
+    "fda-drug-approvals-and-databases": {
+      "name": "FDA Drug Approvals and Databases",
+      "type": "website",
+      "organization": "FDA",
+      "url": "https://www.fda.gov/drugs/",
+      "reliability": "secondary",
+      "cited_by": [
+        "Clinical Trials and Pipeline Drugs"
+      ]
+    },
+    "the-kidney-project:-an-artificial-kidney-to-treat-": {
+      "name": "The Kidney Project: An Artificial Kidney to Treat Kidney Failure",
+      "type": "journal",
+      "organization": "Nature Reviews Nephrology",
+      "url": "https://www.nature.com/articles/s41581-021-00393-8",
+      "reliability": "primary",
+      "cited_by": [
+        "Wearable and Implantable Kidney Devices"
+      ]
+    },
+    "wearable-artificial-kidney:-technical-requirements": {
+      "name": "Wearable Artificial Kidney: Technical Requirements and Clinical Adaptation",
+      "type": "journal",
+      "organization": "Artificial Organs",
+      "url": "https://onlinelibrary.wiley.com/journal/15251594",
+      "reliability": "primary",
+      "cited_by": [
+        "Wearable and Implantable Kidney Devices"
+      ]
+    },
+    "advances-in-portable-and-wearable-dialysis-devices": {
+      "name": "Advances in Portable and Wearable Dialysis Devices for End-Stage Renal Disease",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Wearable and Implantable Kidney Devices"
+      ]
+    },
+    "bioartificial-kidney-engineering:-progress-and-cha": {
+      "name": "Bioartificial Kidney Engineering: Progress and Challenges",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/",
+      "reliability": "primary",
+      "cited_by": [
+        "Wearable and Implantable Kidney Devices"
+      ]
+    },
+    "the-kidney-project-official-website": {
+      "name": "The Kidney Project Official Website",
+      "type": "website",
+      "organization": "UCSF",
+      "url": "https://pharm.ucsf.edu/kidney",
+      "reliability": "secondary",
+      "cited_by": [
+        "Wearable and Implantable Kidney Devices"
+      ]
+    },
+    "american-society-of-nephrology-health-equity-frame": {
+      "name": "American Society of Nephrology Health Equity Framework",
+      "type": "guideline",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/health-equity/",
+      "reliability": "primary",
+      "cited_by": [
+        "Health Equity in Nephrology"
+      ]
+    },
+    "cms-esrd-treatment-choices-model-health-equity-pla": {
+      "name": "CMS ESRD Treatment Choices Model Health Equity Plan",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://innovation.cms.gov/innovation-models/esrd-treatment-choices-model",
+      "reliability": "primary",
+      "cited_by": [
+        "Health Equity in Nephrology"
+      ]
+    },
+    "health-disparities-in-kidney-disease:-a-scientific": {
+      "name": "Health Disparities in Kidney Disease: A Scientific Statement from the American Heart Association",
+      "type": "journal",
+      "organization": "American Heart Association",
+      "url": "https://www.ahajournals.org/doi/10.1161/CIR.0000000000001019",
+      "reliability": "primary",
+      "cited_by": [
+        "Health Equity in Nephrology"
+      ]
+    },
+    "national-kidney-foundation-health-equity-toolkit": {
+      "name": "National Kidney Foundation Health Equity Toolkit",
+      "type": "website",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/health-equity",
+      "reliability": "secondary",
+      "cited_by": [
+        "Health Equity in Nephrology"
+      ]
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "End-Stage Renal Disease (ESRD) and Dialysis",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:24:41.844118",
+  "primary_sources": [
+    {
+      "name": "KDIGO Clinical Practice Guideline for Hemodialysis Adequacy",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/hemodialysis-adequacy/",
+      "version": "2015 (updated 2024)",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidance on dialysis prescription, adequacy monitoring, and Kt/V targets"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for Peritoneal Dialysis",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/peritoneal-dialysis/",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for PD catheter placement, prescription, and complications management"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines for Vascular Access",
+      "type": "guideline",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/vascular-access",
+      "version": "2019 Update",
+      "reliability": "primary",
+      "relevance": "Authoritative guidance on fistula creation, graft management, and catheter use for hemodialysis"
+    },
+    {
+      "name": "CMS ESRD Conditions for Coverage",
+      "type": "regulation",
+      "organization": "Centers for Medicare & Medicaid Services",
+      "url": "https://www.cms.gov/medicare/quality/end-stage-renal-disease",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Federal requirements for dialysis facility operations, patient care standards, and quality measures"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - Dialysis Modality Selection Review",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org",
+      "version": "2023-2024 issues",
+      "reliability": "secondary",
+      "relevance": "Recent evidence on shared decision-making and patient education for dialysis modality choice"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidelines specifically addressing intradialytic complication management protocols",
+    "Emerging evidence on home hemodialysis prescription optimization not yet incorporated into major guidelines"
+  ]
+}

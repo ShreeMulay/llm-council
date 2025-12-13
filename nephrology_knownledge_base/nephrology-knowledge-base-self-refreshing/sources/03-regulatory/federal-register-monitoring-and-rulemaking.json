@@ -1,0 +1,58 @@
+{
+  "topic": "Federal Register Monitoring and Rulemaking",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:28:06.631153",
+  "primary_sources": [
+    {
+      "name": "Federal Register - CMS Rules and Regulations",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/agencies/centers-for-medicare-medicaid-services",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official source for all CMS proposed and final rules affecting nephrology practice"
+    },
+    {
+      "name": "CMS ESRD Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/prospective-payment-systems/esrd-pps",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Annual updates to ESRD payment rates and quality measures"
+    },
+    {
+      "name": "Medicare Physician Fee Schedule Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/fee-schedules/physician",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Annual updates to physician payment rates and quality reporting requirements"
+    },
+    {
+      "name": "Regulations.gov Public Comment Portal",
+      "type": "website",
+      "organization": "GSA",
+      "url": "https://www.regulations.gov",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official platform for submitting public comments on proposed federal rules"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Society of Nephrology Policy Updates",
+      "type": "website",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Professional society analysis and advocacy positions on federal regulations"
+    }
+  ],
+  "gaps": [
+    "Limited guidance on systematic monitoring workflows for nephrology practices",
+    "Lack of standardized impact assessment tools for proposed rule changes"
+  ]
+}

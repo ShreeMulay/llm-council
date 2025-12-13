@@ -1,0 +1,59 @@
+{
+  "topic": "State-Specific Regulations and Licensure",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:57.975790",
+  "primary_sources": [
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Federal baseline requirements that states must meet or exceed for dialysis facility licensure"
+    },
+    {
+      "name": "State Operations Manual - Appendix V: Survey Procedures and Interpretive Guidance for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/som107ap_v_esrd.pdf",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Provides survey procedures used by state agencies for dialysis facility oversight"
+    },
+    {
+      "name": "National Conference of State Legislatures Health Professional Licensing Database",
+      "type": "website",
+      "organization": "NCSL",
+      "url": "https://www.ncsl.org/health/health-professional-licensing",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive database of state-specific licensing requirements for healthcare professionals including APPs"
+    },
+    {
+      "name": "Certificate of Need State Health Laws and Programs",
+      "type": "regulation",
+      "organization": "National Health Policy Forum",
+      "url": "https://www.nhpf.org/library/the-basics/Basics_CertificateOfNeed_01-12-18.pdf",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Overview of state CON requirements affecting dialysis facility development"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "State Health Department Dialysis Facility Regulations Compendium",
+      "type": "regulation",
+      "organization": "Various State Health Departments",
+      "url": "https://www.cdc.gov/dialysis/prevention/state-regulations.html",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "CDC compilation of state-specific dialysis facility regulations and reporting requirements"
+    }
+  ],
+  "gaps": [
+    "Limited centralized source for real-time updates on state regulatory changes",
+    "Inconsistent availability of state-specific adverse event reporting requirements",
+    "Variable access to current state privacy and data security law interpretations for healthcare"
+  ]
+}

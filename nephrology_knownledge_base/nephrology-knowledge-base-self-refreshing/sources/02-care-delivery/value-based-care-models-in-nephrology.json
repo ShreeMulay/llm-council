@@ -1,0 +1,58 @@
+{
+  "topic": "Value-Based Care Models in Nephrology",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:25:42.963656",
+  "primary_sources": [
+    {
+      "name": "CMS Kidney Care Choices Model",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://innovation.cms.gov/innovation-models/kidney-care-choices-kcc-model",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official CMS guidance on KCC model implementation and payment structures"
+    },
+    {
+      "name": "Quality Payment Program Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/value-based-programs/quality-payment-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines QPP requirements and MIPS reporting for nephrology practices"
+    },
+    {
+      "name": "Value-based care in nephrology: A systematic review",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive analysis of value-based payment models and outcomes in nephrology"
+    },
+    {
+      "name": "ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/end-stage-renal-disease/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Quality metrics and payment adjustments for dialysis facilities"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Society of Nephrology Value-Based Care Toolkit",
+      "type": "website",
+      "organization": "ASN",
+      "url": "https://www.asn-online.org/policy/value-based-care/",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Practice implementation guidance for nephrology value-based care models"
+    }
+  ],
+  "gaps": [
+    "Limited recent literature on ACO-specific nephrology outcomes",
+    "Sparse guidance on payer contracting strategies for smaller nephrology practices"
+  ]
+}

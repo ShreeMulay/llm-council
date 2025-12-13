@@ -1,0 +1,55 @@
+{
+  "topic": "Disease Classifications and Syndromes",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:23:21.264684",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive CKD staging and classification system"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for Acute Kidney Injury",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/acute-kidney-injury/",
+      "version": "2012",
+      "reliability": "primary",
+      "relevance": "Standardized AKI staging criteria and definitions"
+    },
+    {
+      "name": "KDIGO 2021 Clinical Practice Guideline for the Management of Glomerular Diseases",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/glomerular-diseases/",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Comprehensive glomerulonephritis classification and nephrotic/nephritic syndrome definitions"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Diabetes and Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "ESRD definitions and CKD progression criteria"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Comprehensive Clinical Nephrology",
+      "type": "textbook",
+      "organization": "Elsevier",
+      "url": "https://www.elsevier.com/books/comprehensive-clinical-nephrology/feehally/978-0-323-47794-5",
+      "version": "2019",
+      "reliability": "secondary",
+      "relevance": "Detailed disease classification frameworks and syndrome definitions"
+    }
+  ],
+  "gaps": []
+}

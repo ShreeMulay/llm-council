@@ -1,0 +1,59 @@
+{
+  "topic": "Novel Therapeutics for Kidney Disease",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:29:58.773352",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2022 Clinical Practice Guideline for Diabetes Management in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/diabetes-ckd/",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Establishes SGLT2 inhibitors as standard of care for CKD with and without diabetes"
+    },
+    {
+      "name": "KDIGO 2021 Clinical Practice Guideline for the Management of Glomerular Diseases",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/glomerular-diseases/",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Addresses complement inhibitors and emerging therapies for glomerular diseases"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/anemia-in-ckd/",
+      "version": "2012, updated 2021",
+      "reliability": "primary",
+      "relevance": "Updated recommendations include HIF-PH inhibitors for CKD anemia management"
+    },
+    {
+      "name": "Finerenone in Patients with Chronic Kidney Disease and Type 2 Diabetes (FIDELITY)",
+      "type": "journal",
+      "organization": "New England Journal of Medicine",
+      "url": "https://www.nejm.org/doi/full/10.1056/NEJMoa2110956",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Landmark trial establishing efficacy of nsMRA finerenone in diabetic CKD"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases Novel Therapeutics Review Series",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "version": "2023-2024",
+      "reliability": "secondary",
+      "relevance": "Comprehensive reviews of emerging CKD therapeutics and mechanisms"
+    }
+  ],
+  "gaps": [
+    "Limited long-term safety data for newer agents like HIF-PH inhibitors",
+    "Evolving evidence on optimal combination therapy strategies",
+    "Cost-effectiveness analyses for novel therapeutic classes"
+  ]
+}

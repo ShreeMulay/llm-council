@@ -1,0 +1,58 @@
+{
+  "topic": "Quality Improvement Initiatives",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:26:45.140470",
+  "primary_sources": [
+    {
+      "name": "CMS ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines QIP compliance requirements and quality measures for ESRD facilities"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for the Care of Kidney Transplant Recipients",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/kidney-transplant-recipients/",
+      "version": "2009",
+      "reliability": "primary",
+      "relevance": "Includes quality improvement recommendations for transplant care delivery"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/anemia-in-ckd",
+      "version": "2007",
+      "reliability": "primary",
+      "relevance": "Provides quality indicators and improvement strategies for anemia management"
+    },
+    {
+      "name": "Quality improvement in nephrology: Core Curriculum 2019",
+      "type": "journal",
+      "organization": "AJKD",
+      "url": "https://www.ajkd.org/article/S0272-6386(18)31008-X/fulltext",
+      "version": "2019",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of QI methodologies including PDSA cycles and KPI development in nephrology"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Institute for Healthcare Improvement Model for Improvement",
+      "type": "website",
+      "organization": "IHI",
+      "url": "https://www.ihi.org/resources/Pages/HowtoImprove/default.aspx",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "General framework for PDSA cycles and quality improvement methodology"
+    }
+  ],
+  "gaps": [
+    "Limited recent nephrology-specific guidance on root cause analysis methodologies",
+    "Lack of standardized KPI frameworks specifically for outpatient nephrology practices"
+  ]
+}

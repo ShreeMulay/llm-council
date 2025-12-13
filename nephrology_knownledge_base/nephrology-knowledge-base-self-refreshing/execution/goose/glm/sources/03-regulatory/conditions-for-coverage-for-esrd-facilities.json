@@ -1,0 +1,55 @@
+{
+  "topic": "Conditions for Coverage for ESRD Facilities",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:26:56.234460",
+  "primary_sources": [
+    {
+      "name": "42 CFR 494 - Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.ecfr.gov/current/title-42/chapter-IV/subchapter-G/part-494",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Complete federal regulations defining all conditions for coverage including governance, QAPI, patient care, water treatment, and infection control"
+    },
+    {
+      "name": "CMS State Operations Manual - Appendix V: Interpretive Guidelines for ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Regulations-and-Guidance/Guidance/Manuals/Downloads/som107ap_v_esrd.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official CMS interpretive guidance for surveyors including detailed explanations of V-tags 100s through 600s"
+    },
+    {
+      "name": "ESRD Conditions for Coverage Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/documents/2008/04/15/E8-7319/medicare-and-medicaid-programs-conditions-for-coverage-for-end-stage-renal-disease-facilities",
+      "version": "2008",
+      "reliability": "primary",
+      "relevance": "Original final rule establishing current conditions for coverage framework with detailed regulatory rationale"
+    },
+    {
+      "name": "CMS ESRD Facility Certification and Compliance",
+      "type": "website",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/CertificationandComplianc/ESRDfacilities",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Current CMS guidance on facility certification requirements and compliance resources"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "AAMI Standards and Recommended Practices for Dialysis",
+      "type": "guideline",
+      "organization": "AAMI",
+      "url": "https://www.aami.org/standards-committees/working-groups/dialysis",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Technical standards for water treatment and dialysate quality referenced in V-tags 200s"
+    }
+  ],
+  "gaps": []
+}

@@ -1,0 +1,6 @@
+[submodule "nephrology_knownledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/opus_4_5"]
+	path = nephrology_knownledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/opus_4_5
+	url = git@github.com:ShreeMulay/opus_4_5.git
+[submodule "nephrology_knownledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/glm"]
+	path = nephrology_knownledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/glm
+	url = git@github.com:ShreeMulay/glm.git

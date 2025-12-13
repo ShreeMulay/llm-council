@@ -1,0 +1,58 @@
+{
+  "topic": "Treatment Modalities and Procedures",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:23:31.475103",
+  "primary_sources": [
+    {
+      "name": "KDIGO Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive coverage of renal replacement therapy modalities and kidney transplantation"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Vascular Access",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/vascular-access",
+      "version": "2019",
+      "reliability": "primary",
+      "relevance": "Authoritative guidance on arteriovenous fistulas, grafts, and vascular access procedures"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline on Acute Kidney Injury",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/acute-kidney-injury/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines continuous renal replacement therapy (CRRT) modalities and acute dialysis procedures"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines for Peritoneal Dialysis Adequacy",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/guidelines_commentaries/peritoneal-dialysis",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Comprehensive terminology and procedures for peritoneal dialysis modalities"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases - Dialysis Terminology Review",
+      "type": "journal",
+      "organization": "NKF",
+      "url": "https://www.ajkd.org/",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Peer-reviewed definitions and standardized terminology for dialysis procedures"
+    }
+  ],
+  "gaps": [
+    "Limited recent updates to peritoneal dialysis terminology guidelines",
+    "Need for standardized CRRT procedure definitions across guidelines"
+  ]
+}

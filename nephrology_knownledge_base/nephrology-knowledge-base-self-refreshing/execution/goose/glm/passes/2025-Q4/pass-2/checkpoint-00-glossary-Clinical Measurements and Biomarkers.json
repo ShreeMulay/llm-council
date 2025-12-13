@@ -1,0 +1,16 @@
+{
+  "checkpoint_id": "pass-2-00-glossary-Clinical Measurements and Biomarkers",
+  "timestamp": "2025-12-02T20:23:12.774085",
+  "pass_number": 2,
+  "completed_items": [
+    "00-glossary/Clinical Measurements and Biomarkers"
+  ],
+  "pending_items": [],
+  "files_created": [
+    "sources/00-glossary/clinical-measurements-and-biomarkers.json"
+  ],
+  "files_modified": [],
+  "state": {},
+  "errors": [],
+  "can_resume": true
+}

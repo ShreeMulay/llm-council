@@ -1,0 +1,58 @@
+{
+  "topic": "HIPAA and Patient Privacy in Nephrology",
+  "domain": "03-regulatory",
+  "source_discovery_date": "2025-12-02T20:27:34.897974",
+  "primary_sources": [
+    {
+      "name": "HIPAA Privacy Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/privacy/index.html",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Definitive federal regulation governing PHI protection and patient privacy rights"
+    },
+    {
+      "name": "HIPAA Security Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/security/index.html",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Federal standards for protecting electronic PHI and security risk analysis requirements"
+    },
+    {
+      "name": "CMS Conditions for Coverage for ESRD Facilities",
+      "type": "regulation",
+      "organization": "Centers for Medicare & Medicaid Services",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Medicare compliance requirements including HIPAA obligations for dialysis facilities"
+    },
+    {
+      "name": "HIPAA Breach Notification Rule",
+      "type": "regulation",
+      "organization": "HHS Office for Civil Rights",
+      "url": "https://www.hhs.gov/hipaa/for-professionals/breach-notification/index.html",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Federal requirements for breach notification procedures and timelines"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "HIPAA Compliance Guidelines for Healthcare Providers",
+      "type": "guideline",
+      "organization": "American Health Information Management Association",
+      "url": "https://www.ahima.org/topics/hipaa-privacy-security",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Professional guidance on implementing HIPAA compliance in healthcare settings"
+    }
+  ],
+  "gaps": [
+    "Limited nephrology-specific HIPAA guidance from major kidney organizations",
+    "Lack of recent peer-reviewed research on HIPAA compliance challenges in dialysis settings"
+  ]
+}

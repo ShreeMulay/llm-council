@@ -1,0 +1,59 @@
+{
+  "topic": "Wearable and Implantable Kidney Devices",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:30:17.149638",
+  "primary_sources": [
+    {
+      "name": "The Kidney Project: An Artificial Kidney to Treat Kidney Failure",
+      "type": "journal",
+      "organization": "Nature Reviews Nephrology",
+      "url": "https://www.nature.com/articles/s41581-021-00393-8",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of bioartificial kidney development and The Kidney Project progress"
+    },
+    {
+      "name": "Wearable Artificial Kidney: Technical Requirements and Clinical Adaptation",
+      "type": "journal",
+      "organization": "Artificial Organs",
+      "url": "https://onlinelibrary.wiley.com/journal/15251594",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Detailed analysis of WAK technology, sorbent systems, and clinical implementation challenges"
+    },
+    {
+      "name": "Advances in Portable and Wearable Dialysis Devices for End-Stage Renal Disease",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Current state of portable dialysis technology and filtration advances"
+    },
+    {
+      "name": "Bioartificial Kidney Engineering: Progress and Challenges",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Latest developments in implantable bioartificial organs and tissue engineering approaches"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "The Kidney Project Official Website",
+      "type": "website",
+      "organization": "UCSF",
+      "url": "https://pharm.ucsf.edu/kidney",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Primary source for updates on implantable bioartificial kidney development"
+    }
+  ],
+  "gaps": [
+    "Limited formal clinical guidelines exist as these technologies are still investigational",
+    "No established KDIGO or KDOQI recommendations for patient selection criteria",
+    "Regulatory pathways and reimbursement frameworks are not yet defined"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "ESRD Prospective Payment System (PPS)",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:28:26.908939",
+  "primary_sources": [
+    {
+      "name": "Medicare Program; End-Stage Renal Disease Prospective Payment System, Payment for Renal Dialysis Services; Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.federalregister.gov/documents/2010/08/12/2010-18468/medicare-program-end-stage-renal-disease-prospective-payment-system-payment-for-renal-dialysis",
+      "version": "2010",
+      "reliability": "primary",
+      "relevance": "Foundational regulation establishing the ESRD PPS bundled payment system"
+    },
+    {
+      "name": "CY 2024 End-Stage Renal Disease Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/fee-schedules/esrd-pps",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Current payment rates, case-mix adjusters, and QIP requirements"
+    },
+    {
+      "name": "Medicare Claims Processing Manual Chapter 8 - Outpatient ESRD Services",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/clm104c08.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Detailed billing and coverage requirements for ESRD PPS services"
+    },
+    {
+      "name": "ESRD Quality Incentive Program Technical Specifications",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "QIP measures, scoring methodology, and payment reduction calculations"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "The Economics of Dialysis Care Under Medicare's Bundled Payment System",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "version": "2022",
+      "reliability": "secondary",
+      "relevance": "Analysis of PPS impact on dialysis facility operations and patient outcomes"
+    }
+  ],
+  "gaps": [
+    "Limited recent peer-reviewed analysis of PPS case-mix adjuster effectiveness",
+    "Sparse literature on outlier payment utilization patterns"
+  ]
+}

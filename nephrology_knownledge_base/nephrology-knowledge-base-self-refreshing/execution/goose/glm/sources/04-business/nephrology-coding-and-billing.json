@@ -1,0 +1,58 @@
+{
+  "topic": "Nephrology Coding and Billing",
+  "domain": "04-business",
+  "source_discovery_date": "2025-12-02T20:28:38.137611",
+  "primary_sources": [
+    {
+      "name": "Medicare Benefit Policy Manual - Chapter 11: End Stage Renal Disease (ESRD)",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/bp102c11.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Definitive guidance on ESRD billing, MCP payments, and Medicare coverage policies for dialysis"
+    },
+    {
+      "name": "CPT Professional Edition 2024",
+      "type": "guideline",
+      "organization": "American Medical Association",
+      "url": "https://www.ama-assn.org/practice-management/cpt/cpt-2024-professional-edition",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official CPT codes for nephrology procedures including biopsies, catheter placements, and consultations"
+    },
+    {
+      "name": "ICD-10-CM Official Guidelines for Coding and Reporting FY 2024",
+      "type": "regulation",
+      "organization": "CMS/NCHS",
+      "url": "https://www.cms.gov/files/document/fy-2024-icd-10-cm-coding-guidelines.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official coding guidelines for CKD staging, ESRD, and nephrology-related complications"
+    },
+    {
+      "name": "Medicare Claims Processing Manual - Chapter 8: Outpatient ESRD Hospital, Independent and Provider-Based Renal Dialysis Facility Claims",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/clm104c08.pdf",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive billing procedures for dialysis facilities and outpatient nephrology services"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Society of Nephrology Coding and Billing Resources",
+      "type": "website",
+      "organization": "American Society of Nephrology",
+      "url": "https://www.asn-online.org/education/distancelearning/curricula/business/",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "Professional society guidance on nephrology practice management and billing best practices"
+    }
+  ],
+  "gaps": [
+    "Limited specific guidance on APP billing in nephrology settings",
+    "Evolving telehealth coding for nephrology consultations post-COVID"
+  ]
+}

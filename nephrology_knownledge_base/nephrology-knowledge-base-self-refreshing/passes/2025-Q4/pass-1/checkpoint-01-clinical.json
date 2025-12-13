@@ -1,0 +1,23 @@
+{
+  "checkpoint_id": "pass-1-01-clinical",
+  "timestamp": "2025-12-02T18:50:21.257432",
+  "pass_number": 1,
+  "completed_items": [
+    "00-glossary",
+    "01-clinical"
+  ],
+  "pending_items": [
+    "02-care-delivery",
+    "03-regulatory",
+    "04-business",
+    "05-emerging"
+  ],
+  "files_created": [
+    "domains/00-glossary/_index.md",
+    "domains/01-clinical/_index.md"
+  ],
+  "files_modified": [],
+  "state": {},
+  "errors": [],
+  "can_resume": true
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "Precision Nephrology and Genomics",
+  "domain": "05-emerging",
+  "source_discovery_date": "2025-12-02T20:29:38.636461",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Includes recommendations on genetic testing and risk stratification in CKD"
+    },
+    {
+      "name": "Precision Medicine in Nephrology: A Systematic Approach",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/34/8/1312",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of genomic applications in kidney disease diagnosis and treatment"
+    },
+    {
+      "name": "APOL1 Genetic Testing in Clinical Practice: Current Evidence and Implementation",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(23)00234-5/fulltext",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Clinical guidelines for APOL1 testing and risk assessment in kidney disease"
+    },
+    {
+      "name": "Pharmacogenomics in Kidney Transplantation: Clinical Implementation Guide",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(22)00789-4/fulltext",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for pharmacogenomic testing in transplant recipients"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Polygenic Risk Scores for Chronic Kidney Disease: Current State and Future Directions",
+      "type": "journal",
+      "organization": "Nature Reviews Nephrology",
+      "url": "https://www.nature.com/articles/s41581-023-00721-0",
+      "version": "2023",
+      "reliability": "secondary",
+      "relevance": "Research developments in polygenic risk scoring for CKD prediction"
+    }
+  ],
+  "gaps": [
+    "Limited formal guidelines on polygenic risk score implementation",
+    "Lack of standardized protocols for genomic biomarker discovery validation"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "Nephrology Pharmacology",
+  "domain": "01-clinical",
+  "source_discovery_date": "2025-12-02T20:25:34.202516",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive guidance on medication management and dosing adjustments in CKD patients"
+    },
+    {
+      "name": "Drug Dosing Adjustments in Patients with Chronic Kidney Disease",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org/article/S0272-6386(20)30897-1/fulltext",
+      "version": "2020",
+      "reliability": "primary",
+      "relevance": "Evidence-based recommendations for renal dosing adjustments across medication classes"
+    },
+    {
+      "name": "Nephrotoxicity of Common Drugs Used in Clinical Practice",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org/article/S0085-2538(21)00456-8/fulltext",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Comprehensive review of drug-induced nephrotoxicity mechanisms and prevention strategies"
+    },
+    {
+      "name": "KDOQI Clinical Practice Guidelines for Medication Management in Patients with CKD",
+      "type": "guideline",
+      "organization": "NKF KDOQI",
+      "url": "https://www.kidney.org/professionals/guidelines/medication-management-ckd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Specific guidance on medication reconciliation and safety practices in nephrology"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Pharmacokinetics and Drug Dosing in Patients with Kidney Disease",
+      "type": "journal",
+      "organization": "Journal of the American Society of Nephrology",
+      "url": "https://jasn.asnjournals.org/content/32/6/1326",
+      "version": "2021",
+      "reliability": "secondary",
+      "relevance": "Detailed pharmacokinetic principles for dialysis patients and advanced CKD"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidelines specifically addressing medication management in acute kidney injury",
+    "Emerging data on novel diabetes medications and SGLT2 inhibitors in advanced CKD"
+  ]
+}

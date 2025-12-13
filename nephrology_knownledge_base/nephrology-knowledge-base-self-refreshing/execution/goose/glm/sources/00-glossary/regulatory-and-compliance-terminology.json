@@ -1,0 +1,55 @@
+{
+  "topic": "Regulatory and Compliance Terminology",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:23:52.283018",
+  "primary_sources": [
+    {
+      "name": "CMS ESRD Quality Incentive Program",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/esrd-quality-incentive-program",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Official CMS documentation for ESRD QIP definitions and requirements"
+    },
+    {
+      "name": "CMS ESRD Prospective Payment System Final Rule",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/payment/prospective-payment-systems/esrd-pps",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Authoritative source for ESRD PPS bundled payment terminology and regulations"
+    },
+    {
+      "name": "CMS Conditions for Coverage - ESRD Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/regulations-and-guidance/guidance/manuals/downloads/som107c05pdf.pdf",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Official regulatory definitions for ESRD facility conditions for coverage"
+    },
+    {
+      "name": "CMS Kidney Care Choices Model",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/priorities/innovation/innovation-models/kidney-care-choices-kcc-model",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Primary source for KCC model terminology and payment structure definitions"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "CMS Merit-based Incentive Payment System",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/quality/mips",
+      "version": "2024",
+      "reliability": "secondary",
+      "relevance": "General MIPS terminology applicable to nephrology practices"
+    }
+  ],
+  "gaps": []
+}

@@ -1,0 +1,58 @@
+{
+  "topic": "Multidisciplinary Care Team Model",
+  "domain": "02-care-delivery",
+  "source_discovery_date": "2025-12-02T20:26:03.105128",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Defines multidisciplinary team roles and care coordination in CKD management"
+    },
+    {
+      "name": "NKF KDOQI Clinical Practice Guidelines and Clinical Practice Recommendations for Diabetes and Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "NKF",
+      "url": "https://www.kidney.org/professionals/guidelines/diabetes",
+      "version": "2022",
+      "reliability": "primary",
+      "relevance": "Outlines team-based care approaches for diabetic kidney disease"
+    },
+    {
+      "name": "Multidisciplinary care in chronic kidney disease: a systematic review and meta-analysis",
+      "type": "journal",
+      "organization": "Kidney International",
+      "url": "https://www.kidney-international.org",
+      "version": "2021",
+      "reliability": "primary",
+      "relevance": "Systematic evidence on MDT effectiveness and patient outcomes in nephrology"
+    },
+    {
+      "name": "CMS Conditions for Coverage for End-Stage Renal Disease Facilities",
+      "type": "regulation",
+      "organization": "CMS",
+      "url": "https://www.cms.gov/medicare/provider-enrollment-and-certification/certificationandcomplianc/esrd",
+      "version": "2023",
+      "reliability": "primary",
+      "relevance": "Regulatory requirements for interdisciplinary team composition and care planning"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "Team-based care coordination in nephrology practice",
+      "type": "journal",
+      "organization": "American Journal of Kidney Diseases",
+      "url": "https://www.ajkd.org",
+      "version": "2020",
+      "reliability": "secondary",
+      "relevance": "Practical implementation strategies for nephrology care teams"
+    }
+  ],
+  "gaps": [
+    "Limited recent guidelines specifically addressing communication workflows and handoff protocols in nephrology MDTs",
+    "Standardized documentation frameworks for team-based nephrology care"
+  ]
+}

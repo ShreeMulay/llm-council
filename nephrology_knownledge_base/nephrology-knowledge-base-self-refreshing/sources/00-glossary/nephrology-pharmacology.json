@@ -1,0 +1,57 @@
+{
+  "topic": "Nephrology Pharmacology",
+  "domain": "00-glossary",
+  "source_discovery_date": "2025-12-02T20:23:42.028632",
+  "primary_sources": [
+    {
+      "name": "KDIGO 2024 Clinical Practice Guideline for the Evaluation and Management of Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-evaluation-management/",
+      "version": "2024",
+      "reliability": "primary",
+      "relevance": "Comprehensive coverage of RAAS inhibitors, SGLT2 inhibitors, and phosphate binders in CKD management"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for Anemia in Chronic Kidney Disease",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/anemia-in-ckd/",
+      "version": "2012",
+      "reliability": "primary",
+      "relevance": "Authoritative source for erythropoiesis-stimulating agents definitions and clinical use"
+    },
+    {
+      "name": "KDIGO Clinical Practice Guideline for the Care of Kidney Transplant Recipients",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/transplant-recipient/",
+      "version": "2009",
+      "reliability": "primary",
+      "relevance": "Definitive source for calcineurin inhibitors and immunosuppressive drug classifications"
+    },
+    {
+      "name": "KDIGO 2017 Clinical Practice Guideline Update for the Diagnosis, Evaluation, Prevention, and Treatment of Chronic Kidney Disease-Mineral and Bone Disorder",
+      "type": "guideline",
+      "organization": "KDIGO",
+      "url": "https://kdigo.org/guidelines/ckd-mbd/",
+      "version": "2017",
+      "reliability": "primary",
+      "relevance": "Comprehensive coverage of phosphate binder classifications and mechanisms of action"
+    }
+  ],
+  "secondary_sources": [
+    {
+      "name": "American Journal of Kidney Diseases",
+      "type": "journal",
+      "organization": "National Kidney Foundation",
+      "url": "https://www.ajkd.org/",
+      "version": "2020-2024",
+      "reliability": "secondary",
+      "relevance": "Recent publications on SGLT2 inhibitors and novel nephrology pharmacotherapies"
+    }
+  ],
+  "gaps": [
+    "Updated KDIGO anemia guideline needed for current ESA definitions and newer agents"
+  ]
+}

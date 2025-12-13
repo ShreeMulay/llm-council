@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Topic Content Schema",
+  "description": "Schema for Pass 3 content generation output",
+  "type": "object",
+  "properties": {
+    "topic": {
+      "type": "string",
+      "description": "Topic name"
+    },
+    "domain": {
+      "type": "string",
+      "description": "Domain identifier"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "ISO 8601 timestamp"
+    },
+    "word_count": {
+      "type": "integer",
+      "description": "Approximate word count"
+    },
+    "content": {
+      "type": "object",
+      "description": "Structured content",
+      "properties": {
+        "overview": {
+          "type": "string",
+          "description": "Overview paragraph with citations"
+        },
+        "sections": {
+          "type": "array",
+          "description": "Content sections",
+          "items": {
+            "type": "object",
+            "properties": {
+              "heading": {
+                "type": "string",
+                "description": "Section heading"
+              },
+              "content": {
+                "type": "string",
+                "description": "Section content with citations"
+              }
+            },
+            "required": ["heading", "content"],
+            "additionalProperties": false
+          }
+        },
+        "clinical_points": {
+          "type": "array",
+          "description": "Key clinical practice points",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["overview", "sections"],
+      "additionalProperties": false
+    },
+    "citations_used": {
+      "type": "array",
+      "description": "List of sources actually cited",
+      "items": {
+        "type": "string"
+      }
+    },
+    "gaps_noted": {
+      "type": "array",
+      "description": "Information gaps where sources were insufficient",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": ["topic", "domain", "generated_at", "content", "citations_used"],
+  "additionalProperties": false
+}

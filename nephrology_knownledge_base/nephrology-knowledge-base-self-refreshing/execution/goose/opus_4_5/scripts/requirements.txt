@@ -1,0 +1,31 @@
+# Nephrology Knowledge Base - Python Dependencies
+
+# LLM APIs
+anthropic>=0.40.0
+google-generativeai>=0.8.0
+openai>=1.50.0  # For OpenRouter compatibility
+
+# Data handling
+pyyaml>=6.0.2
+jsonschema>=4.23.0
+pydantic>=2.9.0
+
+# Markdown processing
+python-frontmatter>=1.1.0
+markdown>=3.7
+
+# Utilities
+python-dotenv>=1.0.1
+rich>=13.9.0  # Better console output
+click>=8.1.7  # CLI framework
+
+# HTTP
+httpx>=0.27.0
+tenacity>=9.0.0  # Retry logic
+
+# Date/Time
+python-dateutil>=2.9.0
+
+# Development
+pytest>=8.3.0
+pytest-asyncio>=0.24.0

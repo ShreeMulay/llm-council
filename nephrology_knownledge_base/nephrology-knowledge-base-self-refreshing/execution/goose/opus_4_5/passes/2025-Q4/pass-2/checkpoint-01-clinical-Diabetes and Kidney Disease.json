@@ -1,0 +1,40 @@
+{
+  "checkpoint_id": "pass-2-01-clinical-Diabetes and Kidney Disease",
+  "timestamp": "2025-12-02T20:25:12.972924",
+  "pass_number": 2,
+  "completed_items": [
+    "00-glossary/Clinical Measurements and Biomarkers",
+    "00-glossary/Disease Classifications and Syndromes",
+    "00-glossary/Treatment Modalities and Procedures",
+    "00-glossary/Nephrology Pharmacology",
+    "00-glossary/Regulatory and Compliance Terminology",
+    "00-glossary/Business and Operations Terminology",
+    "00-glossary/Dialysis-Specific Technical Terms",
+    "01-clinical/Chronic Kidney Disease (CKD) Management",
+    "01-clinical/Acute Kidney Injury (AKI)",
+    "01-clinical/End-Stage Renal Disease (ESRD) and Dialysis",
+    "01-clinical/Kidney Transplantation",
+    "01-clinical/Hypertension in Kidney Disease",
+    "01-clinical/Diabetes and Kidney Disease"
+  ],
+  "pending_items": [],
+  "files_created": [
+    "sources/00-glossary/clinical-measurements-and-biomarkers.json",
+    "sources/00-glossary/disease-classifications-and-syndromes.json",
+    "sources/00-glossary/treatment-modalities-and-procedures.json",
+    "sources/00-glossary/nephrology-pharmacology.json",
+    "sources/00-glossary/regulatory-and-compliance-terminology.json",
+    "sources/00-glossary/business-and-operations-terminology.json",
+    "sources/00-glossary/dialysis-specific-technical-terms.json",
+    "sources/01-clinical/chronic-kidney-disease-ckd-management.json",
+    "sources/01-clinical/acute-kidney-injury-aki.json",
+    "sources/01-clinical/end-stage-renal-disease-esrd-and-dialysis.json",
+    "sources/01-clinical/kidney-transplantation.json",
+    "sources/01-clinical/hypertension-in-kidney-disease.json",
+    "sources/01-clinical/diabetes-and-kidney-disease.json"
+  ],
+  "files_modified": [],
+  "state": {},
+  "errors": [],
+  "can_resume": true
+}
