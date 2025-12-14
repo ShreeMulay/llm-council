@@ -4,3 +4,6 @@
 [submodule "nephrology_knownledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/glm"]
 	path = nephrology_knowledge_base/nephrology-knowledge-base-self-refreshing/execution/opencode/glm
 	url = git@github.com:ShreeMulay/glm.git
+[submodule "development/mcp_ui"]
+	path = development/mcp_ui
+	url = git@github.com:ShreeMulay/mcp-ui-playground.git
