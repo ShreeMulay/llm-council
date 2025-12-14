@@ -7,3 +7,6 @@
 [submodule "development/mcp_ui"]
 	path = development/mcp_ui
 	url = git@github.com:ShreeMulay/mcp-ui-playground.git
+[submodule "development/fax-manager"]
+	path = development/fax-manager
+	url = git@github.com:ShreeMulay/fax-manager.git
