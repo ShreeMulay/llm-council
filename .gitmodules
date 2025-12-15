@@ -10,3 +10,6 @@
 [submodule "development/fax-manager"]
 	path = development/fax-manager
 	url = git@github.com:ShreeMulay/fax-manager.git
+[submodule "how-to-use-appify"]
+	path = how-to-use-appify
+	url = git@github.com:ShreeMulay/how-to-use-appify.git
