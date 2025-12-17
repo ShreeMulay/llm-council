@@ -13,3 +13,6 @@
 [submodule "how-to-use-appify"]
 	path = how-to-use-appify
 	url = git@github.com:ShreeMulay/how-to-use-appify.git
+[submodule "development/adi-learning-adventure-v2"]
+	path = development/adi-learning-adventure-v2
+	url = git@github.com:ShreeMulay/adi-learning-adventure-v2.git
