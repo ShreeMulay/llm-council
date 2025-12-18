@@ -19,3 +19,6 @@
 [submodule "development/opencode-history-export"]
 	path = development/opencode-history-export
 	url = git@github.com:ShreeMulay/opencode-history-export.git
+[submodule "development/cadence"]
+	path = development/cadence
+	url = git@github.com:ShreeMulay/cadence.git
