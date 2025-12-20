@@ -5,6 +5,7 @@ import { qualityGates } from "./functions/quality-gates";
 import { dailySummary } from "./functions/daily-summary";
 import { staleReminder } from "./functions/stale-reminder";
 import { agnoSync } from "./functions/agno-sync";
+import { agnoExampleValidate, agnoExampleValidateCategory } from "./functions/agno-example-validate";
 
 /**
  * AI Factory Inngest Server
@@ -29,6 +30,8 @@ app.on(
       dailySummary,
       staleReminder,
       agnoSync,
+      agnoExampleValidate,
+      agnoExampleValidateCategory,
     ],
   })
 );
@@ -51,7 +54,9 @@ app.get("/", (c) => c.json({
     "quality-gates (triggered by git.push)",
     "daily-summary (cron: 9 AM weekdays)",
     "stale-reminder (cron: 10 AM Mondays)",
-    "agno-sync (triggered by agno/lesson.updated)"
+    "agno-sync (triggered by agno/lesson.updated)",
+    "agno-example-validate (triggered by agno/example.updated)",
+    "agno-example-validate-category (triggered by agno/category.validate)"
   ],
   usage: {
     start: "bun run serve.ts",
