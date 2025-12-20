@@ -1,0 +1,25 @@
+#!/bin/bash
+# AI Factory pre-push hook
+# Emits event to Inngest to trigger quality gates
+
+# Get push info
+BRANCH=$(git branch --show-current)
+PROJECT=$(basename "$(git rev-parse --show-toplevel)")
+COMMIT_COUNT=$(git rev-list @{u}..HEAD 2>/dev/null | wc -l || echo "0")
+
+# Emit to Inngest if dev server is running
+if curl -s http://localhost:8288/health > /dev/null 2>&1; then
+  curl -s -X POST http://localhost:8288/e/dev \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"name\": \"git.push\",
+      \"data\": {
+        \"project\": \"$PROJECT\",
+        \"branch\": \"$BRANCH\",
+        \"commits\": $COMMIT_COUNT
+      }
+    }" > /dev/null 2>&1
+fi
+
+# Don't block the push
+exit 0

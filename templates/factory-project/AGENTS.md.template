@@ -1,0 +1,57 @@
+# {{PROJECT_NAME}}
+
+## Overview
+
+{{PROJECT_DESCRIPTION}}
+
+## Beads Issue Tracking
+
+This project uses `bd` (Beads) for ALL task tracking.
+
+```bash
+bd ready              # Find available work
+bd show <id>          # View issue details
+bd update <id> --status in_progress
+bd close <id> --reason "Completed: ..."
+bd sync               # MANDATORY before session end
+```
+
+## OpenSpec
+
+See `openspec/` for detailed specifications.
+
+Commands:
+- `/openspec-proposal <feature>` - Create change proposal
+- `/openspec-apply <change-id>` - Implement approved change
+- `/openspec-archive <change-id>` - Archive completed change
+
+## Tech Stack
+
+- **Language**: {{LANGUAGE}}
+- **Runtime**: {{RUNTIME}}
+- **Package Manager**: {{PACKAGE_MANAGER}}
+
+## Project Structure
+
+```
+{{PROJECT_NAME}}/
+├── .beads/              # Issue tracking
+├── openspec/            # Specifications
+│   ├── AGENTS.md        # Spec conventions
+│   ├── project.md       # Project overview
+│   └── specs/           # Source of truth
+├── src/                 # Source code
+├── tests/               # Tests
+└── AGENTS.md            # This file
+```
+
+## Development Workflow
+
+1. `/factory-session-start` - Begin session
+2. `/factory-next` or pick specific task
+3. Implement per OpenSpec requirements
+4. `/factory-session-end` - Sync and push
+
+## Conventions
+
+{{CONVENTIONS}}

@@ -1,0 +1,29 @@
+#!/bin/bash
+# AI Factory post-commit hook
+# Syncs Beads and emits event to Inngest
+
+# Flush Beads (sync local changes)
+bd flush 2>/dev/null || true
+
+# Emit to Inngest if dev server is running
+if curl -s http://localhost:8288/health > /dev/null 2>&1; then
+  PROJECT=$(basename "$(git rev-parse --show-toplevel)")
+  SHA=$(git rev-parse HEAD)
+  MESSAGE=$(git log -1 --format=%s)
+  TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+  
+  # Send event asynchronously (don't block the commit)
+  curl -s -X POST http://localhost:8288/e/dev \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"name\": \"git.commit\",
+      \"data\": {
+        \"project\": \"$PROJECT\",
+        \"sha\": \"$SHA\",
+        \"message\": \"$MESSAGE\",
+        \"timestamp\": \"$TIMESTAMP\"
+      }
+    }" > /dev/null 2>&1 &
+fi
+
+exit 0

@@ -1,0 +1,67 @@
+# {{PROJECT_NAME}} - OpenSpec Conventions
+
+## Overview
+
+This document describes project-specific conventions for OpenSpec usage.
+
+## Specification Structure
+
+```
+openspec/
+├── AGENTS.md           # This file - conventions
+├── project.md          # Project overview
+├── specs/              # Source of truth (current state)
+│   └── <capability>/
+│       └── spec.md
+└── changes/            # Work in progress
+    ├── <change-id>/
+    │   ├── proposal.md
+    │   ├── tasks.md
+    │   ├── design.md    # Optional
+    │   └── specs/       # Deltas
+    └── archive/         # Completed changes
+```
+
+## Writing Requirements
+
+Use clear, testable language:
+
+```markdown
+### Requirement: [Clear Name]
+The system SHALL [do something specific and measurable].
+
+#### Scenario: [Specific Case]
+- **WHEN** [specific condition]
+- **THEN** [specific, verifiable outcome]
+```
+
+Keywords:
+- `SHALL` / `MUST` - Required behavior
+- `SHOULD` - Recommended but not required
+- `MAY` - Optional
+
+## Task Breakdown
+
+Phases should be:
+1. **Logical groupings** - Related work together
+2. **Sequential** - Later phases depend on earlier ones
+3. **Testable** - Each task has verifiable completion
+
+Task format:
+```markdown
+## Phase N: [Name]
+- [ ] N.1 [Specific, verifiable task]
+- [ ] N.2 [Another task]
+```
+
+## Change IDs
+
+Use verb-led names:
+- `add-<feature>` - New capability
+- `fix-<issue>` - Bug fix
+- `refactor-<component>` - Code improvement
+- `update-<thing>` - Modification
+
+## Project-Specific Rules
+
+{{PROJECT_SPECIFIC_RULES}}

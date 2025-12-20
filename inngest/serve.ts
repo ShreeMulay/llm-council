@@ -55,17 +55,19 @@ app.get("/", (c) => c.json({
   ],
   usage: {
     start: "bun run serve.ts",
-    devServer: "inngest-cli dev -u http://localhost:3000/api/inngest"
+    devServer: "inngest-cli dev -u http://localhost:3333/api/inngest"
   }
 }));
 
-console.log("🚀 AI Factory Inngest Server starting on port 3000...");
-console.log("📡 Inngest endpoint: http://localhost:3000/api/inngest");
-console.log("❤️  Health check: http://localhost:3000/health");
+const PORT = process.env.INNGEST_PORT ? parseInt(process.env.INNGEST_PORT) : 3333;
+
+console.log(`🚀 AI Factory Inngest Server starting on port ${PORT}...`);
+console.log(`📡 Inngest endpoint: http://localhost:${PORT}/api/inngest`);
+console.log(`❤️  Health check: http://localhost:${PORT}/health`);
 console.log("");
-console.log("Next: Run 'inngest-cli dev -u http://localhost:3000/api/inngest' in another terminal");
+console.log(`Next: Run 'inngest-cli dev -u http://localhost:${PORT}/api/inngest' in another terminal`);
 
 export default {
-  port: 3000,
+  port: PORT,
   fetch: app.fetch,
 };

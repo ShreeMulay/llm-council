@@ -1,0 +1,8 @@
+#!/bin/bash
+# AI Factory post-merge hook
+# Imports Beads issues after git pull/merge
+
+# Import any new issues from the merged changes
+bd import 2>/dev/null || true
+
+exit 0
