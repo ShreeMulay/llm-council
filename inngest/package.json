@@ -1,0 +1,17 @@
+{
+  "name": "ai-factory-inngest",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "inngest-cli dev -u http://localhost:3000/api/inngest",
+    "serve": "bun run serve.ts",
+    "start": "bun run serve.ts"
+  },
+  "dependencies": {
+    "inngest": "^3.22.0",
+    "hono": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  }
+}
