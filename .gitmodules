@@ -22,3 +22,6 @@
 [submodule "development/cadence"]
 	path = development/cadence
 	url = git@github.com:ShreeMulay/cadence.git
+[submodule "development/agno-learning"]
+	path = development/agno-learning
+	url = git@github.com:ShreeMulay/agno-learning.git
