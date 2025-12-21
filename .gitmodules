@@ -25,3 +25,6 @@
 [submodule "development/agno-learning"]
 	path = development/agno-learning
 	url = git@github.com:ShreeMulay/agno-learning.git
+[submodule "homeassistant-config"]
+	path = homeassistant-config
+	url = git@github.com:ShreeMulay/homeassistant-config.git
