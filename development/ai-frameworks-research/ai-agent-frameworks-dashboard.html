@@ -482,7 +482,7 @@
             <h1>AI Agent Frameworks Dashboard</h1>
             <div class="header-meta">
                 <span>Last Updated: December 23, 2025</span>
-                <span id="framework-count">40 Frameworks</span>
+                <span id="framework-count">46 Frameworks</span>
                 <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
             </div>
         </header>
@@ -496,10 +496,10 @@
         <!-- Table Tab -->
         <div id="table-tab" class="tab-content active">
             <div class="stats-grid">
-                <div class="stat-card">
-                    <h3 id="total-count">40</h3>
-                    <p>Total Frameworks</p>
-                </div>
+<div class="stat-card">
+                                    <h3 id="total-count">46</h3>
+                                    <p>Total Frameworks</p>
+                                </div>
                 <div class="stat-card">
                     <h3 id="production-count">25</h3>
                     <p>Production Ready</p>
@@ -538,6 +538,11 @@
                             <option value="Enterprise Platform">Enterprise Platform</option>
                             <option value="Voice/Realtime">Voice/Realtime</option>
                             <option value="Research">Research</option>
+                            <option value="Browser Automation">Browser Automation</option>
+                            <option value="Workflow Orchestration">Workflow Orchestration</option>
+                            <option value="Enterprise Multi-Agent">Enterprise Multi-Agent</option>
+                            <option value="Stateful Agents">Stateful Agents</option>
+                            <option value="State Machine">State Machine</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -590,7 +595,7 @@
             
             <div class="table-container">
                 <div class="result-count">
-                    Showing <strong id="visible-count">40</strong> of <strong>40</strong> frameworks
+                    Showing <strong id="visible-count">46</strong> of <strong>46</strong> frameworks
                 </div>
                 <div class="table-wrapper">
                     <table id="frameworks-table">
@@ -688,7 +693,10 @@
     ├─► Prompt optimization? ──► <span class="framework">DSPy</span>
     ├─► Guaranteed JSON output? ──► <span class="framework">Outlines</span> or <span class="framework">Instructor</span>
     ├─► Voice/real-time? ──► <span class="framework">LiveKit Agents</span> or OpenAI Realtime
-    └─► Browser automation? ──► Claude Computer Use or UI-TARS
+    ├─► Browser automation? ──► <span class="framework">BrowserUse</span> (74k+ stars!)
+    ├─► State machine agents? ──► <span class="framework">Burr</span> (Apache Foundation)
+    ├─► Enterprise A2A support? ──► <span class="framework">BeeAI Framework</span> (IBM/Linux Foundation)
+    └─► Stateful session agents? ──► <span class="framework">Julep</span> or <span class="framework">Letta</span>
 
 ═══════════════════════════════════════════════════════════════════════════════
 
@@ -715,7 +723,7 @@
         <div id="stats-tab" class="tab-content">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h3>40</h3>
+                    <h3>46</h3>
                     <p>Total Frameworks</p>
                 </div>
                 <div class="stat-card">
@@ -723,7 +731,7 @@
                     <p>Core Orchestration</p>
                 </div>
                 <div class="stat-card">
-                    <h3>5</h3>
+                    <h3>6</h3>
                     <p>Multi-Agent</p>
                 </div>
                 <div class="stat-card">
@@ -753,6 +761,14 @@
                 <div class="stat-card">
                     <h3>2</h3>
                     <p>Protocols</p>
+                </div>
+                <div class="stat-card">
+                    <h3>1</h3>
+                    <p>Browser Automation</p>
+                </div>
+                <div class="stat-card">
+                    <h3>1</h3>
+                    <p>State Machine</p>
                 </div>
             </div>
             
@@ -832,15 +848,15 @@
                         </thead>
                         <tbody>
                             <tr><td>1</td><td>LangChain</td><td>122,488</td><td>Core Orchestration</td></tr>
-                            <tr><td>2</td><td>OpenHands</td><td>65,900</td><td>Coding Agent</td></tr>
-                            <tr><td>3</td><td>AutoGen</td><td>52,767</td><td>Multi-Agent</td></tr>
-                            <tr><td>4</td><td>LangFlow</td><td>50,000</td><td>Visual/Low-Code</td></tr>
-                            <tr><td>5</td><td>LlamaIndex</td><td>45,970</td><td>RAG & Data</td></tr>
-                            <tr><td>6</td><td>CrewAI</td><td>41,677</td><td>Multi-Agent</td></tr>
-                            <tr><td>7</td><td>Aider</td><td>39,100</td><td>Coding Agent</td></tr>
-                            <tr><td>8</td><td>Agno</td><td>36,266</td><td>Multi-Agent</td></tr>
-                            <tr><td>9</td><td>Ray</td><td>35,000</td><td>Infrastructure</td></tr>
-                            <tr><td>10</td><td>DSPy</td><td>30,971</td><td>Lightweight</td></tr>
+                            <tr><td>2</td><td>BrowserUse</td><td>74,100</td><td>Browser Automation</td></tr>
+                            <tr><td>3</td><td>OpenHands</td><td>65,900</td><td>Coding Agent</td></tr>
+                            <tr><td>4</td><td>AutoGen</td><td>52,767</td><td>Multi-Agent</td></tr>
+                            <tr><td>5</td><td>LangFlow</td><td>50,000</td><td>Visual/Low-Code</td></tr>
+                            <tr><td>6</td><td>LlamaIndex</td><td>45,970</td><td>RAG & Data</td></tr>
+                            <tr><td>7</td><td>CrewAI</td><td>41,677</td><td>Multi-Agent</td></tr>
+                            <tr><td>8</td><td>Aider</td><td>39,100</td><td>Coding Agent</td></tr>
+                            <tr><td>9</td><td>Agno</td><td>36,266</td><td>Multi-Agent</td></tr>
+                            <tr><td>10</td><td>Ray</td><td>35,000</td><td>Infrastructure</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -889,7 +905,13 @@
             {name: "ZenML", category: "Infrastructure", stars: 0, url: "https://github.com/zenml-io/zenml", funding: "VC-backed", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "N/A", multimodal: "N/A", voice: "N/A", production: "Yes", risk: "Low", setup: 20, useCases: "MLOps/LLMOps pipelines, governance", limitations: "Overkill for simple agents", docs: "https://docs.zenml.io"},
             {name: "Salesforce Agentforce", category: "Enterprise Platform", stars: 0, url: "", funding: "Salesforce", language: "Commercial", allLang: "Commercial", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "No", voice: "Yes", production: "Yes", risk: "Low", setup: 0, useCases: "Enterprise CRM, sales/service agents", limitations: "Salesforce lock-in", docs: "https://salesforce.com/agentforce"},
             {name: "LiveKit Agents", category: "Voice/Realtime", stars: 0, url: "https://github.com/livekit/agents", funding: "LiveKit", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "Yes", voice: "Yes", production: "Yes", risk: "Low", setup: 15, useCases: "Real-time voice/video, WebRTC", limitations: "Specialized for realtime only", docs: "https://docs.livekit.io/agents"},
-            {name: "CAMEL-AI", category: "Research", stars: 0, url: "https://github.com/camel-ai/camel", funding: "Academic", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "No", voice: "No", production: "Research", risk: "High", setup: 15, useCases: "Multi-agent societies, role-playing, research", limitations: "Academic focus", docs: "https://camel-ai.org"}
+            {name: "CAMEL-AI", category: "Research", stars: 0, url: "https://github.com/camel-ai/camel", funding: "Academic", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "No", voice: "No", production: "Research", risk: "High", setup: 15, useCases: "Multi-agent societies, role-playing, research", limitations: "Academic focus", docs: "https://camel-ai.org"},
+            {name: "BrowserUse", category: "Browser Automation", stars: 74100, url: "https://github.com/browser-use/browser-use", funding: "VC-Backed", language: "Python", allLang: "Python", mcp: "Yes", a2a: "No", funcCall: "Yes", multimodal: "Yes", voice: "No", production: "Yes", risk: "Low", setup: 10, useCases: "Web automation, form filling, e-commerce automation, scraping", limitations: "Chrome memory intensive, requires browser infrastructure at scale", docs: "https://docs.browser-use.com"},
+            {name: "Langroid", category: "Multi-Agent", stars: 3800, url: "https://github.com/langroid/langroid", funding: "CMU/UW-Madison", language: "Python", allLang: "Python", mcp: "Yes", a2a: "No", funcCall: "Yes", multimodal: "Yes", voice: "No", production: "Yes", risk: "Low", setup: 15, useCases: "Multi-agent RAG, complex reasoning, SQL/document chat", limitations: "Primarily async patterns, limited non-OpenAI testing", docs: "https://langroid.github.io/langroid"},
+            {name: "ControlFlow", category: "Workflow Orchestration", stars: 1400, url: "https://github.com/PrefectHQ/ControlFlow", funding: "Prefect (VC-Backed)", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "No", voice: "No", production: "Archived", risk: "High", setup: 10, useCases: "Task-centric AI workflows, structured output generation", limitations: "ARCHIVED - Merged into Marvin, no longer maintained", docs: "https://controlflow.ai"},
+            {name: "BeeAI Framework", category: "Enterprise Multi-Agent", stars: 3000, url: "https://github.com/i-am-bee/beeai-framework", funding: "IBM (Linux Foundation)", language: "Python", allLang: "Python, TypeScript", mcp: "Yes", a2a: "Yes", funcCall: "Yes", multimodal: "Yes", voice: "No", production: "Yes", risk: "Low", setup: 15, useCases: "Enterprise multi-agent, production AI workflows, constraint-enforced agents", limitations: "Newer framework, enterprise-focused documentation", docs: "https://framework.beeai.dev"},
+            {name: "Julep", category: "Stateful Agents", stars: 6600, url: "https://github.com/julep-ai/julep", funding: "VC-Backed Startup", language: "Python", allLang: "Python, Node.js/TypeScript", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "Yes", voice: "No", production: "Growing", risk: "Medium", setup: 20, useCases: "Stateful AI agents with memory, long-running workflows, session-based apps", limitations: "Cloud-first architecture, self-hosting complexity", docs: "https://docs.julep.ai"},
+            {name: "Burr", category: "State Machine", stars: 1900, url: "https://github.com/apache/burr", funding: "Apache Foundation", language: "Python", allLang: "Python", mcp: "No", a2a: "No", funcCall: "Yes", multimodal: "Yes", voice: "No", production: "Yes", risk: "Low", setup: 10, useCases: "State machine agents, chatbots, simulations, decision-making apps", limitations: "Python-only, limited cloud deployment options", docs: "https://burr.apache.org"}
         ];
         
         // Initialize table
