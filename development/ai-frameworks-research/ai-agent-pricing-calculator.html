@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Pricing Calculator</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #475569;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--accent), #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .card h2 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .input-group input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg-tertiary);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .input-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        .input-value {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .input-value .current {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .checkbox-item:hover {
+            background: var(--border);
+        }
+        
+        .checkbox-item input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+        
+        .checkbox-item span {
+            font-size: 0.85rem;
+        }
+        
+        .checkbox-item .provider {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: block;
+        }
+        
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        
+        .result-card {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result-card.best {
+            border: 2px solid var(--success);
+        }
+        
+        .result-card.best::before {
+            content: 'BEST VALUE';
+            position: absolute;
+            top: 10px;
+            right: -30px;
+            background: var(--success);
+            color: white;
+            font-size: 0.65rem;
+            padding: 3px 35px;
+            transform: rotate(45deg);
+        }
+        
+        .result-card h3 {
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+        
+        .result-card .provider-name {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .result-card .cost {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .result-card .cost-period {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .result-card .breakdown {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        
+        .result-card .breakdown div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .bar-chart {
+            margin-top: 20px;
+        }
+        
+        .bar-item {
+            margin-bottom: 15px;
+        }
+        
+        .bar-item .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+        }
+        
+        .bar-item .bar-track {
+            height: 24px;
+            background: var(--bg-tertiary);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .bar-item .bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+            font-size: 0.75rem;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .summary-stats { grid-template-columns: repeat(2, 1fr); }
+        }
+        
+        .stat-box {
+            background: var(--bg-tertiary);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .stat-box .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .stat-box .label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        .toggle-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .toggle-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 26px;
+            background: var(--bg-tertiary);
+            border-radius: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .toggle.active {
+            background: var(--accent);
+        }
+        
+        .toggle::after {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+        
+        .toggle.active::after {
+            left: 26px;
+        }
+        
+        .savings-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .comparison-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+        }
+        
+        .comparison-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+        
+        .tier-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+        }
+        
+        .tier-budget { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .tier-balanced { background: rgba(59, 130, 246, 0.2); color: var(--accent); }
+        .tier-premium { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        
+        .help-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .provider-section {
+            margin-top: 15px;
+        }
+        
+        .provider-section h4 {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI Agent Pricing Calculator</h1>
+        <p class="subtitle">Estimate monthly LLM costs for your AI agent workloads</p>
+        
+        <div class="grid">
+            <!-- Input Panel -->
+            <div>
+                <div class="card">
+                    <h2>Usage Parameters</h2>
+                    
+                    <div class="input-group">
+                        <label>Daily Messages / Requests</label>
+                        <input type="range" id="daily-messages" min="100" max="1000000" value="10000" step="100" oninput="updateCalculations()">
+                        <div class="input-value">
+                            <span>100</span>
+                            <span class="current" id="daily-messages-value">10,000</span>
+                            <span>1M</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Average Input Tokens per Message</label>
+                        <input type="range" id="input-tokens" min="100" max="10000" value="1000" step="100" oninput="updateCalculations()">
+                        <div class="input-value">
+                            <span>100</span>
+                            <span class="current" id="input-tokens-value">1,000</span>
+                            <span>10K</span>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>Average Output Tokens per Message</label>
+                        <input type="range" id="output-tokens" min="50" max="4000" value="500" step="50" oninput="updateCalculations()">
+                        <div class="input-value">
+                            <span>50</span>
+                            <span class="current" id="output-tokens-value">500</span>
+                            <span>4K</span>
+                        </div>
+                    </div>
+                    
+                    <div class="toggle-section">
+                        <div class="toggle-row">
+                            <span>Enable Caching</span>
+                            <div class="toggle" id="caching-toggle" onclick="toggleCaching()"></div>
+                        </div>
+                        
+                        <div class="input-group" id="cache-rate-group" style="display: none; margin-top: 15px;">
+                            <label>Estimated Cache Hit Rate</label>
+                            <input type="range" id="cache-rate" min="0" max="80" value="40" step="5" oninput="updateCalculations()">
+                            <div class="input-value">
+                                <span>0%</span>
+                                <span class="current" id="cache-rate-value">40%</span>
+                                <span>80%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Select Models to Compare</h2>
+                    
+                    <div class="provider-section">
+                        <h4>OpenAI</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gpt-4o" checked onchange="updateCalculations()">
+                                <span>GPT-4o<span class="provider">$2.50 / $10.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gpt-4o-mini" checked onchange="updateCalculations()">
+                                <span>GPT-4o-mini<span class="provider">$0.15 / $0.60</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gpt-4.1" onchange="updateCalculations()">
+                                <span>GPT-4.1<span class="provider">$2.00 / $8.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="o1" onchange="updateCalculations()">
+                                <span>o1<span class="provider">$15.00 / $60.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="o3-mini" onchange="updateCalculations()">
+                                <span>o3-mini<span class="provider">$1.10 / $4.40</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Anthropic</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="claude-3.5-sonnet" checked onchange="updateCalculations()">
+                                <span>Claude 3.5 Sonnet<span class="provider">$3.00 / $15.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="claude-opus" onchange="updateCalculations()">
+                                <span>Claude Opus<span class="provider">$15.00 / $75.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="claude-haiku" onchange="updateCalculations()">
+                                <span>Claude Haiku<span class="provider">$0.25 / $1.25</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Google</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gemini-2.0-flash" checked onchange="updateCalculations()">
+                                <span>Gemini 2.0 Flash<span class="provider">$0.075 / $0.30</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gemini-2.5-pro" onchange="updateCalculations()">
+                                <span>Gemini 2.5 Pro<span class="provider">$1.25 / $5.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="gemini-1.5-flash" onchange="updateCalculations()">
+                                <span>Gemini 1.5 Flash<span class="provider">$0.075 / $0.30</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Mistral</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="mistral-large" onchange="updateCalculations()">
+                                <span>Mistral Large<span class="provider">$2.00 / $6.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="mistral-small" onchange="updateCalculations()">
+                                <span>Mistral Small<span class="provider">$0.20 / $0.60</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="codestral" onchange="updateCalculations()">
+                                <span>Codestral<span class="provider">$0.30 / $0.90</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Groq (Fast Inference)</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="groq-llama-70b" onchange="updateCalculations()">
+                                <span>Llama 3.1 70B<span class="provider">$0.59 / $0.79</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="groq-llama-8b" onchange="updateCalculations()">
+                                <span>Llama 3.1 8B<span class="provider">$0.05 / $0.08</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="groq-mixtral" onchange="updateCalculations()">
+                                <span>Mixtral 8x7B<span class="provider">$0.24 / $0.24</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Cerebras (Ultra-Fast)</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="cerebras-llama-70b" onchange="updateCalculations()">
+                                <span>Llama 3.1 70B<span class="provider">$0.60 / $0.60</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="cerebras-llama-8b" onchange="updateCalculations()">
+                                <span>Llama 3.1 8B<span class="provider">$0.10 / $0.10</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>DeepSeek (China)</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="deepseek-v3" onchange="updateCalculations()">
+                                <span>DeepSeek V3<span class="provider">$0.27 / $1.10</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="deepseek-r1" onchange="updateCalculations()">
+                                <span>DeepSeek R1<span class="provider">$0.55 / $2.19</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Chinese Models</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="qwen-turbo" onchange="updateCalculations()">
+                                <span>Qwen Turbo<span class="provider">$0.20 / $0.60</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="qwen-plus" onchange="updateCalculations()">
+                                <span>Qwen Plus<span class="provider">$0.80 / $2.00</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="glm-4" onchange="updateCalculations()">
+                                <span>GLM-4 (Zhipu)<span class="provider">$1.40 / $1.40</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="yi-large" onchange="updateCalculations()">
+                                <span>Yi Large (01.AI)<span class="provider">$3.00 / $3.00</span></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="provider-section">
+                        <h4>Together AI / Open Source</h4>
+                        <div class="checkbox-grid">
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="together-llama-405b" onchange="updateCalculations()">
+                                <span>Llama 3.1 405B<span class="provider">$3.50 / $3.50</span></span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" value="together-mixtral" onchange="updateCalculations()">
+                                <span>Mixtral 8x22B<span class="provider">$0.90 / $0.90</span></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Results Panel -->
+            <div>
+                <div class="card">
+                    <h2>Cost Summary</h2>
+                    
+                    <div class="summary-stats">
+                        <div class="stat-box">
+                            <div class="value" id="total-monthly-tokens">300M</div>
+                            <div class="label">Monthly Tokens</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="cheapest-cost">$45</div>
+                            <div class="label">Cheapest Option</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="avg-cost">$250</div>
+                            <div class="label">Average Cost</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="value" id="cache-savings">$0</div>
+                            <div class="label">Cache Savings</div>
+                        </div>
+                    </div>
+                    
+                    <h2 style="margin-top: 30px;">Cost Comparison</h2>
+                    <div class="bar-chart" id="bar-chart"></div>
+                    
+                    <h2 style="margin-top: 30px;">Detailed Breakdown</h2>
+                    <div class="results-grid" id="results-grid"></div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px;">
+                    <h2>Full Comparison Table</h2>
+                    <table class="comparison-table" id="comparison-table">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>Provider</th>
+                                <th>Input $/1M</th>
+                                <th>Output $/1M</th>
+                                <th>Monthly Cost</th>
+                                <th>Cost/1K Conv</th>
+                                <th>Tier</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const models = {
+            // OpenAI
+            'gpt-4o': { name: 'GPT-4o', provider: 'OpenAI', input: 2.50, output: 10.00, tier: 'balanced', cacheDiscount: 0.5 },
+            'gpt-4o-mini': { name: 'GPT-4o-mini', provider: 'OpenAI', input: 0.15, output: 0.60, tier: 'budget', cacheDiscount: 0.5 },
+            'gpt-4.1': { name: 'GPT-4.1', provider: 'OpenAI', input: 2.00, output: 8.00, tier: 'balanced', cacheDiscount: 0.5 },
+            'o1': { name: 'o1', provider: 'OpenAI', input: 15.00, output: 60.00, tier: 'premium', cacheDiscount: 0.5 },
+            'o3-mini': { name: 'o3-mini', provider: 'OpenAI', input: 1.10, output: 4.40, tier: 'balanced', cacheDiscount: 0.5 },
+            
+            // Anthropic
+            'claude-3.5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', input: 3.00, output: 15.00, tier: 'balanced', cacheDiscount: 0.1 },
+            'claude-opus': { name: 'Claude Opus', provider: 'Anthropic', input: 15.00, output: 75.00, tier: 'premium', cacheDiscount: 0.1 },
+            'claude-haiku': { name: 'Claude Haiku', provider: 'Anthropic', input: 0.25, output: 1.25, tier: 'budget', cacheDiscount: 0.1 },
+            
+            // Google
+            'gemini-2.0-flash': { name: 'Gemini 2.0 Flash', provider: 'Google', input: 0.075, output: 0.30, tier: 'budget', cacheDiscount: 0.25 },
+            'gemini-2.5-pro': { name: 'Gemini 2.5 Pro', provider: 'Google', input: 1.25, output: 5.00, tier: 'balanced', cacheDiscount: 0.25 },
+            'gemini-1.5-flash': { name: 'Gemini 1.5 Flash', provider: 'Google', input: 0.075, output: 0.30, tier: 'budget', cacheDiscount: 0.25 },
+            
+            // Mistral
+            'mistral-large': { name: 'Mistral Large', provider: 'Mistral', input: 2.00, output: 6.00, tier: 'balanced', cacheDiscount: 0 },
+            'mistral-small': { name: 'Mistral Small', provider: 'Mistral', input: 0.20, output: 0.60, tier: 'budget', cacheDiscount: 0 },
+            'codestral': { name: 'Codestral', provider: 'Mistral', input: 0.30, output: 0.90, tier: 'budget', cacheDiscount: 0 },
+            
+            // Groq
+            'groq-llama-70b': { name: 'Llama 3.1 70B', provider: 'Groq', input: 0.59, output: 0.79, tier: 'budget', cacheDiscount: 0 },
+            'groq-llama-8b': { name: 'Llama 3.1 8B', provider: 'Groq', input: 0.05, output: 0.08, tier: 'budget', cacheDiscount: 0 },
+            'groq-mixtral': { name: 'Mixtral 8x7B', provider: 'Groq', input: 0.24, output: 0.24, tier: 'budget', cacheDiscount: 0 },
+            
+            // Cerebras
+            'cerebras-llama-70b': { name: 'Llama 3.1 70B', provider: 'Cerebras', input: 0.60, output: 0.60, tier: 'budget', cacheDiscount: 0 },
+            'cerebras-llama-8b': { name: 'Llama 3.1 8B', provider: 'Cerebras', input: 0.10, output: 0.10, tier: 'budget', cacheDiscount: 0 },
+            
+            // DeepSeek
+            'deepseek-v3': { name: 'DeepSeek V3', provider: 'DeepSeek', input: 0.27, output: 1.10, tier: 'budget', cacheDiscount: 0 },
+            'deepseek-r1': { name: 'DeepSeek R1', provider: 'DeepSeek', input: 0.55, output: 2.19, tier: 'budget', cacheDiscount: 0 },
+            
+            // Chinese
+            'qwen-turbo': { name: 'Qwen Turbo', provider: 'Alibaba', input: 0.20, output: 0.60, tier: 'budget', cacheDiscount: 0 },
+            'qwen-plus': { name: 'Qwen Plus', provider: 'Alibaba', input: 0.80, output: 2.00, tier: 'balanced', cacheDiscount: 0 },
+            'glm-4': { name: 'GLM-4', provider: 'Zhipu AI', input: 1.40, output: 1.40, tier: 'balanced', cacheDiscount: 0 },
+            'yi-large': { name: 'Yi Large', provider: '01.AI', input: 3.00, output: 3.00, tier: 'balanced', cacheDiscount: 0 },
+            
+            // Together AI
+            'together-llama-405b': { name: 'Llama 3.1 405B', provider: 'Together AI', input: 3.50, output: 3.50, tier: 'premium', cacheDiscount: 0 },
+            'together-mixtral': { name: 'Mixtral 8x22B', provider: 'Together AI', input: 0.90, output: 0.90, tier: 'budget', cacheDiscount: 0 }
+        };
+        
+        let cachingEnabled = false;
+        
+        function toggleCaching() {
+            cachingEnabled = !cachingEnabled;
+            document.getElementById('caching-toggle').classList.toggle('active', cachingEnabled);
+            document.getElementById('cache-rate-group').style.display = cachingEnabled ? 'block' : 'none';
+            updateCalculations();
+        }
+        
+        function getSelectedModels() {
+            const checkboxes = document.querySelectorAll('.checkbox-item input:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        function calculateCost(modelKey, dailyMessages, inputTokens, outputTokens, cacheRate) {
+            const model = models[modelKey];
+            const monthlyMessages = dailyMessages * 30;
+            const totalInputTokens = monthlyMessages * inputTokens;
+            const totalOutputTokens = monthlyMessages * outputTokens;
+            
+            let inputCost = (totalInputTokens / 1000000) * model.input;
+            let outputCost = (totalOutputTokens / 1000000) * model.output;
+            
+            // Apply cache discount
+            if (cachingEnabled && cacheRate > 0 && model.cacheDiscount > 0) {
+                const cachedInputTokens = totalInputTokens * (cacheRate / 100);
+                const nonCachedInputTokens = totalInputTokens * (1 - cacheRate / 100);
+                inputCost = (nonCachedInputTokens / 1000000) * model.input + 
+                           (cachedInputTokens / 1000000) * model.input * model.cacheDiscount;
+            }
+            
+            const totalCost = inputCost + outputCost;
+            const costPer1K = (totalCost / monthlyMessages) * 1000;
+            
+            return {
+                model: modelKey,
+                name: model.name,
+                provider: model.provider,
+                tier: model.tier,
+                inputCost,
+                outputCost,
+                totalCost,
+                costPer1K,
+                totalInputTokens,
+                totalOutputTokens
+            };
+        }
+        
+        function updateCalculations() {
+            const dailyMessages = parseInt(document.getElementById('daily-messages').value);
+            const inputTokens = parseInt(document.getElementById('input-tokens').value);
+            const outputTokens = parseInt(document.getElementById('output-tokens').value);
+            const cacheRate = parseInt(document.getElementById('cache-rate').value);
+            
+            // Update display values
+            document.getElementById('daily-messages-value').textContent = dailyMessages.toLocaleString();
+            document.getElementById('input-tokens-value').textContent = inputTokens.toLocaleString();
+            document.getElementById('output-tokens-value').textContent = outputTokens.toLocaleString();
+            document.getElementById('cache-rate-value').textContent = cacheRate + '%';
+            
+            const selectedModels = getSelectedModels();
+            const results = selectedModels.map(m => calculateCost(m, dailyMessages, inputTokens, outputTokens, cacheRate));
+            results.sort((a, b) => a.totalCost - b.totalCost);
+            
+            // Calculate totals
+            const monthlyMessages = dailyMessages * 30;
+            const totalMonthlyTokens = monthlyMessages * (inputTokens + outputTokens);
+            
+            // Calculate cache savings
+            let cacheSavings = 0;
+            if (cachingEnabled && results.length > 0) {
+                const withoutCache = selectedModels.map(m => calculateCost(m, dailyMessages, inputTokens, outputTokens, 0));
+                const avgWithCache = results.reduce((a, b) => a + b.totalCost, 0) / results.length;
+                const avgWithoutCache = withoutCache.reduce((a, b) => a + b.totalCost, 0) / withoutCache.length;
+                cacheSavings = avgWithoutCache - avgWithCache;
+            }
+            
+            // Update summary stats
+            document.getElementById('total-monthly-tokens').textContent = formatNumber(totalMonthlyTokens);
+            document.getElementById('cheapest-cost').textContent = results.length > 0 ? '$' + Math.round(results[0].totalCost).toLocaleString() : '-';
+            document.getElementById('avg-cost').textContent = results.length > 0 ? '$' + Math.round(results.reduce((a, b) => a + b.totalCost, 0) / results.length).toLocaleString() : '-';
+            document.getElementById('cache-savings').textContent = cachingEnabled ? '$' + Math.round(cacheSavings).toLocaleString() : '$0';
+            
+            // Update bar chart
+            renderBarChart(results);
+            
+            // Update result cards
+            renderResultCards(results);
+            
+            // Update comparison table
+            renderComparisonTable(results);
+        }
+        
+        function formatNumber(num) {
+            if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+        
+        function renderBarChart(results) {
+            const container = document.getElementById('bar-chart');
+            const maxCost = Math.max(...results.map(r => r.totalCost));
+            
+            container.innerHTML = results.slice(0, 10).map((r, i) => {
+                const width = (r.totalCost / maxCost) * 100;
+                const colors = {
+                    budget: '#22c55e',
+                    balanced: '#3b82f6',
+                    premium: '#8b5cf6'
+                };
+                
+                return `
+                    <div class="bar-item">
+                        <div class="bar-label">
+                            <span>${r.name} <span style="color: var(--text-secondary)">(${r.provider})</span></span>
+                            <span>$${r.totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}/mo</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width: ${width}%; background: ${colors[r.tier]}">
+                                ${width > 15 ? '$' + r.totalCost.toFixed(0) : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function renderResultCards(results) {
+            const container = document.getElementById('results-grid');
+            
+            container.innerHTML = results.slice(0, 6).map((r, i) => `
+                <div class="result-card ${i === 0 ? 'best' : ''}">
+                    <h3>${r.name}</h3>
+                    <div class="provider-name">${r.provider}</div>
+                    <div class="cost">$${r.totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+                    <div class="cost-period">per month</div>
+                    <div class="breakdown">
+                        <div><span>Input tokens:</span><span>$${r.inputCost.toFixed(2)}</span></div>
+                        <div><span>Output tokens:</span><span>$${r.outputCost.toFixed(2)}</span></div>
+                        <div><span>Per 1K conversations:</span><span>$${r.costPer1K.toFixed(2)}</span></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function renderComparisonTable(results) {
+            const tbody = document.getElementById('table-body');
+            
+            tbody.innerHTML = results.map(r => {
+                const tierClass = {
+                    budget: 'tier-budget',
+                    balanced: 'tier-balanced',
+                    premium: 'tier-premium'
+                };
+                
+                return `
+                    <tr>
+                        <td>${r.name}</td>
+                        <td>${r.provider}</td>
+                        <td>$${models[r.model].input.toFixed(2)}</td>
+                        <td>$${models[r.model].output.toFixed(2)}</td>
+                        <td><strong>$${r.totalCost.toLocaleString(undefined, {maximumFractionDigits: 0})}</strong></td>
+                        <td>$${r.costPer1K.toFixed(2)}</td>
+                        <td><span class="tier-badge ${tierClass[r.tier]}">${r.tier.toUpperCase()}</span></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Initialize
+        updateCalculations();
+    </script>
+</body>
+</html>
