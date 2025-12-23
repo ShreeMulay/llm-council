@@ -28,3 +28,6 @@
 [submodule "homeassistant-config"]
 	path = homeassistant-config
 	url = git@github.com:ShreeMulay/homeassistant-config.git
+[submodule "development/TALIA/talia-quality-metrics"]
+	path = development/TALIA/talia-quality-metrics
+	url = git@github.com:ShreeMulay/talia-quality-metrics.git
