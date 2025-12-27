@@ -31,3 +31,6 @@
 [submodule "development/TALIA/talia-quality-metrics"]
 	path = development/TALIA/talia-quality-metrics
 	url = git@github.com:ShreeMulay/talia-quality-metrics.git
+[submodule "development/ai-frameworks-research"]
+	path = development/ai-frameworks-research
+	url = https://github.com/ShreeMulay/ai-agent-frameworks-research.git
