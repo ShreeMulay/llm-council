@@ -34,3 +34,6 @@
 [submodule "development/ai-frameworks-research"]
 	path = development/ai-frameworks-research
 	url = https://github.com/ShreeMulay/ai-agent-frameworks-research.git
+[submodule "development/tke-faxflow"]
+	path = development/tke-faxflow
+	url = git@github.com:ShreeMulay/tke-faxflow.git
