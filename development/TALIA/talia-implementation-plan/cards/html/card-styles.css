@@ -1,0 +1,364 @@
+/* TALIA Card System - Print-Ready CSS
+   The Kidney Experts, PLLC
+   Card Size: 5" x 7" (5in x 7in)
+   
+   Brand Colors:
+   - Primary Blue: #0360b7
+   - Secondary Green: #38a169
+   - Accent Green: #2bb041
+   - Text Dark: #333c4e
+   - Light Background: #f1f5f9
+*/
+
+/* Reset and Base */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+@page {
+  size: 5in 7in;
+  margin: 0;
+}
+
+/* Print Setup */
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  .card-page {
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Card Container */
+.card-page {
+  width: 5in;
+  height: 7in;
+  padding: 0.25in;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 9pt;
+  line-height: 1.3;
+  color: #333c4e;
+  background: white;
+  position: relative;
+}
+
+/* Card Header */
+.card-header {
+  padding: 0.15in 0.2in;
+  color: white;
+  text-align: center;
+  border-radius: 4px 4px 0 0;
+  margin: -0.25in -0.25in 0.15in -0.25in;
+}
+
+.card-header h1 {
+  font-size: 14pt;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.card-header .subtitle {
+  font-size: 9pt;
+  font-weight: 400;
+  opacity: 0.9;
+  margin-top: 2px;
+}
+
+.card-header .brand {
+  font-size: 8pt;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Header Colors by Card Type */
+.header-blue { background: linear-gradient(135deg, #0360b7, #0483d8); }
+.header-green { background: linear-gradient(135deg, #38a169, #2bb041); }
+.header-yellow { background: #F1C40F; color: #333c4e; }
+.header-red { background: #E74C3C; }
+.header-orange { background: #FF5722; }
+.header-purple { background: #8E44AD; }
+.header-navy { background: #34495E; }
+.header-pink { background: #E91E63; }
+.header-tan { background: #D2B48C; color: #333c4e; }
+.header-lightblue { background: #87CEEB; color: #333c4e; }
+.header-yellowgreen { background: #9ACD32; color: #333c4e; }
+.header-magenta { background: #9B59B6; }
+.header-amber { background: #F39C12; color: #333c4e; }
+
+/* Patient Info Bar */
+.patient-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.1in;
+  padding: 0.1in;
+  background: #f1f5f9;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  margin-bottom: 0.15in;
+  font-size: 8pt;
+}
+
+.patient-info .field {
+  display: flex;
+  gap: 4px;
+}
+
+.patient-info label {
+  font-weight: 600;
+  color: #666;
+}
+
+.patient-info .input-line {
+  flex: 1;
+  border-bottom: 1px solid #999;
+  min-width: 0.8in;
+}
+
+/* Section Styling */
+.section {
+  margin-bottom: 0.12in;
+}
+
+.section-title {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #0360b7;
+  margin-bottom: 0.05in;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #0360b7;
+}
+
+.section-content {
+  padding: 0.08in;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background: #fafafa;
+}
+
+/* Form Elements */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.08in;
+  margin-bottom: 0.05in;
+  align-items: center;
+}
+
+.form-row:last-child {
+  margin-bottom: 0;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1in;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.checkbox {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #666;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.input-field {
+  border-bottom: 1px solid #999;
+  min-width: 0.5in;
+  display: inline-block;
+}
+
+.input-field.short { min-width: 0.3in; }
+.input-field.medium { min-width: 0.8in; }
+.input-field.long { min-width: 1.5in; flex: 1; }
+
+/* Alert Box */
+.alert-box {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-left: 3px solid #ff9800;
+  padding: 0.05in 0.1in;
+  margin-top: 0.05in;
+  border-radius: 2px;
+  font-size: 8pt;
+}
+
+.alert-box::before {
+  content: "⚠ ";
+  font-weight: bold;
+}
+
+/* Flags Section */
+.flags-section {
+  margin-top: auto;
+  padding: 0.08in;
+  background: #fff8e1;
+  border: 1px solid #ffb74d;
+  border-radius: 3px;
+}
+
+.flags-title {
+  font-weight: 700;
+  color: #e65100;
+  font-size: 8pt;
+  margin-bottom: 4px;
+}
+
+/* Footer */
+.card-footer {
+  position: absolute;
+  bottom: 0.25in;
+  left: 0.25in;
+  right: 0.25in;
+  padding-top: 0.1in;
+  border-top: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  font-size: 8pt;
+}
+
+/* === BACK OF CARD (Education Side) === */
+.card-back {
+  padding: 0.3in;
+}
+
+.card-back .card-header {
+  margin: -0.3in -0.3in 0.2in -0.3in;
+}
+
+.education-title {
+  font-size: 13pt;
+  font-weight: 700;
+  color: #0360b7;
+  text-align: center;
+  margin-bottom: 0.15in;
+}
+
+.education-section {
+  margin-bottom: 0.15in;
+}
+
+.education-section h3 {
+  font-size: 10pt;
+  font-weight: 700;
+  color: #333c4e;
+  margin-bottom: 0.08in;
+  padding-bottom: 3px;
+  border-bottom: 2px solid #38a169;
+}
+
+.education-content {
+  font-size: 9pt;
+  line-height: 1.4;
+}
+
+.education-content ul {
+  margin-left: 0.15in;
+  margin-top: 0.05in;
+}
+
+.education-content li {
+  margin-bottom: 0.04in;
+}
+
+.call-box {
+  background: linear-gradient(135deg, #0360b7, #38a169);
+  color: white;
+  padding: 0.12in;
+  border-radius: 4px;
+  margin-top: 0.1in;
+}
+
+.call-box h4 {
+  font-size: 10pt;
+  margin-bottom: 0.05in;
+}
+
+.call-box ul {
+  margin-left: 0.15in;
+  font-size: 9pt;
+}
+
+.call-box .phone {
+  font-size: 12pt;
+  font-weight: 700;
+  margin-top: 0.08in;
+}
+
+/* Brand Footer */
+.brand-footer {
+  text-align: center;
+  margin-top: auto;
+  padding-top: 0.1in;
+  border-top: 1px solid #ddd;
+}
+
+.brand-footer .practice-name {
+  font-weight: 700;
+  color: #0360b7;
+  font-size: 10pt;
+}
+
+.brand-footer .mission {
+  font-style: italic;
+  color: #38a169;
+  font-size: 8pt;
+  margin: 3px 0;
+}
+
+.brand-footer .phone {
+  font-weight: 600;
+  font-size: 9pt;
+}
+
+/* Utility Classes */
+.text-center { text-align: center; }
+.text-bold { font-weight: 700; }
+.text-small { font-size: 8pt; }
+.mt-1 { margin-top: 0.1in; }
+.mb-1 { margin-bottom: 0.1in; }
+
+/* Print Controls (screen only) */
+@media screen {
+  .print-controls {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #0360b7;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    z-index: 1000;
+    border: none;
+  }
+  
+  .print-controls:hover {
+    background: #024a8a;
+  }
+  
+  .card-container {
+    max-width: 5in;
+    margin: 20px auto;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+}

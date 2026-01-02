@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medication Dosing Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-green">
+        <h1>MEDICATION DOSING MODULE</h1>
+        <div class="subtitle">"CKD Medication Safety Check"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Current GFR:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">MEDICATIONS REQUIRING RENAL DOSE ADJUSTMENT</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Metformin - Current:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> OK</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Reduce</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Stop</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Gabapentin - Current:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> OK</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Reduce</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Allopurinol - Current:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> OK</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Reduce</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Colchicine - Current:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> OK</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Reduce</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Baclofen - Current:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> OK</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Reduce</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">MEDICATIONS TO AVOID</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> NSAIDs - Counseled to avoid</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Antacids with magnesium - Counseled to avoid</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Herbal supplements - Reviewed</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Other meds to avoid:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ANTIBIOTIC DOSING REVIEW</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current/recent antibiotics:</span> <span class="input-field long"></span>
+          </div>
+          <div class="form-row">
+            <span>Renal dose verified?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+              <span class="checkbox-item"><span class="checkbox"></span> N/A</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Needs adjustment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">OTC AND SUPPLEMENT REVIEW</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Patient using OTC medications?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Yes - reviewed</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Supplements/herbals:</span> <span class="input-field long"></span>
+          </div>
+          <div class="form-row">
+            <span>Action:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> All safe</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Some need to stop</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">COMMUNICATION</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Recommendations sent to PCP</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Recommendations sent to specialist</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Sent to:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-green">
+        <h1>MEDICATIONS AND YOUR KIDNEYS</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>WHY KIDNEY FUNCTION AFFECTS MEDICATIONS</h3>
+        <div class="education-content">
+          <p>Many medications are removed from your body through your kidneys. When kidneys don't work as well, medications can build up and cause side effects.</p>
+          <p><strong>Some medications need lower doses in CKD. Some should be avoided entirely.</strong></p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>MEDICATIONS TO ALWAYS AVOID</h3>
+        <div class="education-content">
+          <table style="width: 100%; font-size: 8pt; border-collapse: collapse;">
+            <tr><td style="border: 1px solid #ddd; padding: 3px;"><strong>NSAIDs</strong></td><td style="border: 1px solid #ddd; padding: 3px;">Ibuprofen (Advil, Motrin), Naproxen (Aleve)</td></tr>
+            <tr><td style="border: 1px solid #ddd; padding: 3px;"><strong>Antacids with Mg</strong></td><td style="border: 1px solid #ddd; padding: 3px;">Milk of Magnesia, some Maalox</td></tr>
+            <tr><td style="border: 1px solid #ddd; padding: 3px;"><strong>Some laxatives</strong></td><td style="border: 1px solid #ddd; padding: 3px;">Magnesium citrate, Fleet enemas</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>SAFE FOR PAIN</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Acetaminophen (Tylenol):</strong> Safe up to 3 grams/day</li>
+            <li><strong>Topical creams:</strong> Lidocaine, capsaicin</li>
+            <li><strong>Heat/ice</strong></li>
+          </ul>
+          <p>Ask us before taking any new medication!</p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>HERBAL SUPPLEMENTS - BE CAREFUL!</h3>
+        <div class="education-content">
+          <p>Many "natural" products can harm kidneys:</p>
+          <ul>
+            <li>Not regulated by FDA</li>
+            <li>May contain hidden ingredients</li>
+            <li>Can interact with your medications</li>
+            <li><strong>Always tell us what supplements you take</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>BEFORE TAKING ANY NEW MEDICATION</h4>
+        <ul>
+          <li>Call us first - even over-the-counter</li>
+          <li>Tell pharmacist you have kidney disease</li>
+          <li>Ask your other doctors to check with us</li>
+          <li>Read labels for kidney warnings</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

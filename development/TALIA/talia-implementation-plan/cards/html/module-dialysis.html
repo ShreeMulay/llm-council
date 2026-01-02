@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dialysis Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-navy">
+        <h1>DIALYSIS MODULE</h1>
+        <div class="subtitle">"Monthly Dialysis Patient Review"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Dialysis Unit:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">DIALYSIS DETAILS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Modality:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> In-center HD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Home HD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> CAPD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> APD</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Schedule:</span> <span class="input-field medium"></span>
+            <span style="margin-left: 0.1in;">Time on dialysis:</span> <span class="input-field short"></span> <span>hrs</span>
+          </div>
+          <div class="form-row">
+            <span>Dialysis vintage:</span> <span class="input-field short"></span> <span>months/years</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ACCESS STATUS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Access type:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> AVF</span>
+              <span class="checkbox-item"><span class="checkbox"></span> AVG</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Catheter</span>
+              <span class="checkbox-item"><span class="checkbox"></span> PD catheter</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Access issues?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Poor flow</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Infection</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Clot</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Stenosis</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Needs catheter removal/conversion</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ADEQUACY</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Kt/V:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">Goal: &gt;1.2 (HD), &gt;1.7 (PD)</span>
+          </div>
+          <div class="form-row">
+            <span>URR:</span> <span class="input-field short"></span> <span>%</span>
+            <span style="margin-left: 0.2in;">Goal: &gt;65%</span>
+          </div>
+          <div class="form-row">
+            <span>Adequate?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No - needs review</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">DRY WEIGHT</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current dry weight:</span> <span class="input-field short"></span> <span>kg</span>
+          </div>
+          <div class="form-row">
+            <span>Fluid status:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> At goal</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Overloaded - lower DW</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Too dry - raise DW</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>IDWG average:</span> <span class="input-field short"></span> <span>kg</span>
+            <span style="margin-left: 0.1in;">Goal: &lt;3-4% of DW</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">LABS REVIEW</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Hgb:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.05in;">K+:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.05in;">Phos:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.05in;">PTH:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Albumin:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Goal: &gt;3.5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">TRANSPLANT STATUS</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Not candidate</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Not interested</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Pending eval</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Listed</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Living donor being worked up</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-navy">
+        <h1>DIALYSIS PATIENT GUIDE</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>YOUR DRY WEIGHT</h3>
+        <div class="education-content">
+          <p>Your dry weight is your weight when all extra fluid is removed.</p>
+          <ul>
+            <li>Too much fluid = swelling, high BP, shortness of breath</li>
+            <li>Too little fluid = cramps, dizziness, low BP</li>
+            <li>Report weight changes or symptoms to dialysis staff</li>
+          </ul>
+          <p><strong>My dry weight goal: _______ kg</strong></p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>FLUID AND DIET LIMITS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Fluid:</strong> Usually 32-48 oz/day (ask your team)</li>
+            <li><strong>Sodium:</strong> Less than 2,000 mg/day</li>
+            <li><strong>Potassium:</strong> Limit high-K+ foods</li>
+            <li><strong>Phosphorus:</strong> Take binders WITH meals</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>ACCESS CARE</h3>
+        <div class="education-content">
+          <p><strong>Your access is your lifeline!</strong></p>
+          <ul>
+            <li>Check your fistula/graft daily for the "thrill" (buzzing feeling)</li>
+            <li>Keep it clean - wash before dialysis</li>
+            <li>No blood draws, BP, or sleeping on access arm</li>
+            <li>Report any redness, swelling, or drainage immediately</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>ATTEND ALL TREATMENTS</h3>
+        <div class="education-content">
+          <ul>
+            <li>Missing dialysis is dangerous</li>
+            <li>Shortened treatments don't clean well enough</li>
+            <li>Stay the full time - your life depends on it</li>
+            <li>Plan ahead for holidays and travel</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Access problems (no thrill, swelling, fever)</li>
+          <li>Severe shortness of breath</li>
+          <li>Chest pain</li>
+          <li>Can't attend dialysis</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

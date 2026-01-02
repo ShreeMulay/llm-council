@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Summary Card - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-navy">
+        <h1>PATIENT SUMMARY CARD</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Updated:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KIDNEY STATUS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>CKD Stage:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">Current GFR:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">eGFR Slope:</span> <span class="input-field short"></span> <span>/yr</span>
+          </div>
+          <div class="form-row">
+            <span>CKD Cause:</span> <span class="input-field long"></span>
+          </div>
+          <div class="form-row">
+            <span>Proteinuria:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Mild</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Moderate</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Severe</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KEY COMORBIDITIES</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Diabetes</span>
+            <span class="checkbox-item"><span class="checkbox"></span> HTN</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Heart Failure</span>
+            <span class="checkbox-item"><span class="checkbox"></span> CAD</span>
+            <span class="checkbox-item"><span class="checkbox"></span> A-Fib</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> PKD</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Lupus</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Transplant</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Gout</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Anemia</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Other:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">CURRENT KIDNEY MEDICATIONS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> ACEi/ARB:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> SGLT2i:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Finerenone</span>
+            <span class="checkbox-item" style="margin-left: 0.2in;"><span class="checkbox"></span> Bicarbonate</span>
+            <span class="checkbox-item" style="margin-left: 0.2in;"><span class="checkbox"></span> K+ Binder</span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> ESA:</span> <span class="input-field short"></span>
+            <span class="checkbox-item" style="margin-left: 0.1in;"><span class="checkbox"></span> Iron:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Phosphorus Binder:</span> <span class="input-field medium"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KIDNEY REPLACEMENT PLANNING</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Status:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Not yet needed</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Education started</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Modality chosen</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Modality:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> HD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> PD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Home HD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Transplant</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Conservative</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Access:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> AVF</span>
+              <span class="checkbox-item"><span class="checkbox"></span> AVG</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Catheter</span>
+              <span class="checkbox-item"><span class="checkbox"></span> PD Cath</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Transplant listed</span>
+            <span style="margin-left: 0.2in;">Living donor identified?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ALLERGIES / SPECIAL NOTES</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span class="input-field long" style="min-height: 0.3in;"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Last Updated: <span class="input-field medium"></span></span>
+        <span>By: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-navy">
+        <h1>YOUR KIDNEY CARE SUMMARY</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="education-section">
+        <h3>YOUR KIDNEY TEAM</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Nephrologist:</strong> Dr. Shree Mulay</li>
+            <li><strong>Practice:</strong> The Kidney Experts, PLLC</li>
+            <li><strong>Phone:</strong> (731) 300-6155</li>
+            <li><strong>Website:</strong> thekidneyexperts.com</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>MY KIDNEY NUMBERS</h3>
+        <div class="education-content">
+          <table style="width: 100%; font-size: 8pt; border-collapse: collapse;">
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 4px; width: 40%;"><strong>My CKD Stage:</strong></td>
+              <td style="border: 1px solid #ddd; padding: 4px;"></td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 4px;"><strong>My GFR:</strong></td>
+              <td style="border: 1px solid #ddd; padding: 4px;"></td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 4px;"><strong>My BP Goal:</strong></td>
+              <td style="border: 1px solid #ddd; padding: 4px;">&lt;130/80</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #ddd; padding: 4px;"><strong>My A1C Goal:</strong></td>
+              <td style="border: 1px solid #ddd; padding: 4px;"></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>MY KEY MEDICATIONS</h3>
+        <div class="education-content">
+          <div style="border: 1px solid #ddd; padding: 0.1in; min-height: 0.8in; background: #fafafa;">
+            <p style="font-size: 8pt; color: #666;">List your kidney medications here:</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>MY CARE PLAN</h3>
+        <div class="education-content">
+          <ul>
+            <li>My kidney treatment choice: _______________</li>
+            <li>Transplant status: _______________</li>
+            <li>Next steps: _______________</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>IMPORTANT REMINDERS</h4>
+        <ul>
+          <li>Bring this card to EVERY doctor visit</li>
+          <li>Update when medications change</li>
+          <li>Show ER doctors this card</li>
+          <li>Ask before taking any new medications or supplements</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

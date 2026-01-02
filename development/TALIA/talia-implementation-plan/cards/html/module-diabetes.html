@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diabetes Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-yellow">
+        <h1>DIABETES MODULE</h1>
+        <div class="subtitle">"Blood Sugar and Kidney Health"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">DIABETES TYPE</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Type 1 Diabetes</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Type 2 Diabetes</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Other: <span class="input-field medium"></span></span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Duration of diabetes:</span> <span class="input-field short"></span> <span>years</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">GLYCEMIC CONTROL</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Last A1C:</span> <span class="input-field short"></span> <span>%</span>
+            <span style="margin-left: 0.2in;">Date:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span>Goal:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> &lt;7.0% (standard)</span>
+              <span class="checkbox-item"><span class="checkbox"></span> &lt;7.5%</span>
+              <span class="checkbox-item"><span class="checkbox"></span> &lt;8.0% (individualized)</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>A1C Status:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> At goal</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Above goal</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Not checked recently</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Order A1C today</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">CURRENT DIABETES MEDICATIONS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Metformin</span>
+            <span>Dose:</span> <span class="input-field short"></span> <span>mg</span>
+            <div class="checkbox-group" style="margin-left: 0.1in;">
+              <span class="checkbox-item"><span class="checkbox"></span> BID</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Daily</span>
+              <span class="checkbox-item"><span class="checkbox"></span> XR</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Held (GFR &lt;30)</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Dose reduced (GFR 30-45)</span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> SGLT2 inhibitor:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> GLP-1 agonist:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Insulin - Type:</span> <span class="input-field medium"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">SGLT2 INHIBITOR STATUS (Kidney Protection Priority)</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Already on SGLT2i - Continue</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Not on SGLT2i, GFR &gt;20 - Recommend starting today</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Not on SGLT2i, GFR &lt;20 - Discuss with provider</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Contraindicated - Reason: <span class="input-field medium"></span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">HOME GLUCOSE MONITORING</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Checking regularly</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Not checking regularly</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Uses CGM</span>
+          </div>
+          <div class="form-row">
+            <span>Fasting average:</span> <span class="input-field short"></span> <span>mg/dL</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EDUCATION COMPLETED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> A1C goal</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Medication purposes</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hypoglycemia awareness</span>
+            <span class="checkbox-item"><span class="checkbox"></span> SGLT2i benefits/side effects</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-yellow">
+        <h1>DIABETES AND YOUR KIDNEYS</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>WHY BLOOD SUGAR MATTERS FOR YOUR KIDNEYS</h3>
+        <div class="education-content">
+          <p>High blood sugar damages the tiny blood vessels in your kidneys over time. This is called "diabetic kidney disease."</p>
+          <p><strong>Diabetes is the #1 cause of kidney failure in America.</strong></p>
+          <p>The GOOD news: Controlling your blood sugar can SLOW or STOP kidney damage from getting worse!</p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>YOUR A1C NUMBER</h3>
+        <div class="education-content">
+          <p>A1C tells us your AVERAGE blood sugar over 3 months.</p>
+          <ul>
+            <li>Less than 7.0% = Good control for most people</li>
+            <li>7.0% - 8.0% = May be okay depending on your situation</li>
+            <li>Over 8.0% = Higher risk of kidney damage</li>
+          </ul>
+          <p><strong>Your goal A1C: _______ %</strong></p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>MEDICATIONS THAT PROTECT YOUR KIDNEYS</h3>
+        <div class="education-content">
+          <p><strong>SGLT2 Inhibitors (Jardiance, Farxiga):</strong></p>
+          <ul>
+            <li>Lower blood sugar AND protect kidneys</li>
+            <li>Can slow kidney disease progression by 30-40%</li>
+            <li>Side effect: May cause yeast infections</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>LOW BLOOD SUGAR (HYPOGLYCEMIA)</h3>
+        <div class="education-content">
+          <p><strong>Symptoms:</strong> Shaking, sweating, confusion, fast heartbeat</p>
+          <p><strong>What to do:</strong></p>
+          <ol>
+            <li>Eat or drink 15 grams of fast sugar (4 glucose tablets, 4 oz juice)</li>
+            <li>Wait 15 minutes and recheck</li>
+            <li>If still low, repeat</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Blood sugar over 300 that won't come down</li>
+          <li>Frequent low blood sugar episodes</li>
+          <li>Signs of infection (fever, frequent urination with burning)</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

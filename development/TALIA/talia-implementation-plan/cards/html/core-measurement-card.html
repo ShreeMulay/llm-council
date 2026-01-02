@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Measurement Card - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-blue">
+        <h1>MEASUREMENT CARD</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">WEIGHT</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Today:</span> <span class="input-field medium"></span> <span>lbs</span>
+            <span style="margin-left: 0.2in;">Last Visit:</span> <span class="input-field medium"></span> <span>lbs</span>
+          </div>
+          <div class="form-row">
+            <span>Change:</span> <span class="input-field short"></span> <span>lbs</span>
+            <div class="checkbox-group" style="margin-left: 0.2in;">
+              <span class="checkbox-item"><span class="checkbox"></span> Gain</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Loss</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No Change</span>
+            </div>
+          </div>
+          <div class="alert-box">ALERT if change > 5 lbs: <span class="input-field long"></span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">BLOOD PRESSURE</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Systolic:</span> <span class="input-field short"></span> <span>mmHg</span>
+            <span style="margin-left: 0.3in;">Diastolic:</span> <span class="input-field short"></span> <span>mmHg</span>
+          </div>
+          <div class="form-row">
+            <span>Position:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Seated</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Standing</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Lying</span>
+            </div>
+            <span style="margin-left: 0.2in;">Arm:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Right</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Left</span>
+            </div>
+          </div>
+          <div class="alert-box">URGENT if >180/110 or <90/60: <span class="input-field long"></span></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">HEART RATE & RHYTHM</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Heart Rate:</span> <span class="input-field short"></span> <span>bpm</span>
+            <span style="margin-left: 0.3in;">Rhythm:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Regular</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Irregular</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">OTHER VITALS (if indicated)</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Temperature:</span> <span class="input-field short"></span> <span>&deg;F</span>
+            <span style="margin-left: 0.3in;">O2 Saturation:</span> <span class="input-field short"></span> <span>%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EDEMA ASSESSMENT</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Grade:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Trace</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 2+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 4+</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Location:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Ankles</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Legs</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Sacral</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Periorbital</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Other</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Change from last visit:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Better</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Same</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Worse</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">PAIN (if applicable)</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Level:</span> <span class="input-field short"></span> <span>/10</span>
+            <span style="margin-left: 0.2in;">Location:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flags-section">
+        <div class="flags-title">FLAGS TRIGGERED:</div>
+        <div class="checkbox-group">
+          <span class="checkbox-item"><span class="checkbox"></span> Weight</span>
+          <span class="checkbox-item"><span class="checkbox"></span> BP High</span>
+          <span class="checkbox-item"><span class="checkbox"></span> BP Low</span>
+          <span class="checkbox-item"><span class="checkbox"></span> Edema Change</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-blue">
+        <h1>UNDERSTANDING YOUR NUMBERS</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="education-section">
+        <h3>WHY WE CHECK THESE THINGS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>WEIGHT</strong> tells us about fluid in your body
+              <ul>
+                <li>Quick weight gain often means extra fluid</li>
+                <li>Quick weight loss might mean you need to drink more</li>
+                <li>Aim for steady weight, not big swings</li>
+              </ul>
+            </li>
+            <li><strong>BLOOD PRESSURE</strong> affects your kidneys AND heart
+              <ul>
+                <li>High blood pressure damages your kidneys over time</li>
+                <li>Your goal is usually below 130/80</li>
+                <li>Take your BP medications every day, same time</li>
+              </ul>
+            </li>
+            <li><strong>SWELLING (EDEMA)</strong> shows where fluid is building up
+              <ul>
+                <li>Check your ankles each morning</li>
+                <li>Press on your shin - does it leave a dent?</li>
+                <li>Tell us if your shoes feel tight</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WHAT YOU CAN DO AT HOME</h3>
+        <div class="education-content">
+          <ul>
+            <li>Weigh yourself every morning, same time, same clothes</li>
+            <li>Keep a log of your weight</li>
+            <li>Limit salt to help control fluid and blood pressure</li>
+            <li>Take all medications as prescribed</li>
+            <li>Check your ankles for swelling each day</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Weight gain of 3+ pounds in one day or 5+ pounds in one week</li>
+          <li>Blood pressure over 180/110 or under 90/60</li>
+          <li>Sudden increase in swelling</li>
+          <li>Trouble breathing, especially when lying down</li>
+          <li>Dizziness or feeling faint</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

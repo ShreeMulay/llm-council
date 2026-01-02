@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Patient Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-blue">
+        <h1>NEW PATIENT MODULE</h1>
+        <div class="subtitle">"Welcome to The Kidney Experts"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">REFERRAL INFORMATION</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Referred by:</span> <span class="input-field long"></span>
+          </div>
+          <div class="form-row">
+            <span>Reason for referral:</span>
+          </div>
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Elevated creatinine</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Proteinuria</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hematuria</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hypertension</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> Electrolyte abnormality</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Kidney stones</span>
+            <span class="checkbox-item"><span class="checkbox"></span> PKD</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Other: <span class="input-field medium"></span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">BASELINE KIDNEY FUNCTION</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Creatinine:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">GFR:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">Date:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span>CKD Stage:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> 1</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 2</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3a</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3b</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 4</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 5</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Unknown</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>UACR/Proteinuria:</span> <span class="input-field short"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KEY MEDICAL HISTORY</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Diabetes</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hypertension</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Heart disease</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Heart failure</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> Prior AKI</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Family hx kidney disease</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Autoimmune disease</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Cancer</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Other significant history:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">INITIAL WORKUP ORDERED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> CMP</span>
+            <span class="checkbox-item"><span class="checkbox"></span> CBC</span>
+            <span class="checkbox-item"><span class="checkbox"></span> UA with micro</span>
+            <span class="checkbox-item"><span class="checkbox"></span> UACR</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Lipid panel</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> A1C</span>
+            <span class="checkbox-item"><span class="checkbox"></span> PTH</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Vitamin D</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Iron panel</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Renal ultrasound</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Other:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">INITIAL EDUCATION PROVIDED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> What kidneys do</span>
+            <span class="checkbox-item"><span class="checkbox"></span> CKD basics explained</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Avoid NSAIDs</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hydration importance</span>
+            <span class="checkbox-item"><span class="checkbox"></span> When to call</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-blue">
+        <h1>WELCOME TO THE KIDNEY EXPERTS</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>WHAT YOUR KIDNEYS DO</h3>
+        <div class="education-content">
+          <p>Your kidneys are amazing organs that:</p>
+          <ul>
+            <li>Filter waste and extra fluid from your blood</li>
+            <li>Control blood pressure</li>
+            <li>Keep minerals in balance (potassium, calcium, phosphorus)</li>
+            <li>Help make red blood cells</li>
+            <li>Keep your bones healthy</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WHAT IS CKD?</h3>
+        <div class="education-content">
+          <p><strong>Chronic Kidney Disease (CKD)</strong> means your kidneys aren't filtering as well as they should.</p>
+          <ul>
+            <li>CKD is very common - millions of people have it</li>
+            <li>It usually happens slowly over years</li>
+            <li>The good news: we can often slow it down!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>PROTECT YOUR KIDNEYS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Control blood pressure</strong> - this is huge!</li>
+            <li><strong>Control blood sugar</strong> if diabetic</li>
+            <li><strong>Avoid NSAIDs</strong> (ibuprofen, Advil, Aleve, Motrin)</li>
+            <li><strong>Stay hydrated</strong> - drink water throughout the day</li>
+            <li><strong>Take medications</strong> as prescribed</li>
+            <li><strong>Don't smoke</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>OUR MISSION</h3>
+        <div class="education-content">
+          <p style="font-style: italic; text-align: center; font-size: 11pt; color: #38a169;">
+            "Ridding the world of the need for dialysis"
+          </p>
+          <p>We are committed to keeping your kidneys working as long as possible. With proper care, many patients can avoid or delay dialysis for years - or even forever!</p>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Swelling in legs, ankles, or face</li>
+          <li>Changes in urination (less, blood, foamy)</li>
+          <li>Severe fatigue or weakness</li>
+          <li>Nausea or vomiting</li>
+          <li>Questions about your medications</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

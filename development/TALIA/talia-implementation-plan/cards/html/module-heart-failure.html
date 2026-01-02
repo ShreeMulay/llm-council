@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Heart Failure Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-red">
+        <h1>HEART FAILURE MODULE</h1>
+        <div class="subtitle">"Your Heart and Kidneys Work Together"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">HEART FAILURE TYPE</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> HFrEF (EF &lt;40%)</span>
+            <span class="checkbox-item"><span class="checkbox"></span> HFmrEF (EF 40-49%)</span>
+            <span class="checkbox-item"><span class="checkbox"></span> HFpEF (EF &ge;50%)</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Last EF:</span> <span class="input-field short"></span> <span>%</span>
+            <span style="margin-left: 0.2in;">Date:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span>NYHA Class:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> I</span>
+              <span class="checkbox-item"><span class="checkbox"></span> II</span>
+              <span class="checkbox-item"><span class="checkbox"></span> III</span>
+              <span class="checkbox-item"><span class="checkbox"></span> IV</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">VOLUME STATUS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current weight:</span> <span class="input-field short"></span> <span>lbs</span>
+            <span style="margin-left: 0.1in;">Dry weight:</span> <span class="input-field short"></span> <span>lbs</span>
+            <span style="margin-left: 0.1in;">Difference:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Volume status:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Euvolemic</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Hypervolemic</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Hypovolemic</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Edema:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> None</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 2+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3+</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 4+</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>JVD:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+            </div>
+            <span style="margin-left: 0.2in;">Orthopnea:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Yes - # pillows: <span class="input-field short"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">HEART FAILURE MEDICATIONS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> ACEi/ARB/ARNI:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Beta-blocker:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> SGLT2i:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> MRA:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span class="checkbox-item"><span class="checkbox"></span> Loop diuretic:</span> <span class="input-field medium"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">DIURETIC ADJUSTMENT</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> No change needed</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Increase diuretic</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Decrease diuretic</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Add thiazide</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>New dose:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EDUCATION COMPLETED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Daily weights</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Fluid restriction</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Sodium restriction</span>
+            <span class="checkbox-item"><span class="checkbox"></span> When to call</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-red">
+        <h1>YOUR HEART AND KIDNEYS</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>HOW YOUR HEART AND KIDNEYS ARE CONNECTED</h3>
+        <div class="education-content">
+          <p>Your heart pumps blood to your kidneys. If your heart is weak, less blood gets to your kidneys. This can make kidney function worse.</p>
+          <p>Your kidneys control fluid in your body. Too much fluid makes your heart work harder.</p>
+          <p><strong>Protecting one protects the other!</strong></p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>DAILY WEIGHT IS CRITICAL</h3>
+        <div class="education-content">
+          <ul>
+            <li>Weigh yourself every morning BEFORE eating or drinking</li>
+            <li>Use the same scale, same clothes</li>
+            <li>Write it down or use an app</li>
+            <li><strong>Call us if you gain 3+ lbs in one day or 5+ lbs in one week</strong></li>
+          </ul>
+          <p>My dry weight goal: _______ lbs</p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>FLUID AND SALT LIMITS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Fluid limit:</strong> Usually 6-8 cups (48-64 oz) per day</li>
+            <li><strong>Sodium limit:</strong> Less than 2,000 mg per day</li>
+            <li>Avoid canned soups, processed foods, fast food</li>
+            <li>Read labels - sodium adds up fast!</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WATER PILLS (DIURETICS)</h3>
+        <div class="education-content">
+          <ul>
+            <li>Help remove extra fluid from your body</li>
+            <li>Take in the morning to avoid nighttime bathroom trips</li>
+            <li>You'll urinate more - this is expected</li>
+            <li>Don't skip doses even if you feel fine</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US RIGHT AWAY</h4>
+        <ul>
+          <li>Weight gain of 3+ lbs in one day or 5+ lbs in one week</li>
+          <li>Increased swelling in legs, ankles, or belly</li>
+          <li>Trouble breathing, especially when lying down</li>
+          <li>Waking up at night short of breath</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

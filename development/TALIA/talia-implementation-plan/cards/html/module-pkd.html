@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PKD Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-magenta">
+        <h1>PKD MODULE</h1>
+        <div class="subtitle">"Polycystic Kidney Disease Management"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">PKD TYPE</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> ADPKD (autosomal dominant)</span>
+            <span class="checkbox-item"><span class="checkbox"></span> ARPKD (autosomal recessive)</span>
+            <span class="checkbox-item"><span class="checkbox"></span> PKD - type unknown</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Family history:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Parent</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Sibling</span>
+              <span class="checkbox-item"><span class="checkbox"></span> None known</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Genetic testing:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> PKD1</span>
+              <span class="checkbox-item"><span class="checkbox"></span> PKD2</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Not done</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KIDNEY SIZE/VOLUME</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>TKV (total kidney volume):</span> <span class="input-field short"></span> <span>mL</span>
+            <span style="margin-left: 0.1in;">Date:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span>htTKV (height-adjusted):</span> <span class="input-field short"></span> <span>mL/m</span>
+          </div>
+          <div class="form-row">
+            <span>Mayo Class:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> 1A</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1B</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1C</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1D</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 1E</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Not calculated</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KIDNEY FUNCTION</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current GFR:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Creatinine:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Trend:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Stable</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Slow decline</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Rapid decline</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">TOLVAPTAN (JYNARQUE) STATUS</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Not a candidate</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Candidate - not yet started</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Currently on Jynarque</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Dose:</span> <span class="input-field short"></span> <span>/</span> <span class="input-field short"></span> <span>mg</span>
+          </div>
+          <div class="form-row">
+            <span>LFTs current:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Normal</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Elevated - action needed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">COMPLICATIONS</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Pain/discomfort</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Cyst infections</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Cyst hemorrhage</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Kidney stones</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> Liver cysts</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Brain aneurysm screen:</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Done</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Needed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EDUCATION COMPLETED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Disease progression</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hydration importance</span>
+            <span class="checkbox-item"><span class="checkbox"></span> BP control</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Jynarque counseling</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-magenta">
+        <h1>POLYCYSTIC KIDNEY DISEASE</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>WHAT IS PKD?</h3>
+        <div class="education-content">
+          <p>PKD is an inherited condition where fluid-filled cysts grow in your kidneys. Over time, these cysts can crowd out healthy kidney tissue.</p>
+          <p><strong>ADPKD</strong> is the most common type - it runs in families (50% chance of passing to children).</p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>SLOWING PKD PROGRESSION</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Control blood pressure</strong> - goal usually &lt;130/80</li>
+            <li><strong>Drink lots of water</strong> - at least 3 liters/day to suppress cyst growth hormone</li>
+            <li><strong>Limit caffeine</strong> - may stimulate cyst growth</li>
+            <li><strong>Avoid NSAIDs</strong> - ibuprofen, Aleve</li>
+            <li><strong>Consider Jynarque</strong> if you qualify - slows cyst growth</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>ABOUT JYNARQUE (TOLVAPTAN)</h3>
+        <div class="education-content">
+          <p>Jynarque is an FDA-approved medication that can slow PKD progression.</p>
+          <ul>
+            <li>Causes increased urination (expected)</li>
+            <li>Must drink lots of water</li>
+            <li>Requires monthly liver tests (rare risk of liver injury)</li>
+            <li>Not for everyone - talk to us about whether you qualify</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WATCHING FOR COMPLICATIONS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Cyst infection:</strong> Fever, flank pain - needs specific antibiotics</li>
+            <li><strong>Cyst bleeding:</strong> Blood in urine, pain - usually rest and fluids</li>
+            <li><strong>Kidney stones:</strong> More common in PKD</li>
+            <li><strong>Brain aneurysm:</strong> Family screening if history</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Blood in urine (especially with pain or fever)</li>
+          <li>Fever over 100.4&deg;F</li>
+          <li>Severe flank or abdominal pain</li>
+          <li>Sudden severe headache (could indicate aneurysm)</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

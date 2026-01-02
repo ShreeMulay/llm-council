@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AKI Follow-up Module - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-red">
+        <h1>AKI FOLLOW-UP MODULE</h1>
+        <div class="subtitle">"Recovery After Acute Kidney Injury"</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">AKI EPISODE DETAILS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Date of AKI:</span> <span class="input-field medium"></span>
+            <span style="margin-left: 0.1in;">Time since AKI:</span> <span class="input-field short"></span> <span>weeks/months</span>
+          </div>
+          <div class="form-row">
+            <span>Peak creatinine:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Baseline creatinine:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Dialysis required?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Yes - # sessions: <span class="input-field short"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">CAUSE OF AKI</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Sepsis/Infection</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Dehydration</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Contrast</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Medications (NSAIDs, etc.)</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> Surgery</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Heart failure</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Obstruction</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Unknown</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">CURRENT KIDNEY FUNCTION</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current creatinine:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Current GFR:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Recovery status:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Full recovery (back to baseline)</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Partial recovery</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No recovery - new CKD</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Still recovering</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>New baseline creatinine:</span> <span class="input-field short"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">RISK FACTOR MODIFICATION</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> NSAIDs stopped/avoided</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Nephrotoxic meds reviewed</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Hydration plan discussed</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> BP optimized</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Diabetes optimized</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Contrast protocol in place</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">MONITORING PLAN</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Recheck labs in:</span> <span class="input-field short"></span>
+            <div class="checkbox-group" style="margin-left: 0.1in;">
+              <span class="checkbox-item"><span class="checkbox"></span> weeks</span>
+              <span class="checkbox-item"><span class="checkbox"></span> months</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Follow-up visit in:</span> <span class="input-field short"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EDUCATION COMPLETED</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> AKI increases future CKD risk</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Avoid nephrotoxins</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Stay hydrated</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Long-term monitoring needed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-red">
+        <h1>AFTER ACUTE KIDNEY INJURY (AKI)</h1>
+      </div>
+
+      <div class="education-section">
+        <h3>WHAT HAPPENED TO YOUR KIDNEYS</h3>
+        <div class="education-content">
+          <p>You had an <strong>Acute Kidney Injury (AKI)</strong> - a sudden drop in how well your kidneys work. This can happen from:</p>
+          <ul>
+            <li>Severe infection or illness</li>
+            <li>Dehydration</li>
+            <li>Certain medications</li>
+            <li>Surgery or procedures</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WHY FOLLOW-UP MATTERS</h3>
+        <div class="education-content">
+          <p>Even if your kidneys seem better, AKI increases your risk for:</p>
+          <ul>
+            <li>Chronic kidney disease (CKD)</li>
+            <li>Another AKI episode</li>
+            <li>Heart problems</li>
+          </ul>
+          <p><strong>Regular monitoring helps catch problems early!</strong></p>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>PROTECT YOUR KIDNEYS GOING FORWARD</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>Avoid NSAIDs</strong> (ibuprofen, Advil, Aleve, Motrin)</li>
+            <li><strong>Stay hydrated</strong> - drink water throughout the day</li>
+            <li><strong>Tell all doctors</strong> about your AKI history</li>
+            <li><strong>Ask before</strong> any contrast dye for CT or heart cath</li>
+            <li><strong>Take medications</strong> as prescribed</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>BEFORE ANY PROCEDURE</h3>
+        <div class="education-content">
+          <p>Tell your doctors:</p>
+          <ul>
+            <li>"I had acute kidney injury on [date]"</li>
+            <li>"My kidney doctor is at The Kidney Experts"</li>
+            <li>"Please contact them before giving contrast dye"</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Decreased urination</li>
+          <li>Swelling in legs or ankles</li>
+          <li>Severe fatigue</li>
+          <li>Before any surgery or procedure with contrast</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

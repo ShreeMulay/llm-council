@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assessment Card - The Kidney Experts</title>
+  <link rel="stylesheet" href="card-styles.css">
+</head>
+<body>
+  <button class="print-controls no-print" onclick="window.print()">Print Card</button>
+
+  <div class="card-container">
+    <div class="card-page">
+      <div class="card-header header-green">
+        <h1>ASSESSMENT CARD</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="patient-info">
+        <div class="field"><label>Date:</label> <span class="input-line"></span></div>
+        <div class="field"><label>Patient:</label> <span class="input-line"></span></div>
+        <div class="field"><label>MRN:</label> <span class="input-line"></span></div>
+        <div class="field"><label>DOB:</label> <span class="input-line"></span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">KIDNEY FUNCTION STATUS</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Current GFR:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">Previous GFR:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.2in;">Date:</span> <span class="input-field medium"></span>
+          </div>
+          <div class="form-row">
+            <span>CKD Stage:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> 1</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 2</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3a</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 3b</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 4</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 5</span>
+              <span class="checkbox-item"><span class="checkbox"></span> 5D</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Trend:</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Stable</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Improving</span>
+              <span class="checkbox-item"><span class="checkbox"></span> Declining</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">LABS REVIEW</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Creatinine:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Potassium:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Bicarb:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>Hemoglobin:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">Phosphorus:</span> <span class="input-field short"></span>
+            <span style="margin-left: 0.1in;">PTH:</span> <span class="input-field short"></span>
+          </div>
+          <div class="form-row">
+            <span>UACR:</span> <span class="input-field short"></span> <span>mg/g</span>
+            <span style="margin-left: 0.2in;">24hr Protein:</span> <span class="input-field short"></span> <span>g/day</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">SYMPTOMS CHECK</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Fatigue</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Nausea</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Poor appetite</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Itching</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Sleep issues</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Muscle cramps</span>
+          </div>
+          <div class="checkbox-group mt-1">
+            <span class="checkbox-item"><span class="checkbox"></span> Shortness of breath</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Chest pain</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Confusion</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Decreased urine</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Other symptoms:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">MEDICATION REVIEW</div>
+        <div class="section-content">
+          <div class="form-row">
+            <span>Taking all medications as prescribed?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Any new medications or changes?</span>
+            <div class="checkbox-group">
+              <span class="checkbox-item"><span class="checkbox"></span> Yes</span>
+              <span class="checkbox-item"><span class="checkbox"></span> No</span>
+            </div>
+          </div>
+          <div class="form-row">
+            <span>Details:</span> <span class="input-field long"></span>
+          </div>
+          <div class="form-row">
+            <span>Any OTC/supplements?</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">RECENT EVENTS</div>
+        <div class="section-content">
+          <div class="checkbox-group">
+            <span class="checkbox-item"><span class="checkbox"></span> Hospitalization</span>
+            <span class="checkbox-item"><span class="checkbox"></span> ER visit</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Procedure/Surgery</span>
+            <span class="checkbox-item"><span class="checkbox"></span> Infection</span>
+            <span class="checkbox-item"><span class="checkbox"></span> None</span>
+          </div>
+          <div class="form-row mt-1">
+            <span>Details:</span> <span class="input-field long"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flags-section">
+        <div class="flags-title">PROVIDER ALERTS:</div>
+        <div class="checkbox-group">
+          <span class="checkbox-item"><span class="checkbox"></span> GFR Drop &gt;5</span>
+          <span class="checkbox-item"><span class="checkbox"></span> High K+</span>
+          <span class="checkbox-item"><span class="checkbox"></span> Low Bicarb</span>
+          <span class="checkbox-item"><span class="checkbox"></span> Uremic Sx</span>
+          <span class="checkbox-item"><span class="checkbox"></span> Recent Event</span>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <span>Completed by: <span class="input-field medium"></span> (initials)</span>
+        <span>Time: <span class="input-field short"></span></span>
+      </div>
+    </div>
+
+    <div class="card-page card-back">
+      <div class="card-header header-green">
+        <h1>UNDERSTANDING YOUR KIDNEY HEALTH</h1>
+        <div class="brand">THE KIDNEY EXPERTS</div>
+      </div>
+
+      <div class="education-section">
+        <h3>YOUR KIDNEY NUMBERS</h3>
+        <div class="education-content">
+          <ul>
+            <li><strong>GFR (Glomerular Filtration Rate)</strong>
+              <ul>
+                <li>Measures how well your kidneys filter blood</li>
+                <li>Normal is above 90</li>
+                <li>Lower numbers mean kidneys are working less</li>
+              </ul>
+            </li>
+            <li><strong>Creatinine</strong>
+              <ul>
+                <li>Waste product from muscles</li>
+                <li>Higher levels = kidneys filtering less</li>
+              </ul>
+            </li>
+            <li><strong>Protein in Urine (UACR)</strong>
+              <ul>
+                <li>Healthy kidneys keep protein in blood</li>
+                <li>Protein leaking into urine = kidney damage</li>
+                <li>Goal: Less than 30 mg/g</li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>CKD STAGES</h3>
+        <div class="education-content">
+          <table style="width: 100%; font-size: 8pt; border-collapse: collapse;">
+            <tr><td style="border-bottom: 1px solid #ddd; padding: 3px;">Stage 1: GFR 90+ (kidney damage, normal function)</td></tr>
+            <tr><td style="border-bottom: 1px solid #ddd; padding: 3px;">Stage 2: GFR 60-89 (mild decrease)</td></tr>
+            <tr><td style="border-bottom: 1px solid #ddd; padding: 3px;">Stage 3a: GFR 45-59 (mild-moderate)</td></tr>
+            <tr><td style="border-bottom: 1px solid #ddd; padding: 3px;">Stage 3b: GFR 30-44 (moderate-severe)</td></tr>
+            <tr><td style="border-bottom: 1px solid #ddd; padding: 3px;">Stage 4: GFR 15-29 (severe)</td></tr>
+            <tr><td style="padding: 3px;">Stage 5: GFR &lt;15 (kidney failure)</td></tr>
+          </table>
+        </div>
+      </div>
+
+      <div class="education-section">
+        <h3>WARNING SIGNS TO WATCH</h3>
+        <div class="education-content">
+          <ul>
+            <li>Feeling very tired or weak</li>
+            <li>Nausea or vomiting</li>
+            <li>Not wanting to eat</li>
+            <li>Swelling in legs, ankles, or feet</li>
+            <li>Making less urine than usual</li>
+            <li>Trouble thinking clearly</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="call-box">
+        <h4>WHEN TO CALL US</h4>
+        <ul>
+          <li>Any of the warning signs above get worse suddenly</li>
+          <li>You can't take your medications</li>
+          <li>You've been to the ER or hospital</li>
+          <li>You need imaging with contrast dye</li>
+        </ul>
+        <div class="phone">(731) 300-6155</div>
+      </div>
+
+      <div class="brand-footer">
+        <div class="practice-name">THE KIDNEY EXPERTS, PLLC</div>
+        <div class="mission">"Ridding the world of the need for dialysis"</div>
+        <div class="phone">Phone: (731) 300-6155</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
