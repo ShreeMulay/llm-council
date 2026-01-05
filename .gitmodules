@@ -37,3 +37,6 @@
 [submodule "development/tke-faxflow"]
 	path = development/tke-faxflow
 	url = git@github.com:ShreeMulay/tke-faxflow.git
+[submodule "development/clarity-engine"]
+	path = development/clarity-engine
+	url = git@github.com:ShreeMulay/clarity-engine.git
