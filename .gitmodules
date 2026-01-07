@@ -40,3 +40,6 @@
 [submodule "development/clarity-engine"]
 	path = development/clarity-engine
 	url = git@github.com:ShreeMulay/clarity-engine.git
+[submodule "development/TALIA/tke-provider-workload-offload"]
+	path = development/TALIA/tke-provider-workload-offload
+	url = git@github.com:ShreeMulay/tke-provider-workload-offload.git
