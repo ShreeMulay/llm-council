@@ -43,3 +43,6 @@
 [submodule "development/TALIA/tke-provider-workload-offload"]
 	path = development/TALIA/tke-provider-workload-offload
 	url = git@github.com:ShreeMulay/tke-provider-workload-offload.git
+[submodule "development/TALIA/tke-clinical-training"]
+	path = development/TALIA/tke-clinical-training
+	url = git@github.com:ShreeMulay/tke-clinical-training.git
