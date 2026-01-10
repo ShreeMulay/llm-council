@@ -137,12 +137,12 @@
 - [x] Create executor/error_analyzer.py
 
 ### 3.4 Execution Store
-- [ ] **TEST**: stores/execution-store.test.ts
+- [x] **TEST**: stores/execution-store.test.ts
   - test_execute_mutation
   - test_loading_state
   - test_error_handling
-- [ ] Create stores/execution-store.ts
-- [ ] Create hooks/use-execute.ts
+- [x] Create stores/execution-store.ts
+- [x] Create hooks/use-execute.ts
 
 ### 3.5 Output Panel
 - [ ] **TEST**: components/output/output-panel.test.tsx
