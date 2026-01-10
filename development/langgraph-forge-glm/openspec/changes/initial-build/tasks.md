@@ -123,18 +123,18 @@
 - [x] Create api/execute.py
 
 ### 3.2 Code Parser
-- [ ] **TEST**: unit/test_parser.py
+- [x] **TEST**: unit/test_parser.py
   - test_parse_simple_graph
   - test_parse_conditional_edges
   - test_parse_entry_point
-- [ ] Create executor/parser.py
+- [x] Create executor/parser.py
 
 ### 3.3 Error Analyzer
-- [ ] **TEST**: unit/test_error_analyzer.py
+- [x] **TEST**: unit/test_error_analyzer.py
   - test_keyerror_suggestions
   - test_node_exists_suggestions
   - test_api_key_suggestions
-- [ ] Create executor/error_analyzer.py
+- [x] Create executor/error_analyzer.py
 
 ### 3.4 Execution Store
 - [ ] **TEST**: stores/execution-store.test.ts
