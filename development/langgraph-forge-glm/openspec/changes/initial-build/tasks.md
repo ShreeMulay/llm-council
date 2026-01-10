@@ -74,7 +74,8 @@
 - [x] Create lib/themes.ts (7 themes)
 - [x] Create styles/themes.css
 - [x] Create stores/theme-store.ts
-- [ ] Create components/theme/theme-switcher.tsx
+- [x] **TEST**: components/theme/theme-switcher.test.tsx
+- [x] Create components/theme/theme-switcher.tsx
 
 ### 2.3 Layout Components
 - [x] Create components/layout/header.tsx
@@ -97,11 +98,11 @@
 - [x] Create components/providers/model-selector.tsx
 
 ### 2.6 Code Editor
-- [ ] **TEST**: components/editor/code-editor.test.tsx
+- [x] **TEST**: components/editor/code-editor.test.tsx
   - test_renders_code
   - test_syntax_highlighting
   - test_on_change_callback
-- [ ] Create components/editor/code-editor.tsx
+- [x] Create components/editor/code-editor.tsx
 
 ### 2.7 API Client
 - [x] Create lib/api-client.ts
