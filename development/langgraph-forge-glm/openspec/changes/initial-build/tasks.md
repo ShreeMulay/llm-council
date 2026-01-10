@@ -49,52 +49,52 @@
 - [x] Create api/health.py (already in main.py)
 
 ### 1.8 Models API
-- [ ] **TEST**: integration/test_api_models.py
+- [x] **TEST**: integration/test_api_models.py
   - test_models_returns_for_provider
   - test_models_cached
-- [ ] Create api/models.py
+- [x] Create api/models.py
 
 ---
 
 ## Phase 2: Frontend Foundation
 
 ### 2.1 Project Setup
-- [ ] Initialize Bun project with Vite
-- [ ] Configure TypeScript
-- [ ] Install and configure Tailwind v4
-- [ ] Initialize Shadcn/ui v4
-- [ ] Configure Vitest
-- [ ] Configure Playwright
+- [x] Initialize Bun project with Vite
+- [x] Configure TypeScript
+- [x] Install and configure Tailwind v4
+- [x] Initialize Shadcn/ui v4
+- [x] Configure Vitest
+- [x] Configure Playwright
 
 ### 2.2 Theme System
-- [ ] **TEST**: theme-store.test.ts
+- [x] **TEST**: theme-store.test.ts
   - test_default_theme
   - test_change_theme
   - test_persist_theme
-- [ ] Create lib/themes.ts (7 themes)
-- [ ] Create styles/themes.css
-- [ ] Create stores/theme-store.ts
+- [x] Create lib/themes.ts (7 themes)
+- [x] Create styles/themes.css
+- [x] Create stores/theme-store.ts
 - [ ] Create components/theme/theme-switcher.tsx
 
 ### 2.3 Layout Components
-- [ ] Create components/layout/header.tsx
-- [ ] Create components/layout/sidebar.tsx
-- [ ] Create components/layout/main-layout.tsx
+- [x] Create components/layout/header.tsx
+- [x] Create components/layout/sidebar.tsx
+- [x] Create components/layout/main-layout.tsx
 
 ### 2.4 Provider Store
-- [ ] **TEST**: stores/provider-store.test.ts
+- [x] **TEST**: stores/provider-store.test.ts
   - test_initial_state
   - test_set_provider
   - test_set_model
-- [ ] Create stores/provider-store.ts
+- [x] Create stores/provider-store.ts
 
 ### 2.5 Provider Selector
-- [ ] **TEST**: components/providers/provider-selector.test.tsx
+- [x] **TEST**: components/providers/provider-selector.test.tsx
   - test_renders_providers
   - test_select_provider
   - test_shows_models
-- [ ] Create components/providers/provider-selector.tsx
-- [ ] Create components/providers/model-selector.tsx
+- [x] Create components/providers/provider-selector.tsx
+- [x] Create components/providers/model-selector.tsx
 
 ### 2.6 Code Editor
 - [ ] **TEST**: components/editor/code-editor.test.tsx
@@ -104,8 +104,8 @@
 - [ ] Create components/editor/code-editor.tsx
 
 ### 2.7 API Client
-- [ ] Create lib/api-client.ts
-- [ ] Create hooks/use-models.ts
+- [x] Create lib/api-client.ts
+- [x] Create hooks/use-models.ts
 
 ---
 
