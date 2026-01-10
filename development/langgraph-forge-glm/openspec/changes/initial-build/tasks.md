@@ -1,0 +1,235 @@
+# Implementation Tasks: Initial Build
+
+## Phase 1: Backend Foundation
+
+### 1.1 Project Setup
+- [x] Create pyproject.toml with dependencies
+- [x] Create backend/.env.example
+- [x] Create backend/app/main.py (FastAPI app)
+- [x] Create backend/app/config.py (settings)
+- [x] Verify pytest runs
+
+### 1.2 Provider Abstraction
+- [x] **TEST**: test_providers/test_base.py - interface contract
+- [x] Create providers/base.py - abstract provider class
+- [x] Define Model and Pricing dataclasses
+
+### 1.3 OpenRouter Provider
+- [x] **TEST**: test_providers/test_openrouter.py
+  - test_list_models_returns_models
+  - test_list_models_includes_pricing
+  - test_invoke_returns_response
+  - test_invoke_returns_usage
+- [x] Create providers/openrouter.py
+
+### 1.4 Cerebras Provider
+- [x] **TEST**: test_providers/test_cerebras.py
+  - test_list_models_returns_models
+  - test_fallback_pricing_used
+  - test_invoke_returns_response
+- [x] Create providers/cerebras.py
+
+### 1.5 Fireworks Provider
+- [x] **TEST**: test_providers/test_fireworks.py
+  - (similar to cerebras)
+- [x] Create providers/fireworks.py
+
+### 1.6 Model Caching
+- [x] **TEST**: test_cache.py
+  - test_cache_stores_models
+  - test_cache_returns_fresh
+  - test_cache_refetches_when_stale
+  - test_cache_returns_stale_on_error
+- [x] Create cache/model_cache.py
+
+### 1.7 Health API
+- [x] **TEST**: integration/test_api_health.py
+  - test_health_returns_status
+  - test_health_shows_provider_status
+- [x] Create api/health.py (already in main.py)
+
+### 1.8 Models API
+- [ ] **TEST**: integration/test_api_models.py
+  - test_models_returns_for_provider
+  - test_models_cached
+- [ ] Create api/models.py
+
+---
+
+## Phase 2: Frontend Foundation
+
+### 2.1 Project Setup
+- [ ] Initialize Bun project with Vite
+- [ ] Configure TypeScript
+- [ ] Install and configure Tailwind v4
+- [ ] Initialize Shadcn/ui v4
+- [ ] Configure Vitest
+- [ ] Configure Playwright
+
+### 2.2 Theme System
+- [ ] **TEST**: theme-store.test.ts
+  - test_default_theme
+  - test_change_theme
+  - test_persist_theme
+- [ ] Create lib/themes.ts (7 themes)
+- [ ] Create styles/themes.css
+- [ ] Create stores/theme-store.ts
+- [ ] Create components/theme/theme-switcher.tsx
+
+### 2.3 Layout Components
+- [ ] Create components/layout/header.tsx
+- [ ] Create components/layout/sidebar.tsx
+- [ ] Create components/layout/main-layout.tsx
+
+### 2.4 Provider Store
+- [ ] **TEST**: stores/provider-store.test.ts
+  - test_initial_state
+  - test_set_provider
+  - test_set_model
+- [ ] Create stores/provider-store.ts
+
+### 2.5 Provider Selector
+- [ ] **TEST**: components/providers/provider-selector.test.tsx
+  - test_renders_providers
+  - test_select_provider
+  - test_shows_models
+- [ ] Create components/providers/provider-selector.tsx
+- [ ] Create components/providers/model-selector.tsx
+
+### 2.6 Code Editor
+- [ ] **TEST**: components/editor/code-editor.test.tsx
+  - test_renders_code
+  - test_syntax_highlighting
+  - test_on_change_callback
+- [ ] Create components/editor/code-editor.tsx
+
+### 2.7 API Client
+- [ ] Create lib/api-client.ts
+- [ ] Create hooks/use-models.ts
+
+---
+
+## Phase 3: Integration
+
+### 3.1 Execute API
+- [ ] **TEST**: integration/test_api_execute.py
+  - test_execute_simple_code
+  - test_execute_returns_output
+  - test_execute_returns_metrics
+  - test_execute_returns_graph_structure
+  - test_execute_handles_error
+  - test_execute_timeout
+- [ ] Create api/execute.py
+
+### 3.2 Code Parser
+- [ ] **TEST**: unit/test_parser.py
+  - test_parse_simple_graph
+  - test_parse_conditional_edges
+  - test_parse_entry_point
+- [ ] Create executor/parser.py
+
+### 3.3 Error Analyzer
+- [ ] **TEST**: unit/test_error_analyzer.py
+  - test_keyerror_suggestions
+  - test_node_exists_suggestions
+  - test_api_key_suggestions
+- [ ] Create executor/error_analyzer.py
+
+### 3.4 Execution Store
+- [ ] **TEST**: stores/execution-store.test.ts
+  - test_execute_mutation
+  - test_loading_state
+  - test_error_handling
+- [ ] Create stores/execution-store.ts
+- [ ] Create hooks/use-execute.ts
+
+### 3.5 Output Panel
+- [ ] **TEST**: components/output/output-panel.test.tsx
+  - test_shows_output
+  - test_shows_error
+  - test_shows_suggestions
+- [ ] Create components/output/output-panel.tsx
+- [ ] Create components/output/error-display.tsx
+
+---
+
+## Phase 4: Full Features
+
+### 4.1 Graph Visualization
+- [ ] **TEST**: components/graph/graph-canvas.test.tsx
+  - test_renders_nodes
+  - test_renders_edges
+  - test_handles_empty_graph
+- [ ] Create components/graph/graph-canvas.tsx
+- [ ] Create lib/graph-layout.ts (dagre)
+
+### 4.2 Custom Nodes
+- [ ] Create components/graph/nodes/start-node.tsx
+- [ ] Create components/graph/nodes/end-node.tsx
+- [ ] Create components/graph/nodes/llm-node.tsx
+- [ ] Create components/graph/nodes/tool-node.tsx
+
+### 4.3 Custom Edges
+- [ ] Create components/graph/edges/conditional-edge.tsx
+
+### 4.4 Metrics Panel
+- [ ] **TEST**: components/metrics/metrics-panel.test.tsx
+  - test_shows_tokens
+  - test_shows_cost
+  - test_shows_speed
+- [ ] Create components/metrics/metrics-panel.tsx
+- [ ] Create components/metrics/token-display.tsx
+- [ ] Create components/metrics/cost-display.tsx
+
+### 4.5 Playground Page
+- [ ] Create pages/playground/index.tsx
+- [ ] Wire up all components
+
+---
+
+## Phase 5: Content & Polish
+
+### 5.1 Level 1 Examples
+- [ ] Create examples/level-1/01-hello-state.py + .md
+- [ ] Create examples/level-1/02-two-nodes.py + .md
+- [ ] Create examples/level-1/03-llm-node.py + .md
+- [ ] Create examples/level-1/04-conditional-edge.py + .md
+- [ ] Create examples/level-1/05-simple-agent.py + .md
+- [ ] Create examples/metadata.json
+
+### 5.2 Tutorial Page
+- [ ] Create pages/tutorial/index.tsx
+- [ ] Create components/examples/example-list.tsx
+- [ ] Create components/examples/example-card.tsx
+
+### 5.3 Progress Tracking
+- [ ] **TEST**: stores/progress-store.test.ts
+- [ ] Create stores/progress-store.ts
+- [ ] Create components/examples/progress-indicator.tsx
+
+### 5.4 E2E Tests
+- [ ] Create tests/e2e/playground.spec.ts
+  - test_write_code
+  - test_change_provider
+  - test_execute_and_see_results
+  - test_see_graph_visualization
+- [ ] Create tests/e2e/tutorial.spec.ts
+  - test_navigate_examples
+  - test_run_example
+  - test_see_output
+
+### 5.5 Documentation
+- [ ] Create README.md with setup instructions
+- [ ] Create .env.example files
+- [ ] Document API in openspec/specs/
+
+---
+
+## Definition of Done
+
+Each task is complete when:
+1. Tests written and passing
+2. Implementation complete
+3. No linter errors
+4. Full test suite still passes
+5. Code reviewed (self-review for solo work)
