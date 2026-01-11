@@ -12,3 +12,9 @@ global.console = {
   error: vi.fn(),
   warn: vi.fn(),
 }
+
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+} as any

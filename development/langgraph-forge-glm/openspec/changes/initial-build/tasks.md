@@ -157,12 +157,12 @@
 ## Phase 4: Full Features
 
 ### 4.1 Graph Visualization
-- [ ] **TEST**: components/graph/graph-canvas.test.tsx
+- [x] **TEST**: components/graph/graph-canvas.test.tsx
   - test_renders_nodes
   - test_renders_edges
   - test_handles_empty_graph
-- [ ] Create components/graph/graph-canvas.tsx
-- [ ] Create lib/graph-layout.ts (dagre)
+- [x] Create components/graph/graph-canvas.tsx
+- [x] Create lib/graph-layout.ts (dagre)
 
 ### 4.2 Custom Nodes
 - [ ] Create components/graph/nodes/start-node.tsx
