@@ -8,8 +8,9 @@ describe('GraphCanvas', () => {
   it('should render nodes when nodes are provided', () => {
     const graphData: GraphData = {
       nodes: [
-        { id: '1', type: 'default' },
-        { id: '2', type: 'default' },
+        { id: 'start', type: 'start' },
+        { id: 'llm', type: 'llm' },
+        { id: 'end', type: 'end' },
       ],
       edges: [],
     }
@@ -22,11 +23,11 @@ describe('GraphCanvas', () => {
   it('should render edges when edges are provided', () => {
     const graphData: GraphData = {
       nodes: [
-        { id: '1', type: 'default' },
-        { id: '2', type: 'default' },
+        { id: 'start', type: 'start' },
+        { id: 'llm', type: 'llm' },
       ],
       edges: [
-        { source: '1', target: '2' },
+        { source: 'start', target: 'llm' },
       ],
     }
 
@@ -49,7 +50,7 @@ describe('GraphCanvas', () => {
   it('should be responsive to window resize', () => {
     const graphData: GraphData = {
       nodes: [
-        { id: '1', type: 'default' },
+        { id: 'start', type: 'start' },
       ],
       edges: [],
     }

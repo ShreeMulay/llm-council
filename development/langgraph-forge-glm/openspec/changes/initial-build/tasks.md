@@ -165,10 +165,10 @@
 - [x] Create lib/graph-layout.ts (dagre)
 
 ### 4.2 Custom Nodes
-- [ ] Create components/graph/nodes/start-node.tsx
-- [ ] Create components/graph/nodes/end-node.tsx
-- [ ] Create components/graph/nodes/llm-node.tsx
-- [ ] Create components/graph/nodes/tool-node.tsx
+- [x] Create components/graph/nodes/start-node.tsx
+- [x] Create components/graph/nodes/end-node.tsx
+- [x] Create components/graph/nodes/llm-node.tsx
+- [x] Create components/graph/nodes/tool-node.tsx
 
 ### 4.3 Custom Edges
 - [ ] Create components/graph/edges/conditional-edge.tsx
