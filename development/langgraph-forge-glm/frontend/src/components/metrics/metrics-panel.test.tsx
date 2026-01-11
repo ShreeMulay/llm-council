@@ -6,9 +6,9 @@ describe('MetricsPanel', () => {
   const mockMetrics = {
     provider: 'openrouter',
     model: 'anthropic/claude-3.5-sonnet',
-    inputTokens: 1500,
+    inputTokens: 1000,
     outputTokens: 3000,
-    totalTokens: 4500,
+    totalTokens: 4000,
     durationMs: 2500,
     tokensPerSecond: 1800,
     costUsd: 0.027,
@@ -33,9 +33,7 @@ describe('MetricsPanel', () => {
   it('should show zero values when no metrics', () => {
     render(<MetricsPanel metrics={null} />)
 
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
-    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(screen.getAllByText('0').length).toBeGreaterThanOrEqual(3)
     expect(screen.getByText('0 tokens/s')).toBeInTheDocument()
     expect(screen.getByText('$0.00')).toBeInTheDocument()
   })

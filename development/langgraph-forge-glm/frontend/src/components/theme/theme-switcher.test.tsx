@@ -2,12 +2,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, cleanup, screen, fireEvent } from '@testing-library/react'
 import { ThemeSwitcher } from './theme-switcher'
 import { useThemeStore } from '@/stores/theme-store'
+import type { useThemeStore as UseThemeStoreType } from '@/stores/theme-store'
 import '@testing-library/jest-dom/vitest'
 
 vi.mock('@/stores/theme-store', () => ({
   useThemeStore: vi.fn(),
 }))
 
+const mockUseThemeStore = useThemeStore as unknown as ReturnType<typeof vi.fn<UseThemeStoreType>>
 const mockSetTheme = vi.fn()
 
 describe('ThemeSwitcher', () => {
@@ -17,10 +19,10 @@ describe('ThemeSwitcher', () => {
   })
 
   it('renders theme button', () => {
-    vi.mocked(useThemeStore).mockReturnValue({
+    mockUseThemeStore.mockReturnValue({
       theme: 'light',
       setTheme: vi.fn(),
-    })
+    } as any)
 
     render(<ThemeSwitcher />)
     const button = screen.getByRole('button', { name: /theme/i })
@@ -28,10 +30,10 @@ describe('ThemeSwitcher', () => {
   })
 
   it('shows sun icon for light theme', () => {
-    vi.mocked(useThemeStore).mockReturnValue({
+    mockUseThemeStore.mockReturnValue({
       theme: 'light',
       setTheme: mockSetTheme,
-    })
+    } as any)
 
     render(<ThemeSwitcher />)
     const button = screen.getByRole('button')
@@ -39,10 +41,10 @@ describe('ThemeSwitcher', () => {
   })
 
   it('shows moon icon for dark theme', () => {
-    vi.mocked(useThemeStore).mockReturnValue({
+    mockUseThemeStore.mockReturnValue({
       theme: 'dark',
       setTheme: mockSetTheme,
-    })
+    } as any)
 
     render(<ThemeSwitcher />)
     const button = screen.getByRole('button')
@@ -51,10 +53,10 @@ describe('ThemeSwitcher', () => {
   })
 
   it('cycles through themes when clicked', () => {
-    vi.mocked(useThemeStore).mockReturnValue({
+    mockUseThemeStore.mockReturnValue({
       theme: 'light',
       setTheme: mockSetTheme,
-    })
+    } as any)
 
     render(<ThemeSwitcher />)
 

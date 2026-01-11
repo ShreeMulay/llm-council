@@ -6,7 +6,11 @@ interface TokenDisplayProps {
 
 function formatTokens(tokens: number): string {
   if (tokens >= 1000) {
-    return `${(tokens / 1000).toFixed(0)}K`
+    const value = tokens / 1000
+    if (Number.isInteger(value)) {
+      return `${value}K`
+    }
+    return `${value.toFixed(1)}K`
   }
   return tokens.toString()
 }
