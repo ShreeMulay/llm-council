@@ -53,6 +53,7 @@ export function applyLayout(graphData: GraphData): { nodes: Node[]; edges: Edge[
     id: `e${index}`,
     source: edge.source,
     target: edge.target,
+    type: edge.condition ? 'conditional' : undefined,
     label: edge.condition,
     animated: edge.condition !== undefined,
   }))
@@ -74,6 +75,7 @@ export function formatEdges(graphEdges: GraphEdge[]): Edge[] {
     id: `e${index}`,
     source: edge.source,
     target: edge.target,
+    type: edge.condition ? 'conditional' : undefined,
     label: edge.condition,
     animated: edge.condition !== undefined,
   }))

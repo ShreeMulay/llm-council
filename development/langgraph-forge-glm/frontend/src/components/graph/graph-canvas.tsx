@@ -3,6 +3,7 @@ import '@xyflow/react/dist/style.css'
 import type { GraphData } from '@/lib/graph-layout'
 import { applyLayout } from '@/lib/graph-layout'
 import { StartNode, EndNode, LLMNode, ToolNode } from './nodes'
+import { ConditionalEdge } from './edges'
 
 interface GraphCanvasProps {
   graphData: GraphData
@@ -19,12 +20,17 @@ export function GraphCanvas({ graphData, fitView = true }: GraphCanvasProps) {
     tool: ToolNode,
   }
 
+  const edgeTypes = {
+    conditional: ConditionalEdge,
+  }
+
   return (
     <div className="h-full w-full" data-testid="react-flow-canvas">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView={fitView}
         fitViewOptions={{ padding: 0.2 }}
         minZoom={0.2}
