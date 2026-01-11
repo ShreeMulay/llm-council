@@ -171,7 +171,15 @@
 - [x] Create components/graph/nodes/tool-node.tsx
 
 ### 4.3 Custom Edges
-- [ ] Create components/graph/edges/conditional-edge.tsx
+- [x] **TEST**: components/graph/edges/conditional-edge.test.tsx
+  - test_renders_edge_without_label
+  - test_renders_edge_with_label
+  - test_positions_label_centered
+  - test_does_not_render_empty_label
+  - test_applies_custom_styles
+- [x] Create components/graph/edges/conditional-edge.tsx
+- [x] Update lib/graph-layout.ts to set edge type for conditional edges
+- [x] Update graph-canvas.tsx to register edgeTypes
 
 ### 4.4 Metrics Panel
 - [ ] **TEST**: components/metrics/metrics-panel.test.tsx
