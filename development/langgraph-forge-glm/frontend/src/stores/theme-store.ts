@@ -10,6 +10,10 @@ interface ThemeState {
 const STORAGE_KEY = "theme"
 
 const getInitialTheme = (): Theme => {
+  if (typeof window === "undefined" || typeof localStorage === "undefined") {
+    return "light"
+  }
+
   const saved = localStorage.getItem(STORAGE_KEY)
   if (saved && saved !== "light" && saved !== "dark" && saved !== "midnight" && saved !== "forest" && saved !== "ocean" && saved !== "sunset" && saved !== "high-contrast") {
     return "light"
@@ -20,13 +24,17 @@ const getInitialTheme = (): Theme => {
 export const useThemeStore = create<ThemeState>((set) => ({
   theme: getInitialTheme(),
   setTheme: (theme: Theme) => {
-    localStorage.setItem(STORAGE_KEY, theme)
+    if (typeof window !== "undefined" && typeof localStorage !== "undefined") {
+      localStorage.setItem(STORAGE_KEY, theme)
+    }
 
-    const root = document.documentElement
-    root.classList.remove("dark", "theme-midnight", "theme-forest", "theme-ocean", "theme-sunset", "theme-high-contrast")
+    if (typeof document !== "undefined") {
+      const root = document.documentElement
+      root.classList.remove("dark", "theme-midnight", "theme-forest", "theme-ocean", "theme-sunset", "theme-high-contrast")
 
-    if (theme !== "light") {
-      root.classList.add(theme === "dark" ? "dark" : `theme-${theme}`)
+      if (theme !== "light") {
+        root.classList.add(theme === "dark" ? "dark" : `theme-${theme}`)
+      }
     }
 
     set({ theme })
