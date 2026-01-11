@@ -182,17 +182,22 @@
 - [x] Update graph-canvas.tsx to register edgeTypes
 
 ### 4.4 Metrics Panel
-- [ ] **TEST**: components/metrics/metrics-panel.test.tsx
+- [x] **TEST**: components/metrics/metrics-panel.test.tsx
   - test_shows_tokens
   - test_shows_cost
   - test_shows_speed
-- [ ] Create components/metrics/metrics-panel.tsx
-- [ ] Create components/metrics/token-display.tsx
-- [ ] Create components/metrics/cost-display.tsx
+- [x] Create components/metrics/metrics-panel.tsx
+- [x] Create components/metrics/token-display.tsx
+- [x] Create components/metrics/cost-display.tsx
 
 ### 4.5 Playground Page
-- [ ] Create pages/playground/index.tsx
-- [ ] Wire up all components
+- [x] **TEST**: pages/playground/playground-page.test.tsx
+  - test_renders_all_components
+  - test_executes_code
+  - test_displays_error
+  - test_shows_metrics
+- [x] Create pages/playground/playground-page.tsx
+- [x] Wire up all components (ProviderSelector, CodeEditor, OutputPanel, MetricsPanel, GraphCanvas)
 
 ---
 
