@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "level": "1",
+  "title": "LangGraph Basics",
+  "description": "Learn the fundamentals of LangGraph through 5 progressive examples",
+  "examples": [
+    {
+      "id": "01-hello-state",
+      "title": "Hello State",
+      "description": "Your first LangGraph - learn state, nodes, and basic graph structure",
+      "difficulty": "beginner",
+      "estimatedTime": "5 min",
+      "concepts": ["state", "nodes", "edges", "compile", "invoke"],
+      "order": 1
+    },
+    {
+      "id": "02-two-nodes",
+      "title": "Two Nodes",
+      "description": "Understand how data flows between multiple nodes in sequence",
+      "difficulty": "beginner",
+      "estimatedTime": "7 min",
+      "concepts": ["state accumulation", "partial updates", "sequential flow"],
+      "prerequisites": ["01-hello-state"],
+      "order": 2
+    },
+    {
+      "id": "03-llm-node",
+      "title": "LLM Node",
+      "description": "Use language models in your graphs to generate responses",
+      "difficulty": "beginner",
+      "estimatedTime": "10 min",
+      "concepts": ["LLM nodes", "API integration", "response generation"],
+      "prerequisites": ["02-two-nodes"],
+      "order": 3
+    },
+    {
+      "id": "04-conditional-edge",
+      "title": "Conditional Edge",
+      "description": "Use conditional routing to create dynamic, branching flows",
+      "difficulty": "intermediate",
+      "estimatedTime": "12 min",
+      "concepts": ["conditional edges", "routing functions", "branching logic"],
+      "prerequisites": ["03-llm-node"],
+      "order": 4
+    },
+    {
+      "id": "05-simple-agent",
+      "title": "Simple Agent",
+      "description": "Build a complete conversational agent combining all concepts",
+      "difficulty": "intermediate",
+      "estimatedTime": "15 min",
+      "concepts": ["agent pattern", "intent analysis", "tool routing", "complete agents"],
+      "prerequisites": ["04-conditional-edge"],
+      "order": 5
+    }
+  ]
+}

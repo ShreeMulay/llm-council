@@ -4,11 +4,19 @@ An interactive learning platform for mastering LangGraph through hands-on tutori
 
 ## Features
 
-- **Interactive Tutorials** - Guided lessons with runnable examples and progress tracking
+- **Interactive Tutorials** - Guided lessons with 5 progressively complex examples, progress tracking
+  - Level 1 Basics: Hello State, Two Nodes, LLM Node, Conditional Edge, Simple Agent
+  - Real-time progress indicator tracking completed examples
+  - Difficulty badges and estimated reading times for each lesson
 - **Live Playground** - Free-form code editor with execution and graph visualization
 - **Multi-Provider Support** - OpenRouter, Cerebras, Fireworks AI with dynamic model lists
 - **Rich Metrics** - Token usage, cost, speed (tokens/sec)
 - **7 Color Themes** - Light, Dark, Midnight, Forest, Ocean, Sunset, High Contrast
+
+### Tutorial Navigation
+
+- **Home Page** (`/`) - Overview with link to start tutorial
+- **Tutorial Page** (`/tutorial`) - Complete example list with progress tracking
 
 ## Quick Start
 
