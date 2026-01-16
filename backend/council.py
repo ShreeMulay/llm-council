@@ -13,6 +13,7 @@ from .config import (
 from .openrouter import query_model as query_openrouter_model
 from .openrouter import query_models_parallel as query_openrouter_models_parallel
 from .cerebras import query_cerebras_model, query_cerebras_models_parallel
+from .anthropic_client import call_anthropic, is_anthropic_model
 
 
 async def query_single_model(
@@ -35,8 +36,47 @@ async def query_single_model(
     """
     if is_cerebras_model(model_id):
         return await query_cerebras_model(model_id, messages, max_tokens, temperature)
+    elif is_anthropic_model(model_id):
+        try:
+            prompt = messages[-1].get("content", "") if messages else ""
+            result = await call_anthropic(model_id, prompt, max_tokens)
+            return {
+                "content": result.get("response", ""),
+                "usage": result.get("usage", {}),
+                "provider": "anthropic"
+            }
+        except Exception as e:
+            print(f"Anthropic API error for {model_id}: {e}")
+            return None
     else:
         return await query_openrouter_model(model_id, messages, max_tokens, temperature)
+
+
+async def query_anthropic_single(model_id: str, messages: List[Dict[str, str]], max_tokens: int) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Query single Anthropic model and return (model_id, result) tuple."""
+    try:
+        prompt = messages[-1].get("content", "") if messages else ""
+        result = await call_anthropic(model_id, prompt, max_tokens)
+        return model_id, {
+            "content": result.get("response", ""),
+            "usage": result.get("usage", {}),
+            "provider": "anthropic"
+        }
+    except Exception as e:
+        print(f"Anthropic API error for {model_id}: {e}")
+        return model_id, None
+
+
+async def query_anthropic_models_parallel(
+    model_ids: List[str],
+    messages: List[Dict[str, str]],
+    max_tokens: int = 4096,
+    temperature: float = 0.7
+) -> Dict[str, Optional[Dict[str, Any]]]:
+    """Query multiple Anthropic models in parallel."""
+    tasks = [query_anthropic_single(m, messages, max_tokens) for m in model_ids]
+    results_list = await asyncio.gather(*tasks)
+    return dict(results_list)
 
 
 async def query_models_parallel(
@@ -57,22 +97,22 @@ async def query_models_parallel(
     Returns:
         Dict mapping model_id to response (or None on error)
     """
-    # Separate by provider
     cerebras_ids = [m for m in model_ids if is_cerebras_model(m)]
-    openrouter_ids = [m for m in model_ids if not is_cerebras_model(m)]
+    anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
+    openrouter_ids = [m for m in model_ids if not is_cerebras_model(m) and not is_anthropic_model(m)]
     
     results = {}
-    
-    # Create tasks for both providers
     tasks = []
     
     if cerebras_ids:
         tasks.append(query_cerebras_models_parallel(cerebras_ids, messages, max_tokens, temperature))
     
+    if anthropic_ids:
+        tasks.append(query_anthropic_models_parallel(anthropic_ids, messages, max_tokens, temperature))
+    
     if openrouter_ids:
         tasks.append(query_openrouter_models_parallel(openrouter_ids, messages, max_tokens, temperature))
     
-    # Run all provider queries in parallel
     if tasks:
         provider_results = await asyncio.gather(*tasks)
         for pr in provider_results:

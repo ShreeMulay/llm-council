@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 # Import secrets from bash_secrets
-from .secrets import OPENROUTER_API_KEY, CEREBRAS_API_KEY
+from .secrets import OPENROUTER_API_KEY, CEREBRAS_API_KEY, ANTHROPIC_API_KEY
 
 # Directories
 DATA_DIR = Path("data")
