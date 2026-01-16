@@ -1,28 +1,46 @@
-"""FastAPI backend for LLM Council."""
+"""FastAPI backend for LLM Council with OpenCode integration."""
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import uuid
 import json
 import asyncio
 
 from . import storage
-from .council import run_full_council, generate_conversation_title, stage1_collect_responses, stage2_collect_rankings, stage3_synthesize_final, calculate_aggregate_rankings
+from .config import BACKEND_PORT, BACKEND_HOST, COUNCIL_MODELS, CHAIRMAN_MODEL
+from .council import (
+    run_full_council,
+    generate_conversation_title,
+    stage1_collect_responses,
+    stage2_collect_rankings,
+    stage3_synthesize_final,
+    calculate_aggregate_rankings
+)
+from .model_discovery import get_model_discovery
+from .opencode_integration import handle_council_command, MCP_TOOL_SCHEMA, MODEL_ALIASES_HELP
 
-app = FastAPI(title="LLM Council API")
+app = FastAPI(
+    title="LLM Council API",
+    description="Multi-model LLM deliberation system for OpenCode integration",
+    version="1.0.0"
+)
 
-# Enable CORS for local development
+# Enable CORS for local development and any origin (for MCP access)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
+# ============================================================================
+# Request/Response Models
+# ============================================================================
 
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
@@ -32,6 +50,15 @@ class CreateConversationRequest(BaseModel):
 class SendMessageRequest(BaseModel):
     """Request to send a message in a conversation."""
     content: str
+
+
+class CouncilRequest(BaseModel):
+    """Request for /council command or MCP tool."""
+    query: str
+    final_only: bool = False
+    models: Optional[List[str]] = None
+    chairman: Optional[str] = None
+    include_details: bool = True
 
 
 class ConversationMetadata(BaseModel):
@@ -50,11 +77,133 @@ class Conversation(BaseModel):
     messages: List[Dict[str, Any]]
 
 
+# ============================================================================
+# Health and Info Endpoints
+# ============================================================================
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
-    return {"status": "ok", "service": "LLM Council API"}
+    return {
+        "status": "ok",
+        "service": "LLM Council API",
+        "version": "1.0.0",
+        "port": BACKEND_PORT
+    }
 
+
+@app.get("/health")
+async def health():
+    """Detailed health check."""
+    return {
+        "status": "healthy",
+        "service": "llm-council",
+        "config": {
+            "council_models": COUNCIL_MODELS,
+            "chairman_model": CHAIRMAN_MODEL
+        }
+    }
+
+
+@app.get("/api/info")
+async def api_info():
+    """API information and help."""
+    return {
+        "name": "LLM Council API",
+        "version": "1.0.0",
+        "description": "Multi-model LLM deliberation with peer review",
+        "endpoints": {
+            "/api/council": "Execute council deliberation (POST)",
+            "/api/models": "List available models (GET)",
+            "/api/mcp/schema": "MCP tool schema (GET)"
+        },
+        "model_aliases": MODEL_ALIASES_HELP
+    }
+
+
+# ============================================================================
+# Model Discovery Endpoints
+# ============================================================================
+
+@app.get("/api/models")
+async def get_models(provider: Optional[str] = None, refresh: bool = False):
+    """
+    Get available models from all providers.
+    
+    Args:
+        provider: Filter by provider ("openrouter" or "cerebras")
+        refresh: Force refresh from API (bypass cache)
+    """
+    discovery = get_model_discovery()
+    models = await discovery.get_all_models(provider, force_refresh=refresh)
+    cache_info = discovery.get_cache_info()
+    
+    return {
+        "models": models,
+        "count": len(models),
+        "cache": cache_info
+    }
+
+
+@app.get("/api/models/{provider}")
+async def get_provider_models(provider: str, refresh: bool = False):
+    """Get models from a specific provider."""
+    if provider.lower() not in ["openrouter", "cerebras"]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid provider: {provider}. Must be 'openrouter' or 'cerebras'"
+        )
+    
+    discovery = get_model_discovery()
+    models = await discovery.get_all_models(provider.lower(), force_refresh=refresh)
+    
+    return {
+        "provider": provider,
+        "models": models,
+        "count": len(models)
+    }
+
+
+# ============================================================================
+# Council Deliberation Endpoints (OpenCode Integration)
+# ============================================================================
+
+@app.post("/api/council")
+async def council_deliberation(request: CouncilRequest):
+    """
+    Execute 3-stage council deliberation.
+    
+    This is the main endpoint for OpenCode's /council command and MCP tool.
+    
+    Returns:
+        - markdown: Formatted markdown output for display
+        - stage1: Individual model responses
+        - stage2: Peer rankings (empty if final_only=True)
+        - stage3: Chairman's synthesized answer
+        - metadata: Aggregate rankings, label mapping
+        - timing: Elapsed time
+        - config: Models used
+    """
+    result = await handle_council_command(
+        query=request.query,
+        final_only=request.final_only,
+        models=request.models,
+        chairman=request.chairman,
+        include_details=request.include_details
+    )
+    
+    return result
+
+
+@app.get("/api/mcp/schema")
+async def mcp_schema():
+    """Return MCP tool schema for registration."""
+    return MCP_TOOL_SCHEMA
+
+
+# ============================================================================
+# Conversation Storage Endpoints (Legacy GUI Support)
+# ============================================================================
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
 async def list_conversations():
@@ -77,6 +226,15 @@ async def get_conversation(conversation_id: str):
     if conversation is None:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return conversation
+
+
+@app.delete("/api/conversations/{conversation_id}")
+async def delete_conversation(conversation_id: str):
+    """Delete a conversation."""
+    success = storage.delete_conversation(conversation_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    return {"status": "deleted", "id": conversation_id}
 
 
 @app.post("/api/conversations/{conversation_id}/message")
@@ -194,6 +352,11 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
     )
 
 
+# ============================================================================
+# Entry Point
+# ============================================================================
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    print(f"Starting LLM Council API on http://{BACKEND_HOST}:{BACKEND_PORT}")
+    uvicorn.run(app, host=BACKEND_HOST, port=BACKEND_PORT)

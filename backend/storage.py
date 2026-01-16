@@ -5,17 +5,17 @@ import os
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
-from .config import DATA_DIR
+from .config import CONVERSATIONS_DIR
 
 
 def ensure_data_dir():
     """Ensure the data directory exists."""
-    Path(DATA_DIR).mkdir(parents=True, exist_ok=True)
+    CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def get_conversation_path(conversation_id: str) -> str:
     """Get the file path for a conversation."""
-    return os.path.join(DATA_DIR, f"{conversation_id}.json")
+    return str(CONVERSATIONS_DIR / f"{conversation_id}.json")
 
 
 def create_conversation(conversation_id: str) -> Dict[str, Any]:
@@ -88,9 +88,9 @@ def list_conversations() -> List[Dict[str, Any]]:
     ensure_data_dir()
 
     conversations = []
-    for filename in os.listdir(DATA_DIR):
+    for filename in os.listdir(CONVERSATIONS_DIR):
         if filename.endswith('.json'):
-            path = os.path.join(DATA_DIR, filename)
+            path = str(CONVERSATIONS_DIR / filename)
             with open(path, 'r') as f:
                 data = json.load(f)
                 # Return metadata only
@@ -170,3 +170,22 @@ def update_conversation_title(conversation_id: str, title: str):
 
     conversation["title"] = title
     save_conversation(conversation)
+
+
+def delete_conversation(conversation_id: str) -> bool:
+    """
+    Delete a conversation from storage.
+
+    Args:
+        conversation_id: Conversation identifier
+
+    Returns:
+        True if deleted, False if not found
+    """
+    path = get_conversation_path(conversation_id)
+
+    if not os.path.exists(path):
+        return False
+
+    os.remove(path)
+    return True
