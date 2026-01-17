@@ -12,6 +12,12 @@ from src.data.precision import (
 )
 from src.data.rate_limiter import rate_limiter, IBKRRateLimiter
 from src.data.ibkr_client import get_ibkr_client, IBKRClient
+from src.data.ohlcv_collector import (
+    get_ohlcv_collector,
+    OHLCVCollector,
+    OHLCVBar,
+    Timeframe,
+)
 
 __all__ = [
     "round_quantity",
@@ -24,4 +30,8 @@ __all__ = [
     "IBKRRateLimiter",
     "get_ibkr_client",
     "IBKRClient",
+    "get_ohlcv_collector",
+    "OHLCVCollector",
+    "OHLCVBar",
+    "Timeframe",
 ]
