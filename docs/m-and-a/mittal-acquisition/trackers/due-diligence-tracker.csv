@@ -1,0 +1,88 @@
+Category,Item ID,Due Diligence Item,Priority,Status,Owner,Due Date,Notes,Red Flag?
+FINANCIAL - GENERAL,F001,3 years audited/reviewed financial statements,Critical,Not Started,TKE Finance,,Required for SBA,
+FINANCIAL - GENERAL,F002,Tax returns (3 years - federal and state),Critical,Not Started,TKE Finance,,Compare to financials,
+FINANCIAL - GENERAL,F003,Year-to-date P&L (current year),Critical,Not Started,TKE Finance,,Most recent month-end,
+FINANCIAL - GENERAL,F004,Monthly P&L statements (3 years),High,Not Started,TKE Finance,,Identify seasonality,
+FINANCIAL - GENERAL,F005,Balance sheet (current),Critical,Not Started,TKE Finance,,Working capital analysis,
+FINANCIAL - GENERAL,F006,Chart of accounts,Medium,Not Started,TKE Finance,,Understand expense categories,
+FINANCIAL - REVENUE,F007,Revenue by service line (E&M/Consults/Dialysis/MedDir),Critical,Not Started,TKE Finance,,Concentration risk,YES
+FINANCIAL - REVENUE,F008,Revenue by physician,Critical,Not Started,TKE Finance,,Provider concentration,YES
+FINANCIAL - REVENUE,F009,Revenue by location,High,Not Started,TKE Finance,,Southaven performance,
+FINANCIAL - REVENUE,F010,Revenue by payor (Medicare/MA/Commercial/Medicaid),Critical,Not Started,TKE Finance,,Payor mix analysis,
+FINANCIAL - REVENUE,F011,Top 10 payors with revenue amounts,High,Not Started,TKE Finance,,Concentration risk,
+FINANCIAL - REVENUE,F012,Collections rate by payor type,High,Not Started,TKE Finance,,Cash conversion,
+FINANCIAL - AR,F013,Accounts receivable aging (30/60/90/120+),Critical,Not Started,TKE Finance,,Collection risk,YES
+FINANCIAL - AR,F014,Bad debt history and reserve methodology,High,Not Started,TKE Finance,,Write-off patterns,
+FINANCIAL - AR,F015,Accounts payable aging,High,Not Started,TKE Finance,,Outstanding obligations,
+FINANCIAL - EBITDA,F016,EBITDA add-back schedule with documentation,Critical,Not Started,TKE Finance,,Validate adjustments,YES
+FINANCIAL - EBITDA,F017,Owner compensation vs market rate analysis,Critical,Not Started,TKE Finance,,MGMA comparison,YES
+FINANCIAL - EBITDA,F018,Related party transactions list,High,Not Started,TKE Finance,,FMV verification,YES
+FINANCIAL - EBITDA,F019,Non-recurring expenses identification,High,Not Started,TKE Finance,,One-time items,
+FINANCIAL - BANKING,F020,Bank statements (12 months),High,Not Started,TKE Finance,,Cash flow verification,
+FINANCIAL - BANKING,F021,Line of credit agreements,Medium,Not Started,TKE Finance,,Outstanding debt,
+FINANCIAL - BANKING,F022,Loan agreements and payment schedules,High,Not Started,TKE Finance,,Debt to assume/payoff,
+LEGAL - CORPORATE,L001,Articles of Organization/Incorporation,High,Not Started,TKE Legal,,Entity structure,
+LEGAL - CORPORATE,L002,Operating Agreement/Bylaws,High,Not Started,TKE Legal,,Ownership verification,
+LEGAL - CORPORATE,L003,Good standing certificates (TN and MS),High,Not Started,TKE Legal,,Entity status,
+LEGAL - CORPORATE,L004,Ownership/member interest schedule,Critical,Not Started,TKE Legal,,Who owns what %,
+LEGAL - CORPORATE,L005,Minutes of member/shareholder meetings,Medium,Not Started,TKE Legal,,Governance history,
+LEGAL - CONTRACTS,L006,DaVita Medical Director Agreement(s),Critical,Not Started,TKE Legal,,CRITICAL - transferability,YES
+LEGAL - CONTRACTS,L007,Fresenius agreements (if any),High,Not Started,TKE Legal,,Other dialysis relationships,
+LEGAL - CONTRACTS,L008,Hospital medical staff agreements,High,Not Started,TKE Legal,,Credentialing requirements,
+LEGAL - CONTRACTS,L009,Payor contracts (all),Critical,Not Started,TKE Legal,,Assignment provisions,YES
+LEGAL - CONTRACTS,L010,Referral source agreements,High,Not Started,TKE Legal,,Stark compliance check,YES
+LEGAL - CONTRACTS,L011,Vendor contracts (major),Medium,Not Started,TKE Legal,,Assignment/termination,
+LEGAL - CONTRACTS,L012,Equipment leases,Medium,Not Started,TKE Legal,,Obligations,
+LEGAL - REAL ESTATE,L013,Office lease agreements (both locations),High,Not Started,TKE Legal,,Assignment provisions,
+LEGAL - REAL ESTATE,L014,Real property ownership (if any),High,Not Started,TKE Legal,,Included in deal?,
+LEGAL - REAL ESTATE,L015,Lease terms and expiration dates,High,Not Started,TKE Legal,,Renegotiation needs,
+LEGAL - EMPLOYMENT,L016,Physician employment agreements (all 3 MDs),Critical,Not Started,TKE Legal,,Compensation terms,YES
+LEGAL - EMPLOYMENT,L017,Non-compete agreements (all providers),Critical,Not Started,TKE Legal,,Post-acquisition retention,YES
+LEGAL - EMPLOYMENT,L018,NP/APP employment agreements,High,Not Started,TKE Legal,,Retention planning,
+LEGAL - EMPLOYMENT,L019,Staff employment handbook,Medium,Not Started,TKE Legal,,Policy review,
+LEGAL - EMPLOYMENT,L020,Benefit plan documents,Medium,Not Started,TKE Legal,,Integration planning,
+LEGAL - LITIGATION,L021,Pending litigation list,Critical,Not Started,TKE Legal,,Liability exposure,YES
+LEGAL - LITIGATION,L022,Threatened claims or disputes,Critical,Not Started,TKE Legal,,Contingent liabilities,YES
+LEGAL - LITIGATION,L023,Malpractice claims history (5 years),High,Not Started,TKE Legal,,Risk assessment,
+LEGAL - LITIGATION,L024,Insurance claims history,Medium,Not Started,TKE Legal,,Coverage gaps,
+COMPLIANCE,C001,Medicare/Medicaid enrollment status,Critical,Not Started,TKE Compliance,,Active enrollment,
+COMPLIANCE,C002,State medical licenses (all providers),Critical,Not Started,TKE Compliance,,Current and valid,
+COMPLIANCE,C003,DEA registrations,High,Not Started,TKE Compliance,,Prescriptive authority,
+COMPLIANCE,C004,Board certifications,High,Not Started,TKE Compliance,,Credentialing requirements,
+COMPLIANCE,C005,OIG exclusion check (all providers/staff),Critical,Not Started,TKE Compliance,,No exclusions,YES
+COMPLIANCE,C006,HIPAA policies and procedures,High,Not Started,TKE Compliance,,Compliance program,
+COMPLIANCE,C007,Compliance program documentation,High,Not Started,TKE Compliance,,Written program,
+COMPLIANCE,C008,Billing compliance audits (last 3 years),High,Not Started,TKE Compliance,,Audit findings,YES
+COMPLIANCE,C009,Coding audit results,High,Not Started,TKE Compliance,,E&M accuracy,
+COMPLIANCE,C010,RAC/MAC audit history,High,Not Started,TKE Compliance,,Recoupment risk,YES
+COMPLIANCE,C011,Stark/Anti-Kickback compliance review,Critical,Not Started,TKE Compliance,,Referral relationships,YES
+OPERATIONS,O001,EHR system documentation,High,Not Started,TKE Ops,,Integration planning,
+OPERATIONS,O002,Practice management system,High,Not Started,TKE Ops,,Billing system,
+OPERATIONS,O003,Patient panel summary,High,Not Started,TKE Ops,,Active patient count,
+OPERATIONS,O004,wRVU productivity by provider,High,Not Started,TKE Ops,,Provider efficiency,
+OPERATIONS,O005,Appointment volume trends,Medium,Not Started,TKE Ops,,Demand patterns,
+OPERATIONS,O006,Staff roster with roles and tenure,High,Not Started,TKE Ops,,Retention planning,
+OPERATIONS,O007,Organizational chart,Medium,Not Started,TKE Ops,,Structure,
+OPERATIONS,O008,Dialysis rounding schedule,High,Not Started,TKE Ops,,Service coverage,
+OPERATIONS,O009,Hospital rounding coverage,High,Not Started,TKE Ops,,Call schedule,
+OPERATIONS,O010,Quality metrics (if available),Medium,Not Started,TKE Ops,,Performance data,
+INSURANCE,I001,Professional liability insurance policies,Critical,Not Started,TKE Legal,,Tail coverage needs,
+INSURANCE,I002,General liability insurance,High,Not Started,TKE Legal,,Coverage levels,
+INSURANCE,I003,Workers compensation,High,Not Started,TKE Legal,,Claims history,
+INSURANCE,I004,D&O/EPLI insurance,Medium,Not Started,TKE Legal,,Management coverage,
+INSURANCE,I005,Cyber liability insurance,Medium,Not Started,TKE Legal,,PHI protection,
+DAVITA SPECIFIC,D001,Complete DaVita agreement copies,Critical,Not Started,TKE Legal,,Full contract text,YES
+DAVITA SPECIFIC,D002,Change of control provisions,Critical,Not Started,TKE Legal,,Transferability,YES
+DAVITA SPECIFIC,D003,Termination provisions,Critical,Not Started,TKE Legal,,Notice requirements,YES
+DAVITA SPECIFIC,D004,Revenue from DaVita (3 years),Critical,Not Started,TKE Finance,,Financial exposure,YES
+DAVITA SPECIFIC,D005,Medical Director duties and hours,High,Not Started,TKE Ops,,Workload assessment,
+DAVITA SPECIFIC,D006,DaVita facility locations covered,High,Not Started,TKE Ops,,Geographic scope,
+DAVITA SPECIFIC,D007,DaVita relationship history,Medium,Not Started,TKE,,Relationship quality,
+DAVITA SPECIFIC,D008,DaVita regional contact information,High,Not Started,TKE,,Transition planning,
+PHYSICIAN SPECIFIC,P001,Dr. Mittal - transition expectations,Critical,Not Started,Dr. Mulay,,Employment terms,
+PHYSICIAN SPECIFIC,P002,Dr. Mittal - compensation history,Critical,Not Started,TKE Finance,,MGMA comparison,
+PHYSICIAN SPECIFIC,P003,Dr. Goel - retention commitment,Critical,Not Started,Dr. Mulay,,Stay/leave intent,YES
+PHYSICIAN SPECIFIC,P004,Dr. Goel - compensation expectations,High,Not Started,TKE Finance,,Cost planning,
+PHYSICIAN SPECIFIC,P005,Dr. Shukoor - retention commitment,Critical,Not Started,Dr. Mulay,,Stay/leave intent,YES
+PHYSICIAN SPECIFIC,P006,Dr. Shukoor - compensation expectations,High,Not Started,TKE Finance,,Cost planning,
+PHYSICIAN SPECIFIC,P007,Non-compete scope and duration (all MDs),Critical,Not Started,TKE Legal,,Geographic restrictions,YES

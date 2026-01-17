@@ -1,0 +1,58 @@
+EARNOUT STRUCTURE OVERVIEW,,,,,
+Total Earnout Pool,1500000,,,,
+Performance Period,36,months,,,
+Payment Frequency,Annual,,,,
+,,,,,
+MILESTONE DEFINITIONS,,,,,
+Milestone,Year,EBITDA Target,Earnout Amount,Trigger Condition,
+DaVita Transfer,1,N/A,500000,All MD contracts successfully transferred,
+Physician Retention,2,N/A,500000,Dr. Goel + 1 other MD remain employed,
+Revenue Target,2,90% of baseline,500000,Year 2 revenue >= $8.7M (90% of $9.7M),
+Total Maximum,,1500000,,,
+,,,,,
+PROBABILITY-WEIGHTED ANALYSIS,,,,,
+Milestone,Earnout Amount,Probability,Expected Value,NPV @ 10%,Notes
+DaVita Transfer,500000,70%,350000,318182,Significant risk
+Physician Retention,500000,80%,400000,330579,Moderate confidence
+Revenue Target,500000,85%,425000,351240,High confidence
+Total Expected,1500000,,1175000,999999,~$1.0M expected liability
+,,,,,
+SCENARIO ANALYSIS,,,,,
+Scenario,Probability,Yr 1 Payout,Yr 2 Payout,Total Payout,Expected Value
+Best Case (All Met),45%,500000,1000000,1500000,675000
+Partial - DaVita Only,15%,500000,0,500000,75000
+Partial - Retention Only,20%,0,500000,500000,100000
+Partial - Revenue Only,10%,0,500000,500000,50000
+Worst Case (None Met),10%,0,0,0,0
+Weighted Average,100%,,,900000,=SUM(F23:F27)
+,,,,,
+EARNOUT WATERFALL - EBITDA TIED,,,,,
+Actual EBITDA,% of Target,Tier Achieved,Payout %,Payout Amount
+1600000,80%,None,0%,0
+1700000,85%,None,0%,0
+1800000,90%,Threshold,50%,250000
+1900000,95%,Tier 1,75%,375000
+2000000,100%,Tier 2,100%,500000
+2100000,105%,Tier 2+,100%,500000
+2200000,110%,Full,100%,500000
+,,,,,
+PAYMENT SCHEDULE,,,,,
+Year,Milestone,Measurement Date,Payment Due,Amount,
+1,DaVita Transfer,Month 12,Month 13,500000,
+2,Physician Retention,Month 24,Month 25,500000,
+2,Revenue Target,Month 24,Month 25,500000,
+Total Maximum,,,,1500000,
+,,,,,
+EARNOUT PROTECTION TERMS,,,,,
+Protection Type,Buyer/Seller,Description,,
+Pro-rata Reduction,Buyer,Partial achievement = proportional payout,,
+Offset Rights,Buyer,Can offset against indemnification claims,,
+Ordinary Course Covenant,Seller,Buyer must operate normally,,
+No Termination,Seller,Cannot fire physicians to avoid earnout,,
+Dispute Resolution,Both,Independent accountant determines achievement,,
+,,,,,
+ACCOUNTING TREATMENT,,,,,
+Item,Amount,Treatment,,
+Day 1 Liability,900000,Expected value (probability-weighted),,
+Maximum Contingent,600000,Disclosed in footnotes,,
+Measurement Period,36,months - fair value adjustment each quarter,,

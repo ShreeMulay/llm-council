@@ -1,0 +1,47 @@
+VALUATION SCENARIO ANALYSIS,,,,,
+Scenario,EBITDA,Purchase Price,Implied Multiple,Industry Benchmark,Variance
+Downside,1800000,9000000,5.00x,5.25x,-0.25x
+Base Case,1900000,10000000,5.26x,5.25x,+0.01x
+Upside,2000000,10500000,5.25x,5.25x,0.00x
+,,,,,
+KEY FORMULAS,,,,,
+Implied Multiple,=Purchase_Price/EBITDA,,,,
+Target Price at 5.25x,=EBITDA*5.25,,,,
+,,,,,
+SENSITIVITY ANALYSIS - ENTERPRISE VALUE,,,,,
+EBITDA / Multiple,4.5x,5.0x,5.25x,5.5x,6.0x
+1700000,7650000,8500000,8925000,9350000,10200000
+1800000,8100000,9000000,9450000,9900000,10800000
+1900000,8550000,9500000,9975000,10450000,11400000
+2000000,9000000,10000000,10500000,11000000,12000000
+2100000,9450000,10500000,11025000,11550000,12600000
+2200000,9900000,11000000,11550000,12100000,13200000
+,,,,,
+DEAL RANGE ANALYSIS,,,,,
+Price Range,Low,Target,High,Walk-away,
+Purchase Price,9000000,10000000,10500000,11000000,
+At EBITDA 1800000,5.00x,5.56x,5.83x,6.11x,
+At EBITDA 1900000,4.74x,5.26x,5.53x,5.79x,
+At EBITDA 2000000,4.50x,5.00x,5.25x,5.50x,
+,,,,,
+GROWTH ASSUMPTIONS,,,,,
+Year,Revenue,Growth Rate,EBITDA,EBITDA Margin,
+0 (Pre-Close),9700000,,1900000,19.6%,
+1,10185000,5.0%,2037000,20.0%,
+2,10693875,5.0%,2192244,20.5%,
+3,11175300,4.5%,2347064,21.0%,
+4,11622912,4.0%,2498027,21.5%,
+5,12039918,3.5%,2649582,22.0%,
+,,,,,
+COMPARABLE TRANSACTIONS,,,,,
+Transaction Type,Multiple Range,Notes,,,
+Nephrology Practice (Single),4.5x-5.5x,No dialysis income,,,
+Nephrology Practice (Multi-site),5.0x-6.5x,Established,,,
+Nephrology + Med Director,5.5x-7.0x,DaVita/Fresenius contracts,,,
+Nephrology + Dialysis JV,7.0x-9.0x,Significant upside,,,
+,,,,,
+PURCHASE PRICE RECOMMENDATION,,,,,
+Element,Value,Rationale,,,
+Initial Offer,9000000,Anchor low (5.0x on $1.8M),,
+Target Negotiated,9750000,Fair value (5.13x on $1.9M),,
+Maximum Authorized,10500000,Walk-away above (5.5x on $1.9M),,

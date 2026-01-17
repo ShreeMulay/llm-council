@@ -1,0 +1,37 @@
+SOURCES & USES OF FUNDS,,,
+,Amount,% of Total,Notes
+USES OF FUNDS,,,
+Purchase Price - Base,8500000,82.5%,Excludes earnout
+Deal Closing Costs,250000,2.4%,See breakdown below
+SBA Loan Origination Fee,175000,1.7%,3.5% of $5M
+Working Capital Adjustment,150000,1.5%,Estimated
+Cash Reserve,75000,0.7%,Operating buffer
+Total Cash at Closing,9150000,88.8%,=SUM(B4:B8)
+Earnout (Contingent),1500000,14.6%,Performance-based
+Escrow Holdback,1000000,9.7%,From purchase price
+TOTAL TRANSACTION VALUE,10000000,100.0%,
+,,,
+SOURCES OF FUNDS,,,
+SBA 7(a) Loan,5000000,54.6%,10.5% for 10 years
+Seller Note,2500000,27.3%,6% for 5 years
+Buyer Equity Injection,1650000,18.0%,Cash at closing
+Total Sources at Closing,9150000,100.0%,=B14+B15+B16 (=Total Uses)
+,,,
+BALANCE CHECK,=B9-B17,,"Should equal zero"
+,,,
+CLOSING COSTS BREAKDOWN,,,
+Legal Fees (Buyer),75000,,
+Due Diligence/Quality of Earnings,60000,,
+Accounting/Tax Advisory,40000,,
+Environmental/Regulatory Review,35000,,
+Integration Planning,25000,,
+Other Closing Costs,15000,,
+Total Closing Costs,250000,,=SUM(B23:B28)
+,,,
+PURCHASE PRICE ALLOCATION,,,
+Net Working Capital,500000,5.0%,
+Tangible Assets (Equipment/FF&E),1500000,15.0%,Dialysis machines
+Patient Relationships (Intangible),2500000,25.0%,10-year amortization
+Non-Compete Agreements,500000,5.0%,5-year amortization
+Goodwill,5000000,50.0%,Residual value
+Total Purchase Price,10000000,100.0%,=SUM(B33:B37)
