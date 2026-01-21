@@ -313,7 +313,7 @@ By working together transparently from the outset, we can facilitate a smoother 
 
 **Sincerely,**
 
-**Shree Mulay, MD, MBA, FASN**  
+**Shree Mulay, MD**  
 Co-Founder & CEO  
 The Kidney Experts, PLLC  
 Jackson, Tennessee
