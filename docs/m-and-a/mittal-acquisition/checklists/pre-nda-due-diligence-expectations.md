@@ -1,6 +1,9 @@
 # PRE-NDA DUE DILIGENCE EXPECTATIONS
 ## For Acquisition of Nephrology/Dialysis Medical Practice
 
+**Prepared by:** The Kidney Experts, PLLC  
+**Date:** January 20, 2026
+
 ---
 
 ### INTRODUCTION
@@ -9,7 +12,7 @@ This document establishes the comprehensive scope of information and documentati
 
 The nephrology and dialysis sector presents unique complexities due to its heavily regulated environment, intricate reimbursement structures, and extensive web of physician relationships. Our diligence process reflects these realities while maintaining a collaborative approach designed to minimize disruption to daily operations.
 
-We encourage the Seller to begin organizing these materials promptly. This proactive preparation will accelerate the transaction timeline and demonstrate the practice's operational sophistication to prospective buyers.
+We encourage the Seller to begin organizing these materials promptly. This proactive preparation will accelerate the transaction timeline and demonstrate the practice's operational sophistication.
 
 ---
 
@@ -310,7 +313,9 @@ By working together transparently from the outset, we can facilitate a smoother 
 
 **Sincerely,**
 
-[Buyer's Acquisition Team]  
-[Date]
+**Shree Mulay, MD, MBA, FASN**  
+Co-Founder & CEO  
+The Kidney Experts, PLLC  
+Jackson, Tennessee
 
 *This document represents standard due diligence expectations for nephrology practice acquisitions. Additional information may be requested based on initial findings during the formal diligence process.*
