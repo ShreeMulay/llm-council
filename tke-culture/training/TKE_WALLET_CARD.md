@@ -32,8 +32,8 @@
 │                                     │
 │   1. Does this serve the patient?   │
 │   2. What does the data say?        │
-│   3. Is this sustainable?           │
-│   4. Could AI help?                 │
+│   3. Can AI identify root cause?    │
+│   4. AI first, human always?        │
 │   5. Did I talk directly to         │
 │      people affected?               │
 │                                     │
@@ -57,11 +57,11 @@
 │   2. LISTEN FIRST, THEN ACT         │
 │      I understand before solving.   │
 │                                     │
-│   3. FIX SYSTEMS, OWN MY PART, GROW │
+│   3. FIX THE SYSTEM, OWN YOUR PART  │
 │      Find system gaps AND my role.  │
 │                                     │
-│   4. TEST, LEARN, IMPROVE           │
-│      Small experiments. Learn fast. │
+│   4. TEST, LEARN, EVOLVE            │
+│      Small experiments. Adapt fast. │
 │                                     │
 │   5. UNREASONABLE HOSPITALITY       │
 │      Go beyond expected.            │

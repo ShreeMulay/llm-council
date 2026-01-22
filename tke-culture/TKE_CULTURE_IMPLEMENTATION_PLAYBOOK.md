@@ -1,4 +1,4 @@
-# TKE Culture Implementation Playbook (v3.0)
+# TKE Culture Implementation Playbook (v4.0)
 
 > **12-Week Rollout Plan + Coryell Accountability Training + Onboarding Curriculum**
 
@@ -6,16 +6,16 @@
 
 ## Executive Summary
 
-This playbook provides a structured 12-week plan to implement the TKE Culture System v3.0 across all locations. The major components include **Eric Coryell's peer accountability framework** and **David Friedman's fundamentals-based approach**, now distilled into 6 core individual behaviors.
+This playbook provides a structured 12-week plan to implement the TKE Culture System v4.0 across all locations. The major components include **Eric Coryell's peer accountability framework** and **David Friedman's fundamentals-based approach**, now distilled into 6 core individual behaviors.
 
-**What's New in v3.0**:
-- Dual taglines (patient-facing + internal)
-- Distilled from 9 fundamentals to 6 (removing redundancy with Accountability System)
-- New accountability philosophy intro ("describe without blame")
-- "Listen First, Then Act" fundamental (from Selena's input)
-- Growth mindset integration ("Fix Systems, Own My Part, Grow")
-- Expanded leadership expectations (Clear the path, Shield your team, Standards are standards, 48-hour response)
-- "Shared metrics create shared fate" added to Operating Principle
+**What's New in v4.0**:
+- Fundamental #3 renamed: "Fix the System, Own Your Part" (clearer accountability)
+- Fundamental #4 renamed: "Test, Learn, Evolve" (adaptation as survival)
+- Decision Filter #3 changed: "Can AI identify the root cause?" (systems + AI)
+- Decision Filter #4 changed: "AI first, human always?" (owner's mandate)
+- NEW: "Flow vs. Friction" cultural language with blameless clarification
+- NEW: "Precision Hospitality" concept (AI = Memory, Humans = Heart)
+- LLM Council approved with 94% confidence
 
 **Success Criteria**:
 - 100% of staff can recite 5 Core Values and Operating Principle by Week 8
@@ -323,7 +323,7 @@ HUDDLE AGENDA (7 minutes)
 | 6 | Direct is Kind - Speak for Yourself | Each person shares one thought using only "I" statements |
 | 7 | Direct is Kind - Statements Before Questions | Partner pairs practice question + preceding thought |
 | 8 | Listen First, Then Act | Practice reflecting back before responding |
-| 9 | Fix Systems, Own My Part, Grow | Share one lesson learned from a recent mistake |
+| 9 | Fix the System, Own Your Part | Share one lesson learned from a recent mistake |
 | 10-12 | Integration | Rotate all skills |
 
 ### Week 8-9: Recognition Focus + Direct Conversation Tracking
@@ -346,7 +346,7 @@ HUDDLE AGENDA (7 minutes)
 | Direct is Kind | "Tell me about a conflict at work. Use only 'I' statements to describe what happened." (Observe if they say "we" or "everyone") |
 | Direct is Kind | "Describe a time you had to give difficult feedback to a peer. What did you say? What was the result?" |
 | Listen First, Then Act | "Tell me about a time you jumped to a solution too quickly. What happened? What would you do differently?" |
-| Fix Systems, Own My Part, Grow | "Tell me about a mistake you made. What was the system issue? What was your part? What did you learn?" |
+| Fix the System, Own Your Part | "Tell me about a mistake you made. What was the system issue? What was your part? What did you learn?" |
 | Unreasonable Hospitality | "Describe a time you went above and beyond for a customer/patient. What made you do it?" |
 | AI in Everything | "Tell me about a time you identified an opportunity for automation or technology improvement." |
 
@@ -384,10 +384,10 @@ ACCOUNTABILITY BEHAVIORS (30%)
 
 FUNDAMENTALS (30%)
 
-5. Fix Systems, Own My Part, Grow
+5. Fix the System, Own Your Part
    Rating: ___  Evidence: ________________
 
-6. Test, Learn, Improve
+6. Test, Learn, Evolve
    Rating: ___  Evidence: ________________
 
 7. Unreasonable Hospitality
@@ -669,10 +669,10 @@ We hold each other accountable because we care, not to punish.
 6 FUNDAMENTALS (distilled from 9)
 1. Direct is Kind — speak for yourself, share your thought, describe without blame
 2. Listen First, Then Act — understand before solving
-3. Fix Systems, Own My Part, Grow — find the system gap AND the personal lesson
-4. Test, Learn, Improve — small experiments, constant progress
-5. Unreasonable Hospitality — go beyond expected
-6. AI in Everything — if AI can do it, AI should
+3. Fix the System, Own Your Part — find the system gap AND own your role
+4. Test, Learn, Evolve — small experiments, adapt or fall behind
+5. Unreasonable Hospitality — AI = Memory, Humans = Heart
+6. AI in Everything — AI first, human always
 
 LEADERSHIP'S TWO JOBS
 1. Model peer accountability — we have direct conversations too
@@ -802,6 +802,7 @@ Follow up:          conversation     |
 | 1.0 | January 2025 | Dr. Shree Mulay | Initial release |
 | 2.0 | January 2026 | Dr. Shree Mulay | Major revision: Added Coryell accountability framework, skill-building modules, bidirectional accountability, updated metrics, updated onboarding |
 | 3.0 | January 2026 | Dr. Shree Mulay | Distillation: Dual taglines, 6 fundamentals (from 9), accountability philosophy ("describe without blame"), "Listen First" fundamental, growth mindset integration, expanded leadership expectations (clear path, shield team, standards, 48-hour response), peer vs. organizational escalation distinction |
+| 4.0 | January 2026 | Dr. Shree Mulay | Evolution: Renamed Fundamental #3 to "Fix the System, Own Your Part", Fundamental #4 to "Test, Learn, Evolve", Decision Filter #3 to "Can AI identify the root cause?", Decision Filter #4 to "AI first, human always?", added "Flow vs. Friction" and "Precision Hospitality" concepts. LLM Council approved 94%. |
 
 ---
 

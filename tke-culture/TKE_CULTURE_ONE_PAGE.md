@@ -1,4 +1,4 @@
-# THE KIDNEY EXPERTS | Culture at a Glance (v3.0)
+# THE KIDNEY EXPERTS | Culture at a Glance (v4.0)
 
 ---
 
@@ -19,6 +19,8 @@
 > **"What happens to one, happens to all."**
 
 **Shared metrics create shared fate.** We measure what matters together.
+
+**Flow vs. Friction**: We optimize for Flow. Chronic friction triggers system redesign. We report friction to fix the system, not to blame the person.
 
 **Bidirectional Accountability**: Peer↔Peer | Team→Leadership | Leadership→Team
 
@@ -68,10 +70,10 @@ No one is exempt. Title doesn't shield you from direct feedback.
 |---|-------------|---------------|
 | 1 | **Direct is Kind** | I speak for myself, share my thought before questions, describe without blame, coach directly. |
 | 2 | **Listen First, Then Act** | I understand before solving. I ask before assuming. |
-| 3 | **Fix Systems, Own My Part, Grow** | Every failure has system gaps AND personal lessons. I find both. |
-| 4 | **Test, Learn, Improve** | Small experiments. Learn from everything. Progress beats perfection. |
-| 5 | **Unreasonable Hospitality** | I go beyond expected. "Big Expertise. Small-Town Heart." is my promise. |
-| 6 | **AI in Everything** | If AI can do it, AI should. I ask "could AI help?" constantly. |
+| 3 | **Fix the System, Own Your Part** | Every failure has system gaps AND personal lessons. I find both. I fix both. |
+| 4 | **Test, Learn, Evolve** | Small experiments. Learn from everything. Adapt or fall behind. |
+| 5 | **Unreasonable Hospitality** | I go beyond expected. AI = Memory. Humans = Heart. |
+| 6 | **AI in Everything** | AI first, human always. If AI can do it, AI should. |
 
 ---
 
@@ -81,8 +83,8 @@ No one is exempt. Title doesn't shield you from direct feedback.
 ┌─────────────────────────────────────────┐
 │ 1. Does this serve the patient?         │
 │ 2. What does the data say?              │
-│ 3. Is this sustainable?                 │
-│ 4. Could AI help?                       │
+│ 3. Can AI identify the root cause?      │
+│ 4. AI first, human always?              │
 │ 5. Have I talked directly to people     │
 │    affected?                            │
 └─────────────────────────────────────────┘
@@ -135,4 +137,4 @@ No one is exempt. Title doesn't shield you from direct feedback.
 
 <p align="center"><em>"Big Expertise. Small-Town Heart."</em></p>
 <p align="center"><strong>THE KIDNEY EXPERTS</strong></p>
-<p align="center"><small>Culture System v3.0 | Based on Eric Coryell's Accountable Teams</small></p>
+<p align="center"><small>Culture System v4.0 | Based on Eric Coryell's Accountable Teams</small></p>

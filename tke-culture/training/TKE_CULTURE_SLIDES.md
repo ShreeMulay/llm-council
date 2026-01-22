@@ -13,7 +13,7 @@
 │                    THE KIDNEY EXPERTS                          │
 │                                                                │
 │                    Culture Rollout                             │
-│                    v3.0 | January 2026                         │
+│                    v4.0 | January 2026                         │
 │                                                                │
 │                                                                │
 │    "Big Expertise. Small-Town Heart."                          │
@@ -311,8 +311,8 @@
 │                                                                │
 │    1. Direct is Kind                                           │
 │    2. Listen First, Then Act                                   │
-│    3. Fix Systems, Own My Part, Grow                           │
-│    4. Test, Learn, Improve                                     │
+│    3. Fix the System, Own Your Part                            │
+│    4. Test, Learn, Evolve                                      │
 │    5. Unreasonable Hospitality                                 │
 │    6. AI in Everything                                         │
 │                                                                │
@@ -382,15 +382,15 @@
 
 ---
 
-## Slide 15: Fundamental 3 - Fix Systems, Own My Part, Grow
+## Slide 15: Fundamental 3 - Fix the System, Own Your Part
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │                                                                │
-│    3. FIX SYSTEMS, OWN MY PART, GROW                           │
+│    3. FIX THE SYSTEM, OWN YOUR PART                            │
 │                                                                │
 │    "Every failure has system gaps AND personal lessons.        │
-│     I find both. I improve both."                              │
+│     I find both. I fix both."                                  │
 │                                                                │
 │    ─────────────────────────────────────────────               │
 │                                                                │
@@ -399,27 +399,28 @@
 │    ✅ "What system gap allowed this?"                          │
 │    ✅ "What's my part in this?"                                │
 │    ✅ "What will I do differently?"                            │
-│    ✅ "What did I learn? How am I better?"                     │
 │                                                                │
-│    "Fix systems" can't become an excuse.                       │
-│    Both are true: the system failed AND I can do better.       │
+│    "Fix the system" can't become an excuse.                    │
+│    Both are true: the system failed AND I own my part.         │
+│                                                                │
+│    We report friction to fix the system, not to blame.         │
 │                                                                │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Speaker Notes**: In healthcare we use the Swiss Cheese Model—systems fail, not people. But that can become an excuse. The answer is BOTH: fix the system AND own your part. And grow from it.
+**Speaker Notes**: In healthcare we use the Swiss Cheese Model—systems fail, not people. But that can become an excuse. The answer is BOTH: fix the system AND own your part. We report friction to fix the system, not to blame the person.
 
 ---
 
-## Slide 16: Fundamental 4 - Test, Learn, Improve
+## Slide 16: Fundamental 4 - Test, Learn, Evolve
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │                                                                │
-│    4. TEST, LEARN, IMPROVE                                     │
+│    4. TEST, LEARN, EVOLVE                                      │
 │                                                                │
 │    "I run small experiments. I learn from everything.          │
-│     Progress beats perfection."                                │
+│     I adapt or I fall behind."                                 │
 │                                                                │
 │    ─────────────────────────────────────────────               │
 │                                                                │
@@ -427,16 +428,17 @@
 │    • Set success criteria BEFORE the test                      │
 │    • Learn from both successes and failures                    │
 │    • Every week: identify ONE thing to improve                 │
+│    • Embrace change as essential, not optional                 │
 │                                                                │
-│    1% improvement daily = 37x improvement yearly               │
+│    Evolution is survival. Those who don't adapt get left.      │
 │                                                                │
-│    The TEST: Am I experimenting and learning,                  │
-│              or waiting for perfect conditions?                │
+│    The TEST: Am I evolving with intention,                     │
+│              or resisting necessary change?                    │
 │                                                                │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Speaker Notes**: We don't need perfect plans. We need fast learning. Small experiments, clear criteria, learn and iterate. Progress beats perfection every time.
+**Speaker Notes**: Evolution isn't optional—it's survival. Those who resist change get left behind. Small experiments, fast learning, constant adaptation. This is how we stay ahead.
 
 ---
 
@@ -510,9 +512,9 @@
 │                                                                │
 │    2. What does the data say?                                  │
 │                                                                │
-│    3. Is this sustainable?                                     │
+│    3. Can AI identify the root cause?                          │
 │                                                                │
-│    4. Could AI help?                                           │
+│    4. AI first, human always?                                  │
 │                                                                │
 │    5. Have I talked directly to the people affected?           │
 │                                                                │

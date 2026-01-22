@@ -198,7 +198,7 @@
 **Setup**: During shift change, critical patient information isn't being communicated. One patient with new lab abnormalities was missed because the outgoing nurse said "nothing new" when there was. The incoming nurse found out hours later from the EHR.
 
 **The Issue**: Handoff quality
-**Fundamental in Play**: Fix Systems, Own My Part, Grow
+**Fundamental in Play**: Fix the System, Own Your Part
 
 **Discussion Questions**:
 - What's the system gap?
@@ -270,7 +270,7 @@
 **Setup**: When mistakes happen, Jordan always has an explanation that points elsewhere: "The system was down," "I wasn't told," "That's not my job." The pattern is consistent—Jordan never owns their part.
 
 **The Issue**: Lack of personal accountability
-**Fundamental in Play**: Fix Systems, Own My Part, Grow
+**Fundamental in Play**: Fix the System, Own Your Part
 
 **Discussion Questions**:
 - How does constant deflection affect team trust?

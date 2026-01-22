@@ -1,6 +1,6 @@
 # The Kidney Experts (TKE) Culture System
 
-> **Version**: 3.0 | **Effective Date**: January 2026 | **Owner**: Dr. Shree Mulay
+> **Version**: 4.0 | **Effective Date**: January 2026 | **Owner**: Dr. Shree Mulay
 
 ---
 
@@ -47,6 +47,8 @@ We share a fate. Your success is my success. Your failure is my concern. We hold
 This principle, drawn from Eric Coryell's *Revolutionize Teamwork*, is the foundation everything else rests on. Without shared fate, values become posters on walls. With shared fate, values become lived reality.
 
 **Shared metrics create shared fate.** We measure what matters together—patients kept off dialysis, satisfaction scores, promises kept. If you only know how YOU'RE doing, you can't feel what happens to all.
+
+**Flow vs. Friction**: We optimize for Flow. Chronic friction triggers system redesign. We report friction to fix the system, not to blame the person.
 
 ---
 
@@ -363,43 +365,44 @@ Whether it's a patient, a colleague, or a problem—I listen before I diagnose. 
 
 ---
 
-### 3. Fix Systems, Own My Part, Grow
+### 3. Fix the System, Own Your Part
 
-> **Every failure has system gaps AND personal lessons. I find both. I improve both.**
+> **Every failure has system gaps AND personal lessons. I find both. I fix both.**
 
-The Swiss Cheese Model is valid—every failure reveals system gaps. But "fix systems" can't become an excuse. Both are true: the system failed AND I need to do better. And both are opportunities to grow.
+The Swiss Cheese Model is valid—every failure reveals system gaps. But "fix the system" can't become an excuse. Both are true: the system failed AND I need to do better.
 
 **What this looks like:**
 - When something goes wrong: "What happened?" not "Who did this?"
 - AND: "What's my part in this? What will I do differently?"
-- After fixing: "What did I learn? How am I better?"
 - Leadership owns their broken promises, not just individual contributors
 - "I own that" is said before anyone has to ask
+- We report friction to fix the system, not to blame the person
 
 **The balance:**
-| Blameless (keep) | Ownership (add) | Growth (add) |
-|------------------|-----------------|--------------|
-| Fix the system gaps | AND acknowledge my role | AND learn from it |
-| No public shaming | AND have direct conversations | AND become better |
-| Focus on prevention | AND commit to personal improvement | AND share the lesson |
+| Blameless (keep) | Ownership (add) |
+|------------------|-----------------|
+| Fix the system gaps | AND acknowledge my role |
+| No public shaming | AND have direct conversations |
+| Focus on prevention | AND commit to personal improvement |
 
-**The test**: Did I fix the system, own my part, AND grow from it?
+**The test**: Did I fix the system AND own my part?
 
 ---
 
-### 4. Test, Learn, Improve
+### 4. Test, Learn, Evolve
 
-> **I run small experiments. I learn from everything. Progress beats perfection.**
+> **I run small experiments. I learn from everything. I adapt or I fall behind.**
 
-Small experiments are cheaper than big bets. Learning fast beats planning perfectly. 1% improvement daily = 37x improvement yearly.
+Small experiments are cheaper than big bets. Learning fast beats planning perfectly. Evolution is survival—those who don't adapt get left behind.
 
 **What this looks like:**
 - I test new ideas with small pilots before committing resources
 - I set clear success criteria BEFORE the test
 - I learn from both successes and failures
 - Every week, I identify ONE thing that could be improved and either fix it or flag it
+- I embrace change as essential, not optional
 
-**The test**: Am I experimenting and learning, or waiting for perfect conditions?
+**The test**: Am I evolving with intention, or resisting necessary change?
 
 ---
 
@@ -408,6 +411,8 @@ Small experiments are cheaper than big bets. Learning fast beats planning perfec
 > **I go beyond expected. I anticipate needs. "Big Expertise. Small-Town Heart." is my promise.**
 
 This differentiates TKE from transactional healthcare. It creates patient loyalty and referrals. It delivers on our promise of clinical excellence with genuine warmth.
+
+**Precision Hospitality** (internal reframe): AI anticipates your needs, our team exceeds them. AI = Memory (data, preferences, history). Humans = Heart (empathy, judgment, connection). We use technology to enable warmth at scale, not replace it.
 
 **What "unreasonable" means:**
 | Reasonable | Unreasonable |
@@ -456,8 +461,8 @@ When facing any significant decision, ask:
 |---|----------|-------------|
 | 1 | **Does this serve the patient?** | People First, Always + Prevention Over Profit |
 | 2 | **What does the data say?** | Data Over Opinion |
-| 3 | **Is this sustainable?** | Work Smart, Not Long |
-| 4 | **Could AI help?** | AI Amplifies Human Impact |
+| 3 | **Can AI identify the root cause?** | Fix the System + AI Amplifies |
+| 4 | **AI first, human always?** | AI Amplifies Human Impact |
 | 5 | **Have I talked directly to the people affected?** | Shared Fate / Accountability |
 
 **If you can't answer all five well, pause and reconsider.**
@@ -647,8 +652,8 @@ Sometimes values create tension. Here's how to navigate:
 │  6 FUNDAMENTALS (Individual Behaviors)                          │
 │  1. Direct is Kind                                              │
 │  2. Listen First, Then Act                                      │
-│  3. Fix Systems, Own My Part, Grow                              │
-│  4. Test, Learn, Improve                                        │
+│  3. Fix the System, Own Your Part                               │
+│  4. Test, Learn, Evolve                                         │
 │  5. Unreasonable Hospitality                                    │
 │  6. AI in Everything                                            │
 └─────────────────────────────────────────────────────────────────┘
@@ -656,7 +661,7 @@ Sometimes values create tension. Here's how to navigate:
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │  5-QUESTION DECISION FILTER                                     │
-│  1. Patient? 2. Data? 3. Sustainable? 4. AI? 5. Talked directly?│
+│  1. Patient? 2. Data? 3. Root cause? 4. AI first? 5. Talked?    │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -679,12 +684,16 @@ Sometimes values create tension. Here's how to navigate:
 **6 FUNDAMENTALS**:
 1. Direct is Kind
 2. Listen First, Then Act
-3. Fix Systems, Own My Part, Grow
-4. Test, Learn, Improve
+3. Fix the System, Own Your Part
+4. Test, Learn, Evolve
 5. Unreasonable Hospitality
 6. AI in Everything
 
-**5 QUESTIONS**: Patient? Data? Sustainable? AI? Talked directly?
+**5 QUESTIONS**: Patient? Data? Root cause? AI first? Talked directly?
+
+**FLOW VS. FRICTION**: We optimize for Flow. Chronic friction triggers system redesign.
+
+**PRECISION HOSPITALITY**: AI = Memory. Humans = Heart. AI anticipates your needs, our team exceeds them.
 
 **ACCOUNTABILITY ESSENCE**:
 - The mark of a great leader is describing what happened without assigning blame
@@ -710,7 +719,11 @@ Sometimes values create tension. Here's how to navigate:
 
 **Unreasonable Hospitality**: Going beyond what's expected; anticipating needs before they're expressed; making people feel genuinely cared for.
 
-**Blameless Problem Solving**: Focusing on fixing systems rather than blaming individuals when things go wrong. Based on the "Swiss Cheese Model" where failures result from multiple system gaps aligning.
+**Blameless Problem Solving**: Focusing on fixing systems rather than blaming individuals when things go wrong. Based on the "Swiss Cheese Model" where failures result from multiple system gaps aligning. We report friction to fix the system, not to blame the person.
+
+**Flow vs. Friction**: The cultural metaphor for addressing change resistance and systemic issues. We optimize for Flow. Chronic friction triggers system redesign—not punishment, but improvement.
+
+**Precision Hospitality**: The internal reframe of Unreasonable Hospitality for the AI age. AI = Memory (data, preferences, patterns). Humans = Heart (empathy, judgment, connection). AI anticipates needs; humans exceed expectations.
 
 **The Swiss Cheese Model**: A framework for understanding failures as the result of multiple system gaps (holes in layers of cheese) aligning, rather than single-point individual failures.
 
@@ -743,6 +756,7 @@ This culture system integrates concepts from:
 | 1.0 | January 2025 | Initial release | Dr. Shree Mulay |
 | 2.0 | January 2026 | Major revision: Added Coryell accountability system, restored full mission/slogan, restructured fundamentals, added bidirectional accountability, added leadership expectations, added value tension resolution | Dr. Shree Mulay |
 | 3.0 | January 2026 | Distillation: Dual taglines (patient-facing + internal), consolidated 9 fundamentals to 6, added accountability philosophy intro ("describe without blame"), integrated growth mindset, added "Listen First" fundamental, expanded leadership expectations (clear path, shield team, standards, 48-hour response), moved "Results as a Team" to Operating Principle as "Shared metrics create shared fate" | Dr. Shree Mulay, Selena Reyes (input) |
+| 4.0 | January 2026 | Evolution: Renamed Fundamental #3 to "Fix the System, Own Your Part" (clearer accountability), renamed Fundamental #4 to "Test, Learn, Evolve" (adaptation as survival), updated Decision Filter #3 to "Can AI identify the root cause?" (systems + AI), updated Decision Filter #4 to "AI first, human always?" (owner's mandate), added "Flow vs. Friction" cultural language with blameless clarification, added "Precision Hospitality" concept (AI = Memory, Humans = Heart). LLM Council approved with 94% confidence. | Dr. Shree Mulay |
 
 ---
 

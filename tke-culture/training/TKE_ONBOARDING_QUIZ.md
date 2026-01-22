@@ -222,20 +222,20 @@
 
 **Correct: B**
 
-**Feedback if wrong**: TKE has 6 Fundamentals: (1) Direct is Kind, (2) Listen First Then Act, (3) Fix Systems Own My Part Grow, (4) Test Learn Improve, (5) Unreasonable Hospitality, (6) AI in Everything.
+**Feedback if wrong**: TKE has 6 Fundamentals: (1) Direct is Kind, (2) Listen First Then Act, (3) Fix the System, Own Your Part, (4) Test, Learn, Evolve, (5) Unreasonable Hospitality, (6) AI in Everything.
 
 ---
 
-### Q16. What does "Fix Systems, Own My Part, Grow" mean?
+### Q16. What does "Fix the System, Own Your Part" mean?
 
 - A) Only fix systems, individuals aren't responsible
 - B) Only hold individuals accountable, systems are fine
 - C) Every failure has system gaps AND personal lessons—find both
-- D) Growth is optional if systems are fixed
+- D) Personal accountability is optional if systems are fixed
 
 **Correct: C**
 
-**Feedback if wrong**: "Fix Systems, Own My Part, Grow" means every failure reveals system gaps AND opportunities for personal growth. Both are true. "Fix systems" can't become an excuse to avoid personal accountability.
+**Feedback if wrong**: "Fix the System, Own Your Part" means every failure reveals system gaps AND opportunities for personal accountability. Both are true. "Fix the system" can't become an excuse to avoid personal ownership. We report friction to fix the system, not to blame the person.
 
 ---
 
@@ -278,16 +278,16 @@
 
 ---
 
-### Q20. According to "Test, Learn, Improve," which approach is preferred?
+### Q20. According to "Test, Learn, Evolve," which approach is preferred?
 
 - A) Perfect planning before any action
 - B) Big bets on untested ideas
-- C) Small experiments with clear success criteria
+- C) Small experiments with clear success criteria, then adapt
 - D) Avoiding experimentation to reduce risk
 
 **Correct: C**
 
-**Feedback if wrong**: "Test, Learn, Improve" means running small experiments with clear success criteria, learning from both successes and failures. Progress beats perfection.
+**Feedback if wrong**: "Test, Learn, Evolve" means running small experiments with clear success criteria, learning from both successes and failures, and adapting. Evolution is survival—those who don't adapt get left behind.
 
 ---
 
@@ -309,13 +309,13 @@
 ### Q22. What are the 5 questions in TKE's Decision Filter?
 
 - A) Who, What, When, Where, Why
-- B) Patient? Data? Sustainable? AI? Talked directly?
+- B) Patient? Data? Root cause? AI first? Talked directly?
 - C) Cost? Benefit? Risk? Time? Resources?
 - D) Approve? Deny? Defer? Escalate? Document?
 
 **Correct: B**
 
-**Feedback if wrong**: The 5-Question Decision Filter is: (1) Does this serve the patient? (2) What does the data say? (3) Is this sustainable? (4) Could AI help? (5) Have I talked directly to people affected?
+**Feedback if wrong**: The 5-Question Decision Filter is: (1) Does this serve the patient? (2) What does the data say? (3) Can AI identify the root cause? (4) AI first, human always? (5) Have I talked directly to people affected?
 
 ---
 

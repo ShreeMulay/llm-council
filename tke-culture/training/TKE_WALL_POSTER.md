@@ -7,92 +7,93 @@
 ## Poster Layout (Top to Bottom)
 
 ```
-┌────────────────────────────────────────────────────────────────────────────┐
-│                                                                            │
-│                          THE KIDNEY EXPERTS                                │
-│                                                                            │
-│              "Ridding the World of the Need for Dialysis!"                 │
-│                                                                            │
-│         ─────────────────────────────────────────────────────              │
-│                                                                            │
-│    Patient-facing: "Big Expertise. Small-Town Heart."                      │
-│    Internal: "Treated like family. Built for impact."                      │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│                         OPERATING PRINCIPLE                                │
-│                                                                            │
-│                "What happens to one, happens to all."                      │
-│                  Shared metrics create shared fate.                        │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│   ┌──────────────────────────────┐   ┌──────────────────────────────┐     │
-│   │       5 CORE VALUES          │   │      6 FUNDAMENTALS          │     │
-│   ├──────────────────────────────┤   ├──────────────────────────────┤     │
-│   │                              │   │                              │     │
-│   │  1. People First, Always     │   │  1. Direct is Kind           │     │
-│   │     Patients are people,     │   │     I speak for myself.      │     │
-│   │     not cases.               │   │     I share my thought       │     │
-│   │                              │   │     before questions.        │     │
-│   │  2. Prevention Over Profit   │   │                              │     │
-│   │     Success = patients who   │   │  2. Listen First, Then Act   │     │
-│   │     never need dialysis.     │   │     I understand before      │     │
-│   │                              │   │     solving.                 │     │
-│   │  3. Work Smart, Not Long     │   │                              │     │
-│   │     Systems preserve energy  │   │  3. Fix Systems, Own My      │     │
-│   │     for what matters.        │   │     Part, Grow               │     │
-│   │                              │   │     Find both. Fix both.     │     │
-│   │  4. Data Over Opinion        │   │                              │     │
-│   │     Prove it before          │   │  4. Test, Learn, Improve     │     │
-│   │     scaling it.              │   │     Small experiments.       │     │
-│   │                              │   │     Progress > perfection.   │     │
-│   │  5. AI Amplifies Human       │   │                              │     │
-│   │     Impact                   │   │  5. Unreasonable Hospitality │     │
-│   │     Technology handles       │   │     Go beyond expected.      │     │
-│   │     routine; humans do       │   │                              │     │
-│   │     remarkable.              │   │  6. AI in Everything         │     │
-│   │                              │   │     If AI can, AI should.    │     │
-│   └──────────────────────────────┘   └──────────────────────────────┘     │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│                        THE CONTRACT WE MAKE                                │
-│                                                                            │
-│   "I care enough about you and our mission to tell you what I see.         │
-│    I expect you to do the same for me."                                    │
-│                                                                            │
-│   ┌─────────────────────────────────────────────────────────────────┐     │
-│   │                                                                 │     │
-│   │   TRUST DESTROYERS          │     TRUST BUILDERS                │     │
-│   │   ✗ Ignoring                │     ✓ Direct conversation, 1:1   │     │
-│   │   ✗ Gossiping               │     ✓ Direct conversation,       │     │
-│   │   ✗ Escalating to boss      │       as a team                  │     │
-│   │                                                                 │     │
-│   └─────────────────────────────────────────────────────────────────┘     │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│                       5-QUESTION DECISION FILTER                           │
-│                                                                            │
-│    ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐   ┌─────┐                        │
-│    │  1  │   │  2  │   │  3  │   │  4  │   │  5  │                        │
-│    └──┬──┘   └──┬──┘   └──┬──┘   └──┬──┘   └──┬──┘                        │
-│       │         │         │         │         │                            │
-│    Does this  What does  Is this   Could    Did I talk                     │
-│    serve the  the data  sustain-   AI      directly to                     │
-│    patient?    say?      able?    help?   people affected?                 │
-│                                                                            │
-│              If you can't answer all five well, PAUSE.                     │
-│                                                                            │
-├────────────────────────────────────────────────────────────────────────────┤
-│                                                                            │
-│   "The mark of a great leader is the ability to describe                   │
-│    what happened without assigning blame."                                 │
-│                                                                            │
-│                    Culture System v3.0 | January 2026                      │
-│                                                                            │
-└────────────────────────────────────────────────────────────────────────────┘
++----------------------------------------------------------------------------+
+|                                                                            |
+|                          THE KIDNEY EXPERTS                                |
+|                                                                            |
+|              "Ridding the World of the Need for Dialysis!"                 |
+|                                                                            |
+|         -----------------------------------------------------------        |
+|                                                                            |
+|    Patient-facing: "Big Expertise. Small-Town Heart."                      |
+|    Internal: "Treated like family. Built for impact."                      |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                                                                            |
+|                         OPERATING PRINCIPLE                                |
+|                                                                            |
+|                "What happens to one, happens to all."                      |
+|                  Shared metrics create shared fate.                        |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                                                                            |
+|   +------------------------------+   +------------------------------+      |
+|   |       5 CORE VALUES          |   |      6 FUNDAMENTALS          |      |
+|   +------------------------------+   +------------------------------+      |
+|   |                              |   |                              |      |
+|   |  1. People First, Always     |   |  1. Direct is Kind           |      |
+|   |     Patients are people,     |   |     I speak for myself.      |      |
+|   |     not cases.               |   |     I share my thought       |      |
+|   |                              |   |     before questions.        |      |
+|   |  2. Prevention Over Profit   |   |                              |      |
+|   |     Success = patients who   |   |  2. Listen First, Then Act   |      |
+|   |     never need dialysis.     |   |     I understand before      |      |
+|   |                              |   |     solving.                 |      |
+|   |  3. Work Smart, Not Long     |   |                              |      |
+|   |     Systems preserve energy  |   |  3. Fix the System, Own      |      |
+|   |     for what matters.        |   |     Your Part                |      |
+|   |                              |   |     Find both. Fix both.     |      |
+|   |  4. Data Over Opinion        |   |                              |      |
+|   |     Prove it before          |   |  4. Test, Learn, Evolve      |      |
+|   |     scaling it.              |   |     Small experiments.       |      |
+|   |                              |   |     Adapt or fall behind.    |      |
+|   |  5. AI Amplifies Human       |   |                              |      |
+|   |     Impact                   |   |  5. Unreasonable Hospitality |      |
+|   |     Technology handles       |   |     Go beyond expected.      |      |
+|   |     routine; humans do       |   |                              |      |
+|   |     remarkable.              |   |  6. AI in Everything         |      |
+|   |                              |   |     If AI can, AI should.    |      |
+|   +------------------------------+   +------------------------------+      |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                                                                            |
+|                        THE CONTRACT WE MAKE                                |
+|                                                                            |
+|   "I care enough about you and our mission to tell you what I see.         |
+|    I expect you to do the same for me."                                    |
+|                                                                            |
+|   +-----------------------------------------------------------------+      |
+|   |                                                                 |      |
+|   |   TRUST DESTROYERS          |     TRUST BUILDERS                |      |
+|   |   X Ignoring                |     + Direct conversation, 1:1   |      |
+|   |   X Gossiping               |     + Direct conversation,       |      |
+|   |   X Escalating to boss      |       as a team                  |      |
+|   |                                                                 |      |
+|   +-----------------------------------------------------------------+      |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                                                                            |
+|                       5-QUESTION DECISION FILTER                           |
+|                                                                            |
+|    +-----+   +-----+   +-----+   +-----+   +-----+                         |
+|    |  1  |   |  2  |   |  3  |   |  4  |   |  5  |                         |
+|    +--+--+   +--+--+   +--+--+   +--+--+   +--+--+                         |
+|       |         |         |         |         |                            |
+|    Does this  What does  Can AI    AI first, Did I talk                    |
+|    serve the  the data   identify  human     directly to                   |
+|    patient?   say?       root      always?   people affected?              |
+|                          cause?                                            |
+|                                                                            |
+|              If you can't answer all five well, PAUSE.                     |
+|                                                                            |
++----------------------------------------------------------------------------+
+|                                                                            |
+|   "The mark of a great leader is the ability to describe                   |
+|    what happened without assigning blame."                                 |
+|                                                                            |
+|                    Culture System v4.0 | January 2026                      |
+|                                                                            |
++----------------------------------------------------------------------------+
 ```
 
 ---
