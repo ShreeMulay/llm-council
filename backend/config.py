@@ -68,11 +68,15 @@ CEREBRAS_MODEL_IDS = [
 ]
 
 # OpenAI models that should be routed directly via Codex OAuth
+# NOTE: Codex OAuth uses the Responses API, not Chat Completions.
+# For now, route all OpenAI models through OpenRouter instead.
+# TODO: Implement Responses API client if direct OpenAI access is needed.
 OPENAI_MODEL_IDS = [
-    "openai/gpt-5.2",
-    "openai/gpt-5.1",
-    "openai/gpt-4o",
-    "openai/gpt-4-turbo",
+    # Disabled - Codex OAuth token doesn't work with Chat Completions API
+    # "openai/gpt-5.2",
+    # "openai/gpt-5.1",
+    # "openai/gpt-4o",
+    # "openai/gpt-4-turbo",
 ]
 
 # Model name aliases for convenience (used in /council command)
@@ -96,7 +100,9 @@ def is_cerebras_model(model_id: str) -> bool:
 
 def is_openai_model(model_id: str) -> bool:
     """Check if a model ID should be routed to OpenAI directly via Codex OAuth."""
-    return model_id.startswith("openai/") or model_id in OPENAI_MODEL_IDS
+    # Disabled - Codex OAuth uses Responses API, not Chat Completions
+    # All OpenAI models now route through OpenRouter
+    return model_id in OPENAI_MODEL_IDS  # Empty list = always False
 
 
 def resolve_model_alias(alias: str) -> str:
