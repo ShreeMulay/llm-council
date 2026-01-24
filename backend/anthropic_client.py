@@ -176,7 +176,7 @@ async def call_anthropic_oauth(
         "system": final_system,
     }
     
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=600.0) as client:
         response = await client.post(ANTHROPIC_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
@@ -241,7 +241,7 @@ async def call_anthropic_api_key(
     if system_prompt:
         payload["system"] = system_prompt
     
-    async with httpx.AsyncClient(timeout=120.0) as client:
+    async with httpx.AsyncClient(timeout=600.0) as client:
         response = await client.post(ANTHROPIC_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
