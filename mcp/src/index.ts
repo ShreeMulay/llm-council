@@ -5,8 +5,133 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { spawn, ChildProcess } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const BACKEND_URL = process.env.LLM_COUNCIL_URL || "http://localhost:8800";
+const HEALTH_URL = `${BACKEND_URL}/health`;
+const BACKEND_CWD = path.join(__dirname, "../../");
+
+// ============================================================================
+// BackendManager - Auto-spawns Python backend if not running
+// ============================================================================
+
+class BackendManager {
+  private process: ChildProcess | null = null;
+  private isShuttingDown = false;
+
+  async ensureRunning(): Promise<void> {
+    if (this.isShuttingDown) return;
+    if (await this.isAlive()) return;
+    await this.spawn();
+    await this.waitForReady();
+  }
+
+  private async isAlive(): Promise<boolean> {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const response = await fetch(HEALTH_URL, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  private async spawn(): Promise<void> {
+    if (this.process) {
+      // Process exists but not responding - kill it first
+      this.process.kill();
+      this.process = null;
+    }
+
+    console.error("[Backend] Starting Python backend...");
+
+    this.process = spawn("uv", ["run", "python", "-m", "backend.main"], {
+      cwd: BACKEND_CWD,
+      detached: false,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    this.process.stdout?.on("data", (data: Buffer) => {
+      const lines = data.toString().trim().split("\n");
+      for (const line of lines) {
+        console.error(`[Backend] ${line}`);
+      }
+    });
+
+    this.process.stderr?.on("data", (data: Buffer) => {
+      const lines = data.toString().trim().split("\n");
+      for (const line of lines) {
+        console.error(`[Backend] ${line}`);
+      }
+    });
+
+    this.process.on("exit", (code, signal) => {
+      console.error(`[Backend] Process exited (code=${code}, signal=${signal})`);
+      this.process = null;
+
+      // Auto-restart if not shutting down
+      if (!this.isShuttingDown) {
+        console.error("[Backend] Will restart on next request");
+      }
+    });
+
+    this.process.on("error", (err) => {
+      console.error(`[Backend] Process error: ${err.message}`);
+      this.process = null;
+    });
+  }
+
+  private async waitForReady(timeout = 30000): Promise<void> {
+    const startTime = Date.now();
+    const pollInterval = 500;
+
+    while (Date.now() - startTime < timeout) {
+      if (await this.isAlive()) {
+        console.error("[Backend] Ready and accepting connections");
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+    }
+
+    throw new Error(`Backend failed to start within ${timeout / 1000}s`);
+  }
+
+  async shutdown(): Promise<void> {
+    this.isShuttingDown = true;
+    if (this.process) {
+      console.error("[Backend] Shutting down...");
+      this.process.kill("SIGTERM");
+
+      // Wait briefly for graceful shutdown
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      if (this.process) {
+        this.process.kill("SIGKILL");
+      }
+      this.process = null;
+    }
+  }
+}
+
+const backendManager = new BackendManager();
+
+// Shutdown handlers
+process.on("SIGINT", async () => {
+  await backendManager.shutdown();
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  await backendManager.shutdown();
+  process.exit(0);
+});
 const COUNCIL_TIMEOUT_MS = parseInt(process.env.LLM_COUNCIL_TIMEOUT || "180000", 10);
 
 interface CouncilRequest {
@@ -82,6 +207,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Unknown tool: ${name}`);
   }
 
+  // Ensure backend is running before processing request
+  await backendManager.ensureRunning();
+
   const query = args?.query as string;
   const finalOnly = (args?.final_only as boolean) ?? false;
   const includeDetails = (args?.include_details as boolean) ?? true;
@@ -145,7 +273,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text" as const,
-          text: `Error consulting LLM Council: ${errorMessage}\n\nMake sure the backend is running: cd llm-council && uv run python -m backend.main`,
+          text: `Error consulting LLM Council: ${errorMessage}`,
         },
       ],
       isError: true,
