@@ -1,6 +1,6 @@
 # LLM Council - OpenCode Project
 
-Multi-model LLM deliberation system with peer review. Queries 4 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
+Multi-model LLM deliberation system with peer review. Queries 6 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
 
 ## Quick Start
 
@@ -12,14 +12,26 @@ uv run python -m backend.main
 ./start.sh
 ```
 
-## Council Models
+## Council Models (6-Member Configuration)
 
-| Model | Provider | Purpose |
-|-------|----------|---------|
-| Claude Opus 4.5 | OpenRouter (Anthropic) | Council + Chairman |
-| Gemini Flash 3.0 Preview | OpenRouter (Google) | Council |
-| Grok 4.1 Fast | OpenRouter (xAI) | Council |
-| GLM 4.7 | Cerebras Direct | Council |
+| Model | Provider | Role | Special Settings |
+|-------|----------|------|------------------|
+| GPT-5.2 | OpenAI Codex OAuth | Anchor/Reasoning | `reasoningEffort: high` |
+| Claude Opus 4.5 | Anthropic OAuth | Lead Coder + **Chairman** | - |
+| Gemini 3 Pro Preview | OpenRouter | Knowledge Generalist | - |
+| DeepSeek V3.2 | OpenRouter | Architect/Reasoner | - |
+| GLM 4.7 | Cerebras Direct | Tool Specialist | - |
+| Grok 4.1 Fast | OpenRouter | Real-time Intel | `reasoning: disabled` |
+
+### Chairman Selection (LLM Council Decision)
+
+**Claude Opus 4.5** was selected as chairman by unanimous council vote (4-0).
+
+Key reasoning:
+- **Synthesis > Reasoning**: Chairman's job is to integrate perspectives, not be the smartest
+- **Constitutional AI**: Reduces self-preference bias vs performance-optimized models
+- **"Strong but not supreme"**: 80.9% SWE-bench means technical depth without "Tyranny of the Expert"
+- **Separation of powers**: GPT-5.2 as Visionary, Claude as Judge
 
 ## API Endpoints
 
@@ -56,20 +68,27 @@ MCP Config:
 }
 ```
 
-## API Keys
+## API Keys & OAuth
 
-Loaded from `~/.bash_secrets`:
-- `OPENROUTER_API_KEY` - For Opus, Gemini, Grok
+**OAuth (loaded from `~/.local/share/opencode/auth.json`):**
+- `openai` / `codex` - For GPT-5.2 via Codex OAuth
+- `anthropic` - For Claude Opus 4.5 via Anthropic OAuth
+
+**API Keys (loaded from `~/.bash_secrets`):**
+- `OPENROUTER_API_KEY` - For Gemini, DeepSeek, Grok
 - `CEREBRAS_API_KEY` - For GLM 4.7
 
 ## Model Aliases
 
 Use aliases in `/council` command:
+- `gpt` -> openai/gpt-5.2
 - `opus` -> anthropic/claude-opus-4.5
-- `gemini` or `flash` -> google/gemini-3-flash-preview
-- `grok` -> x-ai/grok-4.1-fast
+- `gemini` or `pro` -> google/gemini-3-pro-preview
+- `deepseek` -> deepseek/deepseek-v3.2
 - `glm` -> zai-glm-4.7
+- `grok` -> x-ai/grok-4.1-fast
 - `sonnet` -> anthropic/claude-3.5-sonnet
+- `flash` -> google/gemini-3-flash-preview (backward compat)
 
 ## Tech Stack
 

@@ -29,20 +29,24 @@ OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions"
 CEREBRAS_MODELS_URL = "https://api.cerebras.ai/v1/models"
 
-# Council Models - the 4 models for deliberation
-# 1. Claude Opus 4.5 via OpenRouter (routes to Anthropic)
-# 2. Gemini Flash 3.0 Preview via OpenRouter
-# 3. Grok 4.1 Fast via OpenRouter
-# 4. GLM 4.7 via Cerebras (direct)
+# Council Models - 6 models for deliberation
+# 1. GPT-5.2 via OpenAI Codex OAuth (Anchor/Reasoning)
+# 2. Claude Opus 4.5 via Anthropic OAuth (Lead Coder)
+# 3. Gemini 3 Pro Preview via OpenRouter (Generalist)
+# 4. DeepSeek V3.2 via OpenRouter (Architect/Reasoner)
+# 5. GLM 4.7 via Cerebras Direct (Tool Specialist)
+# 6. Grok 4.1 Fast via OpenRouter (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
-    "anthropic/claude-opus-4.5",      # OpenRouter -> Anthropic
-    "google/gemini-3-flash-preview",  # OpenRouter -> Google
-    "x-ai/grok-4.1-fast",             # OpenRouter -> xAI
-    "zai-glm-4.7",                    # Cerebras Direct
+    "openai/gpt-5.2",                 # OpenAI Codex OAuth (Anchor)
+    "anthropic/claude-opus-4.5",      # Anthropic OAuth (Lead Coder)
+    "google/gemini-3-pro-preview",    # OpenRouter (Generalist)
+    "deepseek/deepseek-v3.2",         # OpenRouter (Architect)
+    "zai-glm-4.7",                    # Cerebras Direct (Tool Specialist)
+    "x-ai/grok-4.1-fast",             # OpenRouter (Real-time Intel)
 ]
 
 # Chairman Model - synthesizes final response
-# Opus 4.5 for best synthesis capability
+# Claude Opus 4.5 for best synthesis capability (council unanimous decision)
 DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.5"
 
 # Override via environment
@@ -63,20 +67,36 @@ CEREBRAS_MODEL_IDS = [
     "gpt-oss-120b",
 ]
 
+# OpenAI models that should be routed directly via Codex OAuth
+OPENAI_MODEL_IDS = [
+    "openai/gpt-5.2",
+    "openai/gpt-5.1",
+    "openai/gpt-4o",
+    "openai/gpt-4-turbo",
+]
+
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
+    "gpt": "openai/gpt-5.2",
     "opus": "anthropic/claude-opus-4.5",
-    "gemini": "google/gemini-3-flash-preview",
-    "grok": "x-ai/grok-4.1-fast",
+    "gemini": "google/gemini-3-pro-preview",
+    "pro": "google/gemini-3-pro-preview",
+    "deepseek": "deepseek/deepseek-v3.2",
     "glm": "zai-glm-4.7",
+    "grok": "x-ai/grok-4.1-fast",
     "sonnet": "anthropic/claude-3.5-sonnet",
-    "flash": "google/gemini-3-flash-preview",
+    "flash": "google/gemini-3-flash-preview",  # backward compat
 }
 
 
 def is_cerebras_model(model_id: str) -> bool:
     """Check if a model ID should be routed to Cerebras."""
     return model_id in CEREBRAS_MODEL_IDS
+
+
+def is_openai_model(model_id: str) -> bool:
+    """Check if a model ID should be routed to OpenAI directly via Codex OAuth."""
+    return model_id.startswith("openai/") or model_id in OPENAI_MODEL_IDS
 
 
 def resolve_model_alias(alias: str) -> str:

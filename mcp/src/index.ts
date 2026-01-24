@@ -7,6 +7,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 
 const BACKEND_URL = process.env.LLM_COUNCIL_URL || "http://localhost:8800";
+const COUNCIL_TIMEOUT_MS = parseInt(process.env.LLM_COUNCIL_TIMEOUT || "180000", 10);
 
 interface CouncilRequest {
   query: string;
@@ -104,13 +105,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       include_details: includeDetails,
     };
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
+
     const response = await fetch(`${BACKEND_URL}/api/council`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(requestBody),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -128,8 +135,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ],
     };
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
+    let errorMessage = error instanceof Error ? error.message : "Unknown error";
+    
+    if (error instanceof Error && error.name === "AbortError") {
+      errorMessage = `Council deliberation timed out after ${COUNCIL_TIMEOUT_MS / 1000}s. Try using final_only: true for faster results.`;
+    }
+    
     return {
       content: [
         {

@@ -9,11 +9,13 @@ from .config import (
     COUNCIL_MODELS,
     CHAIRMAN_MODEL,
     is_cerebras_model,
+    is_openai_model,
 )
 from .openrouter import query_model as query_openrouter_model
 from .openrouter import query_models_parallel as query_openrouter_models_parallel
 from .cerebras import query_cerebras_model, query_cerebras_models_parallel
 from .anthropic_client import call_anthropic, is_anthropic_model
+from .openai_client import call_openai
 
 
 async def query_single_model(
@@ -48,6 +50,19 @@ async def query_single_model(
         except Exception as e:
             print(f"Anthropic API error for {model_id}: {e}")
             return None
+    elif is_openai_model(model_id):
+        try:
+            prompt = messages[-1].get("content", "") if messages else ""
+            # Use 'high' reasoning effort for council deliberation (per LLM Council recommendation)
+            result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
+            return {
+                "content": result.get("response", ""),
+                "usage": result.get("usage", {}),
+                "provider": "openai"
+            }
+        except Exception as e:
+            print(f"OpenAI API error for {model_id}: {e}")
+            return None
     else:
         return await query_openrouter_model(model_id, messages, max_tokens, temperature)
 
@@ -79,6 +94,34 @@ async def query_anthropic_models_parallel(
     return dict(results_list)
 
 
+async def query_openai_single(model_id: str, messages: List[Dict[str, str]], max_tokens: int) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Query single OpenAI model and return (model_id, result) tuple."""
+    try:
+        prompt = messages[-1].get("content", "") if messages else ""
+        # Use 'high' reasoning effort for council deliberation
+        result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
+        return model_id, {
+            "content": result.get("response", ""),
+            "usage": result.get("usage", {}),
+            "provider": "openai"
+        }
+    except Exception as e:
+        print(f"OpenAI API error for {model_id}: {e}")
+        return model_id, None
+
+
+async def query_openai_models_parallel(
+    model_ids: List[str],
+    messages: List[Dict[str, str]],
+    max_tokens: int = 4096,
+    temperature: float = 0.7
+) -> Dict[str, Optional[Dict[str, Any]]]:
+    """Query multiple OpenAI models in parallel."""
+    tasks = [query_openai_single(m, messages, max_tokens) for m in model_ids]
+    results_list = await asyncio.gather(*tasks)
+    return dict(results_list)
+
+
 async def query_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
@@ -99,7 +142,9 @@ async def query_models_parallel(
     """
     cerebras_ids = [m for m in model_ids if is_cerebras_model(m)]
     anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
-    openrouter_ids = [m for m in model_ids if not is_cerebras_model(m) and not is_anthropic_model(m)]
+    openai_ids = [m for m in model_ids if is_openai_model(m)]
+    # OpenRouter handles everything else (Gemini, DeepSeek, Grok, etc.)
+    openrouter_ids = [m for m in model_ids if not is_cerebras_model(m) and not is_anthropic_model(m) and not is_openai_model(m)]
     
     results = {}
     tasks = []
@@ -109,6 +154,9 @@ async def query_models_parallel(
     
     if anthropic_ids:
         tasks.append(query_anthropic_models_parallel(anthropic_ids, messages, max_tokens, temperature))
+    
+    if openai_ids:
+        tasks.append(query_openai_models_parallel(openai_ids, messages, max_tokens, temperature))
     
     if openrouter_ids:
         tasks.append(query_openrouter_models_parallel(openrouter_ids, messages, max_tokens, temperature))
