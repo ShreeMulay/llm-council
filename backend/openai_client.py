@@ -184,7 +184,7 @@ async def call_openai(
     if "gpt-5" in openai_model and reasoning_effort != "none":
         payload["reasoning_effort"] = reasoning_effort
     
-    async with httpx.AsyncClient(timeout=600.0) as client:
+    async with httpx.AsyncClient(timeout=900.0) as client:
         response = await client.post(OPENAI_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
