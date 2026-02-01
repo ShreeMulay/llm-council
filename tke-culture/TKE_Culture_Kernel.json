@@ -1,0 +1,444 @@
+{
+  "version": "4.0",
+  "effective_date": "2026-01",
+  "owner": "Dr. Shree Mulay",
+
+  "identity": {
+    "bhag": "Ridding the World of the Need for Dialysis!",
+    "mission": "We transform kidney health by preventing the need for dialysis, prioritizing transplants and home therapies, and empowering patients through education.",
+    "taglines": {
+      "patient_facing": "Big Expertise. Small-Town Heart.",
+      "internal": "Treated like family. Built for impact."
+    },
+    "connection": "The internal culture (Treated like family. Built for impact.) is the engine that produces the external experience (Big Expertise. Small-Town Heart.)."
+  },
+
+  "operating_principle": {
+    "name": "Shared Fate",
+    "statement": "What happens to one, happens to all.",
+    "description": "We share a fate. Your success is my success. Your failure is my concern. We hold each other accountable—not by looking to the boss, but by having direct conversations.",
+    "attribution": "Eric Coryell, Revolutionize Teamwork",
+    "mechanisms": {
+      "shared_metrics": "Shared metrics create shared fate. We measure what matters together—patients kept off dialysis, satisfaction scores, promises kept.",
+      "flow_vs_friction": "We optimize for Flow. Chronic friction triggers system redesign. We report friction to fix the system, not to blame the person.",
+      "bidirectional_accountability": {
+        "peer_to_peer": "I hold my colleagues accountable. They hold me accountable.",
+        "team_to_leadership": "The team holds leadership accountable for commitments, decisions, and living the values.",
+        "leadership_to_team": "Leadership holds the team accountable for performance, culture, and patient outcomes.",
+        "everyone_to_everyone": "An MA can hold the CEO accountable. A physician can receive feedback from front desk staff."
+      }
+    }
+  },
+
+  "accountability_system": {
+    "core_quote": "The mark of a great leader is the ability to describe what happened without assigning blame.",
+    "principle": "Accountability is not punishment. It's trust.",
+    "contract_we_break": "I won't talk about your performance if you don't talk about mine.",
+    "contract_we_make": "I care enough about you and our mission to tell you what I see. I expect you to do the same for me.",
+    "trust_destroyers": ["Ignoring", "Gossiping", "Escalating to boss"],
+    "trust_builders": ["Direct conversation, one-on-one", "Direct conversation, as a team"],
+    "behavioral_rules": {
+      "speak_for_yourself": "Say 'I think,' 'I feel,' 'I believe.' Never hide behind 'we,' 'everyone,' or 'the team.'",
+      "statements_before_questions": "Before asking a question, share the thought that led to it."
+    },
+    "escalation_path": [
+      "Direct conversation, one-on-one",
+      "Second direct conversation (if first didn't resolve)",
+      "Direct conversation with a peer facilitator",
+      "Team conversation (if it affects the team)",
+      "Leadership involvement (only after steps 1-4)"
+    ]
+  },
+
+  "values": [
+    {
+      "id": "people_first",
+      "name": "People First, Always",
+      "description": "Patients are people with stories, not cases with numbers. Team members are valued humans, not interchangeable resources.",
+      "behaviors": [
+        "Use patient names, not room numbers",
+        "Ask 'what matters to you?' not just 'what's the matter?'",
+        "Support staff as whole humans, not just workers",
+        "Never sacrifice human dignity for efficiency",
+        "Holding someone accountable IS people first—you care enough to help them grow"
+      ],
+      "anti_patterns": [
+        "Referring to patients by diagnosis or room number",
+        "Treating staff as interchangeable resources",
+        "Prioritizing efficiency over human dignity",
+        "Avoiding accountability conversations under the guise of being 'nice'",
+        "Ignoring team member wellbeing in pursuit of metrics"
+      ],
+      "test": "Would we be comfortable if our family member was treated this way?"
+    },
+    {
+      "id": "prevention_over_profit",
+      "name": "Prevention Over Profit",
+      "description": "Our success is measured by patients who never need dialysis. Long-term relationships matter more than short-term revenue.",
+      "behaviors": [
+        "Aggressive quadruple therapy for diabetic CKD (protocols over preferences)",
+        "Celebrate health maintained, not just disease treated",
+        "Choose what's right for patients even when it reduces revenue",
+        "Build business model around CKD management, not ESRD management",
+        "Track and celebrate dialysis prevention outcomes"
+      ],
+      "anti_patterns": [
+        "Choosing higher-revenue treatments over evidence-based prevention",
+        "Measuring success only by revenue or visit volume",
+        "Delaying prevention conversations to maintain patient volume",
+        "Avoiding difficult conversations about lifestyle changes",
+        "Prioritizing ESRD capitation revenue over prevention"
+      ],
+      "test": "Does this decision prevent disease progression, or just manage decline?",
+      "paradox": "Every patient we keep off dialysis costs us ~$200-250/month in potential ESRD capitation revenue. This is our mission, not our mistake."
+    },
+    {
+      "id": "work_smart_not_long",
+      "name": "Work Smart, Not Long",
+      "description": "We achieve more by working intelligently, not grinding endlessly. Systems and AI preserve human energy for what matters most.",
+      "behaviors": [
+        "Build systems that eliminate duplicate work",
+        "Use AI to handle routine tasks so humans can focus on judgment and relationships",
+        "Measure outcomes, not hours",
+        "Reject 'work harder' in favor of 'build better systems'",
+        "Renegotiate promises before deadlines if keeping them requires overwork"
+      ],
+      "anti_patterns": [
+        "Glorifying long hours or burnout",
+        "Doing manually what AI or systems could automate",
+        "Measuring productivity by time spent rather than outcomes",
+        "Making promises that require unsustainable effort",
+        "Resisting automation because 'we've always done it this way'"
+      ],
+      "test": "Can we sustain this pace for 5 years, or are we sprinting a marathon?"
+    },
+    {
+      "id": "data_over_opinion",
+      "name": "Data Over Opinion",
+      "description": "Prove it before scaling it. Evidence drives decisions; experience informs them. 'I don't know, let's find out' is stronger than unfounded certainty.",
+      "behaviors": [
+        "Test assumptions with data before committing resources",
+        "Admit when we're wrong and change course",
+        "Use KDIGO/KDOQI guidelines as baseline, update when evidence changes",
+        "Track outcomes systematically (dialysis delays, hospitalizations, adherence)",
+        "Say 'I don't know, let me find out' rather than guess"
+      ],
+      "anti_patterns": [
+        "Making decisions based on 'gut feel' without data validation",
+        "Continuing practices because 'we've always done it this way'",
+        "Ignoring data that contradicts a preferred narrative",
+        "Scaling before proving with a pilot",
+        "Treating anecdotes as evidence"
+      ],
+      "test": "What data supports this decision, and what would prove us wrong?"
+    },
+    {
+      "id": "ai_amplifies_human_impact",
+      "name": "AI Amplifies Human Impact",
+      "description": "We continuously embrace AI to amplify what humans do best. Every manual process is a candidate for automation. Every system is a candidate for improvement.",
+      "behaviors": [
+        "Ask 'could AI help?' as reflexively as 'does this serve the patient?'",
+        "AI handles documentation, flagging, routine tasks",
+        "Humans focus on judgment, empathy, creativity, relationships",
+        "Continuously experiment with AI tools and workflows",
+        "Share AI workflow discoveries immediately with the team"
+      ],
+      "anti_patterns": [
+        "Treating AI as optional or nice-to-have",
+        "Fearing AI will replace jobs (AI replaces tasks, not people)",
+        "Using AI without verifying outputs",
+        "Refusing to learn AI tools for your role",
+        "Building manual processes when AI alternatives exist"
+      ],
+      "test": "Could AI do this, or does it require human judgment/empathy?"
+    }
+  ],
+
+  "fundamentals": [
+    {
+      "id": "direct_is_kind",
+      "number": 1,
+      "name": "Direct is Kind",
+      "mantra": "I speak for myself. I share my thought before questions. I describe without blame. I coach directly.",
+      "description": "The direct path builds trust. Ignoring, gossiping, and escalating destroy it. When I have an issue with someone, I go to them—within 48 hours.",
+      "behaviors": [
+        "Go directly to the person within 48 hours when I have an issue",
+        "Use 'I' statements, not 'we think' or 'everyone feels'",
+        "Share the thought that led to my question before asking it",
+        "Describe situations without assigning blame",
+        "Thank people who give me direct feedback, even when it stings"
+      ],
+      "anti_patterns": [
+        "Complaining about someone to a third party instead of going to them directly",
+        "Using 'we think' or 'everyone feels' to hide behind group pronouns",
+        "Asking accusatory questions without sharing your thought first",
+        "Letting issues fester past 48 hours without addressing them",
+        "Escalating to a manager before trying a direct conversation"
+      ],
+      "test": "Did I take the direct path, or did I avoid discomfort?"
+    },
+    {
+      "id": "listen_first_then_act",
+      "number": 2,
+      "name": "Listen First, Then Act",
+      "mantra": "I understand before solving. I ask before assuming. The best care starts with hearing what matters.",
+      "description": "Whether it's a patient, a colleague, or a problem—I listen before I diagnose. I seek to understand the full picture before jumping to solutions.",
+      "behaviors": [
+        "Let patients finish speaking before offering solutions",
+        "Ask clarifying questions before proposing fixes",
+        "Understand root causes before treating symptoms",
+        "Reflect back what I heard to confirm understanding",
+        "Ask 'what matters to you?' not just 'what's the matter?'"
+      ],
+      "anti_patterns": [
+        "Interrupting patients or colleagues mid-sentence",
+        "Jumping to solutions before understanding the full picture",
+        "Assuming you know what someone needs without asking",
+        "Treating symptoms instead of investigating root causes",
+        "Waiting to talk instead of truly listening"
+      ],
+      "test": "Did I truly listen, or was I just waiting to talk?"
+    },
+    {
+      "id": "fix_the_system_own_your_part",
+      "number": 3,
+      "name": "Fix the System, Own Your Part",
+      "mantra": "Every failure has system gaps AND personal lessons. I find both. I fix both.",
+      "description": "The Swiss Cheese Model is valid—every failure reveals system gaps. But 'fix the system' can't become an excuse. Both are true: the system failed AND I need to do better.",
+      "behaviors": [
+        "When something goes wrong, ask 'What happened?' not 'Who did this?'",
+        "Identify system gaps AND acknowledge personal responsibility",
+        "Say 'I own that' before anyone has to ask",
+        "Report friction to fix the system, not to blame the person",
+        "Leadership owns broken promises, not just individual contributors"
+      ],
+      "anti_patterns": [
+        "Blaming individuals when systems failed them",
+        "Using 'fix the system' as an excuse to avoid personal accountability",
+        "Public shaming for mistakes",
+        "Waiting to be confronted instead of proactively owning errors",
+        "Ignoring systemic issues and only addressing individual performance"
+      ],
+      "test": "Did I fix the system AND own my part?"
+    },
+    {
+      "id": "test_learn_evolve",
+      "number": 4,
+      "name": "Test, Learn, Evolve",
+      "mantra": "I run small experiments. I learn from everything. I adapt or I fall behind.",
+      "description": "Small experiments are cheaper than big bets. Learning fast beats planning perfectly. Evolution is survival—those who don't adapt get left behind.",
+      "behaviors": [
+        "Test new ideas with small pilots before committing resources",
+        "Set clear success criteria BEFORE the test",
+        "Learn from both successes and failures",
+        "Every week, identify ONE thing that could be improved and either fix it or flag it",
+        "Embrace change as essential, not optional"
+      ],
+      "anti_patterns": [
+        "Launching big initiatives without piloting first",
+        "Declaring success or failure without clear criteria",
+        "Repeating the same approach after it has failed",
+        "Resisting change because 'this is how we've always done it'",
+        "Over-planning instead of starting small and iterating"
+      ],
+      "test": "Am I evolving with intention, or resisting necessary change?"
+    },
+    {
+      "id": "unreasonable_hospitality",
+      "number": 5,
+      "name": "Unreasonable Hospitality",
+      "mantra": "I go beyond expected. I anticipate needs. 'Big Expertise. Small-Town Heart.' is my promise.",
+      "description": "This differentiates TKE from transactional healthcare. It creates patient loyalty and referrals. It delivers on our promise of clinical excellence with genuine warmth.",
+      "precision_hospitality": {
+        "concept": "AI anticipates your needs, our team exceeds them.",
+        "ai_role": "Memory — data, preferences, history, patterns",
+        "human_role": "Heart — empathy, judgment, connection"
+      },
+      "behaviors": [
+        "Remember personal details about patients and reference them",
+        "Call to check in after difficult visits—not because protocol requires it",
+        "Explain complex kidney function in terms the patient actually understands",
+        "Anticipate questions before they're asked",
+        "Make the clinical environment feel warm, not sterile"
+      ],
+      "anti_patterns": [
+        "Treating patient interactions as transactions",
+        "Only doing what protocol requires and nothing more",
+        "Failing to remember or reference personal details",
+        "Using medical jargon without translation",
+        "Making patients feel like they're on an assembly line"
+      ],
+      "test": "Would this feel like family, or like a transaction?"
+    },
+    {
+      "id": "ai_in_everything",
+      "number": 6,
+      "name": "AI in Everything",
+      "mantra": "If AI can do it, AI should. I ask 'could AI help?' constantly.",
+      "description": "AI handles routine so humans can handle remarkable. Every repetitive task is an automation candidate. I focus my human energy on judgment, empathy, creativity, and relationships.",
+      "daily_question": "What did I do manually today that AI could help with?",
+      "by_role": {
+        "providers": {
+          "ai_handles": "Documentation, coding suggestions, abnormal flags",
+          "human_handles": "Medical decisions, patient relationships, complex judgment"
+        },
+        "medical_assistants": {
+          "ai_handles": "Data entry, reminders, refill routing",
+          "human_handles": "Patient interaction, clinical prep, in-person support"
+        },
+        "front_desk": {
+          "ai_handles": "Confirmations, insurance verification",
+          "human_handles": "Complex scheduling, upset patient de-escalation"
+        },
+        "billing": {
+          "ai_handles": "Claim scrubbing, denial analysis",
+          "human_handles": "Payer negotiations, complex appeals"
+        }
+      },
+      "behaviors": [
+        "Ask 'could AI help?' for every repetitive task",
+        "Use AI tools daily in your role",
+        "Share AI workflow discoveries with the team",
+        "Verify AI outputs before acting on them",
+        "Suggest AI improvements when you see manual bottlenecks"
+      ],
+      "anti_patterns": [
+        "Doing manually what AI could automate",
+        "Refusing to learn or use AI tools",
+        "Treating AI as a threat to your job",
+        "Blindly trusting AI without verification",
+        "Keeping AI workflow discoveries to yourself"
+      ],
+      "test": "Could AI do this, or does it require my human judgment/empathy?"
+    }
+  ],
+
+  "decision_filter": {
+    "name": "5-Question Decision Filter",
+    "instruction": "When facing any significant decision, ask all five. If you can't answer all five well, pause and reconsider.",
+    "questions": [
+      {
+        "number": 1,
+        "question": "Does this serve the patient?",
+        "connects_to": ["People First, Always", "Prevention Over Profit"]
+      },
+      {
+        "number": 2,
+        "question": "What does the data say?",
+        "connects_to": ["Data Over Opinion"]
+      },
+      {
+        "number": 3,
+        "question": "Can AI identify the root cause?",
+        "connects_to": ["Fix the System, Own Your Part", "AI Amplifies Human Impact"]
+      },
+      {
+        "number": 4,
+        "question": "AI first, human always?",
+        "connects_to": ["AI Amplifies Human Impact"]
+      },
+      {
+        "number": 5,
+        "question": "Have I talked directly to the people affected?",
+        "connects_to": ["Shared Fate", "Bidirectional Accountability"]
+      }
+    ]
+  },
+
+  "cultural_language": {
+    "flow_vs_friction": {
+      "definition": "We optimize for Flow. Chronic friction triggers system redesign—not punishment, but improvement.",
+      "usage": "Used to surface systemic issues without blame. 'I'm experiencing friction with X' triggers investigation and redesign."
+    },
+    "precision_hospitality": {
+      "definition": "AI = Memory (data, preferences, patterns). Humans = Heart (empathy, judgment, connection). AI anticipates needs; humans exceed expectations.",
+      "usage": "Internal reframe of Unreasonable Hospitality for the AI age."
+    },
+    "swiss_cheese_model": {
+      "definition": "Failures result from multiple system gaps (holes in layers of cheese) aligning, rather than single-point individual failures.",
+      "usage": "Used in blameless post-mortems. Every failure reveals system gaps to fix."
+    },
+    "carefrontation": {
+      "definition": "A direct conversation about a difficult issue, delivered with genuine care for the person. Care + Confrontation = Growth.",
+      "usage": "The expected mode of difficult conversations at TKE."
+    },
+    "shared_fate": {
+      "definition": "Team members' success and failure are interconnected. Creates motivation for peer accountability.",
+      "usage": "Core operating principle. Manifests through shared metrics and mutual accountability."
+    }
+  },
+
+  "leadership_expectations": {
+    "two_jobs": [
+      "Model peer accountability — Have direct conversations yourself",
+      "Clear the organizational path — Remove blockers your team CAN'T solve"
+    ],
+    "key_behaviors": [
+      "Receive feedback publicly and thank the person",
+      "Own mistakes first — say 'I own that' before being asked",
+      "Track commitments visibly — same standard as team",
+      "Redirect escalation — 'Did you talk to them first?'",
+      "Clear the path — remove blockers team can't solve",
+      "Shield your team — absorb chaos from above so clarity flows down",
+      "Standards are standards — enforce consistently, no exceptions",
+      "48-hour response — respond to raised issues within 48 hours"
+    ]
+  },
+
+  "daily_rituals": {
+    "daily_huddle": {
+      "duration": "5 minutes",
+      "agenda": [
+        "Start with one win or thank you (gratitude)",
+        "Today's focus fundamental",
+        "Any blockers or concerns? (surface problems)",
+        "Anyone have an example from yesterday? (reinforce culture)",
+        "Break"
+      ]
+    },
+    "weekly_team_meeting": {
+      "standing_items": [
+        "One recognition for living a fundamental",
+        "One improvement opportunity identified",
+        "AI opportunity of the week",
+        "Leadership commitment check: 'What was promised? What was delivered?'"
+      ]
+    },
+    "monthly_all_staff": {
+      "agenda": [
+        "Culture Champion award",
+        "Fundamental focus for the month",
+        "Share one 'hard lesson' story (blameless learning)",
+        "Leadership accountability review"
+      ]
+    }
+  },
+
+  "attributions": [
+    {
+      "author": "Eric Coryell",
+      "work": "Revolutionize Teamwork: How to Create and Lead Accountable Teams",
+      "contribution": "Shared fate, peer accountability, behavioral rules"
+    },
+    {
+      "author": "David Friedman",
+      "work": "Culture by Design",
+      "contribution": "Fundamentals-based culture systems"
+    },
+    {
+      "author": "Will Guidara",
+      "work": "Unreasonable Hospitality",
+      "contribution": "Exceeding expectations"
+    },
+    {
+      "author": "James Reason",
+      "work": "Swiss Cheese Model",
+      "contribution": "Systems thinking for failures"
+    },
+    {
+      "author": "Selena Reyes",
+      "work": "Board member input",
+      "contribution": "Patient experience, 'Big Expertise. Small-Town Heart.' tagline, leadership specificity, compassionate accountability framing"
+    }
+  ]
+}
