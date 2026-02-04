@@ -299,7 +299,8 @@
       
       // If panel is open and we have doc data, update viewer
       if (currentDocData && !document.getElementById('doc-panel').classList.contains('hidden')) {
-        updateViewer(currentDocData, mode);
+        // For mode changes, don't close panel on newtab - just open the URL
+        updateViewer(currentDocData, mode, false);
       }
     }
 
@@ -350,14 +351,17 @@
       }
     }
 
-    function updateViewer(docData, mode) {
+    function updateViewer(docData, mode, closeOnNewTab = true) {
       const viewer = document.getElementById('doc-viewer');
       const loading = document.getElementById('doc-loading');
 
       if (mode === 'newtab') {
-        // Open in new tab and close panel
+        // Open in new tab
         window.open(docData.signedUrl, '_blank');
-        closeDocPanel();
+        // Only close panel if this is the initial open (not a mode change)
+        if (closeOnNewTab) {
+          closeDocPanel();
+        }
         return;
       }
 
