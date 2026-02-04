@@ -342,8 +342,9 @@
         document.getElementById('doc-meta').textContent = data.filePath || '';
         document.getElementById('doc-download').href = data.downloadUrl || '#';
 
-        // Update viewer based on mode
-        updateViewer(data, mode);
+        // Always show embedded viewer on initial open (not saved preference)
+        // User can then switch modes using the dropdown
+        updateViewer(data, 'embedded', false);
 
       } catch (err) {
         console.error('Document fetch error:', err);
