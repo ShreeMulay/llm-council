@@ -1,0 +1,31 @@
+================================================================================
+SmartList Definition: Statin Status
+================================================================================
+
+SmartList Name: .TKECKD STATIN STATUS
+SmartList ID: 30022
+Section: Lipid Therapy (Section 7)
+Field ID: statin_status
+
+Options:
+- on_high_intensity
+- on_moderate_intensity
+- on_low_intensity
+- not_indicated
+- intolerant
+- declined
+
+Default: (none)
+
+Notes:
+- Per KDIGO/ACC lipid guidelines for CKD
+- High intensity: Atorvastatin 40-80mg, Rosuvastatin 20-40mg
+- Moderate intensity: Atorvastatin 10-20mg, Rosuvastatin 5-10mg
+- Low intensity: Simvastatin 10mg, Pravastatin 10-20mg
+- Most CKD patients should be on moderate-high intensity
+
+Legacy Migration:
+- Maps from {TKE Statin:27055}
+- SmartList ID 27055 -> 30022
+- Expanded to include intensity levels
+================================================================================

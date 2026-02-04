@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-FINE: MRA/Finerenone</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #8B5CF6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #8B5CF6; border-bottom: 1px solid #8B5CF6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .alert-box { background: #FEF3C7; border: 1px solid #F59E0B; padding: 6px; font-size: 8pt; margin-bottom: 8px; border-radius: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>MRA (Finerenone/Spironolactone)</span>
+      <span class="header-code">TKE-FINE</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+      <span>MRN: <input type="text" /></span>
+    </div>
+
+    <div class="alert-box">
+      <strong>Finerenone (Kerendia):</strong> For T2DM + CKD. Monitor K+ closely. Different from spironolactone.
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT STATUS <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> On MRA therapy</div>
+        <div class="checkbox-item"><span class="circle"></span> Not on - indicated</div>
+        <div class="checkbox-item"><span class="circle"></span> Not on - contraindicated</div>
+        <div class="checkbox-item"><span class="circle"></span> Consider starting</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT MEDICATION</div>
+      <div class="field">
+        <span class="field-label">Drug/Dose:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="checkbox-group" style="margin-top: 6px;">
+        <div class="checkbox-item"><span class="checkbox"></span> Finerenone (Kerendia) 10/20mg</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Spironolactone 12.5-50mg</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Eplerenone 25-50mg</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">IF NOT ON THERAPY - REASON</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Hyperkalemia (K+ >5.0)</div>
+        <div class="checkbox-item"><span class="circle"></span> Not diabetic (finerenone)</div>
+        <div class="checkbox-item"><span class="circle"></span> eGFR too low</div>
+        <div class="checkbox-item"><span class="circle"></span> Already on for HF</div>
+        <div class="checkbox-item"><span class="circle"></span> Cost/insurance</div>
+        <div class="checkbox-item"><span class="circle"></span> Other: _______________</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">POTASSIUM MONITORING</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">Current K+:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">Start if K+ <= 5.0</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">Recheck schedule:</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Potassium binder:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Lokelma (sodium zirconium)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Veltassa (patiromer)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> None needed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue current dose</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Start finerenone 10mg (if eGFR <60)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Start finerenone 20mg (if eGFR >=60)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Uptitrate to 20mg</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Hold - hyperkalemia</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add potassium binder</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Prior auth needed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 25px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-FINE-v1.0 | The Kidney Experts | MRA = Pillar 3 of 4 GDMT
+    </div>
+  </div>
+</body>
+</html>

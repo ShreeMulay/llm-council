@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: SGLT2i Not On Reason
+================================================================================
+
+SmartList Name: .TKECKD SGLT2I NOT ON REASON
+SmartList ID: 30028
+Section: SGLT2 Inhibitor (Section 9)
+Field ID: not_on_reason (sglt2i)
+
+Options:
+- egfr_too_low
+- uti
+- dka_risk
+- declined
+- other
+
+Default: (none)
+
+Notes:
+- Document reason if not on SGLT2i
+- egfr_too_low: eGFR < 20 mL/min (initiation threshold)
+- uti: recurrent UTIs or genital infections
+- dka_risk: Type 1 DM or high DKA risk
+- declined: patient declined after counseling
+================================================================================

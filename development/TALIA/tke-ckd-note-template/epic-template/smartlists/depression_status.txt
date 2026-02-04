@@ -1,0 +1,24 @@
+================================================================================
+SmartList Definition: Depression Status
+================================================================================
+
+SmartList Name: .TKECKD DEPRESSION STATUS
+SmartList ID: 30060
+Section: Depression Screen (Section 29)
+Field ID: depression_status
+
+Options:
+- negative
+- mild
+- moderate
+- severe
+
+Default: (none)
+
+Notes:
+- Based on PHQ-9 scoring
+- negative: PHQ-9 0-4
+- mild: PHQ-9 5-9
+- moderate: PHQ-9 10-14
+- severe: PHQ-9 15-27
+================================================================================

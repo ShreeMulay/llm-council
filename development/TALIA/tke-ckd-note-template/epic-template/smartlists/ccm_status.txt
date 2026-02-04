@@ -1,0 +1,29 @@
+================================================================================
+SmartList Definition: CCM Status
+================================================================================
+
+SmartList Name: .TKECKD CCM STATUS
+SmartList ID: 30007
+Section: Header (Section 0) and CCM (Section 27)
+Field ID: ccm_status
+
+Options:
+- not_enrolled
+- enrolled
+- active
+- declined
+- discharged
+
+Default: not_enrolled
+
+Notes:
+- Chronic Care Management (CCM) program status
+- "enrolled" = signed consent, not yet active
+- "active" = receiving CCM services
+- "declined" = patient declined enrollment
+- "discharged" = previously enrolled, now discharged
+
+Legacy Migration:
+- Maps from {CCM Status:27080}
+- SmartList ID 27080 -> 30007
+================================================================================

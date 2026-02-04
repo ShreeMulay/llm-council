@@ -1,0 +1,26 @@
+================================================================================
+SmartList Definition: MRA Status
+================================================================================
+
+SmartList Name: .TKECKD MRA STATUS
+SmartList ID: 30029
+Section: MRA (Section 10) - PILLAR 3
+Field ID: mra_status
+
+Options:
+- on
+- not_indicated
+- consider
+- contraindicated
+
+Default: (none)
+
+Notes:
+- PILLAR 3 of GDMT for CKD
+- Finerenone: non-steroidal MRA, preferred for DKD (FIDELIO/FIGARO)
+- Spironolactone/Eplerenone: steroidal MRAs
+- on: currently on MRA
+- not_indicated: not a candidate
+- consider: potential candidate
+- contraindicated: K+ > 5.0, severe CKD
+================================================================================

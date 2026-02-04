@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-TXPL: Transplant Readiness</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #6B7280; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #6B7280; border-bottom: 1px solid #6B7280; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #6B7280; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #6B7280; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #6B7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Transplant Readiness</span>
+      <span class="header-code">TKE-TXPL</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TRANSPLANT CANDIDATE STATUS <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Yes - candidate</div>
+        <div class="checkbox-item"><span class="circle"></span> No - not a candidate</div>
+        <div class="checkbox-item"><span class="circle"></span> Evaluating</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Not referred</div>
+        <div class="checkbox-item"><span class="circle"></span> In workup</div>
+        <div class="checkbox-item"><span class="circle"></span> Listed (active)</div>
+        <div class="checkbox-item"><span class="circle"></span> Listed (inactive)</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Transplant Center(s):</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">WORKUP PROGRESS</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">Completion %:</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+        <div>
+          <div class="checkbox-group">
+            <div class="checkbox-item"><span class="checkbox"></span> Living donor identified</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">BARRIERS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> BMI &gt;35</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cardiac clearance needed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cancer screening needed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Insurance/financial</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Social support</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Substance use</div>
+      </div>
+      <div class="field" style="margin-top: 4px;">
+        <span class="field-label">Other barriers:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to transplant center</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Continue workup</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Address barriers</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Discuss living donation</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Not pursuing transplant</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-TXPL-v1.0 | The Kidney Experts | Planning Domain
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Kidney Transplant</div>
+      <div class="back-content">
+        A kidney transplant is often the best treatment for kidney failure. A healthy kidney from a living or deceased donor can give you more freedom and a longer life than dialysis. We want to help you explore this option.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">THE PROCESS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Referral:</strong> We send your information to a transplant center</li>
+          <li><strong>Evaluation:</strong> Tests to make sure transplant is safe for you</li>
+          <li><strong>Listing:</strong> If approved, you're added to the waiting list</li>
+          <li><strong>Living donor:</strong> A family member or friend can donate - this is often faster</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Ask family and friends about living donation</li>
+          <li>Keep all appointments for transplant workup</li>
+          <li>Work on any barriers (weight, smoking, etc.)</li>
+          <li>Stay healthy - exercise, eat well, take your medicines</li>
+          <li>Keep your vaccinations up to date</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">QUESTIONS TO ASK</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Am I a candidate for transplant?</li>
+          <li>What do I need to do to get listed?</li>
+          <li>How long is the wait for a kidney?</li>
+          <li>Can someone I know donate to me?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-TXPL-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

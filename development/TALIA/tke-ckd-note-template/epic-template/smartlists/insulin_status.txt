@@ -1,0 +1,21 @@
+================================================================================
+SmartList Definition: Insulin Status
+================================================================================
+
+SmartList Name: .TKECKD INSULIN STATUS
+SmartList ID: 30034
+Section: Diabetes Management (Section 12)
+Field ID: insulin_status
+
+Options:
+- on
+- not_on
+- not_needed
+
+Default: (none)
+
+Notes:
+- on: currently on insulin therapy
+- not_on: diabetic but not on insulin
+- not_needed: not diabetic or well-controlled without insulin
+================================================================================

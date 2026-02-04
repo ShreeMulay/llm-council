@@ -1,0 +1,24 @@
+================================================================================
+SmartList Definition: Renalytix Result
+================================================================================
+
+SmartList Name: .TKECKD RENALYTIX RESULT
+SmartList ID: 30013
+Section: Kidney Function (Section 1)
+Field ID: renalytix_result
+
+Options:
+- Low
+- Medium
+- High
+- Not_done
+
+Default: Not_done
+
+Notes:
+- KidneyIntelX risk stratification result
+- Predicts 5-year risk of rapid kidney function decline
+- Low: < 5% risk
+- Medium: 5-15% risk
+- High: > 15% risk
+================================================================================

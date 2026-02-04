@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: GLP-1 Not On Reason
+================================================================================
+
+SmartList Name: .TKECKD GLP1 NOT ON REASON
+SmartList ID: 30032
+Section: GLP-1 Receptor Agonist (Section 11)
+Field ID: not_on_reason (glp1)
+
+Options:
+- not_diabetic
+- gi_intolerance
+- cost
+- declined
+- other
+
+Default: (none)
+
+Notes:
+- Document reason if not on GLP-1 RA
+- not_diabetic: primary indication is T2DM (though obesity is emerging)
+- gi_intolerance: nausea, vomiting
+- cost: insurance/affordability barrier
+- declined: patient declined
+================================================================================

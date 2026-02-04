@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-FINE: MRA/Finerenone</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #8B5CF6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #8B5CF6; border-bottom: 1px solid #8B5CF6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .pillar-badge { background: #8B5CF6; color: white; padding: 2px 6px; border-radius: 3px; font-size: 8pt; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #8B5CF6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #8B5CF6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #8B5CF6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>MRA / Finerenone (Kerendia)</span>
+      <span class="header-code">TKE-FINE <span class="pillar-badge">Pillar 3</span></span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT STATUS <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> On finerenone (Kerendia)</div>
+        <div class="checkbox-item"><span class="circle"></span> On spironolactone</div>
+        <div class="checkbox-item"><span class="circle"></span> On eplerenone</div>
+        <div class="checkbox-item"><span class="circle"></span> Not on - consider</div>
+        <div class="checkbox-item"><span class="circle"></span> Not indicated</div>
+        <div class="checkbox-item"><span class="circle"></span> Contraindicated</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Drug/Dose:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">FINERENONE ELIGIBILITY (DKD)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Type 2 diabetes</div>
+        <div class="checkbox-item"><span class="checkbox"></span> eGFR >= 25</div>
+        <div class="checkbox-item"><span class="checkbox"></span> UACR >= 30</div>
+        <div class="checkbox-item"><span class="checkbox"></span> K+ &lt; 5.0</div>
+        <div class="checkbox-item"><span class="checkbox"></span> On max RAAS</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">POTASSIUM MONITORING</div>
+      <div class="field">
+        <span class="field-label">Current K+:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">Target: &lt;5.0 mEq/L to start; &lt;5.5 to continue</div>
+      <div class="field" style="margin-top: 4px;">
+        <span class="field-label">K+ monitoring schedule:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">Potassium binder:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">Lokelma, Veltassa if needed</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue current therapy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Start finerenone 10mg</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Start finerenone 20mg</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add potassium binder</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Recheck K+ in: _______</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-FINE-v1.0 | The Kidney Experts | GDMT Pillar 3 of 4 | FIDELIO/FIGARO
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Finerenone (Kerendia)</div>
+      <div class="back-content">
+        Finerenone is a newer medicine that protects your kidneys and heart, especially if you have diabetes. It works differently from other kidney medicines and adds extra protection.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">YOUR TARGETS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Potassium:</strong> Less than 5.0 to start, less than 5.5 to continue</li>
+          <li><strong>Lab checks:</strong> Potassium checked regularly, especially when starting</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Take this medicine every day as prescribed</li>
+          <li>Limit high-potassium foods (bananas, oranges, potatoes)</li>
+          <li>Get lab work done as scheduled - potassium monitoring is important</li>
+          <li>Take potassium binder if prescribed</li>
+          <li>Avoid salt substitutes (they contain potassium)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Muscle weakness or cramping</li>
+          <li>Irregular heartbeat or palpitations</li>
+          <li>Numbness or tingling</li>
+          <li>Nausea or vomiting</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-FINE-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,591 @@
+@TKECKD@
+
+================================================================================
+                    CKD CLINIC NOTE - THE KIDNEY EXPERTS
+                    "Ridding the World of the Need for Dialysis!"
+================================================================================
+Patient: @NAME@ | DOB: @DOB@ | MRN: @MRN@
+Visit Date: @TD@ | Provider: @ME@
+Visit Type: {VISIT TYPE:30001::.TKECKD VISIT TYPE}
+--------------------------------------------------------------------------------
+CKD Stage: {CKD STAGE:30002::.TKECKD CKD STAGE} | Etiology: {CKD ETIOLOGY:30003::.TKECKD CKD ETIOLOGY} ({PATHOLOGY:30004::.TKECKD PATHOLOGY CONFIRMATION})
+eGFR: *** mL/min | UACR: *** mg/g | Albuminuria: {ALB STAGE:30005::.TKECKD ALBUMINURIA STAGE}
+KDIGO Risk: {KDIGO RISK:30006::.TKECKD KDIGO RISK} | KFRE 2yr: ***% | 5yr: ***%
+GDMT Status: ***/4 pillars (RAAS/SGLT2i/MRA/GLP-1)
+CCM: {CCM STATUS:30007::.TKECKD CCM STATUS}
+================================================================================
+
+Reason for Visit: {REASON:30008::.TKECKD REASON FOR VISIT}
+Follow-Up From: {FOLLOW UP:30009::.TKECKD FOLLOW UP INTERVAL}
+Accompanied By: ***
+
+VITALS
+------
+Weight: @LASTENCWT@ lbs | BMI: @LASTENCBMI@ kg/m2 | Weight Trend: ***
+BP: @LASTENCBP@ mmHg | HR: @LASTENCPU@ bpm | O2 Sat: ***%
+Lab Date: ***
+
+================================================================================
+SECTION 1: KIDNEY FUNCTION & PROGRESSION
+================================================================================
+eGFR (current): *** mL/min/1.73m2 | Previous: *** | Trend: {EGFR TREND:30010::.TKECKD EGFR TREND}
+eGFR Slope: *** mL/min/year (Target: > -3)
+Creatinine: *** mg/dL | BUN: *** mg/dL | BUN:Cr Ratio: ***
+
+Proteinuria:
+  UPCr: *** mg/g (Previous: ***) | Target: <500
+  UACR: *** mg/g (Previous: ***) | Target: <30 (A1)
+  Status: {PROT STATUS:30011::.TKECKD PROTEINURIA STATUS}
+
+Urine Studies: {URINE SUMMARY:30012::.TKECKD URINE SUMMARY}
+Detail: ***
+
+KFRE Risk:
+  2-Year: ***% | 5-Year: ***%
+
+Advanced Testing:
+  Renalytix: {RENALYTIX:30013::.TKECKD RENALYTIX RESULT} (Date: ***)
+  Renasight: ***
+  Kidney Biopsy: ***
+
+AKI History: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 2: HEMATURIA
+================================================================================
+[[ CONDITIONAL: Show if hematuria present ]]
+
+Hematuria Present: [ ] Yes  [ ] No
+Type: {HEMATURIA TYPE:30014::.TKECKD HEMATURIA TYPE}
+UA RBC: *** /hpf (Target: <3)
+Workup Status: {WORKUP STATUS:30015::.TKECKD WORKUP STATUS}
+Cystoscopy Date: ***
+Imaging Result: ***
+Urology Referral: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 3: KIDNEY STONES
+================================================================================
+[[ CONDITIONAL: Show if stone history ]]
+
+Stone History: ***
+Last Episode: ***
+Stone Type: ***
+24h Urine Collected: [ ] Yes  [ ] No (Date: ***)
+Prevention Medications: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 4: GU HISTORY
+================================================================================
+[[ CONDITIONAL: Show if GU history present ]]
+
+GU History: ***
+BPH: [ ] Yes  [ ] No | Medication: ***
+Prostate Cancer: [ ] Yes  [ ] No
+UTI History: ***
+
+================================================================================
+SECTION 5: BLOOD PRESSURE & FLUID STATUS
+================================================================================
+BP: @LASTENCBP@ mmHg | Target: <120/80 (SPRINT)
+BP Control: {BP CONTROL:30016::.TKECKD BP CONTROL STATUS}
+Home BP Available: [ ] Yes  [ ] No | Home BP: ***
+
+Heart Rate: @LASTENCPU@ bpm
+O2 Saturation: ***%
+
+Fluid Status:
+  Edema: {EDEMA:30017::.TKECKD EDEMA}
+  Volume Status: {FLUID STATUS:30018::.TKECKD FLUID STATUS}
+
+Daxor BVA:
+  Result: ***
+  Date: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 6: HEART FAILURE
+================================================================================
+[[ CONDITIONAL: Show if HF diagnosis ]]
+
+HF Status: ***
+HF Type: {HF TYPE:30019::.TKECKD HF TYPE}
+LVEF: ***% (Last Echo: ***)
+
+HF GDMT:
+  [ ] Beta-Blocker
+  [ ] MRA for HF
+  [ ] SGLT2i for HF
+  [ ] ARNi
+
+Cardiorenal Syndrome Type: {CRS TYPE:30020::.TKECKD CRS TYPE}
+Cardiology Follow-Up: ***
+Furoscix Status: {FUROSCIX:30021::.TKECKD FUROSCIX STATUS}
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 7: LIPID THERAPY
+================================================================================
+Statin Status: {STATIN STATUS:30022::.TKECKD STATIN STATUS}
+Statin Drug/Dose: ***
+Statin Intolerance: ***
+
+PCSK9i Status: {PCSK9I STATUS:30023::.TKECKD PCSK9I STATUS}
+PCSK9i Drug: {PCSK9I DRUG:30024::.TKECKD PCSK9I DRUG}
+
+Lipid Panel: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 8: RAAS INHIBITION (ACEi/ARB/ARNi) - PILLAR 1
+================================================================================
+RAAS Status: {RAAS STATUS:30025::.TKECKD RAAS STATUS}
+Drug/Dose: ***
+At Max Dose: [ ] Yes  [ ] No
+Not On Reason: {RAAS NOT ON:30026::.TKECKD RAAS NOT ON REASON}
+
+Monitoring:
+  Cr Rise Since Start: ***% (Target: <30%)
+  K+ On Therapy: *** mEq/L (Target: <5.5)
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 9: SGLT2 INHIBITOR - PILLAR 2
+================================================================================
+SGLT2i Status: {SGLT2I STATUS:30027::.TKECKD SGLT2I STATUS}
+Drug/Dose: ***
+Not On Reason: {SGLT2I NOT ON:30028::.TKECKD SGLT2I NOT ON REASON}
+
+Initial eGFR Dip Documented: [ ] Yes  [ ] No
+Sick Day Rules Reviewed: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 10: MRA (Finerenone/Spironolactone/Eplerenone) - PILLAR 3
+================================================================================
+MRA Status: {MRA STATUS:30029::.TKECKD MRA STATUS}
+Drug/Dose: ***
+Not On Reason: {MRA NOT ON:30030::.TKECKD MRA NOT ON REASON}
+
+K+ Monitoring Schedule: ***
+Potassium Binder: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 11: GLP-1 RECEPTOR AGONIST - PILLAR 4
+================================================================================
+GLP-1 Status: {GLP1 STATUS:30031::.TKECKD GLP1 STATUS}
+Drug/Dose: ***
+Not On Reason: {GLP1 NOT ON:30032::.TKECKD GLP1 NOT ON REASON}
+
+Weight Response: ***
+Kidney Benefit Documented: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 12: DIABETES MANAGEMENT
+================================================================================
+[[ CONDITIONAL: Show if diabetic ]]
+
+Diabetic Status: {DIABETIC STATUS:30033::.TKECKD DIABETIC STATUS}
+HbA1c: ***% (Date: ***) | Target: ***%
+Insulin Status: {INSULIN STATUS:30034::.TKECKD INSULIN STATUS}
+Endocrinology Referral: [ ] Yes  [ ] No
+
+Annual Exams:
+  Eye Exam: {EYE EXAM:30035::.TKECKD ANNUAL EXAM STATUS}
+  Foot Exam: {FOOT EXAM:30036::.TKECKD ANNUAL EXAM STATUS}
+
+Eversense CGM: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 13: GOUT
+================================================================================
+[[ CONDITIONAL: Show if gout history or uric acid elevated ]]
+
+Gout History: ***
+Uric Acid: *** mg/dL (Target: <6.0)
+Uric Acid Status: {URIC ACID STATUS:30037::.TKECKD URIC ACID STATUS}
+Current Therapy: ***
+Krystexxa Status: {KRYSTEXXA:30038::.TKECKD KRYSTEXXA STATUS}
+Last Flare: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 14: OBESITY / WEIGHT MANAGEMENT
+================================================================================
+[[ CONDITIONAL: Show if BMI >= 30 ]]
+
+BMI: @LASTENCBMI@ kg/m2 (Target: <30)
+Weight Trend (6mo): ***
+Obesity Clinic Referral: [ ] Yes  [ ] No
+Bariatric Surgery History: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 15: ANEMIA / BLOOD HEALTH
+================================================================================
+CBC:
+  Hemoglobin: *** g/dL (Target: 10-12 for CKD)
+  Hematocrit: ***%
+  MCV: *** fL
+  WBC: *** K/uL
+  Platelets: *** K/uL
+
+Iron Studies (Date: ***):
+  Ferritin: *** ng/mL (Target: >100)
+  TSAT: ***% (Target: 20-50%)
+
+Anemia Status:
+  At Goal: {ANEMIA GOAL:30039::.TKECKD ANEMIA AT GOAL}
+  CKD-Related: [ ] Yes  [ ] No
+  Anemia Clinic: {ANEMIA CLINIC:30040::.TKECKD ANEMIA CLINIC}
+
+Treatment:
+  ESA Status: ***
+  IV Iron Status: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 16: MINERAL BONE DISEASE
+================================================================================
+Labs:
+  PTH: *** pg/mL (Target: 2-9x ULN for CKD 5)
+  Vitamin D (25-OH): *** ng/mL (Target: 30-50)
+  Calcium: *** mg/dL (Corrected: ***) (Target: 8.4-10.2)
+  Phosphorus: *** mg/dL (Target: 2.5-4.5)
+  Albumin: *** g/dL
+
+MBD at Goal: {MBD GOAL:30041::.TKECKD MBD AT GOAL}
+
+Medications:
+  Vitamin D Supplement: ***
+  Phosphate Binder: ***
+  Calcimimetic: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 17: ELECTROLYTES & ACID-BASE
+================================================================================
+BMP:
+  Sodium: *** mEq/L (Target: 136-145)
+  Potassium: *** mEq/L (Target: 3.5-5.0)
+  Chloride: *** mEq/L
+  Bicarbonate: *** mEq/L (Target: >= 22)
+  Magnesium: *** mg/dL
+  Glucose: *** mg/dL
+
+Electrolytes at Goal: {ELEC GOAL:30042::.TKECKD ELECTROLYTES AT GOAL}
+
+Supplements:
+  Bicarb Supplement: ***
+  KCl Supplement: ***
+
+Pruritus: {PRURITUS:30043::.TKECKD PRURITUS}
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 18: TOBACCO / SUBSTANCE USE
+================================================================================
+Smoking Status: {SMOKING STATUS:30044::.TKECKD SMOKING STATUS}
+Pack Years: ***
+Quit Date: ***
+Vaping Status: ***
+Cessation Counseling: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 19: NSAID AVOIDANCE
+================================================================================
+NSAID Status: {NSAID STATUS:30045::.TKECKD NSAID STATUS}
+Specific NSAID: ***
+Counseled on Avoidance: [ ] Yes  [ ] No
+Alternatives Discussed: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 20: PPI REVIEW
+================================================================================
+PPI Status: {PPI STATUS:30046::.TKECKD PPI STATUS}
+PPI Drug/Dose: ***
+Alternative Recommended: ***
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 21: SICK DAY RULES
+================================================================================
+[[ CONDITIONAL: Show if on RAAS/SGLT2i/MRA/diuretic ]]
+
+Sick Day Rules Reviewed: [ ] Yes  [ ] No
+Meds-to-Hold List Given: [ ] Yes  [ ] No
+Patient Understanding Confirmed: [ ] Yes  [ ] No
+
+================================================================================
+SECTION 22: CONTRAST PRECAUTIONS
+================================================================================
+[[ CONDITIONAL: Show if contrast exposure in 30 days or upcoming ]]
+
+Contrast in 30 Days: [ ] Yes  [ ] No
+Pre-Hydration Used: [ ] Yes  [ ] No
+Hold Nephrotoxins: [ ] Yes  [ ] No
+
+================================================================================
+SECTION 23: SODIUM RESTRICTION
+================================================================================
+Sodium Target: <2g/day
+Diet Adherence: {DIET ADHERENCE:30047::.TKECKD DIET ADHERENCE}
+Dietitian Referral: [ ] Yes  [ ] No
+
+================================================================================
+SECTION 24: TRANSPLANT READINESS
+================================================================================
+[[ CONDITIONAL: Show if CKD G4/G5/G5D or KFRE 2yr >20% ]]
+
+Transplant Candidate: {TX CANDIDATE:30048::.TKECKD TRANSPLANT CANDIDATE}
+Transplant Centers: ***
+Current Status: {TX STATUS:30049::.TKECKD TRANSPLANT CURRENT STATUS}
+Living Donor: [ ] Yes  [ ] No
+Workup Completion: ***%
+Barriers: ***
+BMI Barrier: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 25: DIALYSIS PLANNING / VASCULAR ACCESS
+================================================================================
+[[ CONDITIONAL: Show if CKD G4/G5/G5D or KFRE 2yr >20% ]]
+
+Dialysis Education Completed: [ ] Yes  [ ] No
+Modality Preference: {MODALITY:30050::.TKECKD DIALYSIS MODALITY}
+Vascular Access Status: {ACCESS STATUS:30051::.TKECKD VASCULAR ACCESS STATUS}
+Access Location: ***
+Surgery Referral Date: ***
+Timeline to Dialysis: ***
+Vein Preservation Counseled: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 26: ADVANCE CARE PLANNING
+================================================================================
+[[ CONDITIONAL: Show if CKD G4/G5/G5D or age >75 ]]
+
+ACP Documented: [ ] Yes  [ ] No (Date: ***)
+Surprise Question: {SURPRISE Q:30052::.TKECKD SURPRISE QUESTION}
+Goals of Care Discussed: [ ] Yes  [ ] No
+POLST Completed: [ ] Yes  [ ] No
+Healthcare Proxy: ***
+Conservative Management Discussed: [ ] Yes  [ ] No
+CPT 99497/99498 Billed: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 27: CCM ENROLLMENT
+================================================================================
+CCM Enrollment: {CCM ENROLL:30053::.TKECKD CCM ENROLLMENT}
+CCM Active: [ ] Yes  [ ] No
+Last CCM Contact: ***
+Care Gaps Identified: ***
+
+================================================================================
+SECTION 28: IMMUNIZATIONS
+================================================================================
+Flu Vaccine: {FLU VAX:30054::.TKECKD VACCINE STATUS}
+Pneumococcal (PCV20): {PNEUMO VAX:30055::.TKECKD VACCINE STATUS}
+Hepatitis B: {HEP B:30056::.TKECKD HEP B STATUS}
+COVID Vaccine: {COVID VAX:30057::.TKECKD VACCINE STATUS}
+Shingrix: {SHINGRIX:30058::.TKECKD SHINGRIX STATUS}
+Tdap: {TDAP:30059::.TKECKD VACCINE STATUS}
+
+================================================================================
+SECTION 29: DEPRESSION SCREEN (PHQ-2/9)
+================================================================================
+PHQ-2 Score: *** (Target: <3)
+PHQ-9 Score: ***
+Depression Status: {DEPRESSION:30060::.TKECKD DEPRESSION STATUS}
+Treatment/Referral: ***
+Cognitive Screen: ***
+
+================================================================================
+SECTION 30: FALL RISK ASSESSMENT
+================================================================================
+[[ CONDITIONAL: Show if age >65 or frail ]]
+
+Fall Risk: {FALL RISK:30061::.TKECKD FALL RISK}
+Falls in 12 Months: ***
+Contributing Factors: ***
+
+================================================================================
+SECTION 31: SLEEP APNEA
+================================================================================
+[[ CONDITIONAL: Show if STOP-BANG >=3 or OSA diagnosis ]]
+
+Sleep Study Done: [ ] Yes  [ ] No
+OSA Diagnosis: [ ] Yes  [ ] No
+CPAP Compliance: {CPAP:30062::.TKECKD CPAP COMPLIANCE}
+STOP-BANG Score: *** (Target: <3)
+
+================================================================================
+SECTION 32: SDOH ASSESSMENT
+================================================================================
+[[ CONDITIONAL: Show on initial visit or annual refresh ]]
+
+Transportation: {TRANSPORT:30063::.TKECKD TRANSPORTATION}
+Housing Stability: {HOUSING:30064::.TKECKD HOUSING STABILITY}
+Food Security: {FOOD:30065::.TKECKD FOOD SECURITY}
+Health Literacy: {LITERACY:30066::.TKECKD HEALTH LITERACY}
+Insurance Barriers: ***
+Caregiver Support: ***
+
+================================================================================
+SECTION 33: PHYSICAL PERFORMANCE & FRAILTY
+================================================================================
+Grip Strength:
+  Dominant: *** kg (Target: Men >=27, Women >=16)
+  Non-Dominant: *** kg
+  Low Grip Flag: [ ] Yes  [ ] No
+
+Functional Tests:
+  30-sec Sit-to-Stand: *** reps (Target: >=10)
+  4m Gait Speed: *** m/s (Target: >=0.8)
+  TUG Time: *** sec (Target: <12)
+  SPPB Score: *** (Target: >=10)
+  6-Minute Walk: *** meters (Target: >=350)
+
+Clinical Frailty Scale: *** (Target: <5)
+Frailty Status: {FRAILTY:30067::.TKECKD FRAILTY STATUS}
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 34: NUTRITION / DIETARY ASSESSMENT
+================================================================================
+Protein Intake: {PROTEIN:30068::.TKECKD PROTEIN INTAKE}
+Protein Target: 0.8 g/kg/day (CKD 3-5)
+
+Restrictions:
+  Potassium: {K RESTRICT:30069::.TKECKD RESTRICTION LEVEL}
+  Phosphorus: {PHOS RESTRICT:30070::.TKECKD RESTRICTION LEVEL}
+
+Plant-Based Diet Discussed: [ ] Yes  [ ] No
+Malnutrition Screen: {MALNUTRITION:30071::.TKECKD MALNUTRITION SCREEN}
+Dietitian Referral: [ ] Yes  [ ] No
+
+[AI INTERPRETATION]
+***
+
+================================================================================
+SECTION 35: MEDICATION ADHERENCE & BARRIERS
+================================================================================
+Adherence Assessment: {ADHERENCE:30072::.TKECKD ADHERENCE ASSESSMENT}
+Cost Barriers: [ ] Yes  [ ] No
+Prior Auth Pending: ***
+Pharmacy Access: {PHARMACY:30073::.TKECKD PHARMACY ACCESS}
+Pregnancy/Contraception: ***
+
+================================================================================
+SECTION 36: SPECIAL CLINICS
+================================================================================
+[[ CONDITIONAL: Show if enrolled or candidate ]]
+
+Cardiorenal Metabolic Clinic: {CRM CLINIC:30074::.TKECKD SPECIAL CLINIC STATUS}
+Longevity Clinic: {LONG CLINIC:30075::.TKECKD SPECIAL CLINIC STATUS}
+Heart Failure Clinic: {HF CLINIC:30076::.TKECKD SPECIAL CLINIC STATUS}
+
+================================================================================
+SECTION 37: PCP / CARE TEAM / FOLLOW-UP
+================================================================================
+Care Team:
+  PCP: ***
+  Cardiology: ***
+  Endocrinology: ***
+  Other Specialists: ***
+
+Follow-Up:
+  Interval: ***
+  Next Appointment: ***
+
+Referrals Placed: ***
+Education Delivered: ***
+Time/Complexity: ***
+
+================================================================================
+                              ASSESSMENT & PLAN
+================================================================================
+
+[AI-GENERATED SUMMARY]
+***
+
+PROBLEM LIST:
+1. CKD Stage *** due to *** - ***
+2. ***
+3. ***
+
+PLAN:
+1. ***
+2. ***
+3. ***
+
+ORDERS:
+- Labs: ***
+- Imaging: ***
+- Referrals: ***
+- Medications: ***
+
+PATIENT EDUCATION:
+- ***
+
+FOLLOW-UP: ***
+
+================================================================================
+Provider: @ME@
+Date/Time: @NOW@
+================================================================================

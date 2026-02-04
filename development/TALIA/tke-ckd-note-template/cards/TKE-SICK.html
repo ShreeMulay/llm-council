@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-SICK: Sick Day Rules</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #22C55E; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #22C55E; border-bottom: 1px solid #22C55E; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .alert-box { background: #FEF2F2; border: 1px solid #EF4444; padding: 6px; border-radius: 4px; font-size: 8pt; color: #991B1B; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #22C55E; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #22C55E; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #22C55E; }
+    .hold-box { background: #FEF2F2; border: 2px solid #EF4444; padding: 8px; border-radius: 4px; font-size: 9pt; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Sick Day Rules</span>
+      <span class="header-code">TKE-SICK</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">SICK DAY RULES REVIEWED <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Sick day rules reviewed with patient</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Meds-to-hold list given</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Patient demonstrates understanding</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">MEDICATIONS TO HOLD WHEN SICK</div>
+      <div class="alert-box">
+        <strong>STOP these if you have vomiting, diarrhea, fever, or can't eat/drink:</strong>
+      </div>
+      <div class="checkbox-group" style="margin-top: 6px;">
+        <div class="checkbox-item"><span class="checkbox"></span> ACEi/ARB (lisinopril, losartan, etc.)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> SGLT2i (Jardiance, Farxiga, etc.)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Diuretics (furosemide, HCTZ, etc.)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Metformin</div>
+        <div class="checkbox-item"><span class="checkbox"></span> MRA (spironolactone, finerenone)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> NSAIDs (if any)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PATIENT'S SPECIFIC HOLD LIST</div>
+      <div class="field">
+        <span class="field-label">1.</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">2.</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">3.</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">4.</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Provided written sick day card</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Reviewed when to call office</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Reviewed when to restart meds</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-SICK-v1.0 | The Kidney Experts | Risk Mitigation
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">SICK DAY RULES - KEEP THIS CARD!</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">When You're Sick, STOP These Medicines:</div>
+      <div class="hold-box">
+        <strong>HOLD if you have vomiting, diarrhea, fever, or can't eat/drink:</strong><br/><br/>
+        Your specific medicines to hold:<br/>
+        1. _______________________________<br/>
+        2. _______________________________<br/>
+        3. _______________________________<br/>
+        4. _______________________________
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHY THIS MATTERS</div>
+      <div class="back-content">
+        When you're dehydrated from illness, these medicines can cause sudden kidney damage. Stopping them temporarily protects your kidneys until you're better.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT TO DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Stop</strong> the medicines listed above</li>
+          <li><strong>Drink</strong> plenty of clear fluids if you can</li>
+          <li><strong>Call us</strong> within 24-48 hours to check in</li>
+          <li><strong>Restart</strong> medicines when eating/drinking normally for 24-48 hours</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">CALL US RIGHT AWAY IF:</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>You can't keep fluids down for more than 24 hours</li>
+          <li>You feel dizzy, confused, or very weak</li>
+          <li>You're urinating much less than normal</li>
+          <li>You're not sure what to do</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-SICK-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

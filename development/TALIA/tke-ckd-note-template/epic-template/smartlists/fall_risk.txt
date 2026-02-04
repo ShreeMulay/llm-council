@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Fall Risk
+================================================================================
+
+SmartList Name: .TKECKD FALL RISK
+SmartList ID: 30061
+Section: Fall Risk Assessment (Section 30)
+Field ID: fall_risk
+
+Options:
+- low
+- moderate
+- high
+
+Default: (none)
+
+Notes:
+- Integrates physical performance, medications, history
+- low: no falls, good mobility
+- moderate: 1 fall or mobility concerns
+- high: multiple falls, frailty, high-risk medications
+================================================================================

@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thekidneyexperts.com/schemas/migration-map.json",
+  "title": "TKE CKD Note Template - Epic SmartPhrase Migration Map",
+  "version": "1.0.0",
+  "description": "Maps every legacy SmartList ID from the @ED@ smart phrase to new field_ids in the section registry. Also maps Epic auto-pull tags. Zero data loss migration.",
+
+  "legacy_smartlists": [
+    {
+      "legacy_smartlist": "{here for:27012}",
+      "smartlist_id": 27012,
+      "legacy_context": "Reason for visit dropdown",
+      "new_section_id": "header",
+      "new_field_id": "reason_for_visit",
+      "new_section_number": 0,
+      "migration_notes": "Convert SmartList to text field (more flexible). Pre-populate from scheduling reason."
+    },
+    {
+      "legacy_smartlist": "{Follow Up:27013}",
+      "smartlist_id": 27013,
+      "legacy_context": "Follow-up interval",
+      "new_section_id": "header",
+      "new_field_id": "follow_up_interval",
+      "new_section_number": 0,
+      "migration_notes": "Auto-populate from previous note."
+    },
+    {
+      "legacy_smartlist": "{TKE Urine Summary:27014}",
+      "smartlist_id": 27014,
+      "legacy_context": "Urine studies summary dropdown",
+      "new_section_id": "kidney_function",
+      "new_field_id": "urine_studies_summary",
+      "new_section_number": 1,
+      "migration_notes": "Keep as text. AI agent will generate interpretation from discrete UPCR/UACR values."
+    },
+    {
+      "legacy_smartlist": "{TKE Urine Studies:27015}",
+      "smartlist_id": 27015,
+      "legacy_context": "Urine studies detail dropdown",
+      "new_section_id": "kidney_function",
+      "new_field_id": "urine_studies_detail",
+      "new_section_number": 1,
+      "migration_notes": "Keep as text. Supplements the summary with detailed UA findings."
+    },
+    {
+      "legacy_smartlist": "{proteinuria:27655}",
+      "smartlist_id": 27655,
+      "legacy_context": "Proteinuria status dropdown",
+      "new_section_id": "kidney_function",
+      "new_field_id": "proteinuria_status",
+      "new_section_number": 1,
+      "migration_notes": "Expanded enum values. Now includes trending (improving/worsening/stable)."
+    },
+    {
+      "legacy_smartlist": "{controlled/uncontrolled/unknown:27016}",
+      "smartlist_id": 27016,
+      "legacy_context": "BP control status",
+      "new_section_id": "bp_fluid",
+      "new_field_id": "bp_control_status",
+      "new_section_number": 5,
+      "migration_notes": "Same enum values. Now supplemented with home BP data and Daxor BVA."
+    },
+    {
+      "legacy_smartlist": "{RAAS Inhibition:27018}",
+      "smartlist_id": 27018,
+      "legacy_context": "RAAS inhibitor status",
+      "new_section_id": "raas",
+      "new_field_id": "raas_status",
+      "new_section_number": 8,
+      "migration_notes": "Expanded enum: now distinguishes ACEi vs ARB vs ARNi. Added monitoring fields (K+, Cr rise)."
+    },
+    {
+      "legacy_smartlist": "{SGLT2i status:27020}",
+      "smartlist_id": 27020,
+      "legacy_context": "SGLT2i status",
+      "new_section_id": "sglt2i",
+      "new_field_id": "sglt2i_status",
+      "new_section_number": 9,
+      "migration_notes": "Expanded enum. Added sick day rules review and eGFR dip documentation."
+    },
+    {
+      "legacy_smartlist": "{is diabetic?:27021}",
+      "smartlist_id": 27021,
+      "legacy_context": "Diabetic status",
+      "new_section_id": "diabetes",
+      "new_field_id": "diabetic_status",
+      "new_section_number": 12,
+      "migration_notes": "Expanded enum: type1/type2/prediabetic/gestational. Now includes HbA1c, eye/foot exams, CGM."
+    },
+    {
+      "legacy_smartlist": "{at goal? TKE Anemia:27025}",
+      "smartlist_id": 27025,
+      "legacy_context": "Anemia at goal status",
+      "new_section_id": "anemia",
+      "new_field_id": "anemia_at_goal",
+      "new_section_number": 15,
+      "migration_notes": "Expanded section with full CBC, iron panel, ESA/IV iron tracking."
+    },
+    {
+      "legacy_smartlist": "{Anemia Clinic?:27690}",
+      "smartlist_id": 27690,
+      "legacy_context": "Anemia clinic enrollment",
+      "new_section_id": "anemia",
+      "new_field_id": "anemia_clinic",
+      "new_section_number": 15,
+      "migration_notes": "New enum: enrolled/referred/not_indicated/discharged."
+    },
+    {
+      "legacy_smartlist": "{At Goal? TKE Mineral Bone Disease:27037}",
+      "smartlist_id": 27037,
+      "legacy_context": "MBD at goal status",
+      "new_section_id": "mbd",
+      "new_field_id": "mbd_at_goal",
+      "new_section_number": 16,
+      "migration_notes": "Expanded section with PTH, Vit D, Ca, Phos, binders, calcimimetics."
+    },
+    {
+      "legacy_smartlist": "{At Goal? TKE Electrolytes and Acid Base:27038}",
+      "smartlist_id": 27038,
+      "legacy_context": "Electrolytes at goal status",
+      "new_section_id": "electrolytes",
+      "new_field_id": "electrolytes_at_goal",
+      "new_section_number": 17,
+      "migration_notes": "Expanded section with full BMP, Mg, glucose, bicarb/KCl supplements, pruritus."
+    },
+    {
+      "legacy_smartlist": "{episodes of:27040}",
+      "smartlist_id": 27040,
+      "legacy_context": "Kidney stone episodes",
+      "new_section_id": "kidney_stones",
+      "new_field_id": "stone_history",
+      "new_section_number": 3,
+      "migration_notes": "Now includes stone type, 24h urine, prevention meds."
+    },
+    {
+      "legacy_smartlist": "{TKEcurrentsmokingstatus:27041}",
+      "smartlist_id": 27041,
+      "legacy_context": "Smoking status",
+      "new_section_id": "tobacco",
+      "new_field_id": "smoking_status",
+      "new_section_number": 18,
+      "migration_notes": "Expanded enum includes vaping. Added pack years, quit date, cessation counseling."
+    },
+    {
+      "legacy_smartlist": "{uric acid:27042}",
+      "smartlist_id": 27042,
+      "legacy_context": "Uric acid status",
+      "new_section_id": "gout",
+      "new_field_id": "uric_acid_status",
+      "new_section_number": 13,
+      "migration_notes": "Now includes numeric uric acid, Krystexxa status, last flare date."
+    },
+    {
+      "legacy_smartlist": "{TKE NSAID:27043}",
+      "smartlist_id": 27043,
+      "legacy_context": "NSAID status",
+      "new_section_id": "nsaid",
+      "new_field_id": "nsaid_status",
+      "new_section_number": 19,
+      "migration_notes": "Expanded to include specific NSAID, avoidance counseling, alternatives discussed."
+    },
+    {
+      "legacy_smartlist": "{TKE PPI:27044}",
+      "smartlist_id": 27044,
+      "legacy_context": "PPI status",
+      "new_section_id": "ppi",
+      "new_field_id": "ppi_status",
+      "new_section_number": 20,
+      "migration_notes": "Now distinguishes indicated vs questionable PPI use. Tracks de-escalation."
+    },
+    {
+      "legacy_smartlist": "{TKE Statin:27055}",
+      "smartlist_id": 27055,
+      "legacy_context": "Statin status",
+      "new_section_id": "lipid_therapy",
+      "new_field_id": "statin_status",
+      "new_section_number": 7,
+      "migration_notes": "Expanded with intensity levels, intolerance tracking, PCSK9i candidacy."
+    },
+    {
+      "legacy_smartlist": "{suspected/biopsy confirmed:27058}",
+      "smartlist_id": 27058,
+      "legacy_context": "Pathology confirmation",
+      "new_section_id": "header",
+      "new_field_id": "pathology_confirmation",
+      "new_section_number": 0,
+      "migration_notes": "Same enum values."
+    },
+    {
+      "legacy_smartlist": "{CKD ETIOLOGY:27079}",
+      "smartlist_id": 27079,
+      "legacy_context": "CKD etiology",
+      "new_section_id": "header",
+      "new_field_id": "ckd_etiology",
+      "new_section_number": 0,
+      "migration_notes": "Kept as text. AI agent can suggest from chart data."
+    },
+    {
+      "legacy_smartlist": "{CCM Status:27080}",
+      "smartlist_id": 27080,
+      "legacy_context": "CCM enrollment status",
+      "new_section_id": "header",
+      "new_field_id": "ccm_status",
+      "new_section_number": 0,
+      "migration_notes": "Also mapped to ccm.ccm_enrollment (Section 27). Header shows summary; CCM section has detail."
+    },
+    {
+      "legacy_smartlist": "{TKE Who:27081}",
+      "smartlist_id": 27081,
+      "legacy_context": "Who accompanied the patient",
+      "new_section_id": "header",
+      "new_field_id": "companions",
+      "new_section_number": 0,
+      "migration_notes": "Kept as text."
+    }
+  ],
+
+  "epic_auto_pull_tags": [
+    {
+      "epic_tag": "@ED@",
+      "description": "Encounter type / smart phrase trigger",
+      "new_field": "header.visit_type",
+      "auto_populate": true
+    },
+    {
+      "epic_tag": "@LASTENCBP@",
+      "description": "Last encounter blood pressure",
+      "new_fields": ["bp_fluid.systolic_bp", "bp_fluid.diastolic_bp"],
+      "auto_populate": true,
+      "parse_note": "Split 'XXX/YY' format into systolic and diastolic"
+    },
+    {
+      "epic_tag": "@LASTENCPU@",
+      "description": "Last encounter pulse",
+      "new_field": "bp_fluid.heart_rate",
+      "auto_populate": true
+    },
+    {
+      "epic_tag": "@LASTENCWT@",
+      "description": "Last encounter weight",
+      "new_field": "header.weight",
+      "auto_populate": true
+    },
+    {
+      "epic_tag": "@LASTENCBMI@",
+      "description": "Last encounter BMI",
+      "new_field": "header.bmi",
+      "auto_populate": true
+    },
+    {
+      "epic_tag": "@CREAT@",
+      "description": "Creatinine (if available)",
+      "new_field": "kidney_function.creatinine",
+      "auto_populate": true,
+      "availability": "Depends on Epic configuration"
+    },
+    {
+      "epic_tag": "@GFR@",
+      "description": "eGFR (if available)",
+      "new_field": "kidney_function.egfr_current",
+      "auto_populate": true,
+      "availability": "Depends on Epic configuration"
+    }
+  ],
+
+  "summary": {
+    "total_legacy_smartlists": 23,
+    "total_mapped_fields": 23,
+    "unmapped_legacy_fields": 0,
+    "total_epic_auto_pull_tags": 7,
+    "data_loss": "ZERO - all legacy fields have a corresponding new field_id",
+    "new_fields_added": "200+ new discrete fields beyond the original 23 SmartList fields"
+  }
+}

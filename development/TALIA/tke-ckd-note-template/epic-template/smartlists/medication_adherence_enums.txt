@@ -1,0 +1,34 @@
+================================================================================
+SmartList Definitions: Medication Adherence
+================================================================================
+
+--- ADHERENCE ASSESSMENT ---
+SmartList Name: .TKECKD ADHERENCE ASSESSMENT
+SmartList ID: 30072
+Section: Medication Adherence (Section 35)
+Field ID: adherence_assessment
+
+Options:
+- good
+- fair
+- poor
+
+Notes:
+- good: taking medications as prescribed
+- fair: occasional missed doses
+- poor: frequently missing doses
+
+--- PHARMACY ACCESS ---
+SmartList Name: .TKECKD PHARMACY ACCESS
+SmartList ID: 30073
+Section: Medication Adherence (Section 35)
+Field ID: pharmacy_access
+
+Options:
+- good
+- limited
+
+Notes:
+- good: easy access to pharmacy
+- limited: barriers to pharmacy access
+================================================================================

@@ -1,0 +1,64 @@
+================================================================================
+SmartList Definitions: SDOH Assessment
+================================================================================
+
+--- TRANSPORTATION ---
+SmartList Name: .TKECKD TRANSPORTATION
+SmartList ID: 30063
+Section: SDOH Assessment (Section 32)
+Field ID: transportation
+
+Options:
+- own_car
+- rides
+- issues
+
+Notes:
+- own_car: has reliable personal transportation
+- rides: depends on others for rides
+- issues: transportation barriers to care
+
+--- HOUSING STABILITY ---
+SmartList Name: .TKECKD HOUSING STABILITY
+SmartList ID: 30064
+Section: SDOH Assessment (Section 32)
+Field ID: housing_stability
+
+Options:
+- stable
+- at_risk
+- homeless
+
+Notes:
+- stable: secure housing
+- at_risk: housing insecurity
+- homeless: currently homeless
+
+--- FOOD SECURITY ---
+SmartList Name: .TKECKD FOOD SECURITY
+SmartList ID: 30065
+Section: SDOH Assessment (Section 32)
+Field ID: food_security
+
+Options:
+- secure
+- insecure
+
+Notes:
+- secure: reliable access to food
+- insecure: food insecurity
+
+--- HEALTH LITERACY ---
+SmartList Name: .TKECKD HEALTH LITERACY
+SmartList ID: 30066
+Section: SDOH Assessment (Section 32)
+Field ID: health_literacy
+
+Options:
+- adequate
+- limited
+
+Notes:
+- adequate: can understand health information
+- limited: needs simplified communication
+================================================================================

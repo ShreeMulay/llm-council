@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: Dialysis Modality Preference
+================================================================================
+
+SmartList Name: .TKECKD DIALYSIS MODALITY
+SmartList ID: 30050
+Section: Dialysis Planning (Section 25)
+Field ID: modality_preference
+
+Options:
+- HD
+- PD
+- HHD
+- Conservative
+- Undecided
+
+Default: Undecided
+
+Notes:
+- HD: In-center hemodialysis
+- PD: Peritoneal dialysis
+- HHD: Home hemodialysis
+- Conservative: Conservative/palliative management (no dialysis)
+- Undecided: Has not decided yet
+================================================================================

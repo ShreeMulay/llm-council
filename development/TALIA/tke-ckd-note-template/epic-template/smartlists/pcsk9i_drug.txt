@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: PCSK9i Drug
+================================================================================
+
+SmartList Name: .TKECKD PCSK9I DRUG
+SmartList ID: 30024
+Section: Lipid Therapy (Section 7)
+Field ID: pcsk9i_drug
+
+Options:
+- Repatha
+- Praluent
+- Leqvio
+- none
+
+Default: none
+
+Notes:
+- Repatha (evolocumab): Q2 weeks or monthly injection
+- Praluent (alirocumab): Q2 weeks injection
+- Leqvio (inclisiran): Q6 months injection (siRNA)
+================================================================================

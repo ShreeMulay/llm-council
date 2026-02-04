@@ -1,0 +1,36 @@
+================================================================================
+SmartList Definition: Reason for Visit
+================================================================================
+
+SmartList Name: .TKECKD REASON FOR VISIT
+SmartList ID: 30008
+Section: Header (Section 0)
+Field ID: reason_for_visit
+
+Options:
+- CKD Follow-up
+- New CKD Referral
+- Proteinuria Evaluation
+- Hematuria Evaluation
+- Kidney Stone Follow-up
+- Hypertension Management
+- Electrolyte Abnormality
+- AKI Follow-up
+- Pre-Transplant Evaluation
+- Post-Transplant Follow-up
+- Dialysis Planning
+- Medication Review
+- Lab Review
+- Other (specify)
+
+Default: CKD Follow-up
+
+Notes:
+- Pre-populated from scheduling reason when available
+- Can select multiple reasons
+
+Legacy Migration:
+- Maps from {here for:27012}
+- SmartList ID 27012 -> 30008
+- Expanded options from legacy
+================================================================================

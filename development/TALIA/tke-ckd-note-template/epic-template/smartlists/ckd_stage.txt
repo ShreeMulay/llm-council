@@ -1,0 +1,36 @@
+================================================================================
+SmartList Definition: CKD Stage
+================================================================================
+
+SmartList Name: .TKECKD CKD STAGE
+SmartList ID: 30002
+Section: Header (Section 0)
+Field ID: ckd_stage
+
+Options:
+- G1
+- G2
+- G3a
+- G3b
+- G4
+- G5
+- G5D
+- Transplant
+
+Default: (none)
+
+Notes:
+- Based on KDIGO 2024 staging
+- G1: eGFR >= 90 with kidney damage markers
+- G2: eGFR 60-89 with kidney damage markers
+- G3a: eGFR 45-59
+- G3b: eGFR 30-44
+- G4: eGFR 15-29
+- G5: eGFR < 15
+- G5D: On dialysis
+- Transplant: Post-transplant patient
+
+Legacy Migration:
+- No direct legacy SmartList equivalent
+- Previously free text in @ED@ template
+================================================================================

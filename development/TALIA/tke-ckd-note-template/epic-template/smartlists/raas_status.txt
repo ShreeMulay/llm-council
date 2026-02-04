@@ -1,0 +1,33 @@
+================================================================================
+SmartList Definition: RAAS Status
+================================================================================
+
+SmartList Name: .TKECKD RAAS STATUS
+SmartList ID: 30025
+Section: RAAS Inhibition (Section 8) - PILLAR 1
+Field ID: raas_status
+
+Options:
+- on_acei
+- on_arb
+- on_arni
+- not_on
+- contraindicated
+- intolerant
+
+Default: (none)
+
+Notes:
+- PILLAR 1 of GDMT for CKD
+- on_acei: ACE inhibitor (lisinopril, enalapril, etc.)
+- on_arb: ARB (losartan, valsartan, etc.)
+- on_arni: Sacubitril/valsartan (Entresto)
+- not_on: not currently on RAAS inhibitor
+- contraindicated: medical contraindication
+- intolerant: tried but could not tolerate
+
+Legacy Migration:
+- Maps from {RAAS Inhibition:27018}
+- SmartList ID 27018 -> 30025
+- Expanded to distinguish ACEi vs ARB vs ARNi
+================================================================================

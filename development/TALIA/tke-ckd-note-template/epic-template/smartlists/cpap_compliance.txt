@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: CPAP Compliance
+================================================================================
+
+SmartList Name: .TKECKD CPAP COMPLIANCE
+SmartList ID: 30062
+Section: Sleep Apnea (Section 31)
+Field ID: cpap_compliance
+
+Options:
+- compliant
+- non_compliant
+- na
+
+Default: na
+
+Notes:
+- For patients with OSA on CPAP
+- compliant: using CPAP >= 4 hours/night, >= 70% of nights
+- non_compliant: not meeting compliance criteria
+- na: no CPAP prescribed
+================================================================================

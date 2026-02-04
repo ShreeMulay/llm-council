@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-KFRE: KFRE Calculator</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #3B82F6; border-bottom: 1px solid #3B82F6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .risk-box { border: 2px solid #3B82F6; padding: 8px; margin: 6px 0; text-align: center; }
+    .risk-label { font-size: 8pt; color: #666; }
+    .risk-value { font-size: 16pt; font-weight: bold; color: #3B82F6; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #3B82F6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #3B82F6; }
+  </style>
+</head>
+<body>
+  <!-- FRONT OF CARD -->
+  <div class="card">
+    <div class="header">
+      <span>KFRE Risk Assessment</span>
+      <span class="header-code">TKE-KFRE</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">INPUT VALUES (4-Variable Equation)</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">Age:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">years</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">Sex:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">M / F</div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top: 6px;">
+        <div>
+          <div class="field">
+            <span class="field-label">eGFR:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mL/min/1.73m2</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">UACR:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mg/g</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">KFRE RESULTS <span class="required">*</span></div>
+      <div class="two-col">
+        <div class="risk-box">
+          <div class="risk-label">2-Year Risk</div>
+          <div class="risk-value">____%</div>
+        </div>
+        <div class="risk-box">
+          <div class="risk-label">5-Year Risk</div>
+          <div class="risk-value">____%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">RISK CATEGORY</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Low (&lt;5% 5yr)</div>
+        <div class="checkbox-item"><span class="circle"></span> Moderate (5-15%)</div>
+        <div class="checkbox-item"><span class="circle"></span> High (15-40%)</div>
+        <div class="checkbox-item"><span class="circle"></span> Very High (&gt;40%)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TRIGGERED ACTIONS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Nephrology referral (if &gt;3% 2yr)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Transplant discussion (if &gt;20% 5yr)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Dialysis education (if &gt;20% 5yr)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Vascular access planning (if &gt;40% 5yr)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Advance care planning</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Discussed risk with patient</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Optimize 4 Pillars therapy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to transplant center</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Schedule dialysis education</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Recalculate in: _______</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-KFRE-v1.0 | The Kidney Experts | Tangri KFRE (2011, 2016)
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- BACK OF CARD -->
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Your Kidney Risk Score</div>
+      <div class="back-content">
+        The KFRE (Kidney Failure Risk Equation) uses your age, kidney function, and protein in your urine to estimate your chance of needing dialysis or a transplant in the next 2-5 years. This helps us plan your care.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">YOUR RISK LEVEL</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Low risk (&lt;5%):</strong> Continue current care, regular follow-up</li>
+          <li><strong>Moderate risk (5-15%):</strong> More frequent monitoring, optimize medications</li>
+          <li><strong>High risk (15-40%):</strong> Start planning for future kidney care options</li>
+          <li><strong>Very high risk (&gt;40%):</strong> Active preparation for dialysis or transplant</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Take all your kidney-protective medicines as prescribed</li>
+          <li>Keep your blood pressure and blood sugar in target range</li>
+          <li>Avoid NSAIDs (ibuprofen, naproxen) and other kidney-harmful medicines</li>
+          <li>Follow a kidney-friendly diet (low salt, appropriate protein)</li>
+          <li>Ask about transplant options early - living donors are best</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>New or worsening swelling, shortness of breath</li>
+          <li>Nausea, loss of appetite, or metallic taste</li>
+          <li>Confusion or difficulty concentrating</li>
+          <li>Questions about transplant or dialysis options</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-KFRE-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+================================================================================
+SmartList Definition: Anemia Clinic
+================================================================================
+
+SmartList Name: .TKECKD ANEMIA CLINIC
+SmartList ID: 30040
+Section: Anemia (Section 15)
+Field ID: anemia_clinic
+
+Options:
+- enrolled
+- referred
+- not_indicated
+- discharged
+
+Default: not_indicated
+
+Notes:
+- TKE Anemia Clinic enrollment status
+- enrolled: actively receiving care
+- referred: referral placed, pending enrollment
+- not_indicated: does not need anemia clinic
+- discharged: previously enrolled, now discharged
+
+Legacy Migration:
+- Maps from {Anemia Clinic?:27690}
+- SmartList ID 27690 -> 30040
+================================================================================

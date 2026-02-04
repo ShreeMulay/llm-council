@@ -1,0 +1,23 @@
+================================================================================
+SmartList Definition: eGFR Trend
+================================================================================
+
+SmartList Name: .TKECKD EGFR TREND
+SmartList ID: 30010
+Section: Kidney Function (Section 1)
+Field ID: egfr_trend
+
+Options:
+- stable
+- improving
+- declining
+
+Default: stable
+
+Notes:
+- Based on eGFR slope calculation
+- Stable: slope > -3 mL/min/year
+- Improving: slope > 0 mL/min/year
+- Declining: slope < -3 mL/min/year (rapid progression)
+- AI agent calculates from historical eGFR values
+================================================================================

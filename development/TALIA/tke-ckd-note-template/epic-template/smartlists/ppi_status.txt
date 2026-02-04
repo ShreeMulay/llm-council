@@ -1,0 +1,28 @@
+================================================================================
+SmartList Definition: PPI Status
+================================================================================
+
+SmartList Name: .TKECKD PPI STATUS
+SmartList ID: 30046
+Section: PPI Review (Section 20)
+Field ID: ppi_status
+
+Options:
+- not_on
+- on_indicated
+- on_questionable
+- weaning
+
+Default: (none)
+
+Notes:
+- PPIs associated with AIN and CKD progression
+- not_on: not on PPI
+- on_indicated: on PPI with clear indication (GERD, Barrett's)
+- on_questionable: on PPI without clear indication
+- weaning: actively de-escalating
+
+Legacy Migration:
+- Maps from {TKE PPI:27044}
+- SmartList ID 27044 -> 30046
+================================================================================

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE CKD Cards - Print All</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0; }
+    @media print { 
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .card-container { page-break-after: always; }
+      .card-container:last-child { page-break-after: auto; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    
+    .no-print {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+    }
+    .no-print h1 { font-size: 24px; margin-bottom: 10px; }
+    .no-print p { color: #666; margin-bottom: 15px; }
+    .no-print button {
+      padding: 12px 24px;
+      background: #1a1a1a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .no-print button:hover { background: #333; }
+    .no-print .back-link {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #f0f0f0;
+      color: #333;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    .no-print .back-link:hover { background: #e0e0e0; }
+    
+    .card-container {
+      width: 5.5in;
+      height: 8.5in;
+      margin: 0 auto 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .card-container iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    .domain-header {
+      background: #1a1a1a;
+      color: white;
+      padding: 10px 20px;
+      font-weight: bold;
+      margin-top: 30px;
+    }
+    .domain-header:first-of-type { margin-top: 0; }
+    
+    @media print {
+      .domain-header { display: none; }
+      .card-container { 
+        box-shadow: none; 
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <h1>Print All TKE CKD Cards</h1>
+    <p>This page contains all 42 clinical cards ready for batch printing. Each card prints on a 5.5" x 8.5" half-letter page (front and back).</p>
+    <button onclick="window.print()">Print All Cards</button>
+    <a href="index.html" class="back-link">Back to Gallery</a>
+  </div>
+  
+  <!-- Note: For actual printing, each card's HTML would be embedded or loaded via iframe -->
+  <!-- This is a simplified version showing the structure -->
+  
+  <div class="domain-header" style="background: #3B82F6;">Kidney Core (8 cards)</div>
+  <div class="card-container"><iframe src="TKE-PROT.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-KFRE.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-RNLX.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-RNAS.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-BIOP.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-HEMA.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-STONE.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-GU.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #EF4444;">Cardiovascular (4 cards)</div>
+  <div class="card-container"><iframe src="TKE-BPFL.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-DAXR.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-HF.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-STAT.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #8B5CF6;">Pharmacotherapy - 4 Pillars (4 cards)</div>
+  <div class="card-container"><iframe src="TKE-RAAS.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-SGLT.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-FINE.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-GLP1.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #F97316;">Metabolic (3 cards)</div>
+  <div class="card-container"><iframe src="TKE-DM.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-GOUT.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-OBES.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #1E40AF;">CKD Complications (3 cards)</div>
+  <div class="card-container"><iframe src="TKE-ANEM.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-MBD.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-ELEC.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #22C55E;">Risk Mitigation (6 cards)</div>
+  <div class="card-container"><iframe src="TKE-SMOK.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-NSAI.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-PPI.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-SICK.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-CONT.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-SODM.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #6B7280;">Planning & Transitions (4 cards)</div>
+  <div class="card-container"><iframe src="TKE-TXPL.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-DIAL.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-ACP.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-CCM.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #14B8A6;">Screening & Prevention (8 cards)</div>
+  <div class="card-container"><iframe src="TKE-VACC.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-PHQ.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-FALL.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-SLAP.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-SDOH.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-GRIP.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-FUNC.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-NUTR.html"></iframe></div>
+  
+  <div class="domain-header" style="background: #EC4899;">Care Coordination (2 cards)</div>
+  <div class="card-container"><iframe src="TKE-CRM.html"></iframe></div>
+  <div class="card-container"><iframe src="TKE-LONG.html"></iframe></div>
+</body>
+</html>

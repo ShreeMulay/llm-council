@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TKE Tier 2 Physical Performance Assessment</title>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.5in;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      line-height: 1.3;
+      color: #000;
+      background: #fff;
+    }
+    
+    .page {
+      width: 7.5in;
+      min-height: 10in;
+      margin: 0 auto;
+      padding: 0.25in;
+    }
+    
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 3px solid #1E40AF;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .logo {
+      width: 50px;
+      height: 50px;
+      background: #1E40AF;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14pt;
+    }
+    
+    .title-section h1 {
+      font-size: 14pt;
+      color: #1E40AF;
+      margin-bottom: 2px;
+    }
+    
+    .title-section h2 {
+      font-size: 11pt;
+      color: #333;
+      font-weight: normal;
+    }
+    
+    .patient-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      background: #f5f5f5;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    
+    .patient-info label {
+      font-size: 8pt;
+      color: #666;
+      display: block;
+    }
+    
+    .patient-info .field {
+      border-bottom: 1px solid #999;
+      min-height: 18px;
+      font-size: 10pt;
+    }
+    
+    .section {
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .section-header {
+      background: #1E40AF;
+      color: white;
+      padding: 6px 10px;
+      font-weight: bold;
+      font-size: 10pt;
+    }
+    
+    .section-content {
+      padding: 8px 10px;
+    }
+    
+    .subsection {
+      margin-bottom: 8px;
+    }
+    
+    .subsection-title {
+      font-weight: bold;
+      font-size: 9pt;
+      color: #1E40AF;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #ddd;
+      padding-bottom: 2px;
+    }
+    
+    .test-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+    }
+    
+    .test-label {
+      min-width: 140px;
+      font-size: 9pt;
+    }
+    
+    .test-input {
+      border: 1px solid #999;
+      width: 60px;
+      height: 20px;
+      text-align: center;
+    }
+    
+    .test-unit {
+      font-size: 8pt;
+      color: #666;
+      min-width: 40px;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 9pt;
+    }
+    
+    .checkbox {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #333;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    
+    .circle {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #333;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin-bottom: 8px;
+    }
+    
+    th, td {
+      border: 1px solid #ddd;
+      padding: 4px 6px;
+      text-align: left;
+    }
+    
+    th {
+      background: #f0f0f0;
+      font-weight: bold;
+    }
+    
+    .score-box {
+      display: inline-block;
+      border: 2px solid #1E40AF;
+      padding: 4px 12px;
+      font-weight: bold;
+      font-size: 12pt;
+      margin-left: 10px;
+    }
+    
+    .interpretation-row {
+      display: flex;
+      gap: 20px;
+      margin-top: 6px;
+    }
+    
+    .vitals-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    
+    .vital-item {
+      text-align: center;
+    }
+    
+    .vital-item label {
+      font-size: 8pt;
+      color: #666;
+      display: block;
+    }
+    
+    .vital-item .value {
+      border: 1px solid #999;
+      height: 22px;
+      margin-top: 2px;
+    }
+    
+    .summary-section {
+      background: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px dotted #ccc;
+    }
+    
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    
+    .signature-section {
+      margin-top: 15px;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 20px;
+    }
+    
+    .signature-line {
+      border-bottom: 1px solid #333;
+      height: 25px;
+    }
+    
+    .signature-label {
+      font-size: 8pt;
+      color: #666;
+    }
+    
+    .footer {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 8pt;
+      color: #666;
+      border-top: 1px solid #ddd;
+      padding-top: 6px;
+    }
+    
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .page {
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo">TKE</div>
+        <div class="title-section">
+          <h1>The Kidney Experts</h1>
+          <h2>Tier 2: Physical Performance Assessment</h2>
+        </div>
+      </div>
+      <div style="text-align: right; font-size: 9pt;">
+        <div>Form: TKE-TIER2-v1.0</div>
+        <div>CPT: 97750, 97162</div>
+      </div>
+    </div>
+    
+    <!-- Patient Information -->
+    <div class="patient-info">
+      <div>
+        <label>Patient Name</label>
+        <div class="field"></div>
+      </div>
+      <div>
+        <label>DOB</label>
+        <div class="field"></div>
+      </div>
+      <div>
+        <label>MRN</label>
+        <div class="field"></div>
+      </div>
+      <div>
+        <label>Date of Assessment</label>
+        <div class="field"></div>
+      </div>
+      <div>
+        <label>Examiner</label>
+        <div class="field"></div>
+      </div>
+      <div>
+        <label>Referring Provider</label>
+        <div class="field"></div>
+      </div>
+    </div>
+    
+    <!-- Indication -->
+    <div class="section">
+      <div class="section-header">INDICATION FOR ASSESSMENT</div>
+      <div class="section-content">
+        <div class="checkbox-group">
+          <div class="checkbox-item"><span class="circle"></span> Grip &lt;27kg (M) / &lt;16kg (F)</div>
+          <div class="checkbox-item"><span class="circle"></span> STS &lt;10 reps</div>
+          <div class="checkbox-item"><span class="circle"></span> Gait speed &lt;0.8 m/s</div>
+          <div class="checkbox-item"><span class="circle"></span> Provider referral</div>
+          <div class="checkbox-item"><span class="circle"></span> Pre-transplant eval</div>
+          <div class="checkbox-item"><span class="circle"></span> Other: _______________</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- SPPB Section -->
+    <div class="section">
+      <div class="section-header">SHORT PHYSICAL PERFORMANCE BATTERY (SPPB)</div>
+      <div class="section-content">
+        
+        <!-- Balance -->
+        <div class="subsection">
+          <div class="subsection-title">1. Balance Tests</div>
+          <table>
+            <tr>
+              <th style="width: 35%;">Test</th>
+              <th style="width: 20%;">Time Held</th>
+              <th style="width: 45%;">Result</th>
+            </tr>
+            <tr>
+              <td>Side-by-side stand</td>
+              <td>______ sec</td>
+              <td>
+                <span class="checkbox"></span> Held 10 sec (proceed)
+                <span class="checkbox"></span> &lt;10 sec (0 pts, skip to gait)
+              </td>
+            </tr>
+            <tr>
+              <td>Semi-tandem stand</td>
+              <td>______ sec</td>
+              <td>
+                <span class="checkbox"></span> Held 10 sec (proceed)
+                <span class="checkbox"></span> &lt;10 sec (1 pt, skip to gait)
+              </td>
+            </tr>
+            <tr>
+              <td>Tandem stand</td>
+              <td>______ sec</td>
+              <td>
+                <span class="checkbox"></span> 10 sec (4 pts)
+                <span class="checkbox"></span> 3-9.99 sec (3 pts)
+                <span class="checkbox"></span> &lt;3 sec (2 pts)
+              </td>
+            </tr>
+          </table>
+          <div style="text-align: right;">
+            <strong>Balance Score:</strong> <span class="score-box">___/4</span>
+          </div>
+        </div>
+        
+        <!-- Gait Speed -->
+        <div class="subsection">
+          <div class="subsection-title">2. Gait Speed (4-meter walk)</div>
+          <div class="test-row">
+            <span class="test-label">Trial 1:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">sec</span>
+            <span class="test-label" style="margin-left: 20px;">Trial 2:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">sec</span>
+          </div>
+          <div class="test-row">
+            <span class="test-label">Best time:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">sec</span>
+            <span class="test-label" style="margin-left: 20px;">Gait speed:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">m/s</span>
+          </div>
+          <table style="margin-top: 6px;">
+            <tr>
+              <th>Time</th>
+              <th>Speed</th>
+              <th>Points</th>
+              <th>Select</th>
+            </tr>
+            <tr><td>Unable</td><td>-</td><td>0</td><td><span class="circle"></span></td></tr>
+            <tr><td>&gt;8.70 sec</td><td>&lt;0.46 m/s</td><td>1</td><td><span class="circle"></span></td></tr>
+            <tr><td>6.21-8.70 sec</td><td>0.46-0.64 m/s</td><td>2</td><td><span class="circle"></span></td></tr>
+            <tr><td>4.82-6.20 sec</td><td>0.65-0.83 m/s</td><td>3</td><td><span class="circle"></span></td></tr>
+            <tr><td>&lt;4.82 sec</td><td>&gt;0.83 m/s</td><td>4</td><td><span class="circle"></span></td></tr>
+          </table>
+          <div style="text-align: right;">
+            <strong>Gait Score:</strong> <span class="score-box">___/4</span>
+          </div>
+        </div>
+        
+        <!-- Chair Stand -->
+        <div class="subsection">
+          <div class="subsection-title">3. Chair Stand Test</div>
+          <div class="test-row">
+            <span class="test-label">Single stand:</span>
+            <span class="checkbox"></span> Successful
+            <span class="checkbox"></span> Unable (0 pts, end SPPB)
+          </div>
+          <div class="test-row">
+            <span class="test-label">5x Chair Stand Time:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">sec</span>
+          </div>
+          <table style="margin-top: 6px;">
+            <tr>
+              <th>Time</th>
+              <th>Points</th>
+              <th>Select</th>
+            </tr>
+            <tr><td>Unable or &gt;60 sec</td><td>0</td><td><span class="circle"></span></td></tr>
+            <tr><td>&gt;16.70 sec</td><td>1</td><td><span class="circle"></span></td></tr>
+            <tr><td>13.70-16.69 sec</td><td>2</td><td><span class="circle"></span></td></tr>
+            <tr><td>11.20-13.69 sec</td><td>3</td><td><span class="circle"></span></td></tr>
+            <tr><td>&lt;11.20 sec</td><td>4</td><td><span class="circle"></span></td></tr>
+          </table>
+          <div style="text-align: right;">
+            <strong>Chair Stand Score:</strong> <span class="score-box">___/4</span>
+          </div>
+        </div>
+        
+        <!-- SPPB Total -->
+        <div style="background: #e8f0fe; padding: 8px; border-radius: 4px; margin-top: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong>TOTAL SPPB SCORE:</strong> <span class="score-box" style="font-size: 14pt;">___/12</span>
+            </div>
+            <div class="interpretation-row">
+              <div class="checkbox-item"><span class="circle"></span> 10-12: High</div>
+              <div class="checkbox-item"><span class="circle"></span> 7-9: Intermediate</div>
+              <div class="checkbox-item"><span class="circle"></span> 4-6: Low</div>
+              <div class="checkbox-item"><span class="circle"></span> 0-3: Very Low</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 6MWT Section -->
+    <div class="section">
+      <div class="section-header">6-MINUTE WALK TEST (6MWT)</div>
+      <div class="section-content">
+        <div class="subsection">
+          <div class="subsection-title">Pre-Test Vitals (after 10 min rest)</div>
+          <div class="vitals-grid">
+            <div class="vital-item"><label>HR</label><div class="value"></div><span style="font-size: 8pt;">bpm</span></div>
+            <div class="vital-item"><label>BP</label><div class="value"></div><span style="font-size: 8pt;">mmHg</span></div>
+            <div class="vital-item"><label>SpO2</label><div class="value"></div><span style="font-size: 8pt;">%</span></div>
+            <div class="vital-item"><label>Borg Dyspnea</label><div class="value"></div><span style="font-size: 8pt;">/10</span></div>
+            <div class="vital-item"><label>Borg Fatigue</label><div class="value"></div><span style="font-size: 8pt;">/10</span></div>
+          </div>
+          <div style="margin-top: 4px;">
+            <span class="checkbox"></span> Room air
+            <span class="checkbox"></span> O2 at ______ L/min
+          </div>
+        </div>
+        
+        <div class="subsection">
+          <div class="subsection-title">Test Results</div>
+          <div class="test-row">
+            <span class="test-label">Complete laps (60m each):</span>
+            <span class="test-input"></span>
+            <span class="test-label" style="margin-left: 20px;">Partial lap:</span>
+            <span class="test-input"></span>
+            <span class="test-unit">m</span>
+          </div>
+          <div class="test-row" style="margin-top: 8px;">
+            <span class="test-label" style="font-weight: bold;">TOTAL DISTANCE:</span>
+            <span class="test-input" style="width: 80px; font-weight: bold;"></span>
+            <span class="test-unit">meters</span>
+          </div>
+          <div style="margin-top: 4px;">
+            <span class="checkbox"></span> Stopped during test (reason: _________________________)
+          </div>
+        </div>
+        
+        <div class="subsection">
+          <div class="subsection-title">Post-Test Vitals (immediately after)</div>
+          <div class="vitals-grid">
+            <div class="vital-item"><label>HR</label><div class="value"></div><span style="font-size: 8pt;">bpm</span></div>
+            <div class="vital-item"><label>SpO2</label><div class="value"></div><span style="font-size: 8pt;">%</span></div>
+            <div class="vital-item"><label>Borg Dyspnea</label><div class="value"></div><span style="font-size: 8pt;">/10</span></div>
+            <div class="vital-item"><label>Borg Fatigue</label><div class="value"></div><span style="font-size: 8pt;">/10</span></div>
+            <div class="vital-item"><label>1-min Recovery HR</label><div class="value"></div><span style="font-size: 8pt;">bpm</span></div>
+          </div>
+        </div>
+        
+        <div style="background: #e8f0fe; padding: 8px; border-radius: 4px;">
+          <strong>Interpretation:</strong>
+          <span class="checkbox"></span> &gt;450m: Normal
+          <span class="checkbox"></span> 350-450m: Mild limitation
+          <span class="checkbox"></span> 200-349m: Moderate limitation
+          <span class="checkbox"></span> &lt;200m: Severe limitation
+        </div>
+      </div>
+    </div>
+    
+    <!-- TUG Section -->
+    <div class="section">
+      <div class="section-header">TIMED UP AND GO (TUG)</div>
+      <div class="section-content">
+        <div class="test-row">
+          <span class="test-label">TUG Time:</span>
+          <span class="test-input"></span>
+          <span class="test-unit">seconds</span>
+        </div>
+        <div style="margin-top: 6px;">
+          <strong>Interpretation:</strong>
+          <span class="checkbox"></span> &lt;10 sec: Normal
+          <span class="checkbox"></span> 10-12 sec: Borderline
+          <span class="checkbox"></span> 12-20 sec: Fall risk
+          <span class="checkbox"></span> &gt;20 sec: High fall risk
+        </div>
+        <div style="margin-top: 4px;">
+          <span class="checkbox"></span> Used assistive device: _______________
+        </div>
+      </div>
+    </div>
+    
+    <!-- Frailty Section -->
+    <div class="section">
+      <div class="section-header">FRAILTY ASSESSMENT</div>
+      <div class="section-content">
+        <div class="subsection">
+          <div class="subsection-title">Fried Frailty Phenotype</div>
+          <table>
+            <tr>
+              <th style="width: 25%;">Criterion</th>
+              <th style="width: 55%;">Definition</th>
+              <th style="width: 20%;">Present?</th>
+            </tr>
+            <tr>
+              <td>Weight loss</td>
+              <td>Unintentional &gt;10 lbs in past year</td>
+              <td><span class="circle"></span> Yes <span class="circle"></span> No</td>
+            </tr>
+            <tr>
+              <td>Exhaustion</td>
+              <td>"Everything was an effort" >=3 days/week</td>
+              <td><span class="circle"></span> Yes <span class="circle"></span> No</td>
+            </tr>
+            <tr>
+              <td>Low activity</td>
+              <td>M: &lt;383 kcal/wk; F: &lt;270 kcal/wk</td>
+              <td><span class="circle"></span> Yes <span class="circle"></span> No</td>
+            </tr>
+            <tr>
+              <td>Slow walking</td>
+              <td>Gait speed in lowest 20%</td>
+              <td><span class="circle"></span> Yes <span class="circle"></span> No</td>
+            </tr>
+            <tr>
+              <td>Weakness</td>
+              <td>Grip strength in lowest 20%</td>
+              <td><span class="circle"></span> Yes <span class="circle"></span> No</td>
+            </tr>
+          </table>
+          <div style="margin-top: 6px;">
+            <strong>Fried Score:</strong> <span class="score-box">___/5</span>
+            <span style="margin-left: 20px;">
+              <span class="circle"></span> 0: Robust
+              <span class="circle"></span> 1-2: Pre-frail
+              <span class="circle"></span> 3+: Frail
+            </span>
+          </div>
+        </div>
+        
+        <div class="subsection">
+          <div class="subsection-title">Clinical Frailty Scale (CFS)</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <span class="checkbox-item"><span class="circle"></span> 1: Very fit</span>
+            <span class="checkbox-item"><span class="circle"></span> 2: Well</span>
+            <span class="checkbox-item"><span class="circle"></span> 3: Managing well</span>
+            <span class="checkbox-item"><span class="circle"></span> 4: Vulnerable</span>
+            <span class="checkbox-item"><span class="circle"></span> 5: Mildly frail</span>
+            <span class="checkbox-item"><span class="circle"></span> 6: Moderately frail</span>
+            <span class="checkbox-item"><span class="circle"></span> 7: Severely frail</span>
+            <span class="checkbox-item"><span class="circle"></span> 8: Very severely frail</span>
+            <span class="checkbox-item"><span class="circle"></span> 9: Terminally ill</span>
+          </div>
+          <div style="margin-top: 6px;">
+            <strong>CFS Score:</strong> <span class="score-box">___/9</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Summary & Recommendations -->
+    <div class="section">
+      <div class="section-header">SUMMARY & RECOMMENDATIONS</div>
+      <div class="section-content summary-section">
+        <div class="summary-grid">
+          <div class="summary-item"><span>SPPB Total:</span><span>___/12</span></div>
+          <div class="summary-item"><span>6MWT Distance:</span><span>___ m</span></div>
+          <div class="summary-item"><span>TUG Time:</span><span>___ sec</span></div>
+          <div class="summary-item"><span>Fried Score:</span><span>___/5</span></div>
+          <div class="summary-item"><span>CFS Score:</span><span>___/9</span></div>
+          <div class="summary-item"><span>Overall:</span><span>____________</span></div>
+        </div>
+        
+        <div style="margin-top: 10px;">
+          <strong>Recommendations (check all that apply):</strong>
+          <div class="recommendations-grid" style="margin-top: 6px;">
+            <div class="checkbox-item"><span class="checkbox"></span> Continue Tier 1 monitoring</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Physical therapy referral</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Home exercise program</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Nutrition/dietitian referral</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Tier 3 comprehensive evaluation</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Supervised rehabilitation program</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Fall prevention program</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Cardiac evaluation</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Sarcopenia workup (DXA)</div>
+            <div class="checkbox-item"><span class="checkbox"></span> Other: _______________</div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 10px;">
+          <strong>Follow-up:</strong>
+          <span class="checkbox"></span> Repeat Tier 2 in ___ months
+          <span class="checkbox"></span> Tier 1 at next CKD visit
+          <span class="checkbox"></span> PT to provide exercise Rx
+        </div>
+      </div>
+    </div>
+    
+    <!-- Signature -->
+    <div class="signature-section">
+      <div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Examiner Signature</div>
+      </div>
+      <div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Credentials</div>
+      </div>
+      <div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Date</div>
+      </div>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer">
+      The Kidney Experts, PLLC | TKE-TIER2-v1.0 | "Ridding the World of the Need for Dialysis!"
+    </div>
+  </div>
+</body>
+</html>

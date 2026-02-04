@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Pruritus
+================================================================================
+
+SmartList Name: .TKECKD PRURITUS
+SmartList ID: 30043
+Section: Electrolytes & Acid-Base (Section 17)
+Field ID: pruritus
+
+Options:
+- none
+- mild
+- moderate
+- severe
+
+Default: none
+
+Notes:
+- CKD-associated pruritus (CKD-aP)
+- Common in advanced CKD, especially dialysis
+- Severe pruritus may warrant Difelikefalin (Korsuva)
+================================================================================

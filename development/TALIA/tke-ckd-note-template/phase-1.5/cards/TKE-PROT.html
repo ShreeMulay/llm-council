@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-PROT: Proteinuria</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #3B82F6; border-bottom: 1px solid #3B82F6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .staging-box { background: #EFF6FF; border: 1px solid #3B82F6; padding: 6px; font-size: 8pt; margin-bottom: 8px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Proteinuria / Albuminuria</span>
+      <span class="header-code">TKE-PROT</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+      <span>MRN: <input type="text" /></span>
+    </div>
+
+    <div class="staging-box">
+      <strong>KDIGO Staging:</strong> A1 (<30 mg/g) | A2 (30-300 mg/g) | A3 (>300 mg/g)
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT VALUES</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">UACR (current):</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mg/g | Target: <30</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">UACR (previous):</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top: 6px;">
+        <div>
+          <div class="field">
+            <span class="field-label">UPCr (current):</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mg/g | Target: <500</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">UPCr (previous):</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ALBUMINURIA STAGE</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> A1 (Normal: <30)</div>
+        <div class="checkbox-item"><span class="circle"></span> A2 (Moderate: 30-300)</div>
+        <div class="checkbox-item"><span class="circle"></span> A3 (Severe: >300)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TREND</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Improving (decreasing)</div>
+        <div class="checkbox-item"><span class="circle"></span> Stable</div>
+        <div class="checkbox-item"><span class="circle"></span> Worsening (increasing)</div>
+        <div class="checkbox-item"><span class="circle"></span> New onset</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PROTEINURIA STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> At goal</div>
+        <div class="checkbox-item"><span class="circle"></span> Improving toward goal</div>
+        <div class="checkbox-item"><span class="circle"></span> Not at goal - optimize therapy</div>
+        <div class="checkbox-item"><span class="circle"></span> Nephrotic range (>3.5g/day)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">INTERVENTIONS TO REDUCE PROTEINURIA</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Maximize RAAS inhibitor</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add/optimize SGLT2i</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add finerenone (if T2DM)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> BP control (<120 systolic)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Sodium restriction</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Consider nephrology referral</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Consider kidney biopsy</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 30px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-PROT-v1.0 | The Kidney Experts | Proteinuria = Key CKD Progression Marker
+    </div>
+  </div>
+</body>
+</html>

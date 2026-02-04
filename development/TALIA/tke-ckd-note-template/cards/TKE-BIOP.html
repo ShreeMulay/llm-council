@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-BIOP: Kidney Biopsy</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #3B82F6; border-bottom: 1px solid #3B82F6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #3B82F6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #3B82F6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Kidney Biopsy</span>
+      <span class="header-code">TKE-BIOP</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">BIOPSY STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Not indicated</div>
+        <div class="checkbox-item"><span class="circle"></span> Recommended - pending</div>
+        <div class="checkbox-item"><span class="circle"></span> Scheduled</div>
+        <div class="checkbox-item"><span class="circle"></span> Completed</div>
+        <div class="checkbox-item"><span class="circle"></span> Patient declined</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">BIOPSY DETAILS</div>
+      <div class="field">
+        <span class="field-label">Biopsy Date:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">Performing Center:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PATHOLOGY DIAGNOSIS</div>
+      <div class="field">
+        <span class="field-label">Primary Diagnosis:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">Secondary Findings:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">% Glomerulosclerosis:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">% IFTA:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Discussed results with patient</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Start immunosuppression</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Continue supportive care</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Rheumatology referral</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Repeat biopsy in: _______</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 30px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-BIOP-v1.0 | The Kidney Experts | Pathology-confirmed diagnosis
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Kidney Biopsy</div>
+      <div class="back-content">
+        A kidney biopsy is a procedure where a small piece of kidney tissue is removed and examined under a microscope. This helps us understand exactly what is causing your kidney disease.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHY THIS MATTERS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Provides a definite diagnosis of your kidney condition</li>
+          <li>Helps us choose the best treatment for your specific disease</li>
+          <li>Shows how much scarring is present in your kidneys</li>
+          <li>Helps predict how your kidney disease may progress</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Follow all pre-procedure instructions carefully</li>
+          <li>Rest for 24 hours after the biopsy</li>
+          <li>Take all prescribed medications as directed</li>
+          <li>Attend all follow-up appointments</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Blood in urine that doesn't clear within 24 hours</li>
+          <li>Severe pain at the biopsy site</li>
+          <li>Fever or chills after the procedure</li>
+          <li>Dizziness or feeling faint</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-BIOP-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

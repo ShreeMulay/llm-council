@@ -1,0 +1,23 @@
+================================================================================
+SmartList Definition: Diet Adherence
+================================================================================
+
+SmartList Name: .TKECKD DIET ADHERENCE
+SmartList ID: 30047
+Section: Sodium Restriction (Section 23)
+Field ID: diet_adherence
+
+Options:
+- good
+- fair
+- poor
+
+Default: (none)
+
+Notes:
+- Patient-reported dietary sodium adherence
+- Target: < 2g sodium/day
+- good: consistently following
+- fair: sometimes following
+- poor: not following
+================================================================================

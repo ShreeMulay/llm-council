@@ -1,0 +1,21 @@
+================================================================================
+SmartList Definition: Hematuria Type
+================================================================================
+
+SmartList Name: .TKECKD HEMATURIA TYPE
+SmartList ID: 30014
+Section: Hematuria (Section 2)
+Field ID: hematuria_type
+
+Options:
+- microscopic
+- gross
+- none
+
+Default: none
+
+Notes:
+- microscopic: > 3 RBC/hpf on UA
+- gross: visible blood in urine
+- Triggers hematuria workup section when not "none"
+================================================================================

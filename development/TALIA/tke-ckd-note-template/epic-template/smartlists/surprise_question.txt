@@ -1,0 +1,21 @@
+================================================================================
+SmartList Definition: Surprise Question
+================================================================================
+
+SmartList Name: .TKECKD SURPRISE QUESTION
+SmartList ID: 30052
+Section: Advance Care Planning (Section 26)
+Field ID: surprise_question
+
+Options:
+- yes_surprised
+- no_not_surprised
+
+Default: (none)
+
+Notes:
+- "Would I be surprised if this patient died in the next 12 months?"
+- yes_surprised: would be surprised (better prognosis)
+- no_not_surprised: would not be surprised (consider ACP discussion)
+- Prognostic tool to identify patients needing ACP
+================================================================================

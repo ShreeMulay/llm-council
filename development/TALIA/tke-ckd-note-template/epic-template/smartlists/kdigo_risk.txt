@@ -1,0 +1,31 @@
+================================================================================
+SmartList Definition: KDIGO Risk Category
+================================================================================
+
+SmartList Name: .TKECKD KDIGO RISK
+SmartList ID: 30006
+Section: Header (Section 0)
+Field ID: kdigo_risk_category
+
+Options:
+- Low
+- Moderate
+- High
+- Very_High
+
+Default: (none)
+
+Notes:
+- Based on KDIGO 2024 CKD heat map
+- Combines GFR stage (G1-G5) with albuminuria stage (A1-A3)
+- Determines monitoring frequency and intervention intensity
+
+Risk Matrix:
+         A1      A2      A3
+G1      Low     Mod     High
+G2      Low     Mod     High
+G3a     Mod     High    V.High
+G3b     High    High    V.High
+G4      V.High  V.High  V.High
+G5      V.High  V.High  V.High
+================================================================================

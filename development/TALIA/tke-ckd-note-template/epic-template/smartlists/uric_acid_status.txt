@@ -1,0 +1,28 @@
+================================================================================
+SmartList Definition: Uric Acid Status
+================================================================================
+
+SmartList Name: .TKECKD URIC ACID STATUS
+SmartList ID: 30037
+Section: Gout (Section 13)
+Field ID: uric_acid_status
+
+Options:
+- at_goal
+- above_goal
+- not_tested
+- on_therapy
+
+Default: (none)
+
+Notes:
+- Target uric acid: < 6.0 mg/dL
+- at_goal: uric acid < 6.0
+- above_goal: uric acid >= 6.0
+- not_tested: no recent uric acid level
+- on_therapy: on ULT, monitoring
+
+Legacy Migration:
+- Maps from {uric acid:27042}
+- SmartList ID 27042 -> 30037
+================================================================================

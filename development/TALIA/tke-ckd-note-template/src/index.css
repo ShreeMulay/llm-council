@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* TKE CKD Note Template - Custom Theme */
+/* Domain Colors from field-types.json */
+
+@theme {
+  /* Domain colors */
+  --color-domain-kidney-core: #3B82F6;
+  --color-domain-cardiovascular: #EF4444;
+  --color-domain-pharmacotherapy: #8B5CF6;
+  --color-domain-metabolic: #F97316;
+  --color-domain-ckd-complications: #1E40AF;
+  --color-domain-risk-mitigation: #22C55E;
+  --color-domain-planning: #6B7280;
+  --color-domain-screening: #14B8A6;
+  --color-domain-care-coordination: #EC4899;
+
+  /* Semantic colors */
+  --color-critical: #DC2626;
+  --color-warning: #F59E0B;
+  --color-success: #10B981;
+  --color-info: #3B82F6;
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --dashboard-width: 320px;
+}
+
+/* Base styles */
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-400;
+}
+
+/* Delta highlighting */
+.delta-changed {
+  @apply bg-amber-50 border-l-4 border-amber-400;
+}
+
+.delta-value-old {
+  @apply text-gray-400 line-through text-sm;
+}
+
+.delta-value-new {
+  @apply text-amber-700 font-medium;
+}
+
+/* Critical value highlighting */
+.field-critical {
+  @apply border-red-500 bg-red-50;
+}
+
+.field-warning {
+  @apply border-amber-500 bg-amber-50;
+}
+
+/* Domain-colored section headers */
+.section-header-kidney-core { border-left-color: var(--color-domain-kidney-core); }
+.section-header-cardiovascular { border-left-color: var(--color-domain-cardiovascular); }
+.section-header-pharmacotherapy { border-left-color: var(--color-domain-pharmacotherapy); }
+.section-header-metabolic { border-left-color: var(--color-domain-metabolic); }
+.section-header-ckd-complications { border-left-color: var(--color-domain-ckd-complications); }
+.section-header-risk-mitigation { border-left-color: var(--color-domain-risk-mitigation); }
+.section-header-planning { border-left-color: var(--color-domain-planning); }
+.section-header-screening { border-left-color: var(--color-domain-screening); }
+.section-header-care-coordination { border-left-color: var(--color-domain-care-coordination); }

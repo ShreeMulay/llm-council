@@ -1,0 +1,30 @@
+================================================================================
+SmartList Definition: Smoking Status
+================================================================================
+
+SmartList Name: .TKECKD SMOKING STATUS
+SmartList ID: 30044
+Section: Tobacco / Substance Use (Section 18)
+Field ID: smoking_status
+
+Options:
+- never
+- former
+- current_light
+- current_heavy
+- vaping
+
+Default: (none)
+
+Notes:
+- never: never smoked
+- former: quit smoking
+- current_light: < 10 cigarettes/day
+- current_heavy: >= 10 cigarettes/day
+- vaping: e-cigarettes/vaping
+
+Legacy Migration:
+- Maps from {TKEcurrentsmokingstatus:27041}
+- SmartList ID 27041 -> 30044
+- Expanded to include vaping
+================================================================================

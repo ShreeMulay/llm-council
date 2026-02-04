@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: Transplant Current Status
+================================================================================
+
+SmartList Name: .TKECKD TRANSPLANT CURRENT STATUS
+SmartList ID: 30049
+Section: Transplant Readiness (Section 24)
+Field ID: current_status
+
+Options:
+- not_referred
+- in_workup
+- listed
+- active
+- inactive
+
+Default: not_referred
+
+Notes:
+- not_referred: not yet referred to transplant center
+- in_workup: referred, undergoing evaluation
+- listed: on transplant waiting list
+- active: active on list
+- inactive: temporarily inactive on list
+================================================================================

@@ -1,0 +1,28 @@
+================================================================================
+SmartList Definition: Urine Summary
+================================================================================
+
+SmartList Name: .TKECKD URINE SUMMARY
+SmartList ID: 30012
+Section: Kidney Function (Section 1)
+Field ID: urine_studies_summary
+
+Options:
+- Normal
+- Proteinuria only
+- Hematuria only
+- Proteinuria + Hematuria
+- Active sediment
+- Bland sediment with proteinuria
+- Not collected
+
+Default: (none)
+
+Notes:
+- Quick summary of urine findings
+- AI agent generates detailed interpretation
+
+Legacy Migration:
+- Maps from {TKE Urine Summary:27014}
+- SmartList ID 27014 -> 30012
+================================================================================

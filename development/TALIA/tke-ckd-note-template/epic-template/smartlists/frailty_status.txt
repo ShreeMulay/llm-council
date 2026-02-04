@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Frailty Status
+================================================================================
+
+SmartList Name: .TKECKD FRAILTY STATUS
+SmartList ID: 30067
+Section: Physical Performance & Frailty (Section 33)
+Field ID: frailty_status
+
+Options:
+- robust
+- pre_frail
+- frail
+
+Default: (none)
+
+Notes:
+- Based on Clinical Frailty Scale and physical performance
+- robust: CFS 1-3, good physical function
+- pre_frail: CFS 4-5, some functional decline
+- frail: CFS 6-9, significant functional impairment
+================================================================================

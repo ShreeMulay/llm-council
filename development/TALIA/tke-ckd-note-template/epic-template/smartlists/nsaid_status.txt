@@ -1,0 +1,28 @@
+================================================================================
+SmartList Definition: NSAID Status
+================================================================================
+
+SmartList Name: .TKECKD NSAID STATUS
+SmartList ID: 30045
+Section: NSAID Avoidance (Section 19)
+Field ID: nsaid_status
+
+Options:
+- not_using
+- using_otc
+- using_prescribed
+- using_unknown
+
+Default: (none)
+
+Notes:
+- NSAIDs should be avoided in CKD
+- not_using: confirmed not using NSAIDs
+- using_otc: using OTC NSAIDs (ibuprofen, naproxen)
+- using_prescribed: prescribed NSAID
+- using_unknown: unclear if using
+
+Legacy Migration:
+- Maps from {TKE NSAID:27043}
+- SmartList ID 27043 -> 30045
+================================================================================

@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: GLP-1 Status
+================================================================================
+
+SmartList Name: .TKECKD GLP1 STATUS
+SmartList ID: 30031
+Section: GLP-1 Receptor Agonist (Section 11) - PILLAR 4
+Field ID: glp1_status
+
+Options:
+- on
+- consider
+- not_indicated
+- contraindicated
+
+Default: (none)
+
+Notes:
+- PILLAR 4 of GDMT for CKD
+- Per FLOW trial: semaglutide reduces kidney outcomes in T2DM + CKD
+- on: currently on GLP-1 RA
+- consider: potential candidate
+- not_indicated: non-diabetic, no obesity
+- contraindicated: MTC/MEN2 history, pancreatitis
+================================================================================

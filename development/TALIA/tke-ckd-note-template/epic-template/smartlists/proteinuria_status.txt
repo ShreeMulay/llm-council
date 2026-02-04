@@ -1,0 +1,32 @@
+================================================================================
+SmartList Definition: Proteinuria Status
+================================================================================
+
+SmartList Name: .TKECKD PROTEINURIA STATUS
+SmartList ID: 30011
+Section: Kidney Function (Section 1)
+Field ID: proteinuria_status
+
+Options:
+- none
+- microalbuminuria
+- overt_proteinuria
+- nephrotic_range
+- improving
+- worsening
+- stable
+
+Default: (none)
+
+Notes:
+- none: UACR < 30 mg/g
+- microalbuminuria: UACR 30-300 mg/g
+- overt_proteinuria: UACR 300-3000 mg/g
+- nephrotic_range: UACR > 3000 mg/g or UPCr > 3500 mg/g
+- improving/worsening/stable: trend descriptors
+
+Legacy Migration:
+- Maps from {proteinuria:27655}
+- SmartList ID 27655 -> 30011
+- Expanded to include trend options
+================================================================================

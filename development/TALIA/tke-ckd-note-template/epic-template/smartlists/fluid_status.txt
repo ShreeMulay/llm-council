@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Fluid Status
+================================================================================
+
+SmartList Name: .TKECKD FLUID STATUS
+SmartList ID: 30018
+Section: Blood Pressure & Fluid (Section 5)
+Field ID: fluid_status
+
+Options:
+- euvolemic
+- hypervolemic
+- hypovolemic
+
+Default: euvolemic
+
+Notes:
+- Clinical assessment of volume status
+- euvolemic: normal fluid balance
+- hypervolemic: fluid overload (edema, JVD, rales)
+- hypovolemic: volume depleted (orthostasis, dry mucous membranes)
+================================================================================

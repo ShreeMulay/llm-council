@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-ACP: Advance Care Planning</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #6B7280; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #6B7280; border-bottom: 1px solid #6B7280; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #6B7280; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #6B7280; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #6B7280; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Advance Care Planning</span>
+      <span class="header-code">TKE-ACP</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ACP DOCUMENTATION</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> ACP documented in chart</div>
+        <div class="checkbox-item"><span class="checkbox"></span> POLST completed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Healthcare proxy designated</div>
+      </div>
+      <div class="field" style="margin-top: 4px;">
+        <span class="field-label">ACP Date:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">Healthcare Proxy:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">SURPRISE QUESTION</div>
+      <div style="font-size: 8pt; font-style: italic; margin-bottom: 4px;">"Would I be surprised if this patient died in the next year?"</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Yes, I would be surprised</div>
+        <div class="checkbox-item"><span class="circle"></span> No, I would not be surprised</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">GOALS OF CARE</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Goals of care discussed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Conservative management discussed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Hospice/palliative care discussed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">BILLING (if applicable)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> CPT 99497 (first 30 min)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> CPT 99498 (add'l 30 min)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Initiate ACP discussion</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Complete POLST form</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to palliative care</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Update existing documents</div>
+        <div class="checkbox-item"><span class="checkbox"></span> No changes needed</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-ACP-v1.0 | The Kidney Experts | Planning Domain
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Advance Care Planning</div>
+      <div class="back-content">
+        Advance care planning helps you think about and share your wishes for medical care if you become too sick to speak for yourself. It's about making sure your voice is heard, even when you can't speak.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">KEY DOCUMENTS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Healthcare Power of Attorney:</strong> Names someone to make decisions for you</li>
+          <li><strong>Living Will:</strong> States your wishes about life-sustaining treatment</li>
+          <li><strong>POLST:</strong> Medical orders for emergency situations</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">QUESTIONS TO THINK ABOUT</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Who would I want to make decisions for me?</li>
+          <li>What matters most to me in life?</li>
+          <li>What would I want if I couldn't recover?</li>
+          <li>Have I talked to my family about my wishes?</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">NEXT STEPS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Talk with your family about your wishes</li>
+          <li>Choose someone you trust as your healthcare proxy</li>
+          <li>Put your wishes in writing</li>
+          <li>Give copies to your doctors and family</li>
+          <li>Review and update as your health changes</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Resources</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-ACP-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

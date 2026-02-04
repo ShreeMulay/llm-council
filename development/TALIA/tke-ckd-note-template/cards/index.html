@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TKE CKD Note Template - Card Gallery</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 20px; }
+    
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { color: #1a1a1a; font-size: 28px; margin-bottom: 8px; }
+    .header p { color: #666; font-size: 14px; }
+    .header .stats { margin-top: 12px; font-size: 13px; color: #888; }
+    
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 24px; padding: 16px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .filter-btn { padding: 8px 16px; border: 2px solid #ddd; border-radius: 20px; background: white; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s; }
+    .filter-btn:hover { border-color: #999; }
+    .filter-btn.active { background: #1a1a1a; color: white; border-color: #1a1a1a; }
+    .filter-btn[data-domain="kidney_core"] { border-color: #3B82F6; color: #3B82F6; }
+    .filter-btn[data-domain="kidney_core"].active { background: #3B82F6; color: white; }
+    .filter-btn[data-domain="cardiovascular"] { border-color: #EF4444; color: #EF4444; }
+    .filter-btn[data-domain="cardiovascular"].active { background: #EF4444; color: white; }
+    .filter-btn[data-domain="pharmacotherapy"] { border-color: #8B5CF6; color: #8B5CF6; }
+    .filter-btn[data-domain="pharmacotherapy"].active { background: #8B5CF6; color: white; }
+    .filter-btn[data-domain="metabolic"] { border-color: #F97316; color: #F97316; }
+    .filter-btn[data-domain="metabolic"].active { background: #F97316; color: white; }
+    .filter-btn[data-domain="ckd_complications"] { border-color: #1E40AF; color: #1E40AF; }
+    .filter-btn[data-domain="ckd_complications"].active { background: #1E40AF; color: white; }
+    .filter-btn[data-domain="risk_mitigation"] { border-color: #22C55E; color: #22C55E; }
+    .filter-btn[data-domain="risk_mitigation"].active { background: #22C55E; color: white; }
+    .filter-btn[data-domain="planning"] { border-color: #6B7280; color: #6B7280; }
+    .filter-btn[data-domain="planning"].active { background: #6B7280; color: white; }
+    .filter-btn[data-domain="screening"] { border-color: #14B8A6; color: #14B8A6; }
+    .filter-btn[data-domain="screening"].active { background: #14B8A6; color: white; }
+    .filter-btn[data-domain="care_coordination"] { border-color: #EC4899; color: #EC4899; }
+    .filter-btn[data-domain="care_coordination"].active { background: #EC4899; color: white; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    
+    .card-item { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+    .card-item:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .card-item.hidden { display: none; }
+    
+    .card-header { padding: 12px 16px; color: white; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+    .card-code { font-size: 12px; opacity: 0.9; font-weight: 500; }
+    
+    .card-body { padding: 16px; }
+    .card-title { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+    .card-domain { font-size: 12px; color: #666; margin-bottom: 12px; }
+    
+    .card-actions { display: flex; gap: 8px; }
+    .card-actions a { flex: 1; text-align: center; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 13px; font-weight: 500; transition: background 0.2s; }
+    .btn-view { background: #f0f0f0; color: #333; }
+    .btn-view:hover { background: #e0e0e0; }
+    .btn-print { background: #1a1a1a; color: white; }
+    .btn-print:hover { background: #333; }
+    
+    .print-all { text-align: center; margin-top: 30px; }
+    .print-all a { display: inline-block; padding: 12px 32px; background: #1a1a1a; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: background 0.2s; }
+    .print-all a:hover { background: #333; }
+    
+    /* Domain colors for headers */
+    .domain-kidney_core { background: #3B82F6; }
+    .domain-cardiovascular { background: #EF4444; }
+    .domain-pharmacotherapy { background: #8B5CF6; }
+    .domain-metabolic { background: #F97316; }
+    .domain-ckd_complications { background: #1E40AF; }
+    .domain-risk_mitigation { background: #22C55E; }
+    .domain-planning { background: #6B7280; }
+    .domain-screening { background: #14B8A6; }
+    .domain-care_coordination { background: #EC4899; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>TKE CKD Note Template Cards</h1>
+    <p>42 Clinical Report Cards for Comprehensive CKD Management</p>
+    <div class="stats">The Kidney Experts | "Ridding the World of the Need for Dialysis!"</div>
+  </div>
+  
+  <div class="filters">
+    <button class="filter-btn active" data-domain="all">All (42)</button>
+    <button class="filter-btn" data-domain="kidney_core">Kidney Core (8)</button>
+    <button class="filter-btn" data-domain="cardiovascular">Cardiovascular (4)</button>
+    <button class="filter-btn" data-domain="pharmacotherapy">Pharmacotherapy (4)</button>
+    <button class="filter-btn" data-domain="metabolic">Metabolic (3)</button>
+    <button class="filter-btn" data-domain="ckd_complications">CKD Complications (3)</button>
+    <button class="filter-btn" data-domain="risk_mitigation">Risk Mitigation (6)</button>
+    <button class="filter-btn" data-domain="planning">Planning (4)</button>
+    <button class="filter-btn" data-domain="screening">Screening (8)</button>
+    <button class="filter-btn" data-domain="care_coordination">Care Coordination (2)</button>
+  </div>
+  
+  <div class="grid" id="cardGrid">
+    <!-- Kidney Core (Blue #3B82F6) -->
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Proteinuria</span><span class="card-code">TKE-PROT</span></div>
+      <div class="card-body">
+        <div class="card-title">Proteinuria Assessment</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-PROT.html" class="btn-view">View</a>
+          <a href="TKE-PROT.html" target="_blank" class="btn-print" onclick="window.open(this.href); setTimeout(() => window.print(), 500); return false;">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>KFRE Risk</span><span class="card-code">TKE-KFRE</span></div>
+      <div class="card-body">
+        <div class="card-title">Kidney Failure Risk Equation</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-KFRE.html" class="btn-view">View</a>
+          <a href="TKE-KFRE.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Renal Labs</span><span class="card-code">TKE-RNLX</span></div>
+      <div class="card-body">
+        <div class="card-title">Renal Labs Extended</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-RNLX.html" class="btn-view">View</a>
+          <a href="TKE-RNLX.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Renal Assessment</span><span class="card-code">TKE-RNAS</span></div>
+      <div class="card-body">
+        <div class="card-title">Renal Assessment</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-RNAS.html" class="btn-view">View</a>
+          <a href="TKE-RNAS.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Kidney Biopsy</span><span class="card-code">TKE-BIOP</span></div>
+      <div class="card-body">
+        <div class="card-title">Kidney Biopsy</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-BIOP.html" class="btn-view">View</a>
+          <a href="TKE-BIOP.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Hematuria</span><span class="card-code">TKE-HEMA</span></div>
+      <div class="card-body">
+        <div class="card-title">Hematuria Workup</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-HEMA.html" class="btn-view">View</a>
+          <a href="TKE-HEMA.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>Kidney Stones</span><span class="card-code">TKE-STONE</span></div>
+      <div class="card-body">
+        <div class="card-title">Kidney Stones / Nephrolithiasis</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-STONE.html" class="btn-view">View</a>
+          <a href="TKE-STONE.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="kidney_core">
+      <div class="card-header domain-kidney_core"><span>GU Symptoms</span><span class="card-code">TKE-GU</span></div>
+      <div class="card-body">
+        <div class="card-title">GU Symptoms / Urology</div>
+        <div class="card-domain">Kidney Core</div>
+        <div class="card-actions">
+          <a href="TKE-GU.html" class="btn-view">View</a>
+          <a href="TKE-GU.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Cardiovascular (Red #EF4444) -->
+    <div class="card-item" data-domain="cardiovascular">
+      <div class="card-header domain-cardiovascular"><span>BP & Fluid</span><span class="card-code">TKE-BPFL</span></div>
+      <div class="card-body">
+        <div class="card-title">Blood Pressure & Fluid Status</div>
+        <div class="card-domain">Cardiovascular</div>
+        <div class="card-actions">
+          <a href="TKE-BPFL.html" class="btn-view">View</a>
+          <a href="TKE-BPFL.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="cardiovascular">
+      <div class="card-header domain-cardiovascular"><span>Daxor</span><span class="card-code">TKE-DAXR</span></div>
+      <div class="card-body">
+        <div class="card-title">Daxor Blood Volume Analysis</div>
+        <div class="card-domain">Cardiovascular</div>
+        <div class="card-actions">
+          <a href="TKE-DAXR.html" class="btn-view">View</a>
+          <a href="TKE-DAXR.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="cardiovascular">
+      <div class="card-header domain-cardiovascular"><span>Heart Failure</span><span class="card-code">TKE-HF</span></div>
+      <div class="card-body">
+        <div class="card-title">Heart Failure Management</div>
+        <div class="card-domain">Cardiovascular</div>
+        <div class="card-actions">
+          <a href="TKE-HF.html" class="btn-view">View</a>
+          <a href="TKE-HF.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="cardiovascular">
+      <div class="card-header domain-cardiovascular"><span>Statin</span><span class="card-code">TKE-STAT</span></div>
+      <div class="card-body">
+        <div class="card-title">Statin / Lipid Management</div>
+        <div class="card-domain">Cardiovascular</div>
+        <div class="card-actions">
+          <a href="TKE-STAT.html" class="btn-view">View</a>
+          <a href="TKE-STAT.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Pharmacotherapy (Purple #8B5CF6) -->
+    <div class="card-item" data-domain="pharmacotherapy">
+      <div class="card-header domain-pharmacotherapy"><span>RAAS</span><span class="card-code">TKE-RAAS</span></div>
+      <div class="card-body">
+        <div class="card-title">RAAS Inhibition</div>
+        <div class="card-domain">Pharmacotherapy (4 Pillars)</div>
+        <div class="card-actions">
+          <a href="TKE-RAAS.html" class="btn-view">View</a>
+          <a href="TKE-RAAS.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="pharmacotherapy">
+      <div class="card-header domain-pharmacotherapy"><span>SGLT2i</span><span class="card-code">TKE-SGLT</span></div>
+      <div class="card-body">
+        <div class="card-title">SGLT2 Inhibitor</div>
+        <div class="card-domain">Pharmacotherapy (4 Pillars)</div>
+        <div class="card-actions">
+          <a href="TKE-SGLT.html" class="btn-view">View</a>
+          <a href="TKE-SGLT.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="pharmacotherapy">
+      <div class="card-header domain-pharmacotherapy"><span>Finerenone</span><span class="card-code">TKE-FINE</span></div>
+      <div class="card-body">
+        <div class="card-title">Finerenone (ns-MRA)</div>
+        <div class="card-domain">Pharmacotherapy (4 Pillars)</div>
+        <div class="card-actions">
+          <a href="TKE-FINE.html" class="btn-view">View</a>
+          <a href="TKE-FINE.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="pharmacotherapy">
+      <div class="card-header domain-pharmacotherapy"><span>GLP-1</span><span class="card-code">TKE-GLP1</span></div>
+      <div class="card-body">
+        <div class="card-title">GLP-1 Receptor Agonist</div>
+        <div class="card-domain">Pharmacotherapy (4 Pillars)</div>
+        <div class="card-actions">
+          <a href="TKE-GLP1.html" class="btn-view">View</a>
+          <a href="TKE-GLP1.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Metabolic (Orange #F97316) -->
+    <div class="card-item" data-domain="metabolic">
+      <div class="card-header domain-metabolic"><span>Diabetes</span><span class="card-code">TKE-DM</span></div>
+      <div class="card-body">
+        <div class="card-title">Diabetes Management</div>
+        <div class="card-domain">Metabolic</div>
+        <div class="card-actions">
+          <a href="TKE-DM.html" class="btn-view">View</a>
+          <a href="TKE-DM.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="metabolic">
+      <div class="card-header domain-metabolic"><span>Gout</span><span class="card-code">TKE-GOUT</span></div>
+      <div class="card-body">
+        <div class="card-title">Gout / Krystexxa</div>
+        <div class="card-domain">Metabolic</div>
+        <div class="card-actions">
+          <a href="TKE-GOUT.html" class="btn-view">View</a>
+          <a href="TKE-GOUT.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="metabolic">
+      <div class="card-header domain-metabolic"><span>Obesity</span><span class="card-code">TKE-OBES</span></div>
+      <div class="card-body">
+        <div class="card-title">Obesity Management</div>
+        <div class="card-domain">Metabolic</div>
+        <div class="card-actions">
+          <a href="TKE-OBES.html" class="btn-view">View</a>
+          <a href="TKE-OBES.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- CKD Complications (Dark Blue #1E40AF) -->
+    <div class="card-item" data-domain="ckd_complications">
+      <div class="card-header domain-ckd_complications"><span>Anemia</span><span class="card-code">TKE-ANEM</span></div>
+      <div class="card-body">
+        <div class="card-title">Anemia / Blood Health</div>
+        <div class="card-domain">CKD Complications</div>
+        <div class="card-actions">
+          <a href="TKE-ANEM.html" class="btn-view">View</a>
+          <a href="TKE-ANEM.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="ckd_complications">
+      <div class="card-header domain-ckd_complications"><span>MBD</span><span class="card-code">TKE-MBD</span></div>
+      <div class="card-body">
+        <div class="card-title">Mineral Bone Disease</div>
+        <div class="card-domain">CKD Complications</div>
+        <div class="card-actions">
+          <a href="TKE-MBD.html" class="btn-view">View</a>
+          <a href="TKE-MBD.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="ckd_complications">
+      <div class="card-header domain-ckd_complications"><span>Electrolytes</span><span class="card-code">TKE-ELEC</span></div>
+      <div class="card-body">
+        <div class="card-title">Electrolytes & Acid-Base</div>
+        <div class="card-domain">CKD Complications</div>
+        <div class="card-actions">
+          <a href="TKE-ELEC.html" class="btn-view">View</a>
+          <a href="TKE-ELEC.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Risk Mitigation (Green #22C55E) -->
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>Tobacco</span><span class="card-code">TKE-SMOK</span></div>
+      <div class="card-body">
+        <div class="card-title">Tobacco / Substance Use</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-SMOK.html" class="btn-view">View</a>
+          <a href="TKE-SMOK.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>NSAID</span><span class="card-code">TKE-NSAI</span></div>
+      <div class="card-body">
+        <div class="card-title">NSAID Avoidance</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-NSAI.html" class="btn-view">View</a>
+          <a href="TKE-NSAI.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>PPI</span><span class="card-code">TKE-PPI</span></div>
+      <div class="card-body">
+        <div class="card-title">PPI Review</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-PPI.html" class="btn-view">View</a>
+          <a href="TKE-PPI.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>Sick Day</span><span class="card-code">TKE-SICK</span></div>
+      <div class="card-body">
+        <div class="card-title">Sick Day Rules</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-SICK.html" class="btn-view">View</a>
+          <a href="TKE-SICK.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>Contrast</span><span class="card-code">TKE-CONT</span></div>
+      <div class="card-body">
+        <div class="card-title">Contrast Precautions</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-CONT.html" class="btn-view">View</a>
+          <a href="TKE-CONT.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="risk_mitigation">
+      <div class="card-header domain-risk_mitigation"><span>Sodium</span><span class="card-code">TKE-SODM</span></div>
+      <div class="card-body">
+        <div class="card-title">Sodium Restriction</div>
+        <div class="card-domain">Risk Mitigation</div>
+        <div class="card-actions">
+          <a href="TKE-SODM.html" class="btn-view">View</a>
+          <a href="TKE-SODM.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Planning (Gray #6B7280) -->
+    <div class="card-item" data-domain="planning">
+      <div class="card-header domain-planning"><span>Transplant</span><span class="card-code">TKE-TXPL</span></div>
+      <div class="card-body">
+        <div class="card-title">Transplant Readiness</div>
+        <div class="card-domain">Planning & Transitions</div>
+        <div class="card-actions">
+          <a href="TKE-TXPL.html" class="btn-view">View</a>
+          <a href="TKE-TXPL.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="planning">
+      <div class="card-header domain-planning"><span>Dialysis</span><span class="card-code">TKE-DIAL</span></div>
+      <div class="card-body">
+        <div class="card-title">Dialysis Planning</div>
+        <div class="card-domain">Planning & Transitions</div>
+        <div class="card-actions">
+          <a href="TKE-DIAL.html" class="btn-view">View</a>
+          <a href="TKE-DIAL.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="planning">
+      <div class="card-header domain-planning"><span>ACP</span><span class="card-code">TKE-ACP</span></div>
+      <div class="card-body">
+        <div class="card-title">Advance Care Planning</div>
+        <div class="card-domain">Planning & Transitions</div>
+        <div class="card-actions">
+          <a href="TKE-ACP.html" class="btn-view">View</a>
+          <a href="TKE-ACP.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="planning">
+      <div class="card-header domain-planning"><span>CCM</span><span class="card-code">TKE-CCM</span></div>
+      <div class="card-body">
+        <div class="card-title">CCM Enrollment</div>
+        <div class="card-domain">Planning & Transitions</div>
+        <div class="card-actions">
+          <a href="TKE-CCM.html" class="btn-view">View</a>
+          <a href="TKE-CCM.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Screening (Teal #14B8A6) -->
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Vaccines</span><span class="card-code">TKE-VACC</span></div>
+      <div class="card-body">
+        <div class="card-title">Immunizations</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-VACC.html" class="btn-view">View</a>
+          <a href="TKE-VACC.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Depression</span><span class="card-code">TKE-PHQ</span></div>
+      <div class="card-body">
+        <div class="card-title">Depression Screen (PHQ-2/9)</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-PHQ.html" class="btn-view">View</a>
+          <a href="TKE-PHQ.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Fall Risk</span><span class="card-code">TKE-FALL</span></div>
+      <div class="card-body">
+        <div class="card-title">Fall Risk Assessment</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-FALL.html" class="btn-view">View</a>
+          <a href="TKE-FALL.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Sleep Apnea</span><span class="card-code">TKE-SLAP</span></div>
+      <div class="card-body">
+        <div class="card-title">Sleep Apnea</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-SLAP.html" class="btn-view">View</a>
+          <a href="TKE-SLAP.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>SDOH</span><span class="card-code">TKE-SDOH</span></div>
+      <div class="card-body">
+        <div class="card-title">SDOH Assessment</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-SDOH.html" class="btn-view">View</a>
+          <a href="TKE-SDOH.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Grip Strength</span><span class="card-code">TKE-GRIP</span></div>
+      <div class="card-body">
+        <div class="card-title">Grip Strength</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-GRIP.html" class="btn-view">View</a>
+          <a href="TKE-GRIP.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Functional</span><span class="card-code">TKE-FUNC</span></div>
+      <div class="card-body">
+        <div class="card-title">Functional Assessment</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-FUNC.html" class="btn-view">View</a>
+          <a href="TKE-FUNC.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="screening">
+      <div class="card-header domain-screening"><span>Nutrition</span><span class="card-code">TKE-NUTR</span></div>
+      <div class="card-body">
+        <div class="card-title">Nutrition Assessment</div>
+        <div class="card-domain">Screening & Prevention</div>
+        <div class="card-actions">
+          <a href="TKE-NUTR.html" class="btn-view">View</a>
+          <a href="TKE-NUTR.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Care Coordination (Pink #EC4899) -->
+    <div class="card-item" data-domain="care_coordination">
+      <div class="card-header domain-care_coordination"><span>CRM Clinic</span><span class="card-code">TKE-CRM</span></div>
+      <div class="card-body">
+        <div class="card-title">Cardiorenal Metabolic Clinic</div>
+        <div class="card-domain">Care Coordination</div>
+        <div class="card-actions">
+          <a href="TKE-CRM.html" class="btn-view">View</a>
+          <a href="TKE-CRM.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card-item" data-domain="care_coordination">
+      <div class="card-header domain-care_coordination"><span>Longevity</span><span class="card-code">TKE-LONG</span></div>
+      <div class="card-body">
+        <div class="card-title">Longevity Clinic</div>
+        <div class="card-domain">Care Coordination</div>
+        <div class="card-actions">
+          <a href="TKE-LONG.html" class="btn-view">View</a>
+          <a href="TKE-LONG.html" target="_blank" class="btn-print">Print</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="print-all">
+    <a href="print-all.html">Print All Cards</a>
+  </div>
+  
+  <script>
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const cards = document.querySelectorAll('.card-item');
+    
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active state
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const domain = btn.dataset.domain;
+        
+        // Filter cards
+        cards.forEach(card => {
+          if (domain === 'all' || card.dataset.domain === domain) {
+            card.classList.remove('hidden');
+          } else {
+            card.classList.add('hidden');
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

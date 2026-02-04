@@ -1,0 +1,26 @@
+================================================================================
+SmartList Definition: Electrolytes at Goal
+================================================================================
+
+SmartList Name: .TKECKD ELECTROLYTES AT GOAL
+SmartList ID: 30042
+Section: Electrolytes & Acid-Base (Section 17)
+Field ID: electrolytes_at_goal
+
+Options:
+- at_goal
+- abnormal
+- mixed
+
+Default: (none)
+
+Notes:
+- Targets: Na 136-145, K 3.5-5.0, Bicarb >= 22
+- at_goal: all electrolytes in range
+- abnormal: one or more out of range
+- mixed: some normal, some abnormal
+
+Legacy Migration:
+- Maps from {At Goal? TKE Electrolytes and Acid Base:27038}
+- SmartList ID 27038 -> 30042
+================================================================================

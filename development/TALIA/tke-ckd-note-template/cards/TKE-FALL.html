@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-FALL: Fall Risk Assessment</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #14B8A6; border-bottom: 1px solid #14B8A6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #14B8A6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #14B8A6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Fall Risk Assessment</span>
+      <span class="header-code">TKE-FALL</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">FALL RISK LEVEL <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Low risk</div>
+        <div class="checkbox-item"><span class="circle"></span> Moderate risk</div>
+        <div class="checkbox-item"><span class="circle"></span> High risk</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">FALL HISTORY</div>
+      <div class="field">
+        <span class="field-label">Falls in past 12 months:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CONTRIBUTING FACTORS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Dizziness/lightheadedness</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Vision problems</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Neuropathy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Muscle weakness</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Balance problems</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Medications (sedatives, BP meds)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Home hazards</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Orthostatic hypotension</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PHYSICAL PERFORMANCE (see TKE-GRIP/FUNC)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Low grip strength</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Slow gait speed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Poor sit-to-stand</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Fall prevention education</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Review medications</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to physical therapy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Vision check recommended</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Home safety evaluation</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Vitamin D supplementation</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-FALL-v1.0 | The Kidney Experts | Screening Domain
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Why Falls Matter</div>
+      <div class="back-content">
+        Falls are a serious concern for people with kidney disease. Weak muscles, dizziness from medications, and other factors can increase your risk. A fall can lead to broken bones, hospitalization, and loss of independence.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">REDUCE YOUR RISK AT HOME</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Remove throw rugs and clutter from walkways</li>
+          <li>Install grab bars in bathroom</li>
+          <li>Use nightlights in hallways and bathroom</li>
+          <li>Keep frequently used items within easy reach</li>
+          <li>Wear shoes with non-slip soles</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">STAY STRONG & STEADY</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Exercise regularly - even chair exercises help</li>
+          <li>Practice balance exercises</li>
+          <li>Get up slowly from sitting or lying down</li>
+          <li>Use a cane or walker if recommended</li>
+          <li>Get your vision checked yearly</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>You've had a fall (even if not injured)</li>
+          <li>Feeling dizzy or unsteady</li>
+          <li>Concerned about your balance</li>
+          <li>Need help with fall prevention</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-FALL-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: RAAS Not On Reason
+================================================================================
+
+SmartList Name: .TKECKD RAAS NOT ON REASON
+SmartList ID: 30026
+Section: RAAS Inhibition (Section 8)
+Field ID: not_on_reason (raas)
+
+Options:
+- hyperkalemia
+- AKI
+- hypotension
+- contraindicated
+- other
+
+Default: (none)
+
+Notes:
+- Document reason if not on RAAS inhibitor
+- hyperkalemia: K+ > 5.5 mEq/L
+- AKI: acute kidney injury concern
+- hypotension: symptomatic low BP
+- contraindicated: bilateral RAS, pregnancy, angioedema history
+================================================================================

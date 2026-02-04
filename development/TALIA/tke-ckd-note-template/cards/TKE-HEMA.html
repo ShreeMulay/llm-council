@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-HEMA: Hematuria</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #3B82F6; border-bottom: 1px solid #3B82F6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #3B82F6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #3B82F6; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Hematuria Workup</span>
+      <span class="header-code">TKE-HEMA</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">HEMATURIA TYPE <span class="required">*</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> None</div>
+        <div class="checkbox-item"><span class="circle"></span> Microscopic</div>
+        <div class="checkbox-item"><span class="circle"></span> Gross (visible)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">URINALYSIS FINDINGS</div>
+      <div class="field">
+        <span class="field-label">UA RBC:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">/hpf | Normal: &lt;3</div>
+      <div class="checkbox-group" style="margin-top: 6px;">
+        <div class="checkbox-item"><span class="checkbox"></span> RBC casts present</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Dysmorphic RBCs</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Proteinuria present</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">WORKUP STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Not indicated</div>
+        <div class="checkbox-item"><span class="circle"></span> In progress</div>
+        <div class="checkbox-item"><span class="circle"></span> Complete - negative</div>
+        <div class="checkbox-item"><span class="circle"></span> Complete - positive finding</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">WORKUP COMPONENTS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> CT urogram</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Renal ultrasound</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cystoscopy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Urine cytology</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Urology referral</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Cystoscopy Date:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue monitoring</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Order imaging</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to urology</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Repeat UA in: _______</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-HEMA-v1.0 | The Kidney Experts | AUA/SUFU Hematuria Guidelines
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Blood in Urine</div>
+      <div class="back-content">
+        Hematuria means blood in your urine. Sometimes you can see it (gross hematuria), and sometimes it's only found on a urine test (microscopic hematuria). We need to find out where it's coming from.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">COMMON CAUSES</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Urinary tract infections</li>
+          <li>Kidney stones</li>
+          <li>Enlarged prostate (in men)</li>
+          <li>Kidney disease (glomerulonephritis)</li>
+          <li>Rarely, bladder or kidney cancer</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Complete all recommended tests (imaging, cystoscopy)</li>
+          <li>Drink plenty of water</li>
+          <li>Avoid blood thinners before procedures (as directed)</li>
+          <li>Report any visible blood in urine immediately</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Visible blood in your urine (pink, red, or cola-colored)</li>
+          <li>Pain with urination</li>
+          <li>Fever or chills</li>
+          <li>Blood clots in urine</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-HEMA-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

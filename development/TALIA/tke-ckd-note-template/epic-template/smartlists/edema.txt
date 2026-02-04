@@ -1,0 +1,27 @@
+================================================================================
+SmartList Definition: Edema
+================================================================================
+
+SmartList Name: .TKECKD EDEMA
+SmartList ID: 30017
+Section: Blood Pressure & Fluid (Section 5)
+Field ID: edema
+
+Options:
+- None
+- Trace
+- 1+
+- 2+
+- 3+
+- 4+
+
+Default: None
+
+Notes:
+- Standard edema grading scale
+- Trace: barely perceptible
+- 1+: 2mm depression, disappears rapidly
+- 2+: 4mm depression, 10-15 sec to rebound
+- 3+: 6mm depression, 1-2 min to rebound
+- 4+: 8mm depression, > 2 min to rebound
+================================================================================

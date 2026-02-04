@@ -1,0 +1,31 @@
+================================================================================
+SmartList Definition: SGLT2i Status
+================================================================================
+
+SmartList Name: .TKECKD SGLT2I STATUS
+SmartList ID: 30027
+Section: SGLT2 Inhibitor (Section 9) - PILLAR 2
+Field ID: sglt2i_status
+
+Options:
+- on
+- not_on
+- contraindicated
+- intolerant
+- declined
+
+Default: (none)
+
+Notes:
+- PILLAR 2 of GDMT for CKD
+- Indicated for eGFR >= 20 mL/min (per DAPA-CKD, EMPA-KIDNEY)
+- on: currently on SGLT2i
+- not_on: not currently on, may be candidate
+- contraindicated: medical contraindication
+- intolerant: tried but could not tolerate
+- declined: patient declined
+
+Legacy Migration:
+- Maps from {SGLT2i status:27020}
+- SmartList ID 27020 -> 30027
+================================================================================

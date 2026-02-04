@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Furoscix Status
+================================================================================
+
+SmartList Name: .TKECKD FUROSCIX STATUS
+SmartList ID: 30021
+Section: Heart Failure (Section 6)
+Field ID: furoscix_status
+
+Options:
+- on
+- not_indicated
+- consider
+
+Default: not_indicated
+
+Notes:
+- Furoscix = subcutaneous furosemide for home diuresis
+- on: currently using Furoscix
+- not_indicated: not a candidate
+- consider: potential candidate, discuss with patient
+================================================================================

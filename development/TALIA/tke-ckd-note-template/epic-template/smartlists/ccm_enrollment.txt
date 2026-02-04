@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: CCM Enrollment
+================================================================================
+
+SmartList Name: .TKECKD CCM ENROLLMENT
+SmartList ID: 30053
+Section: CCM Enrollment (Section 27)
+Field ID: ccm_enrollment
+
+Options:
+- not_enrolled
+- enrolled
+- active
+- declined
+- discharged
+
+Default: not_enrolled
+
+Notes:
+- Same as CCM Status (30007) but in dedicated CCM section
+- Chronic Care Management program tracking
+================================================================================

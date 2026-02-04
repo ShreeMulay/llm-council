@@ -1,0 +1,27 @@
+================================================================================
+SmartList Definition: BP Control Status
+================================================================================
+
+SmartList Name: .TKECKD BP CONTROL STATUS
+SmartList ID: 30016
+Section: Blood Pressure & Fluid (Section 5)
+Field ID: bp_control_status
+
+Options:
+- controlled
+- uncontrolled
+- unknown
+
+Default: (none)
+
+Notes:
+- Based on SPRINT/KDIGO targets
+- controlled: BP < 120/80 mmHg (or individualized target)
+- uncontrolled: BP above target
+- unknown: insufficient data
+
+Legacy Migration:
+- Maps from {controlled/uncontrolled/unknown:27016}
+- SmartList ID 27016 -> 30016
+- Same enum values maintained
+================================================================================

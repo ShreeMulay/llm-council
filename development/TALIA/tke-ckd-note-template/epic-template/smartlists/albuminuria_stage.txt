@@ -1,0 +1,23 @@
+================================================================================
+SmartList Definition: Albuminuria Stage
+================================================================================
+
+SmartList Name: .TKECKD ALBUMINURIA STAGE
+SmartList ID: 30005
+Section: Header (Section 0)
+Field ID: albuminuria_stage
+
+Options:
+- A1
+- A2
+- A3
+
+Default: (none)
+
+Notes:
+- Based on KDIGO 2024 albuminuria categories
+- A1: UACR < 30 mg/g (normal to mildly increased)
+- A2: UACR 30-300 mg/g (moderately increased, microalbuminuria)
+- A3: UACR > 300 mg/g (severely increased, macroalbuminuria)
+- Combined with CKD stage for KDIGO risk matrix
+================================================================================

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE CKD Note Template - Phase 1.5 Paper Prototypes</title>
+  <style>
+    @page { size: letter; margin: 0.25in; }
+    @media print { 
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .no-print { display: none; }
+      .page-break { page-break-after: always; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; background: #f5f5f5; }
+    
+    .header-bar { 
+      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+      color: white; 
+      padding: 20px; 
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header-bar h1 { font-size: 24pt; margin-bottom: 8px; }
+    .header-bar p { font-size: 12pt; opacity: 0.9; }
+    
+    .instructions {
+      max-width: 800px;
+      margin: 0 auto 30px;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .instructions h2 { color: #1e40af; margin-bottom: 12px; }
+    .instructions ol { margin-left: 20px; }
+    .instructions li { margin-bottom: 8px; }
+    
+    .card-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 0 20px 40px;
+    }
+    
+    .card-preview {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card-preview:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .card-header {
+      padding: 12px 16px;
+      color: white;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header.pharmacotherapy { background: #8B5CF6; }
+    .card-header.kidney-core { background: #3B82F6; }
+    .card-header.cardiovascular { background: #EF4444; }
+    .card-header.ckd-complications { background: #1E40AF; }
+    .card-header.screening { background: #14B8A6; }
+    
+    .card-body {
+      padding: 16px;
+    }
+    .card-body p { color: #666; margin-bottom: 12px; font-size: 9pt; }
+    .card-body a {
+      display: inline-block;
+      background: #3b82f6;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-size: 9pt;
+    }
+    .card-body a:hover { background: #2563eb; }
+    
+    .print-all-btn {
+      display: block;
+      width: 200px;
+      margin: 0 auto 30px;
+      background: #22c55e;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14pt;
+      cursor: pointer;
+      text-align: center;
+    }
+    .print-all-btn:hover { background: #16a34a; }
+
+    /* Print layout - two cards per page */
+    .print-container { display: none; }
+    @media print {
+      .header-bar, .instructions, .card-grid, .print-all-btn { display: none; }
+      .print-container { display: block; }
+      .print-page {
+        width: 8in;
+        height: 10.5in;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25in;
+        padding: 0.25in;
+      }
+      .card { 
+        width: 5in; 
+        height: 8in; 
+        border: 1px solid #ccc; 
+        padding: 0.2in; 
+        display: flex; 
+        flex-direction: column;
+        page-break-inside: avoid;
+      }
+      .card-print-header { 
+        padding: 8px 12px; 
+        font-weight: bold; 
+        font-size: 12pt; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin: -0.2in -0.2in 0.15in -0.2in; 
+        width: calc(100% + 0.4in);
+        color: white;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print">
+    <div class="header-bar">
+      <h1>TKE CKD Note Template</h1>
+      <p>Phase 1.5: Paper Prototype Cards for Testing</p>
+    </div>
+
+    <div class="instructions">
+      <h2>Print Instructions</h2>
+      <ol>
+        <li>Click "Print All Cards" below or use Ctrl+P / Cmd+P</li>
+        <li>Set paper size to <strong>Letter (8.5" x 11")</strong></li>
+        <li>Enable <strong>"Background graphics"</strong> in print settings for colors</li>
+        <li>Each card prints at 5.5" x 8.5" (half-letter size)</li>
+        <li>Cut along the center line to separate cards</li>
+        <li>For individual cards, click the card link below</li>
+      </ol>
+    </div>
+
+    <button class="print-all-btn no-print" onclick="window.print()">Print All Cards</button>
+
+    <div class="card-grid">
+      <!-- 4 Pillars - Pharmacotherapy -->
+      <div class="card-preview">
+        <div class="card-header pharmacotherapy">
+          <span>TKE-RAAS</span>
+          <span>Pillar 1</span>
+        </div>
+        <div class="card-body">
+          <p><strong>RAAS Inhibition</strong> - ACEi/ARB/ARNi optimization, monitoring K+ and Cr, max dose titration</p>
+          <a href="TKE-RAAS.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="card-header pharmacotherapy">
+          <span>TKE-SGLT</span>
+          <span>Pillar 2</span>
+        </div>
+        <div class="card-body">
+          <p><strong>SGLT2 Inhibitor</strong> - Eligibility (eGFR >=20), sick day rules, initial eGFR dip documentation</p>
+          <a href="TKE-SGLT.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="card-header pharmacotherapy">
+          <span>TKE-FINE</span>
+          <span>Pillar 3</span>
+        </div>
+        <div class="card-body">
+          <p><strong>MRA/Finerenone</strong> - K+ monitoring, potassium binders, FIDELIO/FIGARO criteria</p>
+          <a href="TKE-FINE.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="card-header pharmacotherapy">
+          <span>TKE-GLP1</span>
+          <span>Pillar 4</span>
+        </div>
+        <div class="card-body">
+          <p><strong>GLP-1 Receptor Agonist</strong> - FLOW trial evidence, weight/HbA1c response, kidney benefit</p>
+          <a href="TKE-GLP1.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <!-- Kidney Core -->
+      <div class="card-preview">
+        <div class="card-header kidney-core">
+          <span>TKE-PROT</span>
+          <span>Kidney Core</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Proteinuria</strong> - UACR/UPCr tracking, KDIGO staging (A1/A2/A3), trend analysis</p>
+          <a href="TKE-PROT.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <!-- Cardiovascular -->
+      <div class="card-preview">
+        <div class="card-header cardiovascular">
+          <span>TKE-BPFL</span>
+          <span>Cardiovascular</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Blood Pressure & Fluid</strong> - SPRINT targets, edema assessment, fluid status, weight trend</p>
+          <a href="TKE-BPFL.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <!-- CKD Complications -->
+      <div class="card-preview">
+        <div class="card-header ckd-complications">
+          <span>TKE-ANEM</span>
+          <span>CKD Complications</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Anemia</strong> - CBC, iron studies (ferritin/TSAT), ESA/IV iron status, KDIGO targets</p>
+          <a href="TKE-ANEM.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="card-header ckd-complications">
+          <span>TKE-ELEC</span>
+          <span>CKD Complications</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Electrolytes</strong> - K+, bicarb, Na, Mg, critical values, metabolic acidosis management</p>
+          <a href="TKE-ELEC.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <!-- Screening -->
+      <div class="card-preview">
+        <div class="card-header screening">
+          <span>TKE-GRIP</span>
+          <span>Screening</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Physical Performance</strong> - Grip strength, sit-to-stand, gait speed, frailty assessment</p>
+          <a href="TKE-GRIP.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+
+      <div class="card-preview">
+        <div class="card-header screening">
+          <span>TKE-PHQ</span>
+          <span>Screening</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Depression Screen</strong> - PHQ-2/PHQ-9, severity scoring, safety assessment, referral</p>
+          <a href="TKE-PHQ.html" target="_blank">Open Card</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print container with embedded cards -->
+  <div class="print-container">
+    <p style="text-align: center; padding: 20px; font-size: 14pt;">
+      <strong>To print all cards:</strong> Open each individual card file and print, 
+      or use the browser's print function on this page after the cards load.
+    </p>
+    <p style="text-align: center; font-size: 11pt; color: #666;">
+      Individual card files: TKE-RAAS.html, TKE-SGLT.html, TKE-FINE.html, TKE-GLP1.html, 
+      TKE-PROT.html, TKE-BPFL.html, TKE-ANEM.html, TKE-ELEC.html, TKE-GRIP.html, TKE-PHQ.html
+    </p>
+  </div>
+</body>
+</html>

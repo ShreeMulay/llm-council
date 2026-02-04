@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Krystexxa Status
+================================================================================
+
+SmartList Name: .TKECKD KRYSTEXXA STATUS
+SmartList ID: 30038
+Section: Gout (Section 13)
+Field ID: krystexxa_status
+
+Options:
+- on
+- candidate
+- not_indicated
+
+Default: not_indicated
+
+Notes:
+- Krystexxa (pegloticase) for refractory gout
+- on: currently receiving infusions
+- candidate: failed oral ULT, potential candidate
+- not_indicated: not a candidate
+================================================================================

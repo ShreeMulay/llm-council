@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-PHQ: Depression Screen</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #14B8A6; border-bottom: 1px solid #14B8A6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .score-box { background: #F0FDFA; border: 1px solid #14B8A6; padding: 6px; border-radius: 4px; font-size: 8pt; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #14B8A6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #14B8A6; }
+    .crisis-box { background: #FEF2F2; border: 2px solid #EF4444; padding: 6px; border-radius: 4px; font-size: 9pt; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Depression Screen (PHQ-2/9)</span>
+      <span class="header-code">TKE-PHQ</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PHQ-2 SCREENING</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">PHQ-2 Score:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">Positive if &ge;3</div>
+        </div>
+        <div>
+          <div class="checkbox-group">
+            <div class="checkbox-item"><span class="circle"></span> Negative</div>
+            <div class="checkbox-item"><span class="circle"></span> Positive</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PHQ-9 (if PHQ-2 positive)</div>
+      <div class="field">
+        <span class="field-label">PHQ-9 Score:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="score-box" style="margin-top: 4px;">
+        <strong>Severity:</strong> 0-4 None | 5-9 Mild | 10-14 Moderate | 15-19 Mod-Severe | 20-27 Severe
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">DEPRESSION STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Negative</div>
+        <div class="checkbox-item"><span class="circle"></span> Mild</div>
+        <div class="checkbox-item"><span class="circle"></span> Moderate</div>
+        <div class="checkbox-item"><span class="circle"></span> Severe</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">COGNITIVE SCREEN (if applicable)</div>
+      <div class="field">
+        <span class="field-label">Notes:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> No intervention needed</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Supportive counseling</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to behavioral health</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to psychiatry</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Medication management</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Safety assessment completed</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-PHQ-v1.0 | The Kidney Experts | Screening Domain
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Depression & Kidney Disease</div>
+      <div class="back-content">
+        Depression is common in people with kidney disease - you're not alone. It's a real medical condition that can be treated. Taking care of your mental health is just as important as taking care of your kidneys.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">SIGNS OF DEPRESSION</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Feeling sad, hopeless, or empty</li>
+          <li>Loss of interest in things you used to enjoy</li>
+          <li>Changes in sleep or appetite</li>
+          <li>Feeling tired all the time</li>
+          <li>Trouble concentrating</li>
+          <li>Thoughts of death or suicide</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Talk to your doctor - treatment helps</li>
+          <li>Stay connected with family and friends</li>
+          <li>Try to stay active, even short walks help</li>
+          <li>Join a support group for kidney patients</li>
+          <li>Consider counseling or therapy</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="crisis-box">
+        <strong>CRISIS RESOURCES - Call if you need help now:</strong><br/>
+        <strong>988 Suicide & Crisis Lifeline:</strong> Call or text 988<br/>
+        <strong>Crisis Text Line:</strong> Text HOME to 741741
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Resources</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-PHQ-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

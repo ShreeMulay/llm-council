@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Workup Status
+================================================================================
+
+SmartList Name: .TKECKD WORKUP STATUS
+SmartList ID: 30015
+Section: Hematuria (Section 2)
+Field ID: workup_status
+
+Options:
+- not_indicated
+- in_progress
+- complete
+
+Default: not_indicated
+
+Notes:
+- Per AUA/SUFU hematuria guidelines
+- not_indicated: low-risk, no workup needed
+- in_progress: cystoscopy/imaging pending
+- complete: full workup done
+================================================================================

@@ -1,0 +1,25 @@
+================================================================================
+SmartList Definition: Vascular Access Status
+================================================================================
+
+SmartList Name: .TKECKD VASCULAR ACCESS STATUS
+SmartList ID: 30051
+Section: Dialysis Planning (Section 25)
+Field ID: vascular_access_status
+
+Options:
+- none
+- AVF_planned
+- AVF_maturing
+- AVG
+- Catheter
+
+Default: none
+
+Notes:
+- none: no vascular access
+- AVF_planned: AVF surgery scheduled
+- AVF_maturing: AVF created, maturing (6-12 weeks)
+- AVG: arteriovenous graft in place
+- Catheter: tunneled dialysis catheter
+================================================================================

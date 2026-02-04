@@ -1,0 +1,29 @@
+================================================================================
+SmartList Definition: Anemia at Goal
+================================================================================
+
+SmartList Name: .TKECKD ANEMIA AT GOAL
+SmartList ID: 30039
+Section: Anemia (Section 15)
+Field ID: anemia_at_goal
+
+Options:
+- at_goal
+- below_goal
+- above_goal
+- not_applicable
+
+Default: (none)
+
+Notes:
+- Per KDIGO anemia guidelines
+- Target Hgb: 10-12 g/dL for CKD
+- at_goal: Hgb 10-12 g/dL
+- below_goal: Hgb < 10 g/dL
+- above_goal: Hgb > 12 g/dL (ESA-related)
+- not_applicable: no anemia
+
+Legacy Migration:
+- Maps from {at goal? TKE Anemia:27025}
+- SmartList ID 27025 -> 30039
+================================================================================

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-DAXR: Daxor Blood Volume Analysis</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #EF4444; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #EF4444; border-bottom: 1px solid #EF4444; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 50%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 50%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #EF4444; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #EF4444; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #EF4444; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Daxor Blood Volume Analysis</span>
+      <span class="header-code">TKE-DAXR</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TEST STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Not ordered</div>
+        <div class="checkbox-item"><span class="circle"></span> Ordered - pending</div>
+        <div class="checkbox-item"><span class="circle"></span> Results available</div>
+        <div class="checkbox-item"><span class="circle"></span> Not indicated</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">BVA RESULTS</div>
+      <div class="field">
+        <span class="field-label">Test Date:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">Total Blood Volume:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">mL | % of ideal</div>
+      <div class="field">
+        <span class="field-label">Plasma Volume:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field">
+        <span class="field-label">RBC Volume:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">VOLUME STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Normovolemic</div>
+        <div class="checkbox-item"><span class="circle"></span> Hypervolemic</div>
+        <div class="checkbox-item"><span class="circle"></span> Hypovolemic</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Deviation from ideal:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">% (normal: +/- 8%)</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Adjust diuretic based on BVA</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Fluid restriction</div>
+        <div class="checkbox-item"><span class="checkbox"></span> IV fluids (if hypovolemic)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Repeat BVA in: _______</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Discussed results with patient</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 40px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-DAXR-v1.0 | The Kidney Experts | Precision fluid management
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Blood Volume Analysis</div>
+      <div class="back-content">
+        The Daxor BVA test measures exactly how much blood and fluid is in your body. This helps us know if you have too much fluid (which strains your heart and kidneys) or too little (which can cause low blood pressure).
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHY THIS MATTERS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Helps us adjust your water pill (diuretic) dose precisely</li>
+          <li>Can explain symptoms like swelling, fatigue, or dizziness</li>
+          <li>Especially helpful for heart failure and kidney disease</li>
+          <li>More accurate than just looking at swelling</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Follow fluid and salt restrictions as directed</li>
+          <li>Take diuretics exactly as prescribed</li>
+          <li>Weigh yourself daily at the same time</li>
+          <li>Report sudden weight changes to us</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Weight gain of more than 3 pounds in one day</li>
+          <li>Increased swelling in legs or abdomen</li>
+          <li>Shortness of breath</li>
+          <li>Dizziness or feeling faint</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-DAXR-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

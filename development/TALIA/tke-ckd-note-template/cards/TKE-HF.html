@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-HF: Heart Failure</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #EF4444; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #EF4444; border-bottom: 1px solid #EF4444; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #EF4444; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #EF4444; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #EF4444; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Heart Failure / GDMT</span>
+      <span class="header-code">TKE-HF</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">HF TYPE <span class="required">*</span></div>
+      <div class="two-col">
+        <div>
+          <div class="checkbox-group">
+            <div class="checkbox-item"><span class="circle"></span> HFrEF (EF &lt;40%)</div>
+            <div class="checkbox-item"><span class="circle"></span> HFmrEF (EF 40-49%)</div>
+            <div class="checkbox-item"><span class="circle"></span> HFpEF (EF >=50%)</div>
+            <div class="checkbox-item"><span class="circle"></span> None</div>
+          </div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">LVEF:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">%</div>
+          <div class="field">
+            <span class="field-label">Echo Date:</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">HF GDMT (4 Pillars for HFrEF)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Beta-blocker</div>
+        <div class="checkbox-item"><span class="checkbox"></span> ACEi/ARB/ARNi</div>
+        <div class="checkbox-item"><span class="checkbox"></span> MRA (spironolactone/eplerenone)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> SGLT2i</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">GDMT Compliance:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">X/4 pillars on therapy</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CARDIORENAL SYNDROME</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Type 1 (acute HF -> AKI)</div>
+        <div class="checkbox-item"><span class="circle"></span> Type 2 (chronic HF -> CKD)</div>
+        <div class="checkbox-item"><span class="circle"></span> Type 3 (AKI -> acute HF)</div>
+        <div class="checkbox-item"><span class="circle"></span> Type 4 (CKD -> chronic HF)</div>
+        <div class="checkbox-item"><span class="circle"></span> N/A</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">FUROSCIX (Home IV Diuretic)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> On therapy</div>
+        <div class="checkbox-item"><span class="circle"></span> Consider</div>
+        <div class="checkbox-item"><span class="circle"></span> Not indicated</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Optimize HF GDMT</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Cardiology follow-up</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Repeat echo</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Adjust diuretics</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-HF-v1.0 | The Kidney Experts | AHA/ACC HF Guidelines
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Heart Failure & Kidneys</div>
+      <div class="back-content">
+        Your heart and kidneys work together. When one struggles, the other often does too. This is called "cardiorenal syndrome." Managing both conditions together gives you the best outcomes.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">YOUR TARGETS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Weight:</strong> Stay within 3 pounds of your "dry weight"</li>
+          <li><strong>Sodium:</strong> Less than 2 grams per day</li>
+          <li><strong>Fluid:</strong> As directed by your doctor</li>
+          <li><strong>Medicines:</strong> Take all 4 heart failure medicines if prescribed</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Weigh yourself every morning before eating</li>
+          <li>Take all heart and kidney medicines as prescribed</li>
+          <li>Limit salt and fluids as directed</li>
+          <li>Stay as active as you can - even short walks help</li>
+          <li>Keep all cardiology and nephrology appointments</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Weight gain of 3+ pounds in one day or 5+ in a week</li>
+          <li>Increased shortness of breath</li>
+          <li>Waking up at night unable to breathe</li>
+          <li>New or worsening leg swelling</li>
+          <li>Chest pain or pressure</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-HF-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

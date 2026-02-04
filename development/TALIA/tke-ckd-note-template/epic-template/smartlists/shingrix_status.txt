@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Shingrix Status
+================================================================================
+
+SmartList Name: .TKECKD SHINGRIX STATUS
+SmartList ID: 30058
+Section: Immunizations (Section 28)
+Field ID: shingrix
+
+Options:
+- complete
+- due
+- na
+
+Default: due
+
+Notes:
+- Shingrix (recombinant zoster vaccine)
+- complete: 2-dose series completed
+- due: needs vaccination (age >= 50)
+- na: not applicable (age < 50)
+================================================================================

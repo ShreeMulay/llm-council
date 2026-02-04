@@ -1,0 +1,854 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thekidneyexperts.com/schemas/section-registry.json",
+  "title": "TKE CKD Note Template - Complete Section Registry",
+  "version": "1.0.0",
+  "description": "All 37 sections across 9 clinical domains. Single source of truth for the AI-era CKD note template.",
+  "total_sections": 38,
+  "total_sections_note": "38 entries: sections 0-37 (0 = header, 1-37 = clinical sections). 37 clinical sections + 1 header.",
+
+  "sections": [
+    {
+      "section_number": 0,
+      "section_id": "header",
+      "display_name": "Header & Visit Context",
+      "domain_group": "header",
+      "domain_color": null,
+      "card_codes": [],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "orchestrator",
+      "interpretation_prompt": "Generate a 5-8 line dashboard summary: CKD stage, eGFR trend, UACR trend, GDMT X/4 compliance, top 3 alerts, key changes since last visit.",
+      "fields": [
+        { "field_id": "visit_type", "display_name": "Visit Type", "type": "enum", "enum_ref": "visit_type", "unit": null, "source": ["staff"], "target_range": null, "required": true },
+        { "field_id": "reason_for_visit", "display_name": "Reason for Visit", "type": "text", "unit": null, "source": ["staff", "transcription"], "target_range": null, "required": true },
+        { "field_id": "follow_up_interval", "display_name": "Follow-Up Interval", "type": "text", "unit": null, "source": ["previous_note"], "target_range": null, "required": false },
+        { "field_id": "companions", "display_name": "Companions", "type": "text", "unit": null, "source": ["staff"], "target_range": null, "required": false },
+        { "field_id": "weight", "display_name": "Weight", "type": "number", "unit": "lbs", "source": ["vitals"], "target_range": null, "required": true },
+        { "field_id": "bmi", "display_name": "BMI", "type": "number", "unit": "kg/m2", "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "weight_trend", "display_name": "Weight Trend", "type": "text", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "lab_date", "display_name": "Lab Date", "type": "date", "unit": null, "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "ckd_stage", "display_name": "CKD Stage", "type": "enum", "enum_ref": "ckd_stage", "unit": null, "source": ["calculated"], "target_range": null, "required": true },
+        { "field_id": "ckd_etiology", "display_name": "CKD Etiology", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "pathology_confirmation", "display_name": "Pathology Confirmation", "type": "enum", "enum_ref": "pathology_confirmation", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "albuminuria_stage", "display_name": "Albuminuria Stage", "type": "enum", "enum_ref": "albuminuria_stage", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "kdigo_risk_category", "display_name": "KDIGO Risk Category", "type": "enum", "enum_ref": "kdigo_risk_category", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "gdmt_compliance", "display_name": "GDMT Compliance", "type": "text", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "ccm_status", "display_name": "CCM Status", "type": "enum", "enum_ref": "ccm_status", "unit": null, "source": ["coordinator"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 1,
+      "section_id": "kidney_function",
+      "display_name": "Kidney Function & Progression",
+      "domain_group": "kidney_core",
+      "domain_color": "#3B82F6",
+      "card_codes": ["TKE-PROT", "TKE-KFRE", "TKE-RNLX", "TKE-RNAS", "TKE-BIOP"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "kidney_function_agent",
+      "interpretation_prompt": "Assess kidney function trajectory, proteinuria trend, KFRE risk, and whether current interventions are adequate. Reference KDIGO staging and risk categories.",
+      "fields": [
+        { "field_id": "egfr_current", "display_name": "eGFR (Current)", "type": "number", "unit": "mL/min/1.73m2", "source": ["labs_api"], "target_range": "Stage-dependent", "required": true },
+        { "field_id": "egfr_previous", "display_name": "eGFR (Previous)", "type": "number", "unit": "mL/min/1.73m2", "source": ["previous_note"], "target_range": null, "required": false },
+        { "field_id": "egfr_trend", "display_name": "eGFR Trend", "type": "enum", "enum_ref": "egfr_trend", "unit": null, "source": ["calculated"], "target_range": "stable or improving", "required": false },
+        { "field_id": "egfr_slope", "display_name": "eGFR Slope", "type": "number", "unit": "mL/min/year", "source": ["calculated"], "target_range": "> -3", "required": false },
+        { "field_id": "creatinine", "display_name": "Creatinine", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": null, "required": true },
+        { "field_id": "bun", "display_name": "BUN", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "bun_cr_ratio", "display_name": "BUN:Cr Ratio", "type": "number", "unit": null, "source": ["calculated"], "target_range": "10-20", "required": false },
+        { "field_id": "upcr_current", "display_name": "UPCr (Current)", "type": "number", "unit": "mg/g", "source": ["labs_api"], "target_range": "<500", "required": false },
+        { "field_id": "upcr_previous", "display_name": "UPCr (Previous)", "type": "number", "unit": "mg/g", "source": ["previous_note"], "target_range": null, "required": false },
+        { "field_id": "uacr_current", "display_name": "UACR (Current)", "type": "number", "unit": "mg/g", "source": ["labs_api"], "target_range": "<30 (A1)", "required": false },
+        { "field_id": "uacr_previous", "display_name": "UACR (Previous)", "type": "number", "unit": "mg/g", "source": ["previous_note"], "target_range": null, "required": false },
+        { "field_id": "urine_studies_summary", "display_name": "Urine Studies Summary", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "urine_studies_detail", "display_name": "Urine Studies Detail", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "proteinuria_status", "display_name": "Proteinuria Status", "type": "enum", "enum_ref": "proteinuria_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "kfre_2yr", "display_name": "KFRE 2-Year", "type": "number", "unit": "%", "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "kfre_5yr", "display_name": "KFRE 5-Year", "type": "number", "unit": "%", "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "renalytix_result", "display_name": "Renalytix Result", "type": "enum", "enum_ref": "renalytix_result", "unit": null, "source": ["manual"], "target_range": null, "required": false },
+        { "field_id": "renalytix_date", "display_name": "Renalytix Date", "type": "date", "unit": null, "source": ["manual"], "target_range": null, "required": false },
+        { "field_id": "renasight_result", "display_name": "Renasight Result", "type": "text", "unit": null, "source": ["manual"], "target_range": null, "required": false },
+        { "field_id": "kidney_biopsy", "display_name": "Kidney Biopsy", "type": "text", "unit": null, "source": ["manual"], "target_range": null, "required": false },
+        { "field_id": "aki_history", "display_name": "AKI History", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 2,
+      "section_id": "hematuria",
+      "display_name": "Hematuria",
+      "domain_group": "kidney_core",
+      "domain_color": "#3B82F6",
+      "card_codes": ["TKE-HEMA"],
+      "visit_mode": "conditional",
+      "condition": "hematuria_present == true",
+      "ai_agent": "kidney_function_agent",
+      "interpretation_prompt": "Summarize hematuria workup status and recommend next steps based on AUA/SUFU guidelines.",
+      "fields": [
+        { "field_id": "hematuria_present", "display_name": "Hematuria Present", "type": "boolean", "unit": null, "source": ["labs_api", "provider"], "target_range": "false", "required": true },
+        { "field_id": "hematuria_type", "display_name": "Hematuria Type", "type": "enum", "enum_ref": "hematuria_type", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "ua_rbc", "display_name": "UA RBC", "type": "number", "unit": "/hpf", "source": ["labs_api"], "target_range": "<3", "required": false },
+        { "field_id": "workup_status", "display_name": "Workup Status", "type": "enum", "enum_ref": "workup_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "cystoscopy_date", "display_name": "Cystoscopy Date", "type": "date", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "imaging_result", "display_name": "Imaging Result", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "urology_referral", "display_name": "Urology Referral", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 3,
+      "section_id": "kidney_stones",
+      "display_name": "Kidney Stones",
+      "domain_group": "kidney_core",
+      "domain_color": "#3B82F6",
+      "card_codes": ["TKE-STONE"],
+      "visit_mode": "conditional",
+      "condition": "stone_history is not empty",
+      "ai_agent": "kidney_function_agent",
+      "interpretation_prompt": "Assess stone recurrence risk based on type and 24h urine results. Recommend prevention strategy per AUA guidelines.",
+      "fields": [
+        { "field_id": "stone_history", "display_name": "Stone History", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "last_episode", "display_name": "Last Episode", "type": "date", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "stone_type", "display_name": "Stone Type", "type": "text", "unit": null, "source": ["labs_api", "pathology"], "target_range": null, "required": false },
+        { "field_id": "urine_24h_collected", "display_name": "24h Urine Collected", "type": "boolean", "unit": null, "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "urine_24h_date", "display_name": "24h Urine Date", "type": "date", "unit": null, "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "prevention_meds", "display_name": "Prevention Medications", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 4,
+      "section_id": "gu_history",
+      "display_name": "GU History",
+      "domain_group": "kidney_core",
+      "domain_color": "#3B82F6",
+      "card_codes": ["TKE-GU"],
+      "visit_mode": "conditional",
+      "condition": "gu_history is not empty OR bph == true OR prostate_cancer == true",
+      "ai_agent": "general_ckd_agent",
+      "interpretation_prompt": "Summarize relevant GU history and its impact on CKD management.",
+      "fields": [
+        { "field_id": "gu_history", "display_name": "GU History", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "bph", "display_name": "BPH", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "bph_medication", "display_name": "BPH Medication", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "prostate_cancer", "display_name": "Prostate Cancer", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "uti_history", "display_name": "UTI History", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 5,
+      "section_id": "bp_fluid",
+      "display_name": "Blood Pressure & Fluid",
+      "domain_group": "cardiovascular",
+      "domain_color": "#EF4444",
+      "card_codes": ["TKE-BPFL", "TKE-DAXR"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "bp_fluid_agent",
+      "interpretation_prompt": "Assess BP control per SPRINT/KDIGO targets. Evaluate fluid status. Note Daxor BVA results if available. Recommend medication adjustments.",
+      "fields": [
+        { "field_id": "systolic_bp", "display_name": "Systolic BP", "type": "number", "unit": "mmHg", "source": ["vitals"], "target_range": "<120 (SPRINT)", "required": true },
+        { "field_id": "diastolic_bp", "display_name": "Diastolic BP", "type": "number", "unit": "mmHg", "source": ["vitals"], "target_range": "<80", "required": true },
+        { "field_id": "heart_rate", "display_name": "Heart Rate", "type": "number", "unit": "bpm", "source": ["vitals"], "target_range": null, "required": false },
+        { "field_id": "o2_saturation", "display_name": "O2 Saturation", "type": "number", "unit": "%", "source": ["vitals"], "target_range": ">94", "required": false },
+        { "field_id": "bp_control_status", "display_name": "BP Control Status", "type": "enum", "enum_ref": "bp_control_status", "unit": null, "source": ["provider"], "target_range": "controlled", "required": true },
+        { "field_id": "bp_target", "display_name": "BP Target", "type": "text", "unit": null, "source": ["protocol"], "target_range": "<120 systolic", "required": false },
+        { "field_id": "home_bp_available", "display_name": "Home BP Available", "type": "boolean", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "edema", "display_name": "Edema", "type": "enum", "enum_ref": "edema", "unit": null, "source": ["exam"], "target_range": "None", "required": false },
+        { "field_id": "fluid_status", "display_name": "Fluid Status", "type": "enum", "enum_ref": "fluid_status", "unit": null, "source": ["provider"], "target_range": "euvolemic", "required": false },
+        { "field_id": "daxor_bva_result", "display_name": "Daxor BVA Result", "type": "text", "unit": null, "source": ["manual"], "target_range": null, "required": false },
+        { "field_id": "daxor_bva_date", "display_name": "Daxor BVA Date", "type": "date", "unit": null, "source": ["manual"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 6,
+      "section_id": "heart_failure",
+      "display_name": "Heart Failure",
+      "domain_group": "cardiovascular",
+      "domain_color": "#EF4444",
+      "card_codes": ["TKE-HF"],
+      "visit_mode": "conditional",
+      "condition": "hf_type != 'None' AND hf_type != null",
+      "ai_agent": "heart_failure_agent",
+      "interpretation_prompt": "Assess HF status, GDMT optimization, cardiorenal syndrome type, and Furoscix candidacy. Reference AHA/ACC guidelines.",
+      "fields": [
+        { "field_id": "hf_status", "display_name": "HF Status", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "lvef", "display_name": "LVEF", "type": "number", "unit": "%", "source": ["echo"], "target_range": null, "required": false },
+        { "field_id": "hf_type", "display_name": "HF Type", "type": "enum", "enum_ref": "hf_type", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "last_echo_date", "display_name": "Last Echo Date", "type": "date", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "gdmt_bb", "display_name": "Beta-Blocker", "type": "boolean", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "gdmt_mra_hf", "display_name": "MRA for HF", "type": "boolean", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "gdmt_sglt2i_hf", "display_name": "SGLT2i for HF", "type": "boolean", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "gdmt_arni", "display_name": "ARNi", "type": "boolean", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "crs_type", "display_name": "Cardiorenal Syndrome Type", "type": "enum", "enum_ref": "crs_type", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "cardiology_followup", "display_name": "Cardiology Follow-Up", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "furoscix_status", "display_name": "Furoscix Status", "type": "enum", "enum_ref": "furoscix_status", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 7,
+      "section_id": "lipid_therapy",
+      "display_name": "Lipid Therapy",
+      "domain_group": "cardiovascular",
+      "domain_color": "#EF4444",
+      "card_codes": ["TKE-STAT"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "cv_risk_agent",
+      "interpretation_prompt": "Assess CV risk, statin therapy adequacy, and PCSK9i candidacy for CKD patients per KDIGO/ACC lipid guidelines.",
+      "fields": [
+        { "field_id": "statin_status", "display_name": "Statin Status", "type": "enum", "enum_ref": "statin_status", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "statin_drug_dose", "display_name": "Statin Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "statin_intolerance", "display_name": "Statin Intolerance", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "pcsk9i_status", "display_name": "PCSK9i Status", "type": "enum", "enum_ref": "pcsk9i_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "pcsk9i_drug", "display_name": "PCSK9i Drug", "type": "enum", "enum_ref": "pcsk9i_drug", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "lipid_panel", "display_name": "Lipid Panel", "type": "text", "unit": null, "source": ["labs_api"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 8,
+      "section_id": "raas",
+      "display_name": "RAAS Inhibition (ACEi/ARB/ARNi)",
+      "domain_group": "pharmacotherapy",
+      "domain_color": "#8B5CF6",
+      "card_codes": ["TKE-RAAS"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "pharmacotherapy_agent",
+      "interpretation_prompt": "Assess RAAS inhibitor status: on therapy, at max dose, tolerating (K+, Cr). If not on, document reason. Cross-reference medication_safety thresholds.",
+      "fields": [
+        { "field_id": "raas_status", "display_name": "RAAS Status", "type": "enum", "enum_ref": "raas_status", "unit": null, "source": ["provider"], "target_range": "On therapy", "required": true },
+        { "field_id": "raas_drug_dose", "display_name": "RAAS Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": "Max tolerated", "required": false },
+        { "field_id": "at_max_dose", "display_name": "At Max Dose", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false },
+        { "field_id": "not_on_reason", "display_name": "Not On Reason", "type": "enum", "enum_ref": "raas_not_on_reason", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "cr_rise_since_start", "display_name": "Cr Rise Since Start", "type": "number", "unit": "%", "source": ["calculated"], "target_range": "<30%", "required": false },
+        { "field_id": "k_on_therapy", "display_name": "K+ On Therapy", "type": "number", "unit": "mEq/L", "source": ["labs_api"], "target_range": "<5.5", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 9,
+      "section_id": "sglt2i",
+      "display_name": "SGLT2 Inhibitor",
+      "domain_group": "pharmacotherapy",
+      "domain_color": "#8B5CF6",
+      "card_codes": ["TKE-SGLT"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "pharmacotherapy_agent",
+      "interpretation_prompt": "Assess SGLT2i status. If not on, evaluate eligibility (eGFR >= 20). Document initial eGFR dip if applicable. Confirm sick day rules reviewed.",
+      "fields": [
+        { "field_id": "sglt2i_status", "display_name": "SGLT2i Status", "type": "enum", "enum_ref": "sglt2i_status", "unit": null, "source": ["provider"], "target_range": "On therapy (if eGFR>=20)", "required": true },
+        { "field_id": "sglt2i_drug_dose", "display_name": "SGLT2i Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "not_on_reason", "display_name": "Not On Reason", "type": "enum", "enum_ref": "sglt2i_not_on_reason", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "initial_egfr_dip_documented", "display_name": "Initial eGFR Dip Documented", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "sick_day_rules_reviewed", "display_name": "Sick Day Rules Reviewed", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 10,
+      "section_id": "mra",
+      "display_name": "MRA (Finerenone / Spironolactone / Eplerenone)",
+      "domain_group": "pharmacotherapy",
+      "domain_color": "#8B5CF6",
+      "card_codes": ["TKE-FINE"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "pharmacotherapy_agent",
+      "interpretation_prompt": "Assess MRA status. If on finerenone, monitor K+ closely. Evaluate candidacy per FIDELIO/FIGARO criteria. Document potassium binder use if applicable.",
+      "fields": [
+        { "field_id": "mra_status", "display_name": "MRA Status", "type": "enum", "enum_ref": "mra_status", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "mra_drug_dose", "display_name": "MRA Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "not_on_reason", "display_name": "Not On Reason", "type": "enum", "enum_ref": "mra_not_on_reason", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "k_monitoring_schedule", "display_name": "K+ Monitoring Schedule", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "potassium_binder", "display_name": "Potassium Binder", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 11,
+      "section_id": "glp1",
+      "display_name": "GLP-1 Receptor Agonist",
+      "domain_group": "pharmacotherapy",
+      "domain_color": "#8B5CF6",
+      "card_codes": ["TKE-GLP1"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "pharmacotherapy_agent",
+      "interpretation_prompt": "Assess GLP-1 RA status per FLOW trial evidence. Evaluate kidney benefit documentation. Track weight response. If not on, document reason and candidacy.",
+      "fields": [
+        { "field_id": "glp1_status", "display_name": "GLP-1 Status", "type": "enum", "enum_ref": "glp1_status", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "glp1_drug_dose", "display_name": "GLP-1 Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "not_on_reason", "display_name": "Not On Reason", "type": "enum", "enum_ref": "glp1_not_on_reason", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "weight_response", "display_name": "Weight Response", "type": "text", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "kidney_benefit_documented", "display_name": "Kidney Benefit Documented", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 12,
+      "section_id": "diabetes",
+      "display_name": "Diabetes Management",
+      "domain_group": "metabolic",
+      "domain_color": "#F97316",
+      "card_codes": ["TKE-DM"],
+      "visit_mode": "conditional",
+      "condition": "diabetic_status != 'not_diabetic'",
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess glycemic control vs individualized HbA1c target. Review medication safety (metformin GFR thresholds). Check eye/foot exam status. Note Eversense CGM if applicable.",
+      "fields": [
+        { "field_id": "diabetic_status", "display_name": "Diabetic Status", "type": "enum", "enum_ref": "diabetic_status", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "hba1c", "display_name": "HbA1c", "type": "number", "unit": "%", "source": ["labs_api"], "target_range": "<7.0", "required": false },
+        { "field_id": "hba1c_date", "display_name": "HbA1c Date", "type": "date", "unit": null, "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "hba1c_target", "display_name": "HbA1c Target", "type": "number", "unit": "%", "source": ["protocol"], "target_range": "<7.0 (individualize)", "required": false },
+        { "field_id": "insulin_status", "display_name": "Insulin Status", "type": "enum", "enum_ref": "insulin_status", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "endocrinology_referral", "display_name": "Endocrinology Referral", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "annual_eye_exam", "display_name": "Annual Eye Exam", "type": "enum", "enum_ref": "annual_exam_status", "unit": null, "source": ["provider"], "target_range": "done", "required": false },
+        { "field_id": "annual_foot_exam", "display_name": "Annual Foot Exam", "type": "enum", "enum_ref": "annual_exam_status", "unit": null, "source": ["provider"], "target_range": "done", "required": false },
+        { "field_id": "eversense_cgm", "display_name": "Eversense CGM", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 13,
+      "section_id": "gout",
+      "display_name": "Gout",
+      "domain_group": "metabolic",
+      "domain_color": "#F97316",
+      "card_codes": ["TKE-GOUT"],
+      "visit_mode": "conditional",
+      "condition": "gout_history is not empty OR uric_acid > 6.0",
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess gout control, uric acid target (<6.0), current therapy adequacy, and Krystexxa candidacy for refractory gout.",
+      "fields": [
+        { "field_id": "gout_history", "display_name": "Gout History", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "uric_acid", "display_name": "Uric Acid", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": "<6.0", "required": false },
+        { "field_id": "uric_acid_status", "display_name": "Uric Acid Status", "type": "enum", "enum_ref": "uric_acid_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "current_therapy", "display_name": "Current Therapy", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "krystexxa_status", "display_name": "Krystexxa Status", "type": "enum", "enum_ref": "krystexxa_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "last_flare", "display_name": "Last Flare", "type": "date", "unit": null, "source": ["patient"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 14,
+      "section_id": "obesity",
+      "display_name": "Obesity / Weight Management",
+      "domain_group": "metabolic",
+      "domain_color": "#F97316",
+      "card_codes": ["TKE-OBES"],
+      "visit_mode": "conditional",
+      "condition": "bmi >= 30",
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess obesity impact on CKD progression. Review weight trend, GLP-1 RA candidacy (cross-reference Section 11), and bariatric surgery history.",
+      "fields": [
+        { "field_id": "bmi", "display_name": "BMI", "type": "number", "unit": "kg/m2", "source": ["vitals"], "target_range": "<30", "required": true },
+        { "field_id": "weight_trend_6mo", "display_name": "Weight Trend (6mo)", "type": "text", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "obesity_clinic_referral", "display_name": "Obesity Clinic Referral", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "bariatric_surgery_history", "display_name": "Bariatric Surgery History", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 15,
+      "section_id": "anemia",
+      "display_name": "Anemia / Blood Health",
+      "domain_group": "ckd_complications",
+      "domain_color": "#1E40AF",
+      "card_codes": ["TKE-ANEM"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess anemia per KDIGO: Hgb trend, iron status (ferritin/TSAT), ESA need. Flag CKD-related vs other etiologies. Cross-ref fax manager thresholds.",
+      "fields": [
+        { "field_id": "hemoglobin", "display_name": "Hemoglobin", "type": "number", "unit": "g/dL", "source": ["labs_api"], "target_range": "10-12 (CKD)", "required": true },
+        { "field_id": "mcv", "display_name": "MCV", "type": "number", "unit": "fL", "source": ["labs_api"], "target_range": "80-100", "required": false },
+        { "field_id": "wbc", "display_name": "WBC", "type": "number", "unit": "K/uL", "source": ["labs_api"], "target_range": "4.5-11", "required": false },
+        { "field_id": "platelets", "display_name": "Platelets", "type": "number", "unit": "K/uL", "source": ["labs_api"], "target_range": "150-400", "required": false },
+        { "field_id": "hematocrit", "display_name": "Hematocrit", "type": "number", "unit": "%", "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "ferritin", "display_name": "Ferritin", "type": "number", "unit": "ng/mL", "source": ["labs_api"], "target_range": ">100 (CKD)", "required": false },
+        { "field_id": "tsat", "display_name": "TSAT", "type": "number", "unit": "%", "source": ["labs_api"], "target_range": "20-50%", "required": false },
+        { "field_id": "iron_panel_date", "display_name": "Iron Panel Date", "type": "date", "unit": null, "source": ["labs_api"], "target_range": null, "required": false },
+        { "field_id": "anemia_at_goal", "display_name": "Anemia at Goal", "type": "enum", "enum_ref": "anemia_at_goal", "unit": null, "source": ["provider"], "target_range": "at_goal", "required": false },
+        { "field_id": "anemia_clinic", "display_name": "Anemia Clinic", "type": "enum", "enum_ref": "anemia_clinic", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "esa_status", "display_name": "ESA Status", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "iv_iron_status", "display_name": "IV Iron Status", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "ckd_related", "display_name": "CKD-Related", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 16,
+      "section_id": "mbd",
+      "display_name": "Mineral Bone Disease",
+      "domain_group": "ckd_complications",
+      "domain_color": "#1E40AF",
+      "card_codes": ["TKE-MBD"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess CKD-MBD per KDIGO: PTH trend, calcium/phosphorus balance, Vitamin D status. Recommend medication adjustments (Vit D, binders, calcimimetics).",
+      "fields": [
+        { "field_id": "pth", "display_name": "PTH", "type": "number", "unit": "pg/mL", "source": ["labs_api"], "target_range": "2-9x ULN (CKD 5)", "required": false },
+        { "field_id": "vitamin_d25", "display_name": "Vitamin D (25-OH)", "type": "number", "unit": "ng/mL", "source": ["labs_api"], "target_range": "30-50", "required": false },
+        { "field_id": "calcium", "display_name": "Calcium", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": "8.4-10.2", "required": false },
+        { "field_id": "phosphorus", "display_name": "Phosphorus", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": "2.5-4.5 (CKD 3-5)", "required": false },
+        { "field_id": "albumin", "display_name": "Albumin", "type": "number", "unit": "g/dL", "source": ["labs_api"], "target_range": ">3.5", "required": false },
+        { "field_id": "corrected_calcium", "display_name": "Corrected Calcium", "type": "number", "unit": "mg/dL", "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "mbd_at_goal", "display_name": "MBD at Goal", "type": "enum", "enum_ref": "mbd_at_goal", "unit": null, "source": ["provider"], "target_range": "at_goal", "required": false },
+        { "field_id": "vitamin_d_supplement", "display_name": "Vitamin D Supplement", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "phosphate_binder", "display_name": "Phosphate Binder", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "calcimimetic", "display_name": "Calcimimetic", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 17,
+      "section_id": "electrolytes",
+      "display_name": "Electrolytes & Acid-Base",
+      "domain_group": "ckd_complications",
+      "domain_color": "#1E40AF",
+      "card_codes": ["TKE-ELEC"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "complications_agent",
+      "interpretation_prompt": "Assess electrolyte panel and acid-base status. Flag critical values. Ensure bicarb >= 22 per KDIGO. Note pruritus if present. Cross-ref fax manager thresholds.",
+      "fields": [
+        { "field_id": "sodium", "display_name": "Sodium", "type": "number", "unit": "mEq/L", "source": ["labs_api"], "target_range": "136-145", "required": false },
+        { "field_id": "potassium", "display_name": "Potassium", "type": "number", "unit": "mEq/L", "source": ["labs_api"], "target_range": "3.5-5.0", "required": true },
+        { "field_id": "chloride", "display_name": "Chloride", "type": "number", "unit": "mEq/L", "source": ["labs_api"], "target_range": "98-106", "required": false },
+        { "field_id": "bicarbonate", "display_name": "Bicarbonate", "type": "number", "unit": "mEq/L", "source": ["labs_api"], "target_range": ">= 22", "required": true },
+        { "field_id": "magnesium", "display_name": "Magnesium", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": "1.7-2.2", "required": false },
+        { "field_id": "glucose", "display_name": "Glucose", "type": "number", "unit": "mg/dL", "source": ["labs_api"], "target_range": "70-130 (fasting)", "required": false },
+        { "field_id": "electrolytes_at_goal", "display_name": "Electrolytes at Goal", "type": "enum", "enum_ref": "electrolytes_at_goal", "unit": null, "source": ["provider"], "target_range": "at_goal", "required": false },
+        { "field_id": "bicarb_supplement", "display_name": "Bicarb Supplement", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "kcl_supplement", "display_name": "KCl Supplement", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "pruritus", "display_name": "Pruritus", "type": "enum", "enum_ref": "pruritus", "unit": null, "source": ["patient"], "target_range": "none", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 18,
+      "section_id": "tobacco",
+      "display_name": "Tobacco / Substance Use",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-SMOK"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Assess tobacco/substance use impact on CKD progression. Document cessation counseling. Note vaping status.",
+      "fields": [
+        { "field_id": "smoking_status", "display_name": "Smoking Status", "type": "enum", "enum_ref": "smoking_status", "unit": null, "source": ["provider"], "target_range": "never or former", "required": true },
+        { "field_id": "pack_years", "display_name": "Pack Years", "type": "number", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "quit_date", "display_name": "Quit Date", "type": "date", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "vaping_status", "display_name": "Vaping Status", "type": "text", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "cessation_counseling", "display_name": "Cessation Counseling", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 19,
+      "section_id": "nsaid",
+      "display_name": "NSAID Avoidance",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-NSAI"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Assess NSAID use status. Counsel on avoidance per KDIGO. Cross-ref fax manager NSAID drug list for auto-detection. Recommend alternatives.",
+      "fields": [
+        { "field_id": "nsaid_status", "display_name": "NSAID Status", "type": "enum", "enum_ref": "nsaid_status", "unit": null, "source": ["provider"], "target_range": "not_using", "required": true },
+        { "field_id": "specific_nsaid", "display_name": "Specific NSAID", "type": "text", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "counseled_on_avoidance", "display_name": "Counseled on Avoidance", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false },
+        { "field_id": "alternatives_discussed", "display_name": "Alternatives Discussed", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 20,
+      "section_id": "ppi",
+      "display_name": "PPI Review",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-PPI"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Assess PPI use: indicated vs. questionable. Recommend de-escalation if appropriate. Note AIN/CKD progression risk.",
+      "fields": [
+        { "field_id": "ppi_status", "display_name": "PPI Status", "type": "enum", "enum_ref": "ppi_status", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "ppi_drug_dose", "display_name": "PPI Drug/Dose", "type": "text", "unit": null, "source": ["med_list"], "target_range": null, "required": false },
+        { "field_id": "alternative_recommended", "display_name": "Alternative Recommended", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 21,
+      "section_id": "sick_day",
+      "display_name": "Sick Day Rules",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-SICK"],
+      "visit_mode": "conditional",
+      "condition": "on RAAS or SGLT2i or MRA or diuretic",
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Confirm sick day rules reviewed for all nephrotoxin-risk medications. Generate medication hold list.",
+      "fields": [
+        { "field_id": "sick_day_rules_reviewed", "display_name": "Sick Day Rules Reviewed", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": true },
+        { "field_id": "meds_to_hold_list_given", "display_name": "Meds-to-Hold List Given", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false },
+        { "field_id": "patient_understanding", "display_name": "Patient Understanding", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 22,
+      "section_id": "contrast",
+      "display_name": "Contrast Precautions",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-CONT"],
+      "visit_mode": "conditional",
+      "condition": "contrast_in_30_days == true OR upcoming imaging with contrast",
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Assess contrast exposure risk per ACR/KDIGO. Document pre-hydration and nephrotoxin hold protocols.",
+      "fields": [
+        { "field_id": "contrast_in_30_days", "display_name": "Contrast in 30 Days", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": true },
+        { "field_id": "pre_hydration_used", "display_name": "Pre-Hydration Used", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "hold_nephrotoxins", "display_name": "Hold Nephrotoxins", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 23,
+      "section_id": "sodium",
+      "display_name": "Sodium Restriction",
+      "domain_group": "risk_mitigation",
+      "domain_color": "#22C55E",
+      "card_codes": ["TKE-SODM"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "nutrition_agent",
+      "interpretation_prompt": "Assess dietary sodium adherence and its impact on BP and fluid status. Recommend dietitian referral if non-adherent.",
+      "fields": [
+        { "field_id": "sodium_target", "display_name": "Sodium Target", "type": "text", "unit": null, "source": ["protocol"], "target_range": "<2g/day", "required": false },
+        { "field_id": "diet_adherence", "display_name": "Diet Adherence", "type": "enum", "enum_ref": "diet_adherence", "unit": null, "source": ["patient"], "target_range": "good", "required": false },
+        { "field_id": "dietitian_referral", "display_name": "Dietitian Referral", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 24,
+      "section_id": "transplant",
+      "display_name": "Transplant Readiness",
+      "domain_group": "planning",
+      "domain_color": "#6B7280",
+      "card_codes": ["TKE-TXPL"],
+      "visit_mode": "conditional",
+      "condition": "ckd_stage in ['G4', 'G5', 'G5D'] OR kfre_2yr > 20",
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess transplant readiness: candidate status, workup completion, barriers (BMI, cardiac, etc.). Recommend next steps per KDIGO transplant guidelines.",
+      "fields": [
+        { "field_id": "transplant_candidate", "display_name": "Transplant Candidate", "type": "enum", "enum_ref": "transplant_candidate", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "transplant_centers", "display_name": "Transplant Centers", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "current_status", "display_name": "Current Status", "type": "enum", "enum_ref": "transplant_current_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "living_donor", "display_name": "Living Donor", "type": "boolean", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "workup_completion_pct", "display_name": "Workup Completion %", "type": "number", "unit": "%", "source": ["coordinator"], "target_range": null, "required": false },
+        { "field_id": "barriers", "display_name": "Barriers", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "bmi_barrier", "display_name": "BMI Barrier", "type": "boolean", "unit": null, "source": ["calculated"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 25,
+      "section_id": "dialysis",
+      "display_name": "Dialysis Planning / Vascular Access",
+      "domain_group": "planning",
+      "domain_color": "#6B7280",
+      "card_codes": ["TKE-DIAL"],
+      "visit_mode": "conditional",
+      "condition": "ckd_stage in ['G4', 'G5', 'G5D'] OR kfre_2yr > 20",
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess dialysis planning: education status, modality preference, vascular access, timeline. Cross-ref fax manager dialysis planning thresholds. Document vein preservation.",
+      "fields": [
+        { "field_id": "dialysis_education", "display_name": "Dialysis Education", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true (by G4)", "required": false },
+        { "field_id": "modality_preference", "display_name": "Modality Preference", "type": "enum", "enum_ref": "dialysis_modality_preference", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "vascular_access_status", "display_name": "Vascular Access Status", "type": "enum", "enum_ref": "vascular_access_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "access_location", "display_name": "Access Location", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "surgery_referral_date", "display_name": "Surgery Referral Date", "type": "date", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "timeline_to_dialysis", "display_name": "Timeline to Dialysis", "type": "text", "unit": null, "source": ["calculated"], "target_range": null, "required": false },
+        { "field_id": "vein_preservation", "display_name": "Vein Preservation", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 26,
+      "section_id": "acp",
+      "display_name": "Advance Care Planning",
+      "domain_group": "planning",
+      "domain_color": "#6B7280",
+      "card_codes": ["TKE-ACP"],
+      "visit_mode": "conditional",
+      "condition": "ckd_stage in ['G4', 'G5', 'G5D'] OR age > 75",
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess ACP documentation status. Note surprise question answer. Recommend discussion if not documented. Track CPT billing for ACP conversations.",
+      "fields": [
+        { "field_id": "acp_documented", "display_name": "ACP Documented", "type": "boolean", "unit": null, "source": ["chart"], "target_range": "true", "required": false },
+        { "field_id": "acp_date", "display_name": "ACP Date", "type": "date", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "surprise_question", "display_name": "Surprise Question", "type": "enum", "enum_ref": "surprise_question", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "goals_of_care_discussed", "display_name": "Goals of Care Discussed", "type": "boolean", "unit": null, "source": ["provider"], "target_range": "true", "required": false },
+        { "field_id": "polst_completed", "display_name": "POLST Completed", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "healthcare_proxy", "display_name": "Healthcare Proxy", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "conservative_mgmt_discussed", "display_name": "Conservative Mgmt Discussed", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "cpt_99497_99498", "display_name": "CPT 99497/99498 Billed", "type": "boolean", "unit": null, "source": ["billing"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 27,
+      "section_id": "ccm",
+      "display_name": "CCM Enrollment",
+      "domain_group": "planning",
+      "domain_color": "#6B7280",
+      "card_codes": ["TKE-CCM"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess CCM enrollment and activity. Flag care gaps identified by care coordinator. Recommend enrollment if eligible and not enrolled.",
+      "fields": [
+        { "field_id": "ccm_enrollment", "display_name": "CCM Enrollment", "type": "enum", "enum_ref": "ccm_enrollment", "unit": null, "source": ["coordinator"], "target_range": "enrolled", "required": false },
+        { "field_id": "ccm_active", "display_name": "CCM Active", "type": "boolean", "unit": null, "source": ["coordinator"], "target_range": "true", "required": false },
+        { "field_id": "last_ccm_contact", "display_name": "Last CCM Contact", "type": "date", "unit": null, "source": ["coordinator"], "target_range": null, "required": false },
+        { "field_id": "care_gaps", "display_name": "Care Gaps", "type": "text", "unit": null, "source": ["coordinator"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 28,
+      "section_id": "immunizations",
+      "display_name": "Immunizations",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-VACC"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Check immunization status for CKD-relevant vaccines. Flag due/overdue. Prioritize Hep B for transplant candidates.",
+      "fields": [
+        { "field_id": "flu_vaccine", "display_name": "Flu Vaccine", "type": "enum", "enum_ref": "vaccine_status", "unit": null, "source": ["chart"], "target_range": "current", "required": false },
+        { "field_id": "pneumococcal_pcv20", "display_name": "Pneumococcal (PCV20)", "type": "enum", "enum_ref": "vaccine_status", "unit": null, "source": ["chart"], "target_range": "current", "required": false },
+        { "field_id": "hep_b", "display_name": "Hepatitis B", "type": "enum", "enum_ref": "hep_b_status", "unit": null, "source": ["chart"], "target_range": "immune", "required": false },
+        { "field_id": "covid_vaccine", "display_name": "COVID Vaccine", "type": "enum", "enum_ref": "vaccine_status", "unit": null, "source": ["chart"], "target_range": "current", "required": false },
+        { "field_id": "shingrix", "display_name": "Shingrix", "type": "enum", "enum_ref": "shingrix_status", "unit": null, "source": ["chart"], "target_range": "complete (age 50+)", "required": false },
+        { "field_id": "tdap", "display_name": "Tdap", "type": "enum", "enum_ref": "vaccine_status", "unit": null, "source": ["chart"], "target_range": "current", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 29,
+      "section_id": "depression",
+      "display_name": "Depression Screen (PHQ-2/9)",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-PHQ"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Interpret PHQ scores. Flag positive screens. Recommend treatment/referral per PHQ-9 severity. Note cognitive screen if applicable.",
+      "fields": [
+        { "field_id": "phq2_score", "display_name": "PHQ-2 Score", "type": "number", "unit": "0-6", "source": ["screening"], "target_range": "<3", "required": false },
+        { "field_id": "phq9_score", "display_name": "PHQ-9 Score", "type": "number", "unit": "0-27", "source": ["screening"], "target_range": null, "required": false },
+        { "field_id": "depression_status", "display_name": "Depression Status", "type": "enum", "enum_ref": "depression_status", "unit": null, "source": ["calculated"], "target_range": "negative", "required": false },
+        { "field_id": "treatment_referral", "display_name": "Treatment/Referral", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "cognitive_screen", "display_name": "Cognitive Screen", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 30,
+      "section_id": "fall_risk",
+      "display_name": "Fall Risk Assessment",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-FALL"],
+      "visit_mode": "conditional",
+      "condition": "age > 65 OR frailty_status == 'frail'",
+      "ai_agent": "physical_performance_agent",
+      "interpretation_prompt": "Assess fall risk integrating physical performance data (grip, STS, gait) with medication review and environmental factors. Recommend interventions.",
+      "fields": [
+        { "field_id": "fall_risk", "display_name": "Fall Risk", "type": "enum", "enum_ref": "fall_risk", "unit": null, "source": ["screening"], "target_range": "low", "required": true },
+        { "field_id": "falls_12mo", "display_name": "Falls in 12 Months", "type": "number", "unit": null, "source": ["patient"], "target_range": "0", "required": false },
+        { "field_id": "contributing_factors", "display_name": "Contributing Factors", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 31,
+      "section_id": "sleep_apnea",
+      "display_name": "Sleep Apnea",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-SLAP"],
+      "visit_mode": "conditional",
+      "condition": "stop_bang_score >= 3 OR osa_diagnosis == true",
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess sleep apnea status and CPAP compliance. Note impact on CKD and CV risk. Recommend sleep study if high STOP-BANG and no prior diagnosis.",
+      "fields": [
+        { "field_id": "sleep_study_done", "display_name": "Sleep Study Done", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "osa_diagnosis", "display_name": "OSA Diagnosis", "type": "boolean", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "cpap_compliance", "display_name": "CPAP Compliance", "type": "enum", "enum_ref": "cpap_compliance", "unit": null, "source": ["patient"], "target_range": "compliant", "required": false },
+        { "field_id": "stop_bang_score", "display_name": "STOP-BANG Score", "type": "number", "unit": "0-8", "source": ["screening"], "target_range": "<3", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 32,
+      "section_id": "sdoh",
+      "display_name": "SDOH Assessment",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-SDOH"],
+      "visit_mode": "conditional",
+      "condition": "visit_type == 'New' OR annual_refresh_due",
+      "ai_agent": "planning_screening_agent",
+      "interpretation_prompt": "Assess social determinants of health. Flag barriers to care (transportation, food, housing, literacy). Recommend social work referral if needed.",
+      "fields": [
+        { "field_id": "transportation", "display_name": "Transportation", "type": "enum", "enum_ref": "transportation", "unit": null, "source": ["patient"], "target_range": null, "required": false },
+        { "field_id": "housing_stability", "display_name": "Housing Stability", "type": "enum", "enum_ref": "housing_stability", "unit": null, "source": ["patient"], "target_range": "stable", "required": false },
+        { "field_id": "food_security", "display_name": "Food Security", "type": "enum", "enum_ref": "food_security", "unit": null, "source": ["patient"], "target_range": "secure", "required": false },
+        { "field_id": "health_literacy", "display_name": "Health Literacy", "type": "enum", "enum_ref": "health_literacy", "unit": null, "source": ["staff"], "target_range": "adequate", "required": false },
+        { "field_id": "insurance_barriers", "display_name": "Insurance Barriers", "type": "text", "unit": null, "source": ["billing"], "target_range": "none", "required": false },
+        { "field_id": "caregiver_support", "display_name": "Caregiver Support", "type": "text", "unit": null, "source": ["patient"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 33,
+      "section_id": "physical_performance",
+      "display_name": "Physical Performance & Frailty",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-GRIP", "TKE-FUNC"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "physical_performance_agent",
+      "interpretation_prompt": "Correlate physical performance with eGFR, anemia, fluid status. Flag high-risk combinations (low grip + declining eGFR + anemia). Track trends visit-to-visit. Recommend renal rehab referral when indicated. Adjust interpretation for confounders (edema affects gait, anemia affects endurance).",
+      "fields": [
+        { "field_id": "grip_strength_dominant", "display_name": "Grip Strength (Dominant)", "type": "number", "unit": "kg", "source": ["ocr_scan", "staff"], "target_range": "Men >=27, Women >=16", "required": false },
+        { "field_id": "grip_strength_non_dominant", "display_name": "Grip Strength (Non-Dominant)", "type": "number", "unit": "kg", "source": ["ocr_scan", "staff"], "target_range": null, "required": false },
+        { "field_id": "low_grip_flag", "display_name": "Low Grip Flag", "type": "boolean", "unit": null, "source": ["calculated"], "target_range": "false", "required": false },
+        { "field_id": "sit_to_stand_30sec", "display_name": "30-sec Sit-to-Stand", "type": "number", "unit": "reps", "source": ["ocr_scan", "staff"], "target_range": ">=10", "required": false },
+        { "field_id": "gait_speed_4m", "display_name": "4m Gait Speed", "type": "number", "unit": "m/s", "source": ["ocr_scan", "staff"], "target_range": ">=0.8", "required": false },
+        { "field_id": "tug_time", "display_name": "TUG Time", "type": "number", "unit": "seconds", "source": ["by_referral"], "target_range": "<12", "required": false },
+        { "field_id": "sppb_score", "display_name": "SPPB Score", "type": "number", "unit": "0-12", "source": ["calculated", "by_referral"], "target_range": ">=10", "required": false },
+        { "field_id": "clinical_frailty_scale", "display_name": "Clinical Frailty Scale", "type": "number", "unit": "1-9", "source": ["provider"], "target_range": "<5", "required": false },
+        { "field_id": "six_min_walk", "display_name": "6-Minute Walk", "type": "number", "unit": "meters", "source": ["by_referral"], "target_range": ">=350", "required": false },
+        { "field_id": "frailty_status", "display_name": "Frailty Status", "type": "enum", "enum_ref": "frailty_status", "unit": null, "source": ["calculated"], "target_range": "robust", "required": false }
+      ]
+    },
+
+    {
+      "section_number": 34,
+      "section_id": "nutrition",
+      "display_name": "Nutrition / Dietary Assessment",
+      "domain_group": "screening",
+      "domain_color": "#14B8A6",
+      "card_codes": ["TKE-NUTR"],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "nutrition_agent",
+      "interpretation_prompt": "Assess nutritional status: protein intake adequacy, electrolyte-driven restrictions, plant-based diet discussion, malnutrition screening. Recommend dietitian if needed.",
+      "fields": [
+        { "field_id": "protein_intake", "display_name": "Protein Intake", "type": "enum", "enum_ref": "protein_intake", "unit": null, "source": ["patient", "dietitian"], "target_range": "appropriate", "required": false },
+        { "field_id": "protein_target", "display_name": "Protein Target", "type": "text", "unit": null, "source": ["protocol"], "target_range": "0.8 g/kg/day (CKD 3-5)", "required": false },
+        { "field_id": "potassium_restriction", "display_name": "Potassium Restriction", "type": "enum", "enum_ref": "restriction_level", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "phosphorus_restriction", "display_name": "Phosphorus Restriction", "type": "enum", "enum_ref": "restriction_level", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "plant_based_diet_discussed", "display_name": "Plant-Based Diet Discussed", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "malnutrition_screen", "display_name": "Malnutrition Screen", "type": "enum", "enum_ref": "malnutrition_screen", "unit": null, "source": ["screening"], "target_range": "normal", "required": false },
+        { "field_id": "dietitian_referral", "display_name": "Dietitian Referral", "type": "boolean", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 35,
+      "section_id": "medication_adherence",
+      "display_name": "Medication Adherence & Barriers",
+      "domain_group": "care_coordination",
+      "domain_color": "#EC4899",
+      "card_codes": [],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "medication_safety_agent",
+      "interpretation_prompt": "Assess overall medication adherence. Identify barriers (cost, complexity, access). Cross-reference with 4 Pillars sections. If medication gap exists, check barriers before recommending escalation. Note pregnancy/contraception if applicable.",
+      "fields": [
+        { "field_id": "adherence_assessment", "display_name": "Adherence Assessment", "type": "enum", "enum_ref": "adherence_assessment", "unit": null, "source": ["patient", "provider"], "target_range": "good", "required": true },
+        { "field_id": "cost_barriers", "display_name": "Cost Barriers", "type": "boolean", "unit": null, "source": ["patient"], "target_range": "false", "required": false },
+        { "field_id": "prior_auth_pending", "display_name": "Prior Auth Pending", "type": "text", "unit": null, "source": ["billing"], "target_range": null, "required": false },
+        { "field_id": "pharmacy_access", "display_name": "Pharmacy Access", "type": "enum", "enum_ref": "pharmacy_access", "unit": null, "source": ["patient"], "target_range": "good", "required": false },
+        { "field_id": "pregnancy_contraception", "display_name": "Pregnancy/Contraception", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 36,
+      "section_id": "special_clinics",
+      "display_name": "Special Clinics",
+      "domain_group": "care_coordination",
+      "domain_color": "#EC4899",
+      "card_codes": ["TKE-CRM", "TKE-LONG"],
+      "visit_mode": "conditional",
+      "condition": "patient enrolled in or candidate for specialty clinic",
+      "ai_agent": "general_ckd_agent",
+      "interpretation_prompt": "Document enrollment in specialty clinics (Cardiorenal Metabolic, Longevity, Heart Failure). Note referral status and outcomes.",
+      "fields": [
+        { "field_id": "cardiorenal_metabolic", "display_name": "Cardiorenal Metabolic Clinic", "type": "enum", "enum_ref": "special_clinic_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "longevity_clinic", "display_name": "Longevity Clinic", "type": "enum", "enum_ref": "special_clinic_status", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "heart_failure_clinic", "display_name": "Heart Failure Clinic", "type": "enum", "enum_ref": "special_clinic_status", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    },
+
+    {
+      "section_number": 37,
+      "section_id": "follow_up",
+      "display_name": "PCP / Care Team / Follow-Up",
+      "domain_group": "care_coordination",
+      "domain_color": "#EC4899",
+      "card_codes": [],
+      "visit_mode": "always",
+      "condition": null,
+      "ai_agent": "general_ckd_agent",
+      "interpretation_prompt": "Summarize care team, follow-up plan, referrals placed, education delivered, and billing complexity for the encounter.",
+      "fields": [
+        { "field_id": "pcp_name", "display_name": "PCP Name", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "cardiology", "display_name": "Cardiology", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "endocrinology", "display_name": "Endocrinology", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "other_specialists", "display_name": "Other Specialists", "type": "text", "unit": null, "source": ["chart"], "target_range": null, "required": false },
+        { "field_id": "follow_up_interval", "display_name": "Follow-Up Interval", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": true },
+        { "field_id": "next_appointment", "display_name": "Next Appointment", "type": "date", "unit": null, "source": ["scheduling"], "target_range": null, "required": false },
+        { "field_id": "referrals_placed", "display_name": "Referrals Placed", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false },
+        { "field_id": "education_delivered", "display_name": "Education Delivered", "type": "text", "unit": null, "source": ["auto_populated"], "target_range": null, "required": false },
+        { "field_id": "time_complexity", "display_name": "Time/Complexity", "type": "text", "unit": null, "source": ["provider"], "target_range": null, "required": false }
+      ]
+    }
+  ],
+
+  "cross_cutting_alerts": [
+    {
+      "alert_id": "triple_whammy",
+      "display_name": "Triple Whammy Alert",
+      "card_code": "TKE-TRIP",
+      "agent": "medication_safety_agent",
+      "trigger": "Patient is on RAAS inhibitor (ACEi/ARB/ARNi) AND diuretic AND NSAID",
+      "action": "Red alert in digital note builder + flag in medication adherence section",
+      "severity": "critical",
+      "fax_manager_cross_ref": "MEDICATION_CATEGORIES.ace_inhibitors + arbs + diuretics + nsaids"
+    }
+  ]
+}

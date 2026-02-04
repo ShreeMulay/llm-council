@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://thekidneyexperts.com/schemas/field-types.json",
+  "title": "TKE CKD Note Template - Field Type Definitions",
+  "version": "1.0.0",
+  "description": "Enum definitions, validation rules, and type specifications for the CKD note section registry.",
+
+  "field_types": {
+    "number": {
+      "description": "Numeric value with optional unit and range",
+      "json_type": "number"
+    },
+    "enum": {
+      "description": "Constrained choice from a defined list",
+      "json_type": "string"
+    },
+    "text": {
+      "description": "Free-text string, no length constraint unless specified",
+      "json_type": "string"
+    },
+    "date": {
+      "description": "ISO 8601 date (YYYY-MM-DD)",
+      "json_type": "string",
+      "format": "date"
+    },
+    "boolean": {
+      "description": "True/false flag",
+      "json_type": "boolean"
+    },
+    "calculated": {
+      "description": "Derived from other fields; read-only to user input",
+      "json_type": "varies"
+    }
+  },
+
+  "source_types": [
+    "labs_api",
+    "med_list",
+    "vitals",
+    "provider",
+    "patient",
+    "calculated",
+    "previous_note",
+    "fax_manager",
+    "ocr_scan",
+    "transcription",
+    "chart",
+    "staff",
+    "screening",
+    "coordinator",
+    "billing",
+    "scheduling",
+    "exam",
+    "protocol",
+    "manual",
+    "echo",
+    "pathology",
+    "dietitian",
+    "by_referral",
+    "auto_populated"
+  ],
+
+  "domain_groups": {
+    "header":              { "index": 0, "display": "Header & Visit Context",           "color": null,      "hex": null       },
+    "kidney_core":         { "index": 1, "display": "Kidney Core",                      "color": "Blue",    "hex": "#3B82F6"  },
+    "cardiovascular":      { "index": 2, "display": "Cardiovascular-Renal",             "color": "Red",     "hex": "#EF4444"  },
+    "pharmacotherapy":     { "index": 3, "display": "Pharmacotherapy (4 Pillars)",       "color": "Purple",  "hex": "#8B5CF6"  },
+    "metabolic":           { "index": 4, "display": "Metabolic",                        "color": "Orange",  "hex": "#F97316"  },
+    "ckd_complications":   { "index": 5, "display": "CKD Complications",                "color": "DarkBlue","hex": "#1E40AF"  },
+    "risk_mitigation":     { "index": 6, "display": "Risk Mitigation",                  "color": "Green",   "hex": "#22C55E"  },
+    "planning":            { "index": 7, "display": "Planning & Transitions",            "color": "Gray",    "hex": "#6B7280"  },
+    "screening":           { "index": 8, "display": "Screening & Prevention",            "color": "Teal",    "hex": "#14B8A6"  },
+    "care_coordination":   { "index": 9, "display": "Care Coordination",                 "color": "Pink",    "hex": "#EC4899"  }
+  },
+
+  "visit_modes": {
+    "always":       { "description": "Section appears on every visit" },
+    "initial_only": { "description": "Section appears only on initial visit" },
+    "conditional":  { "description": "Section appears when condition is met" }
+  },
+
+  "enums": {
+    "visit_type": {
+      "values": ["New", "Follow-up", "Urgent", "Telehealth"],
+      "section": "header"
+    },
+    "ckd_stage": {
+      "values": ["G1", "G2", "G3a", "G3b", "G4", "G5", "G5D", "Transplant"],
+      "section": "header"
+    },
+    "pathology_confirmation": {
+      "values": ["suspected", "biopsy_confirmed"],
+      "section": "header"
+    },
+    "albuminuria_stage": {
+      "values": ["A1", "A2", "A3"],
+      "section": "header"
+    },
+    "kdigo_risk_category": {
+      "values": ["Low", "Moderate", "High", "Very_High"],
+      "section": "header"
+    },
+    "ccm_status": {
+      "values": ["not_enrolled", "enrolled", "active", "declined", "discharged"],
+      "section": "header"
+    },
+    "egfr_trend": {
+      "values": ["stable", "improving", "declining"],
+      "section": "kidney_function"
+    },
+    "proteinuria_status": {
+      "values": ["none", "microalbuminuria", "overt_proteinuria", "nephrotic_range", "improving", "worsening", "stable"],
+      "section": "kidney_function"
+    },
+    "renalytix_result": {
+      "values": ["Low", "Medium", "High", "Not_done"],
+      "section": "kidney_function"
+    },
+    "hematuria_type": {
+      "values": ["microscopic", "gross", "none"],
+      "section": "hematuria"
+    },
+    "workup_status": {
+      "values": ["not_indicated", "in_progress", "complete"],
+      "section": "hematuria"
+    },
+    "bp_control_status": {
+      "values": ["controlled", "uncontrolled", "unknown"],
+      "section": "bp_fluid"
+    },
+    "edema": {
+      "values": ["None", "Trace", "1+", "2+", "3+", "4+"],
+      "section": "bp_fluid"
+    },
+    "fluid_status": {
+      "values": ["euvolemic", "hypervolemic", "hypovolemic"],
+      "section": "bp_fluid"
+    },
+    "hf_type": {
+      "values": ["HFrEF", "HFmrEF", "HFpEF", "Normal", "None"],
+      "section": "heart_failure"
+    },
+    "crs_type": {
+      "values": ["Type1", "Type2", "Type3", "Type4", "Type5", "NA"],
+      "section": "heart_failure"
+    },
+    "furoscix_status": {
+      "values": ["on", "not_indicated", "consider"],
+      "section": "heart_failure"
+    },
+    "statin_status": {
+      "values": ["on_high_intensity", "on_moderate_intensity", "on_low_intensity", "not_indicated", "intolerant", "declined"],
+      "section": "lipid_therapy"
+    },
+    "pcsk9i_status": {
+      "values": ["on", "not_indicated", "consider", "prior_auth"],
+      "section": "lipid_therapy"
+    },
+    "pcsk9i_drug": {
+      "values": ["Repatha", "Praluent", "Leqvio", "none"],
+      "section": "lipid_therapy"
+    },
+    "raas_status": {
+      "values": ["on_acei", "on_arb", "on_arni", "not_on", "contraindicated", "intolerant"],
+      "section": "raas"
+    },
+    "raas_not_on_reason": {
+      "values": ["hyperkalemia", "AKI", "hypotension", "contraindicated", "other"],
+      "section": "raas"
+    },
+    "sglt2i_status": {
+      "values": ["on", "not_on", "contraindicated", "intolerant", "declined"],
+      "section": "sglt2i"
+    },
+    "sglt2i_not_on_reason": {
+      "values": ["egfr_too_low", "uti", "dka_risk", "declined", "other"],
+      "section": "sglt2i"
+    },
+    "mra_status": {
+      "values": ["on", "not_indicated", "consider", "contraindicated"],
+      "section": "mra"
+    },
+    "mra_not_on_reason": {
+      "values": ["hyperkalemia", "not_indicated", "other"],
+      "section": "mra"
+    },
+    "glp1_status": {
+      "values": ["on", "consider", "not_indicated", "contraindicated"],
+      "section": "glp1"
+    },
+    "glp1_not_on_reason": {
+      "values": ["not_diabetic", "gi_intolerance", "cost", "declined", "other"],
+      "section": "glp1"
+    },
+    "diabetic_status": {
+      "values": ["type1", "type2", "prediabetic", "not_diabetic", "gestational"],
+      "section": "diabetes"
+    },
+    "insulin_status": {
+      "values": ["on", "not_on", "not_needed"],
+      "section": "diabetes"
+    },
+    "annual_exam_status": {
+      "values": ["done", "due", "overdue"],
+      "section": "diabetes"
+    },
+    "uric_acid_status": {
+      "values": ["at_goal", "above_goal", "not_tested", "on_therapy"],
+      "section": "gout"
+    },
+    "krystexxa_status": {
+      "values": ["on", "candidate", "not_indicated"],
+      "section": "gout"
+    },
+    "anemia_at_goal": {
+      "values": ["at_goal", "below_goal", "above_goal", "not_applicable"],
+      "section": "anemia"
+    },
+    "anemia_clinic": {
+      "values": ["enrolled", "referred", "not_indicated", "discharged"],
+      "section": "anemia"
+    },
+    "mbd_at_goal": {
+      "values": ["at_goal", "below_goal", "above_goal", "mixed"],
+      "section": "mbd"
+    },
+    "electrolytes_at_goal": {
+      "values": ["at_goal", "abnormal", "mixed"],
+      "section": "electrolytes"
+    },
+    "pruritus": {
+      "values": ["none", "mild", "moderate", "severe"],
+      "section": "electrolytes"
+    },
+    "smoking_status": {
+      "values": ["never", "former", "current_light", "current_heavy", "vaping"],
+      "section": "tobacco"
+    },
+    "nsaid_status": {
+      "values": ["not_using", "using_otc", "using_prescribed", "using_unknown"],
+      "section": "nsaid"
+    },
+    "ppi_status": {
+      "values": ["not_on", "on_indicated", "on_questionable", "weaning"],
+      "section": "ppi"
+    },
+    "transplant_candidate": {
+      "values": ["yes", "no", "evaluating"],
+      "section": "transplant"
+    },
+    "transplant_current_status": {
+      "values": ["not_referred", "in_workup", "listed", "active", "inactive"],
+      "section": "transplant"
+    },
+    "dialysis_modality_preference": {
+      "values": ["HD", "PD", "HHD", "Conservative", "Undecided"],
+      "section": "dialysis"
+    },
+    "vascular_access_status": {
+      "values": ["none", "AVF_planned", "AVF_maturing", "AVG", "Catheter"],
+      "section": "dialysis"
+    },
+    "surprise_question": {
+      "values": ["yes_surprised", "no_not_surprised"],
+      "section": "acp"
+    },
+    "ccm_enrollment": {
+      "values": ["not_enrolled", "enrolled", "active", "declined", "discharged"],
+      "section": "ccm"
+    },
+    "vaccine_status": {
+      "values": ["current", "due", "declined", "na"],
+      "section": "immunizations"
+    },
+    "hep_b_status": {
+      "values": ["immune", "in_progress", "due"],
+      "section": "immunizations"
+    },
+    "shingrix_status": {
+      "values": ["complete", "due", "na"],
+      "section": "immunizations"
+    },
+    "depression_status": {
+      "values": ["negative", "mild", "moderate", "severe"],
+      "section": "depression"
+    },
+    "fall_risk": {
+      "values": ["low", "moderate", "high"],
+      "section": "fall_risk"
+    },
+    "cpap_compliance": {
+      "values": ["compliant", "non_compliant", "na"],
+      "section": "sleep_apnea"
+    },
+    "transportation": {
+      "values": ["own_car", "rides", "issues"],
+      "section": "sdoh"
+    },
+    "housing_stability": {
+      "values": ["stable", "at_risk", "homeless"],
+      "section": "sdoh"
+    },
+    "food_security": {
+      "values": ["secure", "insecure"],
+      "section": "sdoh"
+    },
+    "health_literacy": {
+      "values": ["adequate", "limited"],
+      "section": "sdoh"
+    },
+    "frailty_status": {
+      "values": ["robust", "pre_frail", "frail"],
+      "section": "physical_performance"
+    },
+    "protein_intake": {
+      "values": ["appropriate", "excessive", "insufficient"],
+      "section": "nutrition"
+    },
+    "restriction_level": {
+      "values": ["not_needed", "moderate", "strict"],
+      "section": "nutrition"
+    },
+    "malnutrition_screen": {
+      "values": ["normal", "at_risk", "malnourished"],
+      "section": "nutrition"
+    },
+    "adherence_assessment": {
+      "values": ["good", "fair", "poor"],
+      "section": "medication_adherence"
+    },
+    "pharmacy_access": {
+      "values": ["good", "limited"],
+      "section": "medication_adherence"
+    },
+    "special_clinic_status": {
+      "values": ["enrolled", "referred", "not_indicated"],
+      "section": "special_clinics"
+    },
+    "diet_adherence": {
+      "values": ["good", "fair", "poor"],
+      "section": "sodium"
+    }
+  },
+
+  "physiological_bounds": {
+    "_comment": "Values outside these ranges are likely data entry errors. From fax-manager-v2 Config.gs.",
+    "potassium":    { "min": 1.5,  "max": 9.0,   "unit": "mEq/L" },
+    "sodium":       { "min": 100,  "max": 180,    "unit": "mEq/L" },
+    "creatinine":   { "min": 0.1,  "max": 25.0,   "unit": "mg/dL" },
+    "egfr":         { "min": 0,    "max": 200,    "unit": "mL/min/1.73m2" },
+    "hemoglobin":   { "min": 2.0,  "max": 25.0,   "unit": "g/dL" },
+    "calcium":      { "min": 4.0,  "max": 18.0,   "unit": "mg/dL" },
+    "phosphorus":   { "min": 0.5,  "max": 15.0,   "unit": "mg/dL" },
+    "bicarbonate":  { "min": 3.0,  "max": 50.0,   "unit": "mEq/L" },
+    "bun":          { "min": 1,    "max": 200,    "unit": "mg/dL" },
+    "albumin":      { "min": 0.5,  "max": 7.0,    "unit": "g/dL" },
+    "pth":          { "min": 1,    "max": 3000,   "unit": "pg/mL" },
+    "hba1c":        { "min": 3.0,  "max": 20.0,   "unit": "%" },
+    "uric_acid":    { "min": 0.5,  "max": 20.0,   "unit": "mg/dL" },
+    "ferritin":     { "min": 1,    "max": 5000,   "unit": "ng/mL" },
+    "tsat":         { "min": 0,    "max": 100,    "unit": "%" },
+    "vitamin_d25":  { "min": 1,    "max": 150,    "unit": "ng/mL" },
+    "systolic_bp":  { "min": 60,   "max": 300,    "unit": "mmHg" },
+    "diastolic_bp": { "min": 20,   "max": 200,    "unit": "mmHg" },
+    "heart_rate":   { "min": 20,   "max": 250,    "unit": "bpm" },
+    "bmi":          { "min": 10,   "max": 80,     "unit": "kg/m2" },
+    "weight":       { "min": 50,   "max": 700,    "unit": "lbs" },
+    "grip_strength":{ "min": 0,    "max": 80,     "unit": "kg" },
+    "gait_speed":   { "min": 0.1,  "max": 3.0,    "unit": "m/s" },
+    "phq2_score":   { "min": 0,    "max": 6,      "unit": "" },
+    "phq9_score":   { "min": 0,    "max": 27,     "unit": "" },
+    "stop_bang":    { "min": 0,    "max": 8,      "unit": "" },
+    "sppb_score":   { "min": 0,    "max": 12,     "unit": "" },
+    "cfs_score":    { "min": 1,    "max": 9,      "unit": "" },
+    "lvef":         { "min": 5,    "max": 85,     "unit": "%" },
+    "o2_saturation":{ "min": 50,   "max": 100,    "unit": "%" }
+  },
+
+  "critical_values": {
+    "_comment": "From fax-manager-v2 Config.gs CRITICAL_VALUES. Trigger red alerts.",
+    "potassium":    { "panic_low": 2.5,  "panic_high": 6.0  },
+    "sodium":       { "panic_low": 120,  "panic_high": 160  },
+    "hemoglobin":   { "panic_low": 6.0,  "panic_high": null },
+    "calcium":      { "panic_low": 6.5,  "panic_high": 13.0 },
+    "phosphorus":   { "panic_low": 1.0,  "panic_high": 7.0  },
+    "creatinine":   { "panic_low": null, "panic_high": 10.0 },
+    "bicarbonate":  { "panic_low": 10,   "panic_high": null },
+    "glucose":      { "panic_low": 40,   "panic_high": 500  }
+  },
+
+  "action_thresholds": {
+    "_comment": "From fax-manager-v2 Config.gs. Trigger agent flags (not panic, but clinical action needed).",
+    "potassium":    { "action_low": 3.0,  "action_high": 5.5  },
+    "hemoglobin":   { "action_low": 8.0,  "action_high": null },
+    "bicarbonate":  { "action_low": 18,   "action_high": null },
+    "calcium":      { "action_low": 8.0,  "action_high": 10.5 },
+    "magnesium":    { "action_low": 1.5,  "action_high": 2.5  }
+  }
+}

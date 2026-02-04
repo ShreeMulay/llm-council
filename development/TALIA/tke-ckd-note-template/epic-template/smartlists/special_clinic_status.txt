@@ -1,0 +1,26 @@
+================================================================================
+SmartList Definition: Special Clinic Status
+================================================================================
+
+SmartList Name: .TKECKD SPECIAL CLINIC STATUS
+SmartList ID: 30074-30076
+Section: Special Clinics (Section 36)
+Field IDs: cardiorenal_metabolic, longevity_clinic, heart_failure_clinic
+
+Options:
+- enrolled
+- referred
+- not_indicated
+
+Default: not_indicated
+
+Notes:
+- enrolled: actively enrolled in specialty clinic
+- referred: referral placed, pending enrollment
+- not_indicated: not a candidate for this clinic
+
+Used for:
+- 30074: Cardiorenal Metabolic Clinic
+- 30075: Longevity Clinic
+- 30076: Heart Failure Clinic
+================================================================================

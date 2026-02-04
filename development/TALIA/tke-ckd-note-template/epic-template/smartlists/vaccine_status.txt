@@ -1,0 +1,29 @@
+================================================================================
+SmartList Definition: Vaccine Status
+================================================================================
+
+SmartList Name: .TKECKD VACCINE STATUS
+SmartList ID: 30054-30059
+Section: Immunizations (Section 28)
+Field IDs: flu_vaccine, pneumococcal_pcv20, covid_vaccine, tdap
+
+Options:
+- current
+- due
+- declined
+- na
+
+Default: due
+
+Notes:
+- current: up to date
+- due: needs vaccination
+- declined: patient declined
+- na: not applicable (age, contraindication)
+
+Used for:
+- 30054: Flu vaccine
+- 30055: Pneumococcal (PCV20)
+- 30057: COVID vaccine
+- 30059: Tdap
+================================================================================

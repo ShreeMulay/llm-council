@@ -1,0 +1,21 @@
+================================================================================
+SmartList Definition: Transplant Candidate
+================================================================================
+
+SmartList Name: .TKECKD TRANSPLANT CANDIDATE
+SmartList ID: 30048
+Section: Transplant Readiness (Section 24)
+Field ID: transplant_candidate
+
+Options:
+- yes
+- no
+- evaluating
+
+Default: (none)
+
+Notes:
+- yes: confirmed transplant candidate
+- no: not a candidate (medical/social contraindications)
+- evaluating: currently being evaluated
+================================================================================

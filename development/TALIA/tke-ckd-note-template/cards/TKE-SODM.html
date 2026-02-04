@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-SODM: Sodium Restriction</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #22C55E; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #22C55E; border-bottom: 1px solid #22C55E; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .target-box { background: #F0FDF4; border: 1px solid #22C55E; padding: 6px; border-radius: 4px; font-size: 9pt; text-align: center; font-weight: bold; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #22C55E; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #22C55E; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #22C55E; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Sodium Restriction</span>
+      <span class="header-code">TKE-SODM</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">SODIUM TARGET</div>
+      <div class="target-box">
+        Target: &lt;2,000 mg sodium per day (about 1 teaspoon salt)
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">DIET ADHERENCE</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Good adherence</div>
+        <div class="checkbox-item"><span class="circle"></span> Fair adherence</div>
+        <div class="checkbox-item"><span class="circle"></span> Poor adherence</div>
+      </div>
+      <div class="field" style="margin-top: 6px;">
+        <span class="field-label">Barriers identified:</span>
+        <span class="field-value"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">IMPACT ON CLINICAL STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> BP well controlled</div>
+        <div class="checkbox-item"><span class="checkbox"></span> BP elevated - sodium likely factor</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Edema present</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Fluid overload</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">EDUCATION PROVIDED</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Reading food labels</div>
+        <div class="checkbox-item"><span class="checkbox"></span> High-sodium foods to avoid</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Restaurant/fast food tips</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Salt substitutes discussed</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue current diet</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Reinforce sodium restriction</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to dietitian</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Provide educational materials</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-SODM-v1.0 | The Kidney Experts | Risk Mitigation
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Why Limit Sodium?</div>
+      <div class="back-content">
+        Too much sodium (salt) raises blood pressure and causes fluid retention. Both of these stress your kidneys and heart. Limiting sodium helps your blood pressure medicines work better and reduces swelling.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">YOUR TARGET</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Less than 2,000 mg sodium per day</strong></li>
+          <li>That's about 1 teaspoon of table salt</li>
+          <li>Most sodium comes from processed and restaurant foods, not the salt shaker</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">HIGH-SODIUM FOODS TO LIMIT</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Canned soups, vegetables, and sauces</li>
+          <li>Deli meats, bacon, sausage, hot dogs</li>
+          <li>Fast food and restaurant meals</li>
+          <li>Chips, pretzels, salted snacks</li>
+          <li>Frozen dinners and pizza</li>
+          <li>Pickles, olives, soy sauce</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">TIPS FOR SUCCESS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Read labels - look for &lt;140mg sodium per serving</li>
+          <li>Cook at home more often</li>
+          <li>Use herbs, spices, lemon, and vinegar for flavor</li>
+          <li>Ask for sauces/dressings on the side when eating out</li>
+          <li>Choose "low sodium" or "no salt added" products</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-SODM-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,30 @@
+================================================================================
+SmartList Definition: Diabetic Status
+================================================================================
+
+SmartList Name: .TKECKD DIABETIC STATUS
+SmartList ID: 30033
+Section: Diabetes Management (Section 12)
+Field ID: diabetic_status
+
+Options:
+- type1
+- type2
+- prediabetic
+- not_diabetic
+- gestational
+
+Default: (none)
+
+Notes:
+- Triggers diabetes section when not "not_diabetic"
+- type1: Type 1 DM (autoimmune)
+- type2: Type 2 DM (most common in CKD)
+- prediabetic: HbA1c 5.7-6.4%
+- gestational: pregnancy-related (rare in nephrology)
+
+Legacy Migration:
+- Maps from {is diabetic?:27021}
+- SmartList ID 27021 -> 30033
+- Expanded to include type1/prediabetic/gestational
+================================================================================

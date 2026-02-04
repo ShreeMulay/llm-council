@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-GRIP: Physical Performance</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #14B8A6; border-bottom: 1px solid #14B8A6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 50%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 50%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .test-box { background: #F0FDFA; border: 1px solid #14B8A6; padding: 6px; margin-bottom: 6px; border-radius: 4px; }
+    .test-title { font-weight: bold; font-size: 9pt; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Physical Performance & Frailty</span>
+      <span class="header-code">TKE-GRIP</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+      <span>MRN: <input type="text" /></span>
+    </div>
+
+    <div class="test-box">
+      <div class="test-title">GRIP STRENGTH (Dynamometer)</div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">Dominant hand:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">kg | Men >=27, Women >=16</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">Non-dominant:</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">kg</div>
+        </div>
+      </div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Low grip strength (sarcopenia risk)</div>
+      </div>
+    </div>
+
+    <div class="test-box">
+      <div class="test-title">30-SECOND SIT-TO-STAND</div>
+      <div class="field">
+        <span class="field-label">Repetitions:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">Target: >=10 reps | <8 = high risk</div>
+    </div>
+
+    <div class="test-box">
+      <div class="test-title">4-METER GAIT SPEED (Optional)</div>
+      <div class="field">
+        <span class="field-label">Speed:</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">m/s | >=0.8 normal | <0.8 = sarcopenia</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">FRAILTY STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Robust</div>
+        <div class="checkbox-item"><span class="circle"></span> Pre-frail</div>
+        <div class="checkbox-item"><span class="circle"></span> Frail</div>
+      </div>
+      <div class="field" style="margin-top: 4px;">
+        <span class="field-label">Clinical Frailty Scale (1-9):</span>
+        <span class="field-value"></span>
+      </div>
+      <div class="field-target">Target: <5 | >=5 = frail</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CONFOUNDERS (Affects interpretation)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Significant edema</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Anemia (Hgb <10)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Acute illness</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Joint pain/arthritis</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Recent hospitalization</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue monitoring</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to renal rehab</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to PT</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Nutrition consult (protein)</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Address anemia first</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Fall risk assessment</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Exercise prescription given</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 15px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-GRIP-v1.0 | The Kidney Experts | 5-9% mortality increase per 1kg grip decrease
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,24 @@
+================================================================================
+SmartList Definition: PCSK9i Status
+================================================================================
+
+SmartList Name: .TKECKD PCSK9I STATUS
+SmartList ID: 30023
+Section: Lipid Therapy (Section 7)
+Field ID: pcsk9i_status
+
+Options:
+- on
+- not_indicated
+- consider
+- prior_auth
+
+Default: not_indicated
+
+Notes:
+- PCSK9 inhibitors for high-risk patients
+- on: currently on PCSK9i
+- not_indicated: not a candidate
+- consider: potential candidate
+- prior_auth: awaiting insurance approval
+================================================================================

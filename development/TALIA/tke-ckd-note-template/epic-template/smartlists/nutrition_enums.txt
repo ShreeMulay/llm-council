@@ -1,0 +1,54 @@
+================================================================================
+SmartList Definitions: Nutrition Assessment
+================================================================================
+
+--- PROTEIN INTAKE ---
+SmartList Name: .TKECKD PROTEIN INTAKE
+SmartList ID: 30068
+Section: Nutrition (Section 34)
+Field ID: protein_intake
+
+Options:
+- appropriate
+- excessive
+- insufficient
+
+Notes:
+- Target: 0.8 g/kg/day for CKD 3-5
+- appropriate: meeting target
+- excessive: > 1.0 g/kg/day
+- insufficient: < 0.6 g/kg/day
+
+--- RESTRICTION LEVEL ---
+SmartList Name: .TKECKD RESTRICTION LEVEL
+SmartList ID: 30069 (K), 30070 (Phos)
+Section: Nutrition (Section 34)
+Field IDs: potassium_restriction, phosphorus_restriction
+
+Options:
+- not_needed
+- moderate
+- strict
+
+Notes:
+- not_needed: no restriction required
+- moderate: limit high-K/Phos foods
+- strict: strict dietary restriction
+
+--- MALNUTRITION SCREEN ---
+SmartList Name: .TKECKD MALNUTRITION SCREEN
+SmartList ID: 30071
+Section: Nutrition (Section 34)
+Field ID: malnutrition_screen
+
+Options:
+- normal
+- at_risk
+- malnourished
+
+Notes:
+- Based on screening tool (e.g., MNA, MUST)
+- normal: no malnutrition risk
+- at_risk: at risk for malnutrition
+- malnourished: confirmed malnutrition
+================================================================================

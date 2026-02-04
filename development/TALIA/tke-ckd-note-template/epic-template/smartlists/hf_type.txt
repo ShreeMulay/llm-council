@@ -1,0 +1,26 @@
+================================================================================
+SmartList Definition: Heart Failure Type
+================================================================================
+
+SmartList Name: .TKECKD HF TYPE
+SmartList ID: 30019
+Section: Heart Failure (Section 6)
+Field ID: hf_type
+
+Options:
+- HFrEF
+- HFmrEF
+- HFpEF
+- Normal
+- None
+
+Default: None
+
+Notes:
+- HFrEF: LVEF <= 40% (reduced ejection fraction)
+- HFmrEF: LVEF 41-49% (mildly reduced)
+- HFpEF: LVEF >= 50% (preserved)
+- Normal: No HF, normal cardiac function
+- None: Not assessed or unknown
+- Triggers HF section when not "None" or "Normal"
+================================================================================

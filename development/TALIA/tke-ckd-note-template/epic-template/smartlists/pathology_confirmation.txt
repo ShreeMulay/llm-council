@@ -1,0 +1,24 @@
+================================================================================
+SmartList Definition: Pathology Confirmation
+================================================================================
+
+SmartList Name: .TKECKD PATHOLOGY CONFIRMATION
+SmartList ID: 30004
+Section: Header (Section 0)
+Field ID: pathology_confirmation
+
+Options:
+- suspected
+- biopsy_confirmed
+
+Default: suspected
+
+Notes:
+- Indicates whether CKD etiology is clinically suspected or biopsy-proven
+- Important for documentation accuracy and research
+
+Legacy Migration:
+- Maps from {suspected/biopsy confirmed:27058}
+- SmartList ID 27058 -> 30004
+- Same enum values maintained
+================================================================================

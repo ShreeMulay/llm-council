@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Visit Type
+================================================================================
+
+SmartList Name: .TKECKD VISIT TYPE
+SmartList ID: 30001
+Section: Header (Section 0)
+Field ID: visit_type
+
+Options:
+- New
+- Follow-up
+- Urgent
+- Telehealth
+
+Default: Follow-up
+
+Notes:
+- Used in both @TKECKD@ and @TKECKD-INIT@ templates
+- @TKECKD-INIT@ defaults to "New"
+- @TKECKD@ defaults to "Follow-up"
+================================================================================

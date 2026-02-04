@@ -1,0 +1,27 @@
+================================================================================
+SmartList Definition: Cardiorenal Syndrome Type
+================================================================================
+
+SmartList Name: .TKECKD CRS TYPE
+SmartList ID: 30020
+Section: Heart Failure (Section 6)
+Field ID: crs_type
+
+Options:
+- Type1
+- Type2
+- Type3
+- Type4
+- Type5
+- NA
+
+Default: NA
+
+Notes:
+- Type 1: Acute HF causing AKI
+- Type 2: Chronic HF causing progressive CKD
+- Type 3: AKI causing acute cardiac dysfunction
+- Type 4: CKD causing chronic cardiac disease
+- Type 5: Systemic condition affecting both (sepsis, amyloid, etc.)
+- NA: Not applicable / no cardiorenal syndrome
+================================================================================

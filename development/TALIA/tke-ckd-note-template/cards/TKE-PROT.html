@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-PROT: Proteinuria</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #3B82F6; border-bottom: 1px solid #3B82F6; padding-bottom: 2px; margin-bottom: 6px; }
+    .field { margin: 4px 0; display: flex; align-items: flex-start; }
+    .field-label { width: 42%; font-size: 9pt; padding-right: 4px; }
+    .field-value { width: 58%; border-bottom: 1px solid #999; min-height: 14px; font-size: 9pt; }
+    .field-target { font-size: 7pt; color: #666; font-style: italic; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 9pt; }
+    .checkbox { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 12px; height: 12px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .required { color: #EF4444; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .two-col { display: flex; gap: 8px; }
+    .two-col > div { flex: 1; }
+    .trend { font-size: 11pt; font-weight: bold; }
+    /* Back of card styles */
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #3B82F6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #3B82F6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #3B82F6; }
+  </style>
+</head>
+<body>
+  <!-- FRONT OF CARD -->
+  <div class="card">
+    <div class="header">
+      <span>Proteinuria / Albuminuria</span>
+      <span class="header-code">TKE-PROT</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">CURRENT VALUES <span class="required">*</span></div>
+      <div class="two-col">
+        <div>
+          <div class="field">
+            <span class="field-label">UACR (current):</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mg/g | Target: &lt;30 (A1)</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">UACR (previous):</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+      <div class="two-col" style="margin-top: 6px;">
+        <div>
+          <div class="field">
+            <span class="field-label">UPCr (current):</span>
+            <span class="field-value"></span>
+          </div>
+          <div class="field-target">mg/g | Target: &lt;500</div>
+        </div>
+        <div>
+          <div class="field">
+            <span class="field-label">UPCr (previous):</span>
+            <span class="field-value"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">ALBUMINURIA STAGE (KDIGO)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> A1 (&lt;30)</div>
+        <div class="checkbox-item"><span class="circle"></span> A2 (30-300)</div>
+        <div class="checkbox-item"><span class="circle"></span> A3 (&gt;300)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TREND <span class="trend">&#8593;&#8595;&#8594;</span></div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> Improving &#8595;</div>
+        <div class="checkbox-item"><span class="circle"></span> Stable &#8594;</div>
+        <div class="checkbox-item"><span class="circle"></span> Worsening &#8593;</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PROTEINURIA STATUS</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="circle"></span> None</div>
+        <div class="checkbox-item"><span class="circle"></span> Microalbuminuria</div>
+        <div class="checkbox-item"><span class="circle"></span> Overt proteinuria</div>
+        <div class="checkbox-item"><span class="circle"></span> Nephrotic range (&gt;3.5g/day)</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Continue current therapy</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Optimize RAAS inhibitor</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add/optimize SGLT2i</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Add finerenone</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Recheck in: _______</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Nephrology workup</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">NOTES</div>
+      <div style="border: 1px solid #ccc; min-height: 30px; padding: 4px;"></div>
+    </div>
+
+    <div class="footer">
+      TKE-PROT-v1.0 | The Kidney Experts | KDIGO 2024: Target UACR &lt;30 mg/g
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- BACK OF CARD -->
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Understanding Protein in Your Urine</div>
+      <div class="back-content">
+        Your kidneys filter your blood and normally keep protein inside your body. When protein leaks into your urine, it can be a sign that your kidneys need extra care. Finding and treating this early helps protect your kidneys.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">YOUR TARGETS</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>UACR:</strong> Less than 30 mg/g is the goal</li>
+          <li><strong>Trend:</strong> We want to see your numbers going down or staying stable</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHAT YOU CAN DO</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Take your blood pressure and kidney medicines every day</li>
+          <li>Keep your blood pressure under control (goal: less than 120/80)</li>
+          <li>If you have diabetes, keep your blood sugar in target range</li>
+          <li>Limit salt in your diet (less than 2 grams per day)</li>
+          <li>Stay active - aim for 30 minutes of walking most days</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHEN TO CALL US</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Swelling in your legs, ankles, or around your eyes</li>
+          <li>Foamy or bubbly urine</li>
+          <li>Sudden weight gain (more than 3 pounds in a day)</li>
+          <li>Feeling very tired or short of breath</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>Video</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-PROT-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

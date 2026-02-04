@@ -1,0 +1,29 @@
+================================================================================
+SmartList Definition: MBD at Goal
+================================================================================
+
+SmartList Name: .TKECKD MBD AT GOAL
+SmartList ID: 30041
+Section: Mineral Bone Disease (Section 16)
+Field ID: mbd_at_goal
+
+Options:
+- at_goal
+- below_goal
+- above_goal
+- mixed
+
+Default: (none)
+
+Notes:
+- Per KDIGO CKD-MBD guidelines
+- Targets: PTH 2-9x ULN, Ca 8.4-10.2, Phos 2.5-4.5, Vit D 30-50
+- at_goal: all parameters in range
+- below_goal: one or more below target
+- above_goal: one or more above target
+- mixed: some high, some low
+
+Legacy Migration:
+- Maps from {At Goal? TKE Mineral Bone Disease:27037}
+- SmartList ID 27037 -> 30041
+================================================================================

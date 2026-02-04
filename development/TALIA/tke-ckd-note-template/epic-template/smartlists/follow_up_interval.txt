@@ -1,0 +1,36 @@
+================================================================================
+SmartList Definition: Follow-Up Interval
+================================================================================
+
+SmartList Name: .TKECKD FOLLOW UP INTERVAL
+SmartList ID: 30009
+Section: Header (Section 0)
+Field ID: follow_up_interval
+
+Options:
+- 1 week
+- 2 weeks
+- 1 month
+- 6 weeks
+- 2 months
+- 3 months
+- 4 months
+- 6 months
+- 12 months
+- PRN
+- Discharge to PCP
+
+Default: 3 months
+
+Notes:
+- Auto-populated from previous note when available
+- KDIGO-recommended intervals based on risk category:
+  - Low risk: 12 months
+  - Moderate risk: 6 months
+  - High risk: 3 months
+  - Very High risk: 1-3 months
+
+Legacy Migration:
+- Maps from {Follow Up:27013}
+- SmartList ID 27013 -> 30009
+================================================================================

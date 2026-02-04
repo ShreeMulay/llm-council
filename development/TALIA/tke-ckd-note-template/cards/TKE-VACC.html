@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TKE-VACC: Immunizations</title>
+  <style>
+    @page { size: 5.5in 8.5in; margin: 0.25in; }
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } .page-break { page-break-after: always; } }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.3; }
+    .card { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 12pt; display: flex; justify-content: space-between; align-items: center; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); }
+    .header-code { font-size: 10pt; opacity: 0.9; }
+    .patient-info { display: flex; gap: 8px; margin-bottom: 0.15in; font-size: 9pt; border-bottom: 1px solid #ddd; padding-bottom: 6px; }
+    .patient-info span { flex: 1; }
+    .patient-info input { border: none; border-bottom: 1px solid #999; width: 100%; }
+    .section { margin-bottom: 0.12in; }
+    .section-title { font-weight: bold; font-size: 9pt; color: #14B8A6; border-bottom: 1px solid #14B8A6; padding-bottom: 2px; margin-bottom: 6px; }
+    .vaccine-row { display: flex; align-items: center; margin: 4px 0; font-size: 9pt; }
+    .vaccine-name { width: 35%; font-weight: bold; }
+    .vaccine-status { width: 65%; display: flex; gap: 4px; }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .checkbox-item { display: flex; align-items: center; gap: 3px; font-size: 8pt; }
+    .checkbox { width: 10px; height: 10px; border: 1.5px solid #333; display: inline-block; border-radius: 2px; }
+    .circle { width: 10px; height: 10px; border: 1.5px solid #333; display: inline-block; border-radius: 50%; }
+    .footer { margin-top: auto; font-size: 7pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 4px; }
+    .card-back { width: 5in; height: 8in; border: 1px solid #ccc; padding: 0.2in; display: flex; flex-direction: column; }
+    .back-header { background: #14B8A6; color: white; padding: 8px 12px; font-weight: bold; font-size: 11pt; margin: -0.2in -0.2in 0.15in -0.2in; width: calc(100% + 0.4in); text-align: center; }
+    .back-section { margin-bottom: 0.15in; }
+    .back-section-title { font-weight: bold; font-size: 10pt; color: #14B8A6; margin-bottom: 6px; }
+    .back-content { font-size: 9pt; line-height: 1.4; }
+    .back-list { margin-left: 12px; }
+    .back-list li { margin-bottom: 4px; }
+    .qr-placeholder { width: 60px; height: 60px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 7pt; color: #999; }
+    .contact { font-size: 9pt; font-weight: bold; color: #14B8A6; }
+    .priority-box { background: #FEF3C7; border: 1px solid #F59E0B; padding: 4px 6px; border-radius: 3px; font-size: 8pt; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="header">
+      <span>Immunizations</span>
+      <span class="header-code">TKE-VACC</span>
+    </div>
+    
+    <div class="patient-info">
+      <span>Patient: <input type="text" /></span>
+      <span>DOB: <input type="text" /></span>
+      <span>Date: <input type="text" /></span>
+    </div>
+
+    <div class="section">
+      <div class="section-title">VACCINE STATUS</div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">Flu:</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Current</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+          <div class="checkbox-item"><span class="circle"></span> Declined</div>
+        </div>
+      </div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">Pneumococcal (PCV20):</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Current</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+          <div class="checkbox-item"><span class="circle"></span> Declined</div>
+        </div>
+      </div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">Hepatitis B:</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Immune</div>
+          <div class="checkbox-item"><span class="circle"></span> In progress</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+        </div>
+      </div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">COVID:</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Current</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+          <div class="checkbox-item"><span class="circle"></span> Declined</div>
+        </div>
+      </div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">Shingrix (age 50+):</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Complete</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+          <div class="checkbox-item"><span class="circle"></span> N/A</div>
+        </div>
+      </div>
+      
+      <div class="vaccine-row">
+        <span class="vaccine-name">Tdap:</span>
+        <div class="vaccine-status">
+          <div class="checkbox-item"><span class="circle"></span> Current</div>
+          <div class="checkbox-item"><span class="circle"></span> Due</div>
+          <div class="checkbox-item"><span class="circle"></span> Declined</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">TRANSPLANT CANDIDATE PRIORITY</div>
+      <div class="priority-box">
+        <strong>If transplant candidate:</strong> Hepatitis B immunity required before listing
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">PLAN (Provider)</div>
+      <div class="checkbox-group">
+        <div class="checkbox-item"><span class="checkbox"></span> Administer vaccines today</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Order vaccines for next visit</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Refer to pharmacy/PCP</div>
+        <div class="checkbox-item"><span class="checkbox"></span> Check Hep B titer</div>
+        <div class="checkbox-item"><span class="checkbox"></span> All vaccines current</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      TKE-VACC-v1.0 | The Kidney Experts | Screening Domain
+    </div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <div class="card-back">
+    <div class="back-header">WHAT THIS MEANS FOR YOU</div>
+    
+    <div class="back-section">
+      <div class="back-section-title">Why Vaccines Matter for Kidney Patients</div>
+      <div class="back-content">
+        Kidney disease can weaken your immune system, making infections more dangerous. Vaccines help protect you from serious illnesses. Some vaccines are especially important if you're considering a transplant.
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">RECOMMENDED VACCINES</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li><strong>Flu shot:</strong> Every year in the fall</li>
+          <li><strong>Pneumonia (PCV20):</strong> One dose for most adults</li>
+          <li><strong>Hepatitis B:</strong> Series of 3-4 shots (required for transplant)</li>
+          <li><strong>COVID:</strong> Stay up to date with boosters</li>
+          <li><strong>Shingles (Shingrix):</strong> 2 doses if age 50+</li>
+          <li><strong>Tdap:</strong> Every 10 years</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">HEPATITIS B - IMPORTANT!</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>Kidney patients are at higher risk for Hepatitis B</li>
+          <li>You need immunity BEFORE a transplant</li>
+          <li>May need higher doses or more shots</li>
+          <li>We check your blood to confirm immunity</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="back-section">
+      <div class="back-section-title">WHERE TO GET VACCINES</div>
+      <div class="back-content">
+        <ul class="back-list">
+          <li>At our office during your visit</li>
+          <li>Your primary care doctor</li>
+          <li>Local pharmacy (CVS, Walgreens, etc.)</li>
+          <li>Health department</li>
+        </ul>
+      </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: auto;">
+      <div class="qr-placeholder">QR Code<br/>CDC Info</div>
+      <div style="text-align: right;">
+        <div class="contact">THE KIDNEY EXPERTS</div>
+        <div style="font-size: 9pt;">(731) 660-0014</div>
+        <div style="font-size: 7pt; color: #666;">TKE-VACC-v1.0</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

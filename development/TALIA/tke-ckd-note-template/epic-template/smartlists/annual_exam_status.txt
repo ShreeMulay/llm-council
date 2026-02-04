@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Annual Exam Status
+================================================================================
+
+SmartList Name: .TKECKD ANNUAL EXAM STATUS
+SmartList ID: 30035 (eye), 30036 (foot)
+Section: Diabetes Management (Section 12)
+Field ID: annual_eye_exam, annual_foot_exam
+
+Options:
+- done
+- due
+- overdue
+
+Default: due
+
+Notes:
+- Tracks annual diabetic screening exams
+- done: completed within past 12 months
+- due: due within next 3 months
+- overdue: > 12 months since last exam
+================================================================================

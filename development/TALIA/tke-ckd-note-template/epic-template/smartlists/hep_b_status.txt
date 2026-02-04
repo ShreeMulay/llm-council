@@ -1,0 +1,22 @@
+================================================================================
+SmartList Definition: Hepatitis B Status
+================================================================================
+
+SmartList Name: .TKECKD HEP B STATUS
+SmartList ID: 30056
+Section: Immunizations (Section 28)
+Field ID: hep_b
+
+Options:
+- immune
+- in_progress
+- due
+
+Default: due
+
+Notes:
+- Critical for transplant candidates
+- immune: HBsAb positive (> 10 mIU/mL)
+- in_progress: vaccination series started
+- due: needs vaccination
+================================================================================

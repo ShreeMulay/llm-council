@@ -1,0 +1,21 @@
+================================================================================
+SmartList Definition: MRA Not On Reason
+================================================================================
+
+SmartList Name: .TKECKD MRA NOT ON REASON
+SmartList ID: 30030
+Section: MRA (Section 10)
+Field ID: not_on_reason (mra)
+
+Options:
+- hyperkalemia
+- not_indicated
+- other
+
+Default: (none)
+
+Notes:
+- Document reason if not on MRA
+- hyperkalemia: K+ > 5.0 mEq/L at baseline
+- not_indicated: does not meet criteria (non-diabetic, no proteinuria)
+================================================================================
