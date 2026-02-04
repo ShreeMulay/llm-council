@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premier Dialysis - Policy Search</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-content" onclick="resetToHome()" title="Return to home">
+      <h1>Premier Dialysis</h1>
+      <p class="subtitle">Policies & Procedures Search</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="search-container">
+      <form id="search-form" onsubmit="handleSearch(event)">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search policies... e.g. 'What are patient rights in Florida?'"
+            autocomplete="off"
+            autofocus
+          />
+          <button type="submit" id="search-btn">Search</button>
+        </div>
+      </form>
+
+      <div id="results-area" class="results-area hidden">
+        <div id="loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span>Searching policies...</span>
+        </div>
+
+        <div id="answer-section" class="answer-section hidden">
+          <h3>Answer</h3>
+          <div id="answer-text" class="answer-text"></div>
+          <p class="answer-disclaimer">AI-generated summary. Always verify with the source documents below.</p>
+          
+          <!-- Feedback buttons -->
+          <div id="feedback-section" class="feedback-section">
+            <span class="feedback-label">Was this helpful?</span>
+            <button class="feedback-btn" data-vote="up" onclick="submitFeedback('up')" title="Helpful">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+            <button class="feedback-btn" data-vote="down" onclick="submitFeedback('down')" title="Not helpful">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+            </button>
+            <span id="feedback-thanks" class="feedback-thanks hidden">Thank you!</span>
+          </div>
+        </div>
+
+        <div id="sources-section" class="sources-section hidden">
+          <h3>Sources</h3>
+          <div id="sources-list" class="sources-list"></div>
+        </div>
+
+        <div id="error-section" class="error-section hidden">
+          <p id="error-text"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent searches section -->
+    <section id="recent-searches" class="recent-section hidden">
+      <div class="recent-header">
+        <h2>Recent Searches</h2>
+        <button class="clear-recent-btn" onclick="clearRecentSearches()">Clear</button>
+      </div>
+      <div id="recent-chips" class="recent-chips"></div>
+    </section>
+
+    <section id="examples-section" class="help-section">
+      <h2>Example Questions</h2>
+      <div class="examples">
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What is the admission and discharge policy?</button>
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What are patient rights in Florida?</button>
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What are the Medical Director responsibilities?</button>
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What is the infection control protocol?</button>
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What are the staffing requirements?</button>
+        <button class="example-chip" onclick="askQuestion(this.textContent)">What is the advance directives policy?</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Powered by Google Vertex AI Search &middot; Documents synced from Google Drive</p>
+    <p class="footer-note">Answers are generated from Premier Dialysis P&P documents only. Always verify critical decisions with your supervisor.</p>
+  </footer>
+
+  <!-- Document Preview Side Panel -->
+  <aside id="doc-panel" class="doc-panel hidden">
+    <div class="doc-panel-header">
+      <h3 id="doc-panel-title">Document</h3>
+      <div class="doc-panel-actions">
+        <select id="viewer-mode" onchange="handleViewerModeChange()">
+          <option value="embedded">Embedded Viewer</option>
+          <option value="google">Google Docs Viewer</option>
+          <option value="newtab">Open in New Tab</option>
+        </select>
+        <button class="close-btn" onclick="closeDocPanel()" title="Close">&times;</button>
+      </div>
+    </div>
+    <div class="doc-panel-content">
+      <div id="doc-loading" class="doc-loading hidden">
+        <div class="spinner"></div>
+        <span>Loading document...</span>
+      </div>
+      <iframe id="doc-viewer" src="" title="Document viewer"></iframe>
+    </div>
+    <div class="doc-panel-footer">
+      <span id="doc-meta"></span>
+      <a id="doc-download" href="#" download class="download-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download PDF
+      </a>
+    </div>
+  </aside>
+  <div id="doc-overlay" class="doc-overlay hidden" onclick="closeDocPanel()"></div>
+
+  <!-- Feedback Comment Modal -->
+  <div id="feedback-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>What could be improved?</h3>
+      <textarea id="feedback-comment" placeholder="Help us improve by describing what was wrong or missing..." rows="4"></textarea>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeFeedbackModal()">Skip</button>
+        <button class="btn-primary" onclick="submitFeedbackWithComment()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== State ====================
+    let currentResults = [];
+    let currentQuery = '';
+    let currentAnswer = '';
+    let currentDocData = null;
+    let feedbackSubmitted = false;
+
+    const RECENT_SEARCHES_KEY = 'pd-recent-searches';
+    const VIEWER_MODE_KEY = 'pd-viewer-mode';
+    const MAX_RECENT = 10;
+
+    // ==================== Initialization ====================
+    document.addEventListener('DOMContentLoaded', () => {
+      renderRecentSearches();
+      loadViewerPreference();
+    });
+
+    // ==================== Home/Reset ====================
+    function resetToHome() {
+      document.getElementById('search-input').value = '';
+      document.getElementById('results-area').classList.add('hidden');
+      document.getElementById('examples-section').classList.remove('hidden');
+      document.getElementById('answer-section').classList.add('hidden');
+      document.getElementById('sources-section').classList.add('hidden');
+      document.getElementById('error-section').classList.add('hidden');
+      currentResults = [];
+      currentQuery = '';
+      currentAnswer = '';
+      feedbackSubmitted = false;
+      renderRecentSearches();
+    }
+
+    // ==================== Search ====================
+    function askQuestion(query) {
+      document.getElementById('search-input').value = query;
+      handleSearch(new Event('submit'));
+    }
+
+    async function handleSearch(e) {
+      e.preventDefault();
+      const query = document.getElementById('search-input').value.trim();
+      if (!query) return;
+
+      currentQuery = query;
+      feedbackSubmitted = false;
+      resetFeedbackUI();
+
+      // Show results area, hide examples
+      document.getElementById('results-area').classList.remove('hidden');
+      document.getElementById('examples-section').classList.add('hidden');
+      document.getElementById('recent-searches').classList.add('hidden');
+      document.getElementById('loading').classList.remove('hidden');
+      document.getElementById('answer-section').classList.add('hidden');
+      document.getElementById('sources-section').classList.add('hidden');
+      document.getElementById('error-section').classList.add('hidden');
+
+      try {
+        const response = await fetch('/api/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query }),
+        });
+
+        const data = await response.json();
+        document.getElementById('loading').classList.add('hidden');
+
+        if (data.error) {
+          document.getElementById('error-section').classList.remove('hidden');
+          document.getElementById('error-text').textContent = 'Search error: ' + data.error;
+          return;
+        }
+
+        // Save to recent searches
+        saveRecentSearch(query);
+
+        // Store results globally
+        currentResults = data.results || [];
+        currentAnswer = data.summary || '';
+
+        // Show summary/answer
+        if (data.summary) {
+          document.getElementById('answer-section').classList.remove('hidden');
+          document.getElementById('answer-text').innerHTML = formatAnswer(data.summary);
+        }
+
+        // Show source documents
+        if (data.results && data.results.length > 0) {
+          document.getElementById('sources-section').classList.remove('hidden');
+          const sourcesList = document.getElementById('sources-list');
+          sourcesList.innerHTML = data.results.map((r, i) => `
+            <div class="source-card" data-index="${i}" onclick="openDocPanel(${i})">
+              <div class="source-header">
+                <span class="source-number">${i + 1}</span>
+                <span class="source-title">${escapeHtml(r.title)}</span>
+              </div>
+              ${r.snippets && r.snippets.length > 0 ? `<p class="source-snippet">${escapeHtml(r.snippets[0])}</p>` : ''}
+              ${r.segments && r.segments.length > 0 ? r.segments.map(s =>
+                `<div class="source-segment">
+                  ${s.pageNumber ? `<span class="page-badge">Page ${s.pageNumber}</span>` : ''}
+                  <p>${escapeHtml(s.content || '').substring(0, 300)}${(s.content || '').length > 300 ? '...' : ''}</p>
+                </div>`
+              ).join('') : ''}
+              <button class="view-doc-btn" onclick="event.stopPropagation(); openDocPanel(${i})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                View Document
+              </button>
+            </div>
+          `).join('');
+        }
+
+        // Show corrected query if applicable
+        if (data.correctedQuery) {
+          const notice = document.createElement('p');
+          notice.className = 'corrected-query';
+          notice.innerHTML = `Showing results for: <strong>${escapeHtml(data.correctedQuery)}</strong>`;
+          document.getElementById('answer-section').prepend(notice);
+        }
+
+      } catch (err) {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('error-section').classList.remove('hidden');
+        document.getElementById('error-text').textContent = 'Failed to connect to search service. Please try again.';
+        console.error('Search error:', err);
+      }
+    }
+
+    function formatAnswer(text) {
+      // Convert markdown-style citations [1], [2] to clickable badges
+      return escapeHtml(text).replace(/\[(\d+)\]/g, (match, num) => {
+        const index = parseInt(num) - 1;
+        return `<span class="citation-badge clickable" onclick="scrollToSource(${index})" title="View source ${num}">[${num}]</span>`;
+      });
+    }
+
+    function scrollToSource(index) {
+      const card = document.querySelector(`.source-card[data-index="${index}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('highlight');
+        setTimeout(() => card.classList.remove('highlight'), 2000);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ==================== Document Panel ====================
+    function loadViewerPreference() {
+      const saved = localStorage.getItem(VIEWER_MODE_KEY);
+      if (saved) {
+        document.getElementById('viewer-mode').value = saved;
+      }
+    }
+
+    function handleViewerModeChange() {
+      const mode = document.getElementById('viewer-mode').value;
+      localStorage.setItem(VIEWER_MODE_KEY, mode);
+      
+      // If panel is open and we have doc data, update viewer
+      if (currentDocData && !document.getElementById('doc-panel').classList.contains('hidden')) {
+        updateViewer(currentDocData, mode);
+      }
+    }
+
+    async function openDocPanel(index) {
+      const result = currentResults[index];
+      if (!result) return;
+
+      const panel = document.getElementById('doc-panel');
+      const overlay = document.getElementById('doc-overlay');
+      const title = document.getElementById('doc-panel-title');
+      const viewer = document.getElementById('doc-viewer');
+      const loading = document.getElementById('doc-loading');
+      const mode = document.getElementById('viewer-mode').value;
+
+      // Show panel with loading state
+      title.textContent = result.title || 'Document';
+      viewer.src = '';
+      viewer.classList.add('hidden');
+      loading.classList.remove('hidden');
+      panel.classList.remove('hidden');
+      panel.classList.add('open');
+      overlay.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+
+      try {
+        // Fetch signed URL from server
+        const fileUri = result.link || '';
+        const response = await fetch(`/api/document?file=${encodeURIComponent(fileUri)}&title=${encodeURIComponent(result.title || '')}`);
+        const data = await response.json();
+
+        if (data.error) {
+          loading.innerHTML = `<p class="error-text">Error: ${escapeHtml(data.error)}</p>`;
+          return;
+        }
+
+        currentDocData = data;
+        
+        // Update meta info
+        document.getElementById('doc-meta').textContent = data.filePath || '';
+        document.getElementById('doc-download').href = data.downloadUrl || '#';
+
+        // Update viewer based on mode
+        updateViewer(data, mode);
+
+      } catch (err) {
+        console.error('Document fetch error:', err);
+        loading.innerHTML = '<p class="error-text">Failed to load document. Please try again.</p>';
+      }
+    }
+
+    function updateViewer(docData, mode) {
+      const viewer = document.getElementById('doc-viewer');
+      const loading = document.getElementById('doc-loading');
+
+      if (mode === 'newtab') {
+        // Open in new tab and close panel
+        window.open(docData.signedUrl, '_blank');
+        closeDocPanel();
+        return;
+      }
+
+      // Show iframe with appropriate URL
+      loading.classList.add('hidden');
+      viewer.classList.remove('hidden');
+
+      if (mode === 'google') {
+        viewer.src = docData.googleViewerUrl;
+      } else {
+        // Embedded mode - use Google viewer in iframe (most reliable)
+        viewer.src = docData.googleViewerUrl;
+      }
+    }
+
+    function closeDocPanel() {
+      const panel = document.getElementById('doc-panel');
+      const overlay = document.getElementById('doc-overlay');
+      const viewer = document.getElementById('doc-viewer');
+      const loading = document.getElementById('doc-loading');
+
+      panel.classList.remove('open');
+      overlay.classList.add('hidden');
+      document.body.style.overflow = '';
+      
+      // Clean up after animation
+      setTimeout(() => {
+        panel.classList.add('hidden');
+        viewer.src = '';
+        viewer.classList.add('hidden');
+        loading.classList.remove('hidden');
+        loading.innerHTML = '<div class="spinner"></div><span>Loading document...</span>';
+        currentDocData = null;
+      }, 300);
+    }
+
+    // ==================== Recent Searches ====================
+    function saveRecentSearch(query) {
+      let recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+      // Remove if exists, add to front
+      recent = recent.filter(q => q.toLowerCase() !== query.toLowerCase());
+      recent.unshift(query);
+      // Keep max
+      recent = recent.slice(0, MAX_RECENT);
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(recent));
+    }
+
+    function renderRecentSearches() {
+      const recent = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+      const container = document.getElementById('recent-searches');
+      const chipsContainer = document.getElementById('recent-chips');
+
+      if (recent.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      chipsContainer.innerHTML = recent.map(q => `
+        <button class="recent-chip" onclick="askQuestion('${escapeHtml(q).replace(/'/g, "\\'")}')">${escapeHtml(q)}</button>
+      `).join('');
+      
+      container.classList.remove('hidden');
+    }
+
+    function clearRecentSearches() {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+      document.getElementById('recent-searches').classList.add('hidden');
+    }
+
+    // ==================== Feedback ====================
+    function resetFeedbackUI() {
+      document.querySelectorAll('.feedback-btn').forEach(btn => {
+        btn.classList.remove('selected', 'disabled');
+        btn.disabled = false;
+      });
+      document.getElementById('feedback-thanks').classList.add('hidden');
+    }
+
+    async function submitFeedback(vote) {
+      if (feedbackSubmitted) return;
+
+      // Visual feedback
+      const buttons = document.querySelectorAll('.feedback-btn');
+      buttons.forEach(btn => {
+        if (btn.dataset.vote === vote) {
+          btn.classList.add('selected');
+        }
+        btn.classList.add('disabled');
+        btn.disabled = true;
+      });
+
+      if (vote === 'down') {
+        // Show comment modal for negative feedback
+        document.getElementById('feedback-modal').classList.remove('hidden');
+        return;
+      }
+
+      // Submit positive feedback immediately
+      await sendFeedback(vote, '');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+      document.getElementById('feedback-comment').value = '';
+      // Submit without comment
+      sendFeedback('down', '');
+    }
+
+    async function submitFeedbackWithComment() {
+      const comment = document.getElementById('feedback-comment').value.trim();
+      document.getElementById('feedback-modal').classList.add('hidden');
+      document.getElementById('feedback-comment').value = '';
+      await sendFeedback('down', comment);
+    }
+
+    async function sendFeedback(vote, comment) {
+      feedbackSubmitted = true;
+      
+      try {
+        await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: currentQuery,
+            answerSnippet: currentAnswer.substring(0, 500),
+            vote,
+            comment,
+            sources: currentResults.map(r => r.title),
+          }),
+        });
+      } catch (err) {
+        console.error('Feedback error:', err);
+      }
+
+      // Show thank you
+      document.getElementById('feedback-thanks').classList.remove('hidden');
+    }
+
+    // Close modal on overlay click
+    document.getElementById('feedback-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'feedback-modal') {
+        closeFeedbackModal();
+      }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Escape to close panels/modals
+      if (e.key === 'Escape') {
+        if (!document.getElementById('feedback-modal').classList.contains('hidden')) {
+          closeFeedbackModal();
+        } else if (!document.getElementById('doc-panel').classList.contains('hidden')) {
+          closeDocPanel();
+        }
+      }
+    });
+  </script>
+</body>
+</html>

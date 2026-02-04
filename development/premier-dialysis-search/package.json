@@ -1,0 +1,15 @@
+{
+  "name": "premier-dialysis-search",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^8.3.0",
+    "@google-cloud/storage": "^7.18.0",
+    "pdfjs-dist": "^5.4.624"
+  }
+}
