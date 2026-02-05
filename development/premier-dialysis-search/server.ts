@@ -203,6 +203,10 @@ async function handleDocument(req: Request): Promise<Response> {
       expires: Date.now() + 60 * 60 * 1000, // 1 hour
     });
 
+    // Note: GCS metadata.updated reflects file upload time, not policy revision date
+    // The actual revision date is embedded in the document content itself
+    // So we don't show a misleading "updated" date in the UI
+
     // Generate Google Docs viewer URL
     const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(signedUrl)}&embedded=true`;
 
@@ -346,6 +350,167 @@ async function handleAnswer(req: Request): Promise<Response> {
   });
 }
 
+// Handle follow-up questions generation (context-aware)
+async function handleFollowups(req: Request): Promise<Response> {
+  try {
+    const body = await req.json() as { query?: string; answer?: string };
+    const { query, answer } = body;
+
+    if (!query || !answer) {
+      return Response.json(
+        { error: "Missing required fields: query, answer" },
+        { status: 400 }
+      );
+    }
+
+    // Generate contextual follow-ups based on the query and answer content
+    const followups = generateContextualFollowups(query, answer);
+    return Response.json({ followups, source: "contextual" });
+  } catch (err) {
+    console.error("Follow-up generation error:", err);
+    return Response.json({ followups: [], source: "error" });
+  }
+}
+
+// Generate contextual follow-up questions based on query and answer
+function generateContextualFollowups(query: string, answer: string): string[] {
+  const combined = (query + " " + answer).toLowerCase();
+  
+  // Topic-specific follow-ups - check most specific first
+  const topicFollowups: Array<{ keywords: string[]; questions: string[] }> = [
+    // Peritonitis specific
+    {
+      keywords: ["peritonitis", "peritoneal infection"],
+      questions: [
+        "What antibiotics are used for peritonitis treatment?",
+        "When should a patient call about peritonitis symptoms?",
+        "How do I document a peritonitis episode?",
+      ],
+    },
+    // PD/Peritoneal Dialysis
+    {
+      keywords: ["peritoneal dialysis", "pd ", " pd ", "capd", "apd", "dwell"],
+      questions: [
+        "What is the proper exit site care procedure?",
+        "How do I handle a PD catheter malfunction?",
+        "What are the signs of PD-related complications?",
+      ],
+    },
+    // Infection control
+    {
+      keywords: ["infection", "bloodborne", "exposure", "contamination"],
+      questions: [
+        "What PPE is required for this procedure?",
+        "How do I report an exposure incident?",
+        "What are the hand hygiene requirements?",
+      ],
+    },
+    // Emergency/adverse reactions
+    {
+      keywords: ["emergency", "adverse", "reaction", "crisis", "code"],
+      questions: [
+        "Who should be notified during an emergency?",
+        "What documentation is required after the event?",
+        "What supplies should be readily available?",
+      ],
+    },
+    // Medications
+    {
+      keywords: ["medication", "antibiotic", "drug", "dose", "vancomycin", "cefepime", "heparin"],
+      questions: [
+        "What is the medication administration schedule?",
+        "How should this medication be stored?",
+        "What are the signs of an adverse drug reaction?",
+      ],
+    },
+    // Patient education/training
+    {
+      keywords: ["training", "education", "competency", "teach", "instruct"],
+      questions: [
+        "How is patient competency verified?",
+        "What topics must be covered in training?",
+        "How often should retraining occur?",
+      ],
+    },
+    // Documentation
+    {
+      keywords: ["document", "chart", "record", "log", "emr"],
+      questions: [
+        "What must be documented for each treatment?",
+        "How long are records retained?",
+        "Who can access patient records?",
+      ],
+    },
+    // Staffing
+    {
+      keywords: ["staff", "nurse", "employee", "ratio", "certification"],
+      questions: [
+        "What certifications are required?",
+        "What is the required staffing ratio?",
+        "How is competency evaluated?",
+      ],
+    },
+    // Patient rights
+    {
+      keywords: ["rights", "grievance", "complaint", "consent"],
+      questions: [
+        "How does a patient file a grievance?",
+        "What consent is required?",
+        "How is patient privacy protected?",
+      ],
+    },
+    // Admission/discharge
+    {
+      keywords: ["admission", "discharge", "transfer", "eligibility"],
+      questions: [
+        "What assessments are required?",
+        "What are the eligibility criteria?",
+        "What discharge planning is needed?",
+      ],
+    },
+    // Equipment/supplies
+    {
+      keywords: ["equipment", "supply", "supplies", "machine", "cycler", "catheter"],
+      questions: [
+        "How should equipment be maintained?",
+        "What is the process for supply ordering?",
+        "How are equipment issues reported?",
+      ],
+    },
+  ];
+
+  // Find the best matching topic
+  for (const topic of topicFollowups) {
+    if (topic.keywords.some(kw => combined.includes(kw))) {
+      return topic.questions;
+    }
+  }
+
+  // If no specific topic matched, generate based on the query type
+  if (combined.includes("what") || combined.includes("how")) {
+    return [
+      "Who is responsible for this procedure?",
+      "How often should this be reviewed?",
+      "What documentation is required?",
+    ];
+  }
+
+  if (combined.includes("when") || combined.includes("schedule")) {
+    return [
+      "What triggers this action?",
+      "Who should be notified?",
+      "How is this tracked?",
+    ];
+  }
+
+  // Final fallback - procedure-oriented questions
+  return [
+    "What are the step-by-step procedures?",
+    "Who oversees compliance with this policy?",
+    "What training is required for this?",
+  ];
+}
+
 // Serve static files from public/
 const publicDir = import.meta.dir + "/firebase/public";
 
@@ -366,6 +531,9 @@ const server = Bun.serve({
     }
     if (url.pathname === "/api/feedback" && req.method === "POST") {
       return handleFeedback(req);
+    }
+    if (url.pathname === "/api/followups" && req.method === "POST") {
+      return handleFollowups(req);
     }
     if (url.pathname === "/api/health") {
       return Response.json({ status: "ok", project: PROJECT_ID, engine: ENGINE_ID, bucket: BUCKET_NAME });

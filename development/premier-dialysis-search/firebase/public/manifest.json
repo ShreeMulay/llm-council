@@ -1,0 +1,26 @@
+{
+  "name": "Premier Dialysis - Policy Search",
+  "short_name": "PD Policies",
+  "description": "Search Premier Dialysis policies and procedures",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#8224e3",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://premier-dialysis.com/wp-content/uploads/2025/04/Logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://premier-dialysis.com/wp-content/uploads/2025/04/Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "en-US"
+}
