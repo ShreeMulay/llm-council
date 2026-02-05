@@ -8,6 +8,8 @@ import type {
   AttentionItem,
   EncounterProgress,
   UserRole,
+  AIInterpretationData,
+  SparklinePoint,
 } from "@/types/schema"
 import { getCKDStage, getAlbuminuriaStage, calculateGDMTCompliance } from "@/lib/utils"
 
@@ -32,6 +34,12 @@ interface EncounterState {
 
   // Section States (AI-first workflow)
   sectionStates: Record<string, SectionState>
+
+  // AI Interpretations per section
+  aiInterpretations: Record<string, AIInterpretationData>
+
+  // Sparkline trend data per metric key
+  sparklineData: Record<string, SparklinePoint[]>
 
   // UI State
   activeDomainIndex: number
@@ -71,13 +79,20 @@ interface EncounterState {
   checkAlerts: (sections: Section[], criticalValues: Record<string, { panic_low: number | null; panic_high: number | null }>) => void
   clearEncounter: () => void
 
-  // New Phase 10 actions
+  // Phase 10 actions
   setSectionState: (sectionId: string, state: SectionState) => void
   setDashboardOpen: (open: boolean) => void
   setCommandPaletteOpen: (open: boolean) => void
   setChangedOnlyFilter: (on: boolean) => void
   buildAttentionItems: (sections: Section[]) => void
   recalculateProgress: (sections: Section[]) => void
+
+  // Phase 11 actions - AI-first workflow
+  acceptSection: (sectionId: string) => void
+  editSection: (sectionId: string) => void
+  flagSection: (sectionId: string) => void
+  setAIInterpretation: (sectionId: string, interp: AIInterpretationData) => void
+  loadSparklineData: (key: string, data: SparklinePoint[]) => void
 }
 
 const emptyProgress: EncounterProgress = {
@@ -103,6 +118,8 @@ const initialState = {
   currentData: {} as EncounterData,
   previousData: {} as EncounterData,
   sectionStates: {} as Record<string, SectionState>,
+  aiInterpretations: {} as Record<string, AIInterpretationData>,
+  sparklineData: {} as Record<string, SparklinePoint[]>,
   activeDomainIndex: 0,
   expandedSections: new Set<string>(),
   dashboardOpen: false,
@@ -441,6 +458,32 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
       },
     })
   },
+
+  // Phase 11: AI-first workflow actions
+  acceptSection: (sectionId) =>
+    set((prev) => ({
+      sectionStates: { ...prev.sectionStates, [sectionId]: "accepted" },
+    })),
+
+  editSection: (sectionId) =>
+    set((prev) => ({
+      sectionStates: { ...prev.sectionStates, [sectionId]: "edited" },
+    })),
+
+  flagSection: (sectionId) =>
+    set((prev) => ({
+      sectionStates: { ...prev.sectionStates, [sectionId]: "needs_review" },
+    })),
+
+  setAIInterpretation: (sectionId, interp) =>
+    set((prev) => ({
+      aiInterpretations: { ...prev.aiInterpretations, [sectionId]: interp },
+    })),
+
+  loadSparklineData: (key, data) =>
+    set((prev) => ({
+      sparklineData: { ...prev.sparklineData, [key]: data },
+    })),
 
   clearEncounter: () => set(initialState),
 }))

@@ -7,7 +7,7 @@ import { DashboardDrawer } from "@/components/DashboardDrawer"
 import { CommandPalette } from "@/components/CommandPalette"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
-import type { SectionRegistry, FieldTypes, DomainGroup } from "@/types/schema"
+import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
 import { RefreshCw, X } from "lucide-react"
 
 // Import schemas statically for now (in production, these would be fetched)
@@ -16,6 +16,89 @@ import fieldTypesJson from "@schemas/field-types.json"
 
 const sectionRegistry = sectionRegistryJson as unknown as SectionRegistry
 const fieldTypes = fieldTypesJson as unknown as FieldTypes
+
+/** Sample AI interpretations for demo sections */
+const SAMPLE_AI_INTERPRETATIONS: Record<string, AIInterpretationData> = {
+  kidney_function: {
+    text: "eGFR declined from 32 to 28 mL/min (12.5% decline), now CKD Stage 3b. UACR increased from 380 to 420 mg/g (A3 category). This trajectory suggests progressive CKD with worsening albuminuria.\nKFRE 5-year risk should be calculated to assess dialysis timeline.",
+    confidence: 0.92,
+    citations: [
+      { source: "labs_api", label: "CMP", detail: "CMP 2026-01-28", timestamp: "2026-01-28", confidence: "high" },
+      { source: "labs_api", label: "UACR", detail: "UA 2026-01-28", timestamp: "2026-01-28", confidence: "high" },
+      { source: "previous_note", label: "Prior eGFR", detail: "Visit 2025-10-15", timestamp: "2025-10-15", confidence: "high" },
+    ],
+    actionItems: [
+      "Calculate KFRE 5-year kidney failure risk",
+      "Consider AV fistula referral if KFRE >20%",
+    ],
+    generatedAt: new Date().toISOString(),
+    agentId: "kidney-function-agent",
+  },
+  bp_fluid: {
+    text: "Blood pressure 142/88 mmHg - remains uncontrolled (target <130/80 per KDIGO). Systolic up from 138 mmHg (+4). Currently on Losartan 100mg (max dose).\nConsider adding amlodipine 5mg or chlorthalidone 12.5mg as second agent.",
+    confidence: 0.88,
+    citations: [
+      { source: "vitals", label: "Today BP", detail: "Vitals 2026-01-28", timestamp: "2026-01-28", confidence: "high" },
+      { source: "previous_note", label: "Prior BP", detail: "Visit 2025-10-15", timestamp: "2025-10-15", confidence: "high" },
+      { source: "med_list", label: "Current meds", detail: "Losartan 100mg daily", timestamp: "2026-01-28", confidence: "high" },
+    ],
+    actionItems: [
+      "Add second antihypertensive agent",
+      "Home BP monitoring log review at next visit",
+      "Dietary sodium counseling",
+    ],
+    generatedAt: new Date().toISOString(),
+    agentId: "bp-fluid-agent",
+  },
+  raas: {
+    text: "Patient on Losartan 100mg daily (ARB, max dose). RAAS inhibition adequately maintained. eGFR decline 12.5% but no hyperkalemia-related dose reduction needed.\nK+ currently 6.2 mEq/L - CRITICAL. Must address hyperkalemia before continuing full-dose RAAS.",
+    confidence: 0.85,
+    citations: [
+      { source: "med_list", label: "Losartan", detail: "Losartan 100mg daily", timestamp: "2026-01-28", confidence: "high" },
+      { source: "labs_api", label: "K+", detail: "Potassium 6.2 mEq/L", timestamp: "2026-01-28", confidence: "high" },
+      { source: "labs_api", label: "eGFR", detail: "eGFR 28 mL/min", timestamp: "2026-01-28", confidence: "high" },
+    ],
+    actionItems: [
+      "Address hyperkalemia before RAAS dose adjustment",
+      "Consider potassium binder (patiromer/SZC) to maintain RAAS",
+    ],
+    generatedAt: new Date().toISOString(),
+    agentId: "raas-agent",
+  },
+  electrolytes: {
+    text: "CRITICAL: Potassium 6.2 mEq/L (was 4.6 - rose 34.8%). Bicarbonate 21 mEq/L (was 22, borderline low). Hyperkalemia likely multifactorial: CKD progression + full-dose ARB.\nImmediate action required for K+ >6.0.",
+    confidence: 0.95,
+    citations: [
+      { source: "labs_api", label: "BMP", detail: "BMP 2026-01-28: K+ 6.2, HCO3 21", timestamp: "2026-01-28", confidence: "high" },
+      { source: "labs_api", label: "Prior BMP", detail: "BMP 2025-10-15: K+ 4.6, HCO3 22", timestamp: "2025-10-15", confidence: "high" },
+    ],
+    actionItems: [
+      "STAT ECG to assess cardiac effects",
+      "Start sodium zirconium cyclosilicate (Lokelma) 10g TID x48h",
+      "Recheck K+ in 24-48 hours",
+      "Low-potassium diet education",
+    ],
+    generatedAt: new Date().toISOString(),
+    agentId: "electrolyte-agent",
+  },
+  anemia: {
+    text: "Hemoglobin 7.8 g/dL - CRITICAL (was 10.5, dropped 25.7%). Significant decline below action threshold of 10 g/dL. Iron studies and reticulocyte count needed to differentiate iron deficiency vs EPO deficiency vs GI loss.\nTransfusion threshold typically <7 g/dL but symptoms should guide decision.",
+    confidence: 0.90,
+    citations: [
+      { source: "labs_api", label: "CBC", detail: "CBC 2026-01-28: Hgb 7.8", timestamp: "2026-01-28", confidence: "high" },
+      { source: "labs_api", label: "Prior CBC", detail: "CBC 2025-10-15: Hgb 10.5", timestamp: "2025-10-15", confidence: "high" },
+    ],
+    actionItems: [
+      "Order iron studies (ferritin, TSAT, TIBC)",
+      "Order reticulocyte count",
+      "Consider GI bleed workup (stool guaiac)",
+      "Assess symptoms: fatigue, dyspnea, chest pain",
+      "Consider ESA if iron-replete with EPO deficiency",
+    ],
+    generatedAt: new Date().toISOString(),
+    agentId: "anemia-agent",
+  },
+}
 
 export default function App() {
   const store = useEncounterStore()
@@ -57,6 +140,64 @@ export default function App() {
     })
     store.setPatient("PT-12345", "John Smith", 68, "M")
     store.setVisitType("Follow-up")
+
+    // Load sample AI interpretations
+    for (const [sectionId, interp] of Object.entries(SAMPLE_AI_INTERPRETATIONS)) {
+      store.setAIInterpretation(sectionId, interp)
+    }
+    // Set section states for sections with AI data
+    for (const sectionId of Object.keys(SAMPLE_AI_INTERPRETATIONS)) {
+      // Electrolytes and anemia are critical
+      if (sectionId === "electrolytes" || sectionId === "anemia") {
+        store.setSectionState(sectionId, "critical")
+      } else {
+        store.setSectionState(sectionId, "ai_ready")
+      }
+    }
+
+    // Load sample sparkline trend data
+    store.loadSparklineData("egfr", [
+      { date: "2025-01-15", value: 42 },
+      { date: "2025-04-15", value: 38 },
+      { date: "2025-07-15", value: 35 },
+      { date: "2025-10-15", value: 32 },
+      { date: "2026-01-28", value: 28 },
+    ])
+    store.loadSparklineData("uacr", [
+      { date: "2025-01-15", value: 280 },
+      { date: "2025-04-15", value: 320 },
+      { date: "2025-07-15", value: 350 },
+      { date: "2025-10-15", value: 380 },
+      { date: "2026-01-28", value: 420 },
+    ])
+    store.loadSparklineData("potassium", [
+      { date: "2025-01-15", value: 4.2 },
+      { date: "2025-04-15", value: 4.4 },
+      { date: "2025-07-15", value: 4.5 },
+      { date: "2025-10-15", value: 4.6 },
+      { date: "2026-01-28", value: 6.2 },
+    ])
+    store.loadSparklineData("hemoglobin", [
+      { date: "2025-01-15", value: 11.8 },
+      { date: "2025-04-15", value: 11.2 },
+      { date: "2025-07-15", value: 10.9 },
+      { date: "2025-10-15", value: 10.5 },
+      { date: "2026-01-28", value: 7.8 },
+    ])
+    store.loadSparklineData("systolic_bp", [
+      { date: "2025-01-15", value: 148 },
+      { date: "2025-04-15", value: 144 },
+      { date: "2025-07-15", value: 140 },
+      { date: "2025-10-15", value: 138 },
+      { date: "2026-01-28", value: 142 },
+    ])
+    store.loadSparklineData("bicarbonate", [
+      { date: "2025-01-15", value: 24 },
+      { date: "2025-04-15", value: 23 },
+      { date: "2025-07-15", value: 23 },
+      { date: "2025-10-15", value: 22 },
+      { date: "2026-01-28", value: 21 },
+    ])
 
     // Expand some sections by default
     store.expandSection("header")
@@ -107,6 +248,31 @@ export default function App() {
   }
 
   const isProgressionMode = store.viewMode === "progression"
+
+  /** Helper: does a section have any changed fields? */
+  const sectionHasChanges = (section: typeof sectionRegistry.sections[0]) =>
+    section.fields.some((f) => {
+      const key = `${section.section_id}.${f.field_id}`
+      return store.currentData[key] !== store.previousData[key] && store.previousData[key] !== undefined
+    })
+
+  /** Handle section accept → recalculate progress */
+  const handleAcceptSection = (sectionId: string) => {
+    store.acceptSection(sectionId)
+    store.recalculateProgress(sectionRegistry.sections)
+  }
+
+  /** Handle section edit → recalculate progress */
+  const handleEditSection = (sectionId: string) => {
+    store.editSection(sectionId)
+    store.recalculateProgress(sectionRegistry.sections)
+  }
+
+  /** Handle section flag → recalculate progress */
+  const handleFlagSection = (sectionId: string) => {
+    store.flagSection(sectionId)
+    store.recalculateProgress(sectionRegistry.sections)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
@@ -194,8 +360,14 @@ export default function App() {
           {/* Sections */}
           <div className="p-4 md:p-6 space-y-4 pb-20">
             {domainOrder.map((domain) => {
-              const sections = sectionsByDomain[domain] ?? []
+              let sections = sectionsByDomain[domain] ?? []
               if (sections.length === 0) return null
+
+              // Apply "Changed only" filter in Progression mode
+              if (isProgressionMode && store.changedOnlyFilter) {
+                sections = sections.filter(sectionHasChanges)
+                if (sections.length === 0) return null
+              }
 
               return (
                 <div key={domain} className="space-y-2">
@@ -229,6 +401,10 @@ export default function App() {
                           store.sectionStates[section.section_id] ?? "ai_ready"
                         }
                         enumDefinitions={fieldTypes.enums}
+                        aiInterpretation={store.aiInterpretations[section.section_id]}
+                        onAcceptSection={() => handleAcceptSection(section.section_id)}
+                        onEditSection={() => handleEditSection(section.section_id)}
+                        onFlagSection={() => handleFlagSection(section.section_id)}
                       />
                     </div>
                   ))}

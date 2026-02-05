@@ -8,6 +8,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { Sparkline, METRIC_SPARKLINE_CONFIGS } from "@/components/Sparkline"
 import { cn, formatDisplayValue } from "@/lib/utils"
 import { FileText, User, CheckSquare, Check } from "lucide-react"
 import { useState } from "react"
@@ -71,42 +72,127 @@ export function DashboardDrawer({
             </div>
           </div>
 
-          {/* Trends */}
-          <div className="p-4 border-b border-gray-100 grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-xs text-gray-500">eGFR Trend</div>
-              <div className="text-lg font-semibold flex items-center gap-1">
-                {formatDisplayValue(
-                  store.currentData["kidney_function.egfr_current"]
-                )}
-                <span
-                  className={cn(
-                    "text-xl",
-                    store.egfrTrend === "↓" && "text-red-500",
-                    store.egfrTrend === "↑" && "text-green-500"
+          {/* Trends with Sparklines */}
+          <div className="p-4 border-b border-gray-100 space-y-3">
+            <div className="text-xs text-gray-500 font-medium">Key Trends</div>
+
+            {/* eGFR */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-gray-500">eGFR</div>
+                <div className="text-lg font-semibold flex items-center gap-1">
+                  {formatDisplayValue(
+                    store.currentData["kidney_function.egfr_current"]
                   )}
-                >
-                  {store.egfrTrend}
-                </span>
+                  <span
+                    className={cn(
+                      "text-base",
+                      store.egfrTrend === "↓" && "text-red-500",
+                      store.egfrTrend === "↑" && "text-green-500"
+                    )}
+                  >
+                    {store.egfrTrend}
+                  </span>
+                </div>
               </div>
+              {store.sparklineData.egfr && (
+                <Sparkline
+                  data={store.sparklineData.egfr}
+                  {...METRIC_SPARKLINE_CONFIGS.egfr}
+                  width={100}
+                  height={28}
+                />
+              )}
             </div>
-            <div>
-              <div className="text-xs text-gray-500">UACR Trend</div>
-              <div className="text-lg font-semibold flex items-center gap-1">
-                {formatDisplayValue(
-                  store.currentData["kidney_function.uacr_current"]
-                )}
-                <span
-                  className={cn(
-                    "text-xl",
-                    store.uacrTrend === "↑" && "text-red-500",
-                    store.uacrTrend === "↓" && "text-green-500"
+
+            {/* UACR */}
+            <div className="flex items-center justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="text-xs text-gray-500">UACR</div>
+                <div className="text-lg font-semibold flex items-center gap-1">
+                  {formatDisplayValue(
+                    store.currentData["kidney_function.uacr_current"]
                   )}
-                >
-                  {store.uacrTrend}
-                </span>
+                  <span
+                    className={cn(
+                      "text-base",
+                      store.uacrTrend === "↑" && "text-red-500",
+                      store.uacrTrend === "↓" && "text-green-500"
+                    )}
+                  >
+                    {store.uacrTrend}
+                  </span>
+                </div>
               </div>
+              {store.sparklineData.uacr && (
+                <Sparkline
+                  data={store.sparklineData.uacr}
+                  {...METRIC_SPARKLINE_CONFIGS.uacr}
+                  width={100}
+                  height={28}
+                />
+              )}
             </div>
+
+            {/* K+ */}
+            {store.sparklineData.potassium && (
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-gray-500">K+</div>
+                  <div className="text-lg font-semibold">
+                    {formatDisplayValue(
+                      store.currentData["electrolytes.potassium"]
+                    )}
+                  </div>
+                </div>
+                <Sparkline
+                  data={store.sparklineData.potassium}
+                  {...METRIC_SPARKLINE_CONFIGS.potassium}
+                  width={100}
+                  height={28}
+                />
+              </div>
+            )}
+
+            {/* Hgb */}
+            {store.sparklineData.hemoglobin && (
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-gray-500">Hgb</div>
+                  <div className="text-lg font-semibold">
+                    {formatDisplayValue(
+                      store.currentData["anemia.hemoglobin"]
+                    )}
+                  </div>
+                </div>
+                <Sparkline
+                  data={store.sparklineData.hemoglobin}
+                  {...METRIC_SPARKLINE_CONFIGS.hemoglobin}
+                  width={100}
+                  height={28}
+                />
+              </div>
+            )}
+
+            {/* Systolic BP */}
+            {store.sparklineData.systolic_bp && (
+              <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-gray-500">Systolic BP</div>
+                  <div className="text-lg font-semibold">
+                    {formatDisplayValue(
+                      store.currentData["bp_fluid.systolic_bp"]
+                    )}
+                  </div>
+                </div>
+                <Sparkline
+                  data={store.sparklineData.systolic_bp}
+                  {...METRIC_SPARKLINE_CONFIGS.systolic_bp}
+                  width={100}
+                  height={28}
+                />
+              </div>
+            )}
           </div>
 
           {/* GDMT Compliance */}

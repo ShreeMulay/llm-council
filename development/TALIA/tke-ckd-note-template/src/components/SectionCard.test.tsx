@@ -1,12 +1,45 @@
 import { describe, it, expect, mock } from "bun:test"
 import { render, screen, fireEvent } from "@testing-library/react"
 import { SectionCard } from "./SectionCard"
-import type { Section, EncounterData, EnumDefinition } from "@/types/schema"
+import type { Section, EncounterData, EnumDefinition, AIInterpretationData } from "@/types/schema"
 
 // Mock FieldFactory to avoid testing its internals
 mock.module("./FieldFactory", () => ({
   FieldFactory: ({ field }: { field: { field_id: string; display_name: string } }) => (
     <div data-testid={`field-${field.field_id}`}>{field.display_name}</div>
+  ),
+}))
+
+// Mock AIInterpretation to avoid testing its internals
+mock.module("./AIInterpretation", () => ({
+  AIInterpretation: ({
+    interpretation,
+    sectionState,
+    showFields,
+    onAccept,
+    onEdit,
+    onFlag,
+    onToggleFields,
+  }: {
+    interpretation: AIInterpretationData
+    sectionState: string
+    showFields: boolean
+    onAccept: () => void
+    onEdit: () => void
+    onFlag: () => void
+    onToggleFields: () => void
+  }) => (
+    <div data-testid="ai-interpretation">
+      <div data-testid="ai-text">{interpretation.text}</div>
+      <div data-testid="ai-state">{sectionState}</div>
+      <div data-testid="ai-confidence">{interpretation.confidence}</div>
+      <button data-testid="ai-accept" onClick={onAccept}>Accept</button>
+      <button data-testid="ai-edit" onClick={onEdit}>Edit</button>
+      <button data-testid="ai-flag" onClick={onFlag}>Flag</button>
+      <button data-testid="ai-toggle-fields" onClick={onToggleFields}>
+        {showFields ? "Hide Fields" : "Show Fields"}
+      </button>
+    </div>
   ),
 }))
 
@@ -44,6 +77,17 @@ const createTestSection = (overrides: Partial<Section> = {}): Section => ({
   ],
   ...overrides,
 })
+
+const sampleAIInterpretation: AIInterpretationData = {
+  text: "eGFR declined from 32 to 28 mL/min (12.5% decline), now CKD Stage 3b.",
+  confidence: 0.92,
+  citations: [
+    { source: "labs_api", label: "CMP", detail: "CMP 2026-01-28", timestamp: "2026-01-28", confidence: "high" },
+  ],
+  actionItems: ["Calculate KFRE 5-year risk"],
+  generatedAt: "2026-01-28T10:00:00Z",
+  agentId: "kidney-function-agent",
+}
 
 const defaultProps = {
   section: createTestSection(),
@@ -435,6 +479,182 @@ describe("SectionCard", () => {
       
       const svgs = container.querySelectorAll("svg")
       expect(svgs.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe("AI-first layout", () => {
+    it("renders AIInterpretation when aiInterpretation prop is provided", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+        />
+      )
+
+      expect(screen.getByTestId("ai-interpretation")).toBeTruthy()
+      expect(screen.getByTestId("ai-text").textContent).toContain("eGFR declined")
+    })
+
+    it("renders fallback placeholder when no aiInterpretation provided", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+        />
+      )
+
+      expect(screen.queryByTestId("ai-interpretation")).toBeNull()
+      expect(screen.getByText("AI Interpretation")).toBeTruthy()
+    })
+
+    it("hides raw fields by default when AI interpretation is present", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+        />
+      )
+
+      // Fields should be hidden (show fields button should say "Show Fields")
+      expect(screen.getByTestId("ai-toggle-fields").textContent).toBe("Show Fields")
+      // Fields should not be rendered
+      expect(screen.queryByTestId("field-field1")).toBeNull()
+    })
+
+    it("shows raw fields when AI interpretation is absent", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+        />
+      )
+
+      // Fields should be shown without AI data
+      expect(screen.getByTestId("field-field1")).toBeTruthy()
+      expect(screen.getByTestId("field-field2")).toBeTruthy()
+    })
+
+    it("toggles raw fields visibility when toggle button is clicked", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+        />
+      )
+
+      // Initially hidden
+      expect(screen.queryByTestId("field-field1")).toBeNull()
+
+      // Click "Show Fields"
+      fireEvent.click(screen.getByTestId("ai-toggle-fields"))
+
+      // Now visible
+      expect(screen.getByTestId("field-field1")).toBeTruthy()
+      expect(screen.getByTestId("field-field2")).toBeTruthy()
+    })
+
+    it("uses AI text as collapsed summary when aiInterpretation is present", () => {
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={false}
+          aiInterpretation={sampleAIInterpretation}
+        />
+      )
+
+      // Should show first line of AI text
+      expect(screen.getByText(/eGFR declined from 32 to 28/)).toBeTruthy()
+    })
+  })
+
+  describe("Section state badges", () => {
+    it("shows AI Ready badge by default", () => {
+      render(<SectionCard {...defaultProps} />)
+
+      expect(screen.getByText("AI Ready")).toBeTruthy()
+    })
+
+    it("shows Review badge for needs_review state", () => {
+      render(<SectionCard {...defaultProps} sectionState="needs_review" />)
+
+      expect(screen.getByText("Review")).toBeTruthy()
+    })
+
+    it("shows Accepted badge for accepted state", () => {
+      render(<SectionCard {...defaultProps} sectionState="accepted" />)
+
+      expect(screen.getByText("Accepted")).toBeTruthy()
+    })
+
+    it("shows Edited badge for edited state", () => {
+      render(<SectionCard {...defaultProps} sectionState="edited" />)
+
+      expect(screen.getByText("Edited")).toBeTruthy()
+    })
+
+    it("shows Critical badge for critical state", () => {
+      render(<SectionCard {...defaultProps} sectionState="critical" />)
+
+      expect(screen.getByText("Critical")).toBeTruthy()
+    })
+
+    it("shows Conflict badge for conflict state", () => {
+      render(<SectionCard {...defaultProps} sectionState="conflict" />)
+
+      expect(screen.getByText("Conflict")).toBeTruthy()
+    })
+  })
+
+  describe("Accept/Edit/Flag handlers", () => {
+    it("calls onAcceptSection when accept button is clicked", () => {
+      const onAccept = mock(() => {})
+
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+          onAcceptSection={onAccept}
+        />
+      )
+
+      fireEvent.click(screen.getByTestId("ai-accept"))
+      expect(onAccept).toHaveBeenCalledTimes(1)
+    })
+
+    it("calls onEditSection when edit button is clicked", () => {
+      const onEdit = mock(() => {})
+
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+          onEditSection={onEdit}
+        />
+      )
+
+      fireEvent.click(screen.getByTestId("ai-edit"))
+      expect(onEdit).toHaveBeenCalledTimes(1)
+    })
+
+    it("calls onFlagSection when flag button is clicked", () => {
+      const onFlag = mock(() => {})
+
+      render(
+        <SectionCard
+          {...defaultProps}
+          isExpanded={true}
+          aiInterpretation={sampleAIInterpretation}
+          onFlagSection={onFlag}
+        />
+      )
+
+      fireEvent.click(screen.getByTestId("ai-flag"))
+      expect(onFlag).toHaveBeenCalledTimes(1)
     })
   })
 })

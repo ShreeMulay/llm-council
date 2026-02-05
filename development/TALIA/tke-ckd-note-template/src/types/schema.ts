@@ -159,6 +159,54 @@ export interface AttentionItem {
   actions?: Array<{ label: string; action: string }>
 }
 
+/** AI provenance citation - tracks where AI got its data */
+export interface ProvenanceCitation {
+  source: SourceType
+  label: string
+  /** e.g. "CMP 2026-01-28", "Pharmacy fill 2026-01-15" */
+  detail: string
+  /** ISO timestamp of the source data */
+  timestamp?: string
+  /** Confidence level: high (lab result), medium (previous note), low (inference) */
+  confidence: "high" | "medium" | "low"
+}
+
+/** AI interpretation for a section */
+export interface AIInterpretationData {
+  /** The AI-generated interpretation text */
+  text: string
+  /** Confidence score 0-1 */
+  confidence: number
+  /** Source citations for the interpretation */
+  citations: ProvenanceCitation[]
+  /** Action items suggested by AI */
+  actionItems: string[]
+  /** Timestamp of generation */
+  generatedAt: string
+  /** Which AI agent generated this */
+  agentId: string
+}
+
+/** Sparkline data point */
+export interface SparklinePoint {
+  date: string
+  value: number
+}
+
+/** Sparkline configuration for a metric */
+export interface SparklineConfig {
+  fieldKey: string
+  label: string
+  unit: string
+  /** Color for the line */
+  color: string
+  /** Optional target range for reference band */
+  targetLow?: number
+  targetHigh?: number
+  /** Data points (most recent last) */
+  data: SparklinePoint[]
+}
+
 /** Encounter progress tracking */
 export interface EncounterProgress {
   totalSections: number

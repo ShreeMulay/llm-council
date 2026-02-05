@@ -419,19 +419,92 @@ describe("FieldFactory", () => {
     })
   })
 
-  describe("CSS Class Logic", () => {
-    it("applies delta-changed class when value has changed", () => {
-      const state = { hasChanged: true }
-      const wrapperClass = state.hasChanged ? "space-y-1 delta-changed p-2 rounded-md" : "space-y-1"
+  describe("Gutter Marker Delta Display", () => {
+    it("applies left border gutter marker when value has changed", () => {
+      const hasChanged = true
+      const criticalChange = false
+      const wrapperClass = [
+        "space-y-1",
+        hasChanged && "pl-2 border-l-2",
+        hasChanged && (criticalChange ? "border-l-red-500" : "border-l-orange-400"),
+      ].filter(Boolean).join(" ")
 
-      expect(wrapperClass).toContain("delta-changed")
+      expect(wrapperClass).toContain("pl-2")
+      expect(wrapperClass).toContain("border-l-2")
+      expect(wrapperClass).toContain("border-l-orange-400")
     })
 
-    it("does not apply delta-changed class when value unchanged", () => {
-      const state = { hasChanged: false }
-      const wrapperClass = state.hasChanged ? "space-y-1 delta-changed p-2 rounded-md" : "space-y-1"
+    it("applies red gutter marker for critical changes", () => {
+      const hasChanged = true
+      const criticalChange = true
+      const wrapperClass = [
+        "space-y-1",
+        hasChanged && "pl-2 border-l-2",
+        hasChanged && (criticalChange ? "border-l-red-500" : "border-l-orange-400"),
+      ].filter(Boolean).join(" ")
 
-      expect(wrapperClass).not.toContain("delta-changed")
+      expect(wrapperClass).toContain("border-l-red-500")
+      expect(wrapperClass).not.toContain("border-l-orange-400")
+    })
+
+    it("does not apply gutter marker when value unchanged", () => {
+      const hasChanged = false
+      const criticalChange = false
+      const wrapperClass = [
+        "space-y-1",
+        hasChanged && "pl-2 border-l-2",
+        hasChanged && (criticalChange ? "border-l-red-500" : "border-l-orange-400"),
+      ].filter(Boolean).join(" ")
+
+      expect(wrapperClass).not.toContain("pl-2")
+      expect(wrapperClass).not.toContain("border-l-2")
+      expect(wrapperClass).not.toContain("border-l-orange-400")
+      expect(wrapperClass).not.toContain("border-l-red-500")
+    })
+  })
+
+  describe("Critical Change Detection (>20% threshold)", () => {
+    /** Helper matching FieldFactory's isCriticalNumericChange */
+    function isCriticalNumericChange(current: unknown, previous: unknown): boolean {
+      if (typeof current !== "number" || typeof previous !== "number") return false
+      if (previous === 0) return current !== 0
+      return Math.abs((current - previous) / previous) > 0.2
+    }
+
+    it("detects critical change when numeric value changes >20%", () => {
+      // 33% decline (eGFR)
+      expect(isCriticalNumericChange(28, 42)).toBe(true)
+    })
+
+    it("does not flag as critical when change is <=20%", () => {
+      // 6.25% decline
+      expect(isCriticalNumericChange(30, 32)).toBe(false)
+    })
+
+    it("detects critical change at exactly 20% boundary", () => {
+      // exactly 20% decline - should NOT be critical (>20% required)
+      expect(isCriticalNumericChange(80, 100)).toBe(false)
+    })
+
+    it("detects critical change for increase >20%", () => {
+      // 34.8% increase (K+: 4.6 -> 6.2)
+      expect(isCriticalNumericChange(6.2, 4.6)).toBe(true)
+    })
+
+    it("handles zero previous value (always critical if current non-zero)", () => {
+      expect(isCriticalNumericChange(5, 0)).toBe(true)
+    })
+
+    it("returns false when both are zero", () => {
+      expect(isCriticalNumericChange(0, 0)).toBe(false)
+    })
+
+    it("does not flag non-numeric values as critical", () => {
+      expect(isCriticalNumericChange("G4", "G3b")).toBe(false)
+    })
+
+    it("does not flag when previous is undefined", () => {
+      expect(isCriticalNumericChange(28, undefined)).toBe(false)
     })
   })
 })

@@ -127,6 +127,24 @@ export function ClinicalRibbon({
           </button>
         </div>
 
+        {/* Changed only filter (only in Progression mode) */}
+        {store.viewMode === "progression" && (
+          <button
+            className={cn(
+              "hidden sm:flex items-center gap-1 text-xs px-1.5 py-0.5 rounded transition-colors",
+              store.changedOnlyFilter
+                ? "bg-orange-100 text-orange-700"
+                : "text-gray-400 hover:text-gray-600 border border-gray-200"
+            )}
+            onClick={() =>
+              store.setChangedOnlyFilter(!store.changedOnlyFilter)
+            }
+            title="Show only sections with changes"
+          >
+            {store.changedOnlyFilter ? "Changed" : "All"}
+          </button>
+        )}
+
         {/* Command palette trigger */}
         <button
           className="hidden sm:flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 border border-gray-200 rounded px-1.5 py-0.5 transition-colors"
