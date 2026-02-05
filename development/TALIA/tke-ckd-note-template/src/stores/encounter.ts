@@ -1,28 +1,52 @@
 import { create } from "zustand"
-import type { EncounterData, ViewMode, Alert, Section } from "@/types/schema"
+import type {
+  EncounterData,
+  ViewMode,
+  Alert,
+  Section,
+  SectionState,
+  AttentionItem,
+  EncounterProgress,
+  UserRole,
+} from "@/types/schema"
 import { getCKDStage, getAlbuminuriaStage, calculateGDMTCompliance } from "@/lib/utils"
 
 interface EncounterState {
   // Patient & Visit
   patientId: string | null
   patientName: string
+  patientAge: number | null
+  patientSex: "M" | "F" | null
   visitDate: Date
   visitType: "New" | "Follow-up" | "Urgent" | "Telehealth"
 
-  // View Mode
+  // View Mode (Baseline = initial, Progression = follow-up/delta)
   viewMode: ViewMode
-  
+
+  // User Role
+  userRole: UserRole
+
   // Data
   currentData: EncounterData
   previousData: EncounterData
-  
+
+  // Section States (AI-first workflow)
+  sectionStates: Record<string, SectionState>
+
   // UI State
   activeDomainIndex: number
   expandedSections: Set<string>
-  
-  // Alerts
+  dashboardOpen: boolean
+  commandPaletteOpen: boolean
+  changedOnlyFilter: boolean
+
+  // Alerts & Attention Items
   alerts: Alert[]
-  
+  attentionItems: AttentionItem[]
+
+  // Progress
+  progress: EncounterProgress
+
   // Calculated values (derived from currentData)
   ckdStage: string
   albuminuriaStage: string
@@ -31,9 +55,10 @@ interface EncounterState {
   uacrTrend: "↑" | "↓" | "→"
 
   // Actions
-  setPatient: (id: string, name: string) => void
+  setPatient: (id: string, name: string, age?: number, sex?: "M" | "F") => void
   setVisitType: (type: EncounterState["visitType"]) => void
   setViewMode: (mode: ViewMode) => void
+  setUserRole: (role: UserRole) => void
   updateField: (sectionId: string, fieldId: string, value: EncounterData[string]) => void
   toggleSection: (sectionId: string) => void
   expandSection: (sectionId: string) => void
@@ -45,19 +70,47 @@ interface EncounterState {
   recalculateDerived: () => void
   checkAlerts: (sections: Section[], criticalValues: Record<string, { panic_low: number | null; panic_high: number | null }>) => void
   clearEncounter: () => void
+
+  // New Phase 10 actions
+  setSectionState: (sectionId: string, state: SectionState) => void
+  setDashboardOpen: (open: boolean) => void
+  setCommandPaletteOpen: (open: boolean) => void
+  setChangedOnlyFilter: (on: boolean) => void
+  buildAttentionItems: (sections: Section[]) => void
+  recalculateProgress: (sections: Section[]) => void
+}
+
+const emptyProgress: EncounterProgress = {
+  totalSections: 0,
+  aiReady: 0,
+  accepted: 0,
+  edited: 0,
+  needsReview: 0,
+  critical: 0,
+  conflict: 0,
+  percentComplete: 0,
 }
 
 const initialState = {
   patientId: null,
   patientName: "",
+  patientAge: null,
+  patientSex: null,
   visitDate: new Date(),
   visitType: "Follow-up" as const,
-  viewMode: "delta" as ViewMode,
+  viewMode: "progression" as ViewMode,
+  userRole: "provider" as UserRole,
   currentData: {} as EncounterData,
   previousData: {} as EncounterData,
+  sectionStates: {} as Record<string, SectionState>,
   activeDomainIndex: 0,
   expandedSections: new Set<string>(),
+  dashboardOpen: false,
+  commandPaletteOpen: false,
+  changedOnlyFilter: false,
   alerts: [] as Alert[],
+  attentionItems: [] as AttentionItem[],
+  progress: emptyProgress,
   ckdStage: "G3a",
   albuminuriaStage: "A1",
   gdmtCompliance: { count: 0, total: 4 as const, display: "0/4" },
@@ -68,17 +121,24 @@ const initialState = {
 export const useEncounterStore = create<EncounterState>((set, get) => ({
   ...initialState,
 
-  setPatient: (id, name) => set({ patientId: id, patientName: name }),
+  setPatient: (id, name, age, sex) => set({
+    patientId: id,
+    patientName: name,
+    patientAge: age ?? null,
+    patientSex: sex ?? null,
+  }),
 
   setVisitType: (type) => {
     set({ visitType: type })
     // Auto-switch view mode based on visit type
     if (type === "New") {
-      set({ viewMode: "initial" })
+      set({ viewMode: "baseline" })
     } else {
-      set({ viewMode: "delta" })
+      set({ viewMode: "progression" })
     }
   },
+
+  setUserRole: (role) => set({ userRole: role }),
 
   setViewMode: (mode) => set({ viewMode: mode }),
 
@@ -250,6 +310,136 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
     }
 
     set({ alerts: newAlerts })
+  },
+
+  // Phase 10: New actions
+  setSectionState: (sectionId, state) =>
+    set((prev) => ({
+      sectionStates: { ...prev.sectionStates, [sectionId]: state },
+    })),
+
+  setDashboardOpen: (open) => set({ dashboardOpen: open }),
+
+  setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
+
+  setChangedOnlyFilter: (on) => set({ changedOnlyFilter: on }),
+
+  buildAttentionItems: (sections) => {
+    const { currentData, previousData, alerts } = get()
+    const items: AttentionItem[] = []
+
+    // Add critical alerts as attention items
+    for (const alert of alerts) {
+      items.push({
+        id: `alert-${alert.id}`,
+        section_id: alert.section_id,
+        field_id: alert.field_id,
+        type: "critical",
+        message: alert.message,
+      })
+    }
+
+    // Check for GDMT gaps
+    const raasStatus = currentData["raas.raas_status"]
+    if (!raasStatus || raasStatus === "not_started") {
+      items.push({
+        id: "gdmt-gap-raas",
+        section_id: "raas",
+        type: "gap",
+        message: "GDMT gap: RAAS inhibitor not started",
+      })
+    }
+
+    const sglt2iStatus = currentData["sglt2i.sglt2i_status"]
+    if (!sglt2iStatus || sglt2iStatus === "not_started") {
+      items.push({
+        id: "gdmt-gap-sglt2i",
+        section_id: "sglt2i",
+        type: "gap",
+        message: "GDMT gap: SGLT2i not started",
+      })
+    }
+
+    const mraStatus = currentData["mra.mra_status"]
+    if (!mraStatus || mraStatus === "not_started" || mraStatus === "consider") {
+      items.push({
+        id: "gdmt-gap-mra",
+        section_id: "mra",
+        type: "gap",
+        message: "GDMT gap: MRA not started",
+      })
+    }
+
+    // Check for significant changes
+    for (const section of sections) {
+      for (const field of section.fields) {
+        const key = `${section.section_id}.${field.field_id}`
+        const current = currentData[key]
+        const previous = previousData[key]
+        if (
+          current !== undefined &&
+          previous !== undefined &&
+          current !== previous &&
+          field.type === "number" &&
+          typeof current === "number" &&
+          typeof previous === "number"
+        ) {
+          const pctChange = Math.abs((current - previous) / previous) * 100
+          if (pctChange > 20) {
+            items.push({
+              id: `change-${key}`,
+              section_id: section.section_id,
+              field_id: field.field_id,
+              type: "changed",
+              message: `${field.display_name}: ${previous} → ${current} (${pctChange > 0 ? "+" : ""}${pctChange.toFixed(0)}%)`,
+            })
+          }
+        }
+      }
+    }
+
+    set({ attentionItems: items })
+  },
+
+  recalculateProgress: (sections) => {
+    const { sectionStates } = get()
+    // Only count non-header sections
+    const countable = sections.filter((s) => s.domain_group !== "header")
+    const total = countable.length
+    let aiReady = 0
+    let accepted = 0
+    let edited = 0
+    let needsReview = 0
+    let critical = 0
+    let conflict = 0
+
+    for (const section of countable) {
+      const state = sectionStates[section.section_id] ?? "ai_ready"
+      switch (state) {
+        case "ai_ready": aiReady++; break
+        case "accepted": accepted++; break
+        case "edited": edited++; break
+        case "needs_review": needsReview++; break
+        case "critical": critical++; break
+        case "conflict": conflict++; break
+      }
+    }
+
+    const finalized = accepted + edited
+    const percentComplete = total > 0 ? Math.round((finalized / total) * 100) : 0
+
+    set({
+      progress: {
+        totalSections: total,
+        aiReady,
+        accepted,
+        edited,
+        needsReview,
+        critical,
+        conflict,
+        percentComplete,
+      },
+    })
   },
 
   clearEncounter: () => set(initialState),

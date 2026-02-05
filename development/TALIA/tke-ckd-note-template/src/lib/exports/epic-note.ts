@@ -41,8 +41,11 @@ export function generateEpicNote(
   currentData: Record<string, FieldValue>,
   previousData: Record<string, FieldValue>,
   sectionRegistry: SectionRegistry,
-  viewMode: "initial" | "followup"
+  viewMode: "initial" | "followup" | "baseline" | "progression"
 ): string {
+  // Normalize new ViewMode values to export-compatible values
+  const effectiveMode: "initial" | "followup" =
+    viewMode === "baseline" || viewMode === "initial" ? "initial" : "followup"
   const lines: string[] = []
 
   // 1. Dashboard Summary (5-8 lines at top)
@@ -57,7 +60,7 @@ export function generateEpicNote(
       section,
       currentData,
       previousData,
-      viewMode
+      effectiveMode
     )
 
     if (sectionContent) {

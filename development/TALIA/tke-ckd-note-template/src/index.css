@@ -22,8 +22,14 @@
   --color-info: #3B82F6;
 
   /* Layout */
-  --sidebar-width: 240px;
-  --dashboard-width: 320px;
+  --sidebar-width: 192px;
+  --ribbon-height: 40px;
+  --footer-height: 48px;
+
+  /* Role accent colors */
+  --color-role-provider: #3B82F6;
+  --color-role-scribe: #8B5CF6;
+  --color-role-ma: #14B8A6;
 }
 
 /* Base styles */
@@ -34,8 +40,8 @@ body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -50,7 +56,32 @@ body {
   @apply bg-gray-400;
 }
 
-/* Delta highlighting */
+/* ===== Clinical Ribbon ===== */
+.clinical-ribbon {
+  height: var(--ribbon-height);
+}
+
+/* ===== Sticky Footer ===== */
+.sticky-footer {
+  height: var(--footer-height);
+}
+
+/* ===== Needs Attention Queue ===== */
+.needs-attention {
+  /* Subtle top highlight */
+}
+
+/* ===== Section State Borders ===== */
+/* Applied via Tailwind classes in SectionCard.tsx:
+   needs_review  -> border-l-yellow-400
+   ai_ready      -> border-l-blue-400
+   accepted      -> border-l-green-500
+   edited        -> border-l-purple-500
+   critical      -> border-l-red-500 animate-pulse
+   conflict      -> border-l-orange-500
+*/
+
+/* ===== Delta / Progression Highlighting ===== */
 .delta-changed {
   @apply bg-amber-50 border-l-4 border-amber-400;
 }
@@ -63,7 +94,7 @@ body {
   @apply text-amber-700 font-medium;
 }
 
-/* Critical value highlighting */
+/* ===== Critical value highlighting ===== */
 .field-critical {
   @apply border-red-500 bg-red-50;
 }
@@ -72,7 +103,7 @@ body {
   @apply border-amber-500 bg-amber-50;
 }
 
-/* Domain-colored section headers */
+/* ===== Domain-colored section headers ===== */
 .section-header-kidney-core { border-left-color: var(--color-domain-kidney-core); }
 .section-header-cardiovascular { border-left-color: var(--color-domain-cardiovascular); }
 .section-header-pharmacotherapy { border-left-color: var(--color-domain-pharmacotherapy); }
@@ -82,3 +113,22 @@ body {
 .section-header-planning { border-left-color: var(--color-domain-planning); }
 .section-header-screening { border-left-color: var(--color-domain-screening); }
 .section-header-care-coordination { border-left-color: var(--color-domain-care-coordination); }
+
+/* ===== Role Accent Stripe ===== */
+/* Applied to top-level container when role is set */
+.role-provider { border-top: 3px solid var(--color-role-provider); }
+.role-scribe { border-top: 3px solid var(--color-role-scribe); }
+.role-ma { border-top: 3px solid var(--color-role-ma); }
+
+/* ===== Progress Bar Segments ===== */
+/* Multi-segment progress bar uses inline styles in App.tsx */
+
+/* ===== Draft Aesthetic (Phase 11) ===== */
+/* AI-generated content before acceptance uses dashed borders */
+.ai-draft {
+  @apply border-dashed border-blue-300;
+}
+
+.ai-accepted {
+  @apply border-solid border-green-400;
+}

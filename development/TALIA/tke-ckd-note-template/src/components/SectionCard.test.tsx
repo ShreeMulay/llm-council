@@ -52,7 +52,7 @@ const defaultProps = {
   isExpanded: false,
   onToggle: () => {},
   onFieldChange: () => {},
-  isDeltaMode: false,
+  isProgressionMode: false,
   enumDefinitions: {} as Record<string, EnumDefinition>,
 }
 
@@ -251,8 +251,8 @@ describe("SectionCard", () => {
     })
   })
 
-  describe("Delta mode - unchanged sections", () => {
-    it("shows 'Unchanged from previous visit' for stable sections in delta mode", () => {
+  describe("Progression mode - unchanged sections", () => {
+    it("shows 'Unchanged from previous visit' for stable sections in progression mode", () => {
       const section = createTestSection()
       const currentData: EncounterData = { "test_section.field1": 10 }
       const previousData: EncounterData = { "test_section.field1": 10 }
@@ -263,7 +263,7 @@ describe("SectionCard", () => {
           section={section}
           currentData={currentData}
           previousData={previousData}
-          isDeltaMode={true}
+          isProgressionMode={true}
           isExpanded={false}
         />
       )
@@ -271,7 +271,7 @@ describe("SectionCard", () => {
       expect(screen.getByText("Unchanged from previous visit")).toBeTruthy()
     })
 
-    it("shows summary instead of unchanged message when not in delta mode", () => {
+    it("shows summary instead of unchanged message when not in progression mode", () => {
       const section = createTestSection()
       const currentData: EncounterData = { "test_section.field1": 10 }
       const previousData: EncounterData = { "test_section.field1": 10 }
@@ -282,7 +282,7 @@ describe("SectionCard", () => {
           section={section}
           currentData={currentData}
           previousData={previousData}
-          isDeltaMode={false}
+          isProgressionMode={false}
           isExpanded={false}
         />
       )
@@ -291,7 +291,7 @@ describe("SectionCard", () => {
       expect(screen.getByText(/Field One: 10 mg\/dL/)).toBeTruthy()
     })
 
-    it("shows summary when fields have changed in delta mode", () => {
+    it("shows summary when fields have changed in progression mode", () => {
       const section = createTestSection()
       const currentData: EncounterData = { "test_section.field1": 15 }
       const previousData: EncounterData = { "test_section.field1": 10 }
@@ -302,7 +302,7 @@ describe("SectionCard", () => {
           section={section}
           currentData={currentData}
           previousData={previousData}
-          isDeltaMode={true}
+          isProgressionMode={true}
           isExpanded={false}
         />
       )
@@ -330,87 +330,64 @@ describe("SectionCard", () => {
     })
   })
 
-  describe("Domain color classes", () => {
-    it("applies correct domain color class for kidney_core", () => {
+  describe("Section state borders", () => {
+    it("applies ai_ready border by default", () => {
       const section = createTestSection({ domain_group: "kidney_core" })
       const { container } = render(<SectionCard {...defaultProps} section={section} />)
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-kidney-core")
+      expect(card.className).toContain("border-l-blue-400")
     })
 
-    it("applies correct domain color class for cardiovascular", () => {
-      const section = createTestSection({ domain_group: "cardiovascular" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
+    it("applies needs_review border when sectionState is needs_review", () => {
+      const section = createTestSection()
+      const { container } = render(
+        <SectionCard {...defaultProps} section={section} sectionState="needs_review" />
+      )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-cardiovascular")
+      expect(card.className).toContain("border-l-yellow-400")
     })
 
-    it("applies correct domain color class for pharmacotherapy", () => {
-      const section = createTestSection({ domain_group: "pharmacotherapy" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
+    it("applies accepted border when sectionState is accepted", () => {
+      const section = createTestSection()
+      const { container } = render(
+        <SectionCard {...defaultProps} section={section} sectionState="accepted" />
+      )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-pharmacotherapy")
+      expect(card.className).toContain("border-l-green-500")
     })
 
-    it("applies correct domain color class for metabolic", () => {
-      const section = createTestSection({ domain_group: "metabolic" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
+    it("applies critical border with pulse when sectionState is critical", () => {
+      const section = createTestSection()
+      const { container } = render(
+        <SectionCard {...defaultProps} section={section} sectionState="critical" />
+      )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-metabolic")
+      expect(card.className).toContain("border-l-red-500")
+      expect(card.className).toContain("animate-pulse")
     })
 
-    it("applies correct domain color class for ckd_complications", () => {
-      const section = createTestSection({ domain_group: "ckd_complications" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
+    it("applies edited border when sectionState is edited", () => {
+      const section = createTestSection()
+      const { container } = render(
+        <SectionCard {...defaultProps} section={section} sectionState="edited" />
+      )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-ckd-complications")
+      expect(card.className).toContain("border-l-purple-500")
     })
 
-    it("applies correct domain color class for risk_mitigation", () => {
-      const section = createTestSection({ domain_group: "risk_mitigation" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
+    it("applies conflict border when sectionState is conflict", () => {
+      const section = createTestSection()
+      const { container } = render(
+        <SectionCard {...defaultProps} section={section} sectionState="conflict" />
+      )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-risk-mitigation")
-    })
-
-    it("applies correct domain color class for planning", () => {
-      const section = createTestSection({ domain_group: "planning" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
-      
-      const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-planning")
-    })
-
-    it("applies correct domain color class for screening", () => {
-      const section = createTestSection({ domain_group: "screening" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
-      
-      const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-screening")
-    })
-
-    it("applies correct domain color class for care_coordination", () => {
-      const section = createTestSection({ domain_group: "care_coordination" })
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
-      
-      const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("section-header-care-coordination")
-    })
-
-    it("handles unknown domain group gracefully", () => {
-      const section = createTestSection({ domain_group: "header" }) // header has no CSS class
-      const { container } = render(<SectionCard {...defaultProps} section={section} />)
-      
-      const card = container.firstChild as HTMLElement
-      // Should still render without crashing
-      expect(card.className).toContain("border")
-      expect(card.className).toContain("rounded-lg")
+      expect(card.className).toContain("border-l-orange-500")
     })
   })
 

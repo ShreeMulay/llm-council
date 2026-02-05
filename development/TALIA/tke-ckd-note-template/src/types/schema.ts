@@ -125,12 +125,49 @@ export interface EncounterData {
   [key: string]: FieldValue // key format: "section_id.field_id"
 }
 
-export type ViewMode = "initial" | "delta"
+export type ViewMode = "baseline" | "progression"
 
+/** Section review states for AI-first workflow */
+export type SectionState =
+  | "needs_review"  // Yellow - AI low confidence or data conflict
+  | "ai_ready"      // Blue - AI high confidence, no conflicts
+  | "accepted"      // Green - Provider verified
+  | "edited"        // Purple - Provider modified AI
+  | "critical"      // Red, pulsing - Critical value, blocks sign-off
+  | "conflict"      // Orange - Sources disagree, must resolve
+
+/** User roles for role-based UI */
+export type UserRole = "provider" | "scribe" | "ma"
+
+/** Alert with optional link to section */
 export interface Alert {
   id: string
   section_id: string
   field_id: string
   message: string
   severity: "critical" | "high" | "medium" | "low"
+}
+
+/** Needs Attention queue item */
+export interface AttentionItem {
+  id: string
+  section_id: string
+  field_id?: string
+  type: "critical" | "changed" | "gap" | "conflict"
+  message: string
+  /** Quick actions available for this item */
+  actions?: Array<{ label: string; action: string }>
+}
+
+/** Encounter progress tracking */
+export interface EncounterProgress {
+  totalSections: number
+  aiReady: number
+  accepted: number
+  edited: number
+  needsReview: number
+  critical: number
+  conflict: number
+  /** Percentage of sections that are accepted or edited (finalized) */
+  percentComplete: number
 }

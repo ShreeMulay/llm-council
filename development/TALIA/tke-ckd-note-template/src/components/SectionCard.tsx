@@ -1,8 +1,18 @@
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { FieldFactory } from "./FieldFactory"
 import { Badge } from "@/components/ui/badge"
-import { cn, DOMAIN_CSS_CLASSES } from "@/lib/utils"
-import type { Section, EncounterData, EnumDefinition, DomainGroup } from "@/types/schema"
+import { cn } from "@/lib/utils"
+import type { Section, EncounterData, EnumDefinition, SectionState } from "@/types/schema"
+
+/** Border color classes for section states */
+const SECTION_STATE_BORDERS: Record<SectionState, string> = {
+  needs_review: "border-l-yellow-400",
+  ai_ready: "border-l-blue-400",
+  accepted: "border-l-green-500",
+  edited: "border-l-purple-500",
+  critical: "border-l-red-500 animate-pulse",
+  conflict: "border-l-orange-500",
+}
 
 interface SectionCardProps {
   section: Section
@@ -11,7 +21,8 @@ interface SectionCardProps {
   isExpanded: boolean
   onToggle: () => void
   onFieldChange: (fieldId: string, value: EncounterData[string]) => void
-  isDeltaMode: boolean
+  isProgressionMode: boolean
+  sectionState?: SectionState
   enumDefinitions: Record<string, EnumDefinition>
 }
 
@@ -22,7 +33,8 @@ export function SectionCard({
   isExpanded,
   onToggle,
   onFieldChange,
-  isDeltaMode,
+  isProgressionMode,
+  sectionState = "ai_ready",
   enumDefinitions,
 }: SectionCardProps) {
   // Count changed fields
@@ -45,13 +57,14 @@ export function SectionCard({
     return parts.join(" | ") || "No data"
   }
 
-  const domainClass = DOMAIN_CSS_CLASSES[section.domain_group as DomainGroup] ?? ""
+  // Use section state border if available, fallback to domain color
+  const borderClass = SECTION_STATE_BORDERS[sectionState]
 
   return (
     <div className={cn(
       "border rounded-lg bg-white shadow-sm overflow-hidden",
       "border-l-4",
-      domainClass
+      borderClass
     )}>
       {/* Header - always visible */}
       <button
@@ -90,7 +103,7 @@ export function SectionCard({
       {/* Collapsed summary */}
       {!isExpanded && (
         <div className="px-4 pb-3 text-sm text-gray-600 border-t border-gray-100">
-          {isDeltaMode && changedFields.length === 0 ? (
+          {isProgressionMode && changedFields.length === 0 ? (
             <span className="italic">Unchanged from previous visit</span>
           ) : (
             getSummary()
@@ -111,7 +124,7 @@ export function SectionCard({
                   value={currentData[key]}
                   previousValue={previousData[key]}
                   onChange={(val) => onFieldChange(field.field_id, val)}
-                  isDeltaMode={isDeltaMode}
+                  isDeltaMode={isProgressionMode}
                   enumDefinitions={enumDefinitions}
                 />
               )
