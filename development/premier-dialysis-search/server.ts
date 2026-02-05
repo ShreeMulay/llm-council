@@ -17,6 +17,7 @@ const PROJECT_ID = process.env.GCP_PROJECT_ID || "premier-dialysis-search";
 const ENGINE_ID = process.env.SEARCH_ENGINE_ID || "pd-search-engine";
 const LOCATION = "global";
 const BUCKET_NAME = process.env.GCS_BUCKET || "premier-dialysis-pp-docs";
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "shree.mulay@thekidneyexperts.com").split(",").map(e => e.trim().toLowerCase());
 
 // Initialize GCS and Firestore clients
 const storage = new Storage({ projectId: PROJECT_ID });
@@ -56,6 +57,31 @@ async function getToken(): Promise<string> {
   const token = await getAccessToken();
   cachedToken = { token, expiry: Date.now() + 50 * 60 * 1000 };
   return token;
+}
+
+// ==================== Helpers ====================
+
+// Get IAP authenticated user email
+function getIapEmail(req: Request): string {
+  return (req.headers.get("x-goog-authenticated-user-email") || "").replace("accounts.google.com:", "").trim();
+}
+
+// Check if request is from an admin
+function isAdmin(req: Request): boolean {
+  const email = getIapEmail(req).toLowerCase();
+  return ADMIN_EMAILS.includes(email);
+}
+
+// Log search analytics to Firestore (fire-and-forget)
+function logSearchAnalytics(query: string, resultCount: number, userAgent: string, userEmail: string) {
+  firestore.collection("search_analytics").add({
+    query,
+    resultCount,
+    userAgent,
+    userEmail: userEmail || "anonymous",
+    timestamp: new Date().toISOString(),
+    date: new Date().toISOString().split("T")[0],
+  }).catch(err => console.error("Analytics logging error:", err));
 }
 
 // Handle search API proxy
@@ -158,6 +184,14 @@ async function handleSearch(req: Request): Promise<Response> {
           })
         ) || [],
     })
+  );
+
+  // Log analytics (fire-and-forget, don't block response)
+  logSearchAnalytics(
+    query,
+    results.length,
+    req.headers.get("user-agent") || "unknown",
+    getIapEmail(req)
   );
 
   return Response.json({
@@ -511,6 +545,251 @@ function generateContextualFollowups(query: string, answer: string): string[] {
   ];
 }
 
+// ==================== Admin Endpoints ====================
+
+// GET /api/admin/feedback - List all feedback
+async function handleAdminFeedback(req: Request): Promise<Response> {
+  if (!isAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 403 });
+
+  const url = new URL(req.url);
+  const limit = Math.min(parseInt(url.searchParams.get("limit") || "100"), 500);
+
+  const snapshot = await firestore.collection("feedback")
+    .orderBy("timestamp", "desc")
+    .limit(limit)
+    .get();
+
+  const feedback = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const countSnapshot = await firestore.collection("feedback").count().get();
+
+  return Response.json({
+    feedback,
+    total: countSnapshot.data().count,
+    limit,
+  });
+}
+
+// GET /api/admin/analytics - Search analytics with aggregations
+async function handleAdminAnalytics(req: Request): Promise<Response> {
+  if (!isAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 403 });
+
+  const url = new URL(req.url);
+  const days = parseInt(url.searchParams.get("days") || "30");
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const snapshot = await firestore.collection("search_analytics")
+    .where("timestamp", ">=", since.toISOString())
+    .orderBy("timestamp", "desc")
+    .limit(5000)
+    .get();
+
+  const entries = snapshot.docs.map(doc => doc.data());
+
+  // Aggregate by day
+  const dailyCounts: Record<string, number> = {};
+  const queryCounts: Record<string, number> = {};
+  const userSet = new Set<string>();
+
+  entries.forEach(entry => {
+    const rawDate = String(entry.date || entry.timestamp || new Date().toISOString());
+    const date = rawDate.split("T")[0] ?? rawDate;
+    dailyCounts[date] = (dailyCounts[date] || 0) + 1;
+
+    const q = String(entry.query || "").toLowerCase().trim();
+    if (q && q !== "*") queryCounts[q] = (queryCounts[q] || 0) + 1;
+
+    const email = String(entry.userEmail || "");
+    if (email && email !== "anonymous") userSet.add(email);
+  });
+
+  const topQueries = Object.entries(queryCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([query, count]) => ({ query, count }));
+
+  const dailyVolume = Object.entries(dailyCounts)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([date, count]) => ({ date, count }));
+
+  return Response.json({
+    totalSearches: entries.length,
+    uniqueUsers: userSet.size,
+    topQueries,
+    dailyVolume,
+    period: `${days} days`,
+  });
+}
+
+// GET /api/admin/stats - Overview stats
+async function handleAdminStats(req: Request): Promise<Response> {
+  if (!isAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 403 });
+
+  const [feedbackCount, analyticsCount] = await Promise.all([
+    firestore.collection("feedback").count().get(),
+    firestore.collection("search_analytics").count().get(),
+  ]);
+
+  const recentFeedback = await firestore.collection("feedback")
+    .orderBy("timestamp", "desc")
+    .limit(100)
+    .get();
+
+  let thumbsUp = 0;
+  let thumbsDown = 0;
+  recentFeedback.docs.forEach(doc => {
+    const data = doc.data();
+    if (data.vote === "up") thumbsUp++;
+    if (data.vote === "down") thumbsDown++;
+  });
+
+  const today = new Date().toISOString().split("T")[0];
+  const todaySearches = await firestore.collection("search_analytics")
+    .where("date", "==", today)
+    .count()
+    .get();
+
+  return Response.json({
+    totalFeedback: feedbackCount.data().count,
+    totalSearches: analyticsCount.data().count,
+    todaySearches: todaySearches.data().count,
+    recentSentiment: {
+      thumbsUp,
+      thumbsDown,
+      total: thumbsUp + thumbsDown,
+      satisfactionRate: thumbsUp + thumbsDown > 0
+        ? Math.round((thumbsUp / (thumbsUp + thumbsDown)) * 100)
+        : 0,
+    },
+  });
+}
+
+// ==================== Google Chat Bot Webhook ====================
+
+async function handleChatWebhook(req: Request): Promise<Response> {
+  try {
+    const body = await req.json() as {
+      type?: string;
+      message?: { text?: string; argumentText?: string };
+      user?: { displayName?: string; email?: string };
+    };
+
+    // Handle ADDED_TO_SPACE
+    if (body.type === "ADDED_TO_SPACE") {
+      return Response.json({
+        text: "Hi! I'm the Premier Dialysis Policy Search bot. Send me any question about policies and procedures, and I'll find the answer for you.",
+      });
+    }
+
+    if (body.type !== "MESSAGE") {
+      return Response.json({ text: "" });
+    }
+
+    const query = (body.message?.argumentText || body.message?.text || "").trim();
+    if (!query) {
+      return Response.json({ text: "Please send me a question to search for." });
+    }
+
+    const token = await getToken();
+    const searchResponse = await fetch(`${SEARCH_BASE}:search`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-Goog-User-Project": PROJECT_ID,
+      },
+      body: JSON.stringify({
+        query,
+        pageSize: 5,
+        contentSearchSpec: {
+          summarySpec: {
+            summaryResultCount: 3,
+            includeCitations: true,
+            modelSpec: { version: "stable" },
+          },
+          snippetSpec: { returnSnippet: true },
+        },
+        queryExpansionSpec: { condition: "AUTO" },
+        spellCorrectionSpec: { mode: "AUTO" },
+      }),
+    });
+
+    if (!searchResponse.ok) {
+      return Response.json({ text: "Sorry, I couldn't search right now. Please try again later." });
+    }
+
+    const data = await searchResponse.json() as {
+      summary?: { summaryText?: string };
+      results?: Array<{
+        document?: {
+          derivedStructData?: { title?: string };
+        };
+      }>;
+    };
+
+    const summary = data.summary?.summaryText || "No answer found for that query.";
+    const results = (data.results || []).slice(0, 3);
+    const sourcesList = results.map((r, i) =>
+      `${i + 1}. ${r.document?.derivedStructData?.title || "Untitled"}`
+    ).join("\n");
+
+    // Log the chat search
+    logSearchAnalytics(query, results.length, "google-chat-bot", body.user?.email || "chat-user");
+
+    const responseText = [
+      `*${query}*`,
+      "",
+      summary,
+      "",
+      sourcesList ? `*Sources:*\n${sourcesList}` : "",
+      "",
+      `_Search more at https://34-120-25-200.nip.io_`,
+    ].filter(Boolean).join("\n");
+
+    return Response.json({ text: responseText });
+  } catch (err) {
+    console.error("Chat webhook error:", err);
+    return Response.json({ text: "Sorry, something went wrong. Please try again." });
+  }
+}
+
+// ==================== Notifications ====================
+
+// POST /api/admin/notify - Send a notification
+async function handleAdminNotify(req: Request): Promise<Response> {
+  if (!isAdmin(req)) return Response.json({ error: "Unauthorized" }, { status: 403 });
+
+  const body = await req.json() as { title?: string; message?: string };
+  if (!body.title || !body.message) {
+    return Response.json({ error: "Missing title and message" }, { status: 400 });
+  }
+
+  await firestore.collection("notifications").add({
+    title: body.title,
+    message: body.message,
+    timestamp: new Date().toISOString(),
+    sentBy: getIapEmail(req),
+  });
+
+  return Response.json({ success: true });
+}
+
+// GET /api/notifications - Get recent notifications
+async function handleNotifications(req: Request): Promise<Response> {
+  const url = new URL(req.url);
+  const since = url.searchParams.get("since") ||
+    new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const snapshot = await firestore.collection("notifications")
+    .where("timestamp", ">=", since)
+    .orderBy("timestamp", "desc")
+    .limit(10)
+    .get();
+
+  const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  return Response.json({ notifications });
+}
+
 // Serve static files from public/
 const publicDir = import.meta.dir + "/firebase/public";
 
@@ -537,6 +816,27 @@ const server = Bun.serve({
     }
     if (url.pathname === "/api/health") {
       return Response.json({ status: "ok", project: PROJECT_ID, engine: ENGINE_ID, bucket: BUCKET_NAME });
+    }
+    // Admin endpoints
+    if (url.pathname === "/api/admin/feedback" && req.method === "GET") {
+      return handleAdminFeedback(req);
+    }
+    if (url.pathname === "/api/admin/analytics" && req.method === "GET") {
+      return handleAdminAnalytics(req);
+    }
+    if (url.pathname === "/api/admin/stats" && req.method === "GET") {
+      return handleAdminStats(req);
+    }
+    if (url.pathname === "/api/admin/notify" && req.method === "POST") {
+      return handleAdminNotify(req);
+    }
+    // Notifications (public)
+    if (url.pathname === "/api/notifications" && req.method === "GET") {
+      return handleNotifications(req);
+    }
+    // Google Chat bot webhook
+    if (url.pathname === "/api/chat/webhook" && req.method === "POST") {
+      return handleChatWebhook(req);
     }
 
     // Static files

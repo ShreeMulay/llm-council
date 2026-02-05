@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>Admin Dashboard - Premier Dialysis Policy Search</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="https://premier-dialysis.com/wp-content/uploads/2025/04/Logo.png" type="image/png">
+  <style>
+    /* Admin-specific styles */
+    .admin-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+    }
+    .admin-header h1 {
+      font-size: 1.5rem;
+      color: var(--pd-text);
+    }
+    .admin-header a {
+      color: var(--pd-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .admin-header a:hover { text-decoration: underline; }
+
+    /* Stats cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--pd-card-bg);
+      border: 1px solid var(--pd-border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      text-align: center;
+      transition: box-shadow 0.15s;
+    }
+    .stat-card:hover { box-shadow: var(--pd-shadow); }
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--pd-primary);
+      line-height: 1.2;
+    }
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--pd-text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.25rem;
+    }
+
+    /* Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--pd-border);
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: 0.6rem 1.25rem;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--pd-text-light);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .tab-btn:hover { color: var(--pd-primary); }
+    .tab-btn.active {
+      color: var(--pd-primary);
+      border-bottom-color: var(--pd-primary);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Tables */
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .admin-table th {
+      text-align: left;
+      padding: 0.6rem 0.75rem;
+      background: var(--pd-primary-bg);
+      color: var(--pd-primary);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 2px solid var(--pd-border);
+    }
+    .admin-table td {
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid var(--pd-border);
+      color: var(--pd-text);
+      vertical-align: top;
+    }
+    .admin-table tr:hover td {
+      background: var(--pd-gray);
+    }
+    .vote-up { color: var(--pd-green); font-weight: 700; }
+    .vote-down { color: var(--pd-red); font-weight: 700; }
+    .truncate {
+      max-width: 250px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .comment-text {
+      max-width: 200px;
+      font-style: italic;
+      color: var(--pd-text-light);
+    }
+
+    /* Bar chart */
+    .chart-container {
+      background: var(--pd-card-bg);
+      border: 1px solid var(--pd-border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--pd-text);
+      margin-bottom: 1rem;
+    }
+    .bar-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 150px;
+      padding-bottom: 1.5rem;
+      position: relative;
+    }
+    .bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+    }
+    .bar {
+      width: 100%;
+      max-width: 30px;
+      background: var(--pd-primary);
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      transition: height 0.3s ease;
+      position: relative;
+    }
+    .bar:hover { opacity: 0.8; }
+    .bar-label {
+      font-size: 0.6rem;
+      color: var(--pd-text-light);
+      margin-top: 4px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      max-height: 50px;
+      overflow: hidden;
+    }
+    .bar-value {
+      font-size: 0.65rem;
+      color: var(--pd-text);
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    /* Top queries list */
+    .top-list {
+      list-style: none;
+      counter-reset: rank;
+    }
+    .top-list li {
+      counter-increment: rank;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--pd-border);
+      font-size: 0.85rem;
+    }
+    .top-list li:hover { background: var(--pd-gray); }
+    .top-list li::before {
+      content: counter(rank);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--pd-primary-bg);
+      color: var(--pd-primary);
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .top-query { flex: 1; color: var(--pd-text); }
+    .top-count {
+      font-weight: 700;
+      color: var(--pd-primary);
+      font-size: 0.8rem;
+    }
+
+    /* Notification form */
+    .notify-form {
+      background: var(--pd-card-bg);
+      border: 1px solid var(--pd-border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .notify-form h3 {
+      font-size: 1rem;
+      color: var(--pd-text);
+      margin-bottom: 1rem;
+    }
+    .form-group {
+      margin-bottom: 1rem;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--pd-text-light);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--pd-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      color: var(--pd-text);
+      background: var(--pd-white);
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--pd-primary);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .notify-btn {
+      background: var(--pd-primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .notify-btn:hover { background: var(--pd-primary-light); }
+    .notify-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Notification history */
+    .notif-item {
+      padding: 0.75rem;
+      border: 1px solid var(--pd-border);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      background: var(--pd-card-bg);
+    }
+    .notif-title { font-weight: 600; color: var(--pd-text); font-size: 0.9rem; }
+    .notif-body { font-size: 0.85rem; color: var(--pd-text-light); margin-top: 0.25rem; }
+    .notif-meta { font-size: 0.75rem; color: var(--pd-text-light); margin-top: 0.25rem; font-style: italic; }
+
+    /* Loading / error */
+    .admin-loading {
+      text-align: center;
+      padding: 3rem;
+      color: var(--pd-text-light);
+    }
+    .admin-error {
+      text-align: center;
+      padding: 2rem;
+      color: var(--pd-red);
+      background: #fdedec;
+      border-radius: 8px;
+    }
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .bar-label { display: none; }
+    }
+
+    /* Period selector */
+    .period-select {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--pd-border);
+      border-radius: 4px;
+      font-size: 0.85rem;
+      background: var(--pd-white);
+      color: var(--pd-text);
+      cursor: pointer;
+    }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-brand" onclick="window.location.href='/'" title="Return to search" role="button" tabindex="0" aria-label="Go to search page">
+        <img src="https://premier-dialysis.com/wp-content/uploads/2025/04/Logo.png" alt="Premier Dialysis" class="header-logo">
+        <p class="subtitle">Admin Dashboard</p>
+      </div>
+      <div class="theme-switcher" role="group" aria-label="Theme selector">
+        <button class="theme-btn active" data-theme="purple" onclick="setTheme('purple')" title="Premier Purple" aria-label="Premier Purple theme"></button>
+        <button class="theme-btn" data-theme="dark" onclick="setTheme('dark')" title="Dark Mode" aria-label="Dark Mode theme"></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="admin-header">
+      <h1>Admin Dashboard</h1>
+      <a href="/">&larr; Back to Search</a>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total-searches">--</div>
+        <div class="stat-label">Total Searches</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-today">--</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-feedback">--</div>
+        <div class="stat-label">Feedback Received</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-satisfaction">--%</div>
+        <div class="stat-label">Satisfaction Rate</div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('analytics')">Analytics</button>
+      <button class="tab-btn" onclick="switchTab('feedback')">Feedback</button>
+      <button class="tab-btn" onclick="switchTab('notifications')">Notifications</button>
+    </div>
+
+    <!-- Analytics Tab -->
+    <div id="tab-analytics" class="tab-content active">
+      <div class="section-header">
+        <h3 class="chart-title" style="margin:0">Search Volume</h3>
+        <select class="period-select" id="period-select" onchange="loadAnalytics()">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+      </div>
+
+      <div class="chart-container">
+        <div class="bar-chart" id="daily-chart">
+          <div class="admin-loading">Loading chart...</div>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="chart-container">
+          <div class="chart-title">Top Queries</div>
+          <ol class="top-list" id="top-queries">
+            <li><span class="top-query">Loading...</span></li>
+          </ol>
+        </div>
+        <div class="chart-container">
+          <div class="chart-title">Usage Summary</div>
+          <div id="usage-summary" style="padding:0.5rem;font-size:0.9rem;color:var(--pd-text-light)">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feedback Tab -->
+    <div id="tab-feedback" class="tab-content">
+      <div class="chart-container" style="overflow-x:auto">
+        <div class="section-header">
+          <div class="chart-title" style="margin:0">Recent Feedback</div>
+          <span id="feedback-count" style="font-size:0.8rem;color:var(--pd-text-light)"></span>
+        </div>
+        <table class="admin-table" id="feedback-table">
+          <thead>
+            <tr>
+              <th>Vote</th>
+              <th>Query</th>
+              <th>Comment</th>
+              <th>Sources</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="feedback-body">
+            <tr><td colspan="5" class="admin-loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Notifications Tab -->
+    <div id="tab-notifications" class="tab-content">
+      <div class="notify-form">
+        <h3>Send Policy Update Notification</h3>
+        <div class="form-group">
+          <label for="notify-title">Title</label>
+          <input type="text" id="notify-title" placeholder="e.g. Updated Infection Control Policy">
+        </div>
+        <div class="form-group">
+          <label for="notify-message">Message</label>
+          <textarea id="notify-message" placeholder="Describe what changed and any actions staff should take..."></textarea>
+        </div>
+        <button class="notify-btn" id="notify-btn" onclick="sendNotification()">Send Notification</button>
+        <span id="notify-status" style="margin-left:0.75rem;font-size:0.85rem;color:var(--pd-green)"></span>
+      </div>
+
+      <div class="chart-container">
+        <div class="chart-title">Recent Notifications</div>
+        <div id="notification-history">
+          <div class="admin-loading">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Premier Dialysis Admin Dashboard</p>
+    <p class="footer-note">Only accessible to authorized administrators.</p>
+  </footer>
+
+  <script>
+    // ==================== Theme ====================
+    const THEME_KEY = 'pd-theme';
+    function loadTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || 'purple';
+      setTheme(saved, false);
+    }
+    function setTheme(theme, save = true) {
+      if (theme === 'purple') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.theme === theme);
+      });
+      if (save) localStorage.setItem(THEME_KEY, theme);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatTime(iso) {
+      if (!iso) return '--';
+      const d = new Date(iso);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr + 'T00:00:00');
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+
+    // ==================== Tab Navigation ====================
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // ==================== Load Data ====================
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        if (res.status === 403) {
+          document.querySelector('main').innerHTML = '<div class="admin-error"><h2>Access Denied</h2><p>You are not authorized to view this page.</p><p><a href="/">Return to Search</a></p></div>';
+          return false;
+        }
+        const data = await res.json();
+        document.getElementById('stat-total-searches').textContent = (data.totalSearches || 0).toLocaleString();
+        document.getElementById('stat-today').textContent = (data.todaySearches || 0).toLocaleString();
+        document.getElementById('stat-feedback').textContent = (data.totalFeedback || 0).toLocaleString();
+        document.getElementById('stat-satisfaction').textContent = (data.recentSentiment?.satisfactionRate || 0) + '%';
+        return true;
+      } catch (err) {
+        console.error('Stats error:', err);
+        return false;
+      }
+    }
+
+    async function loadAnalytics() {
+      const days = document.getElementById('period-select').value;
+      try {
+        const res = await fetch(`/api/admin/analytics?days=${days}`);
+        const data = await res.json();
+
+        // Daily chart
+        const chart = document.getElementById('daily-chart');
+        if (data.dailyVolume && data.dailyVolume.length > 0) {
+          const maxCount = Math.max(...data.dailyVolume.map(d => d.count));
+          chart.innerHTML = data.dailyVolume.map(d => {
+            const height = maxCount > 0 ? Math.max(2, (d.count / maxCount) * 130) : 2;
+            return `<div class="bar-col">
+              <span class="bar-value">${d.count}</span>
+              <div class="bar" style="height:${height}px" title="${d.date}: ${d.count} searches"></div>
+              <span class="bar-label">${formatDate(d.date)}</span>
+            </div>`;
+          }).join('');
+        } else {
+          chart.innerHTML = '<div class="admin-loading">No search data yet.</div>';
+        }
+
+        // Top queries
+        const list = document.getElementById('top-queries');
+        if (data.topQueries && data.topQueries.length > 0) {
+          list.innerHTML = data.topQueries.map(q =>
+            `<li><span class="top-query">${escapeHtml(q.query)}</span><span class="top-count">${q.count}</span></li>`
+          ).join('');
+        } else {
+          list.innerHTML = '<li><span class="top-query" style="color:var(--pd-text-light)">No queries yet</span></li>';
+        }
+
+        // Usage summary
+        const summary = document.getElementById('usage-summary');
+        const avgPerDay = data.dailyVolume && data.dailyVolume.length > 0
+          ? Math.round(data.totalSearches / data.dailyVolume.length)
+          : 0;
+        summary.innerHTML = `
+          <p><strong>Total searches:</strong> ${data.totalSearches || 0}</p>
+          <p><strong>Unique users:</strong> ${data.uniqueUsers || 0}</p>
+          <p><strong>Avg per day:</strong> ${avgPerDay}</p>
+          <p><strong>Period:</strong> ${data.period || days + ' days'}</p>
+          <p><strong>Top query:</strong> ${data.topQueries?.[0]?.query || 'N/A'} (${data.topQueries?.[0]?.count || 0}x)</p>
+        `;
+      } catch (err) {
+        console.error('Analytics error:', err);
+      }
+    }
+
+    async function loadFeedback() {
+      try {
+        const res = await fetch('/api/admin/feedback?limit=100');
+        const data = await res.json();
+        const count = document.getElementById('feedback-count');
+        count.textContent = `${data.total || 0} total`;
+
+        const body = document.getElementById('feedback-body');
+        if (data.feedback && data.feedback.length > 0) {
+          body.innerHTML = data.feedback.map(f => `
+            <tr>
+              <td><span class="${f.vote === 'up' ? 'vote-up' : 'vote-down'}">${f.vote === 'up' ? '\u25B2' : '\u25BC'}</span></td>
+              <td class="truncate" title="${escapeHtml(f.query)}">${escapeHtml(f.query)}</td>
+              <td class="comment-text">${escapeHtml(f.comment || '--')}</td>
+              <td class="truncate" title="${(f.sources || []).join(', ')}">${(f.sources || []).slice(0, 2).join(', ') || '--'}</td>
+              <td style="white-space:nowrap">${formatTime(f.timestamp)}</td>
+            </tr>
+          `).join('');
+        } else {
+          body.innerHTML = '<tr><td colspan="5" class="admin-loading">No feedback yet.</td></tr>';
+        }
+      } catch (err) {
+        console.error('Feedback error:', err);
+      }
+    }
+
+    async function loadNotifications() {
+      try {
+        const res = await fetch('/api/notifications?since=' + new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+        const data = await res.json();
+        const container = document.getElementById('notification-history');
+        if (data.notifications && data.notifications.length > 0) {
+          container.innerHTML = data.notifications.map(n => `
+            <div class="notif-item">
+              <div class="notif-title">${escapeHtml(n.title)}</div>
+              <div class="notif-body">${escapeHtml(n.message)}</div>
+              <div class="notif-meta">Sent by ${escapeHtml(n.sentBy || 'admin')} on ${formatTime(n.timestamp)}</div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<p style="color:var(--pd-text-light);font-size:0.85rem;padding:0.5rem">No notifications sent yet.</p>';
+        }
+      } catch (err) {
+        console.error('Notifications error:', err);
+      }
+    }
+
+    // ==================== Send Notification ====================
+    async function sendNotification() {
+      const title = document.getElementById('notify-title').value.trim();
+      const message = document.getElementById('notify-message').value.trim();
+      const status = document.getElementById('notify-status');
+      const btn = document.getElementById('notify-btn');
+
+      if (!title || !message) {
+        status.textContent = 'Please fill in both fields.';
+        status.style.color = 'var(--pd-red)';
+        return;
+      }
+
+      btn.disabled = true;
+      status.textContent = 'Sending...';
+      status.style.color = 'var(--pd-text-light)';
+
+      try {
+        const res = await fetch('/api/admin/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, message }),
+        });
+
+        if (res.ok) {
+          status.textContent = 'Notification sent!';
+          status.style.color = 'var(--pd-green)';
+          document.getElementById('notify-title').value = '';
+          document.getElementById('notify-message').value = '';
+          loadNotifications();
+        } else {
+          const data = await res.json();
+          status.textContent = data.error || 'Failed to send.';
+          status.style.color = 'var(--pd-red)';
+        }
+      } catch (err) {
+        status.textContent = 'Network error. Try again.';
+        status.style.color = 'var(--pd-red)';
+      }
+
+      btn.disabled = false;
+    }
+
+    // ==================== Init ====================
+    document.addEventListener('DOMContentLoaded', async () => {
+      loadTheme();
+      const authorized = await loadStats();
+      if (authorized) {
+        loadAnalytics();
+        loadFeedback();
+        loadNotifications();
+      }
+    });
+  </script>
+</body>
+</html>

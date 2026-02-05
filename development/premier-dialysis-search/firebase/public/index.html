@@ -33,6 +33,18 @@
     </div>
   </header>
 
+  <!-- Notification Banner -->
+  <div id="notification-banner" class="notification-banner hidden" role="alert">
+    <div class="notification-content">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <div>
+        <strong id="notif-title"></strong>
+        <span id="notif-message"></span>
+      </div>
+    </div>
+    <button class="notif-dismiss" onclick="dismissNotification()" aria-label="Dismiss notification">&times;</button>
+  </div>
+
   <main>
     <!-- Keyboard shortcut hint -->
     <div class="shortcut-hint" id="shortcut-hint">
@@ -91,6 +103,10 @@
             <button class="action-btn" onclick="shareAnswer()" title="Share answer" aria-label="Share answer">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               <span>Share</span>
+            </button>
+            <button class="action-btn" onclick="emailAnswer()" title="Email answer" aria-label="Email answer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <span>Email</span>
             </button>
           </div>
           
@@ -860,6 +876,85 @@
     document.querySelector('.header-brand')?.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); resetToHome(); }
     });
+
+    // ==================== Email Answer ====================
+    function emailAnswer() {
+      if (!currentQuery || !currentAnswer) return;
+      const sources = currentResults.map((r, i) => `[${i + 1}] ${r.title}`).join('\n');
+      const subject = encodeURIComponent(`Policy Search: ${currentQuery}`);
+      const body = encodeURIComponent(
+        `Question: ${currentQuery}\n\n` +
+        `Answer:\n${currentAnswer}\n\n` +
+        `Sources:\n${sources}\n\n` +
+        `---\n` +
+        `AI-generated summary from Premier Dialysis Policy Search.\n` +
+        `Always verify with source documents.\n` +
+        `Search more at: ${window.location.origin}`
+      );
+      window.open(`mailto:?subject=${subject}&body=${body}`, '_self');
+    }
+
+    // ==================== Notifications ====================
+    const NOTIF_DISMISSED_KEY = 'pd-notif-dismissed';
+
+    async function checkNotifications() {
+      try {
+        const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const res = await fetch(`/api/notifications?since=${since}`);
+        const data = await res.json();
+        if (data.notifications && data.notifications.length > 0) {
+          const dismissed = JSON.parse(localStorage.getItem(NOTIF_DISMISSED_KEY) || '[]');
+          const latest = data.notifications.find(n => !dismissed.includes(n.id));
+          if (latest) {
+            showNotificationBanner(latest);
+            // Also show browser notification if permitted
+            if (Notification.permission === 'granted') {
+              new Notification(latest.title, {
+                body: latest.message,
+                icon: 'https://premier-dialysis.com/wp-content/uploads/2025/04/Logo.png',
+              });
+            }
+          }
+        }
+      } catch (err) {
+        // Silent fail - notifications are non-critical
+      }
+    }
+
+    function showNotificationBanner(notif) {
+      const banner = document.getElementById('notification-banner');
+      document.getElementById('notif-title').textContent = notif.title;
+      document.getElementById('notif-message').textContent = ' - ' + notif.message;
+      banner.dataset.notifId = notif.id;
+      banner.classList.remove('hidden');
+    }
+
+    function dismissNotification() {
+      const banner = document.getElementById('notification-banner');
+      const id = banner.dataset.notifId;
+      if (id) {
+        const dismissed = JSON.parse(localStorage.getItem(NOTIF_DISMISSED_KEY) || '[]');
+        dismissed.push(id);
+        localStorage.setItem(NOTIF_DISMISSED_KEY, JSON.stringify(dismissed.slice(-20)));
+      }
+      banner.classList.add('hidden');
+    }
+
+    // ==================== Service Worker ====================
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    // Request notification permission (non-blocking)
+    if ('Notification' in window && Notification.permission === 'default') {
+      // Wait 30s before asking, don't interrupt first use
+      setTimeout(() => {
+        Notification.requestPermission();
+      }, 30000);
+    }
+
+    // Check for notifications on load
+    checkNotifications();
 
     // Handle shared URL query params
     const urlParams = new URLSearchParams(window.location.search);
