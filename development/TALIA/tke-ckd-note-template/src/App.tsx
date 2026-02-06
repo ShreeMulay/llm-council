@@ -6,6 +6,7 @@ import { NeedsAttention } from "@/components/NeedsAttention"
 import { DashboardDrawer } from "@/components/DashboardDrawer"
 import { CommandPalette } from "@/components/CommandPalette"
 import { PreFlightCheck } from "@/components/PreFlightCheck"
+import { PatientView } from "@/components/PatientView"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
@@ -505,6 +506,9 @@ export default function App() {
 
       {/* Pre-Flight Check */}
       <PreFlightCheck sectionRegistry={sectionRegistry} />
+
+      {/* Patient View */}
+      <PatientView />
     </div>
   )
 }

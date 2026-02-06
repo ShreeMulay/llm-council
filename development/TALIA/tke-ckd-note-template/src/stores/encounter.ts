@@ -101,6 +101,10 @@ interface EncounterState {
   attestEncounter: () => void
   canAttest: () => boolean
   getNoteSummary: (sections: Section[]) => string
+
+  // Phase 15 actions - Patient View
+  patientViewOpen: boolean
+  setPatientViewOpen: (open: boolean) => void
 }
 
 const emptyProgress: EncounterProgress = {
@@ -143,6 +147,7 @@ const initialState = {
   uacrTrend: "→" as const,
   preFlightOpen: false,
   encounterAttested: false,
+  patientViewOpen: false,
 }
 
 export const useEncounterStore = create<EncounterState>((set, get) => ({
@@ -552,6 +557,9 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
 
     return lines.join("\n")
   },
+
+  // Phase 15: Patient View
+  setPatientViewOpen: (open) => set({ patientViewOpen: open }),
 
   clearEncounter: () => set(initialState),
 }))

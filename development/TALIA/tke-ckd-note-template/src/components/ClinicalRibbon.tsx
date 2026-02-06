@@ -10,6 +10,7 @@ import {
   Search,
   Mic,
   LayoutDashboard,
+  Heart,
 } from "lucide-react"
 
 interface ClinicalRibbonProps {
@@ -168,6 +169,18 @@ export function ClinicalRibbon({
         >
           <Mic className="h-3.5 w-3.5" />
         </button>
+
+        {/* Patient View toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={() => store.setPatientViewOpen(true)}
+          aria-label="Open patient view"
+          title="Patient View"
+        >
+          <Heart className="h-4 w-4 text-red-400" />
+        </Button>
 
         {/* Dashboard toggle */}
         <Button
