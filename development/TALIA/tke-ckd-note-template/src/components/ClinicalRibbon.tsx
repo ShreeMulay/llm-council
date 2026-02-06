@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { ViewMode } from "@/types/schema"
+import { RoleSwitcher } from "./RoleSwitcher"
 import {
   Menu,
   AlertTriangle,
@@ -154,6 +155,9 @@ export function ClinicalRibbon({
           <Search className="h-3 w-3" />
           <kbd className="font-mono text-[10px]">K</kbd>
         </button>
+
+        {/* Role switcher */}
+        <RoleSwitcher />
 
         {/* Live Filter placeholder (Phase 16) */}
         <button

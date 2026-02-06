@@ -16,6 +16,7 @@ import type {
   DomainGroup,
   Section,
 } from "@/types/schema"
+import { getPermissions, ROLE_CONFIGS } from "@/lib/role-permissions"
 import {
   ShieldCheck,
   AlertTriangle,
@@ -96,6 +97,8 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
 
   const open = store.preFlightOpen
   const setOpen = store.setPreFlightOpen
+  const permissions = getPermissions(store.userRole)
+  const roleLabel = ROLE_CONFIGS[store.userRole].label
 
   // Non-header sections grouped by domain
   const sectionsByDomain = useMemo(() => {
@@ -144,7 +147,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
     }
   }, [sectionRegistry, store.sectionStates])
 
-  const canAttest = stats.blockers === 0 && attestChecked && !store.encounterAttested
+  const canAttest = stats.blockers === 0 && attestChecked && !store.encounterAttested && permissions.canAttest
 
   // AI-generated note summary
   const noteSummary = useMemo(
@@ -407,7 +410,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                   checked={attestChecked}
                   onChange={(e) => setAttestChecked(e.target.checked)}
                   className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  disabled={stats.blockers > 0}
+                  disabled={stats.blockers > 0 || !permissions.canAttest}
                 />
                 <span className="text-sm text-gray-700">
                   I have reviewed all sections and attest that this note
@@ -415,6 +418,12 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                   content has been verified for accuracy.
                 </span>
               </label>
+
+              {!permissions.canAttest && (
+                <p className="text-xs text-amber-600 italic">
+                  Only the Provider role can attest. Current role: {roleLabel}
+                </p>
+              )}
 
               <div className="flex justify-end gap-2">
                 <Button

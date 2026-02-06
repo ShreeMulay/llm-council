@@ -9,6 +9,7 @@ import { PreFlightCheck } from "@/components/PreFlightCheck"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
+import { getPermissions, ROLE_CONFIGS } from "@/lib/role-permissions"
 import { RefreshCw, X } from "lucide-react"
 
 // Import schemas statically for now (in production, these would be fetched)
@@ -249,6 +250,8 @@ export default function App() {
   }
 
   const isProgressionMode = store.viewMode === "progression"
+  const permissions = getPermissions(store.userRole)
+  const roleConfig = ROLE_CONFIGS[store.userRole]
 
   /** Helper: does a section have any changed fields? */
   const sectionHasChanges = (section: typeof sectionRegistry.sections[0]) =>
@@ -276,7 +279,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden">
+    <div className={cn("min-h-screen bg-gray-50 flex flex-col overflow-hidden", roleConfig.borderClass)}>
       {/* Clinical Ribbon - slim sticky header */}
       <ClinicalRibbon
         onMenuToggle={() => setSidebarOpen((prev) => !prev)}
@@ -403,9 +406,9 @@ export default function App() {
                         }
                         enumDefinitions={fieldTypes.enums}
                         aiInterpretation={store.aiInterpretations[section.section_id]}
-                        onAcceptSection={() => handleAcceptSection(section.section_id)}
-                        onEditSection={() => handleEditSection(section.section_id)}
-                        onFlagSection={() => handleFlagSection(section.section_id)}
+                        onAcceptSection={permissions.canAcceptSections ? () => handleAcceptSection(section.section_id) : undefined}
+                        onEditSection={permissions.canEditSections ? () => handleEditSection(section.section_id) : undefined}
+                        onFlagSection={permissions.canFlagSections ? () => handleFlagSection(section.section_id) : undefined}
                       />
                     </div>
                   ))}
@@ -478,11 +481,13 @@ export default function App() {
           size="sm"
           className="h-8"
           onClick={() => store.setPreFlightOpen(true)}
-          disabled={store.encounterAttested}
+          disabled={store.encounterAttested || !permissions.canOpenPreFlight}
           title={
             store.encounterAttested
               ? "Note already attested"
-              : "Open Pre-Flight Check"
+              : !permissions.canOpenPreFlight
+                ? `${roleConfig.label} role cannot finalize notes`
+                : "Open Pre-Flight Check"
           }
         >
           {store.encounterAttested ? "Note Attested" : "Finalize Note"}
