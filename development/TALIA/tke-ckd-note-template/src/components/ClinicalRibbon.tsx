@@ -4,11 +4,14 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import type { ViewMode } from "@/types/schema"
 import { RoleSwitcher } from "./RoleSwitcher"
+import { useLiveFilterTrigger } from "./LiveFilter"
+import { VoiceConsentDialog } from "./VoiceConsentDialog"
 import {
   Menu,
   AlertTriangle,
   Search,
   Mic,
+  MicOff,
   LayoutDashboard,
   Heart,
 } from "lucide-react"
@@ -23,6 +26,8 @@ export function ClinicalRibbon({
   onDashboardToggle,
 }: ClinicalRibbonProps) {
   const store = useEncounterStore()
+
+  const liveFilter = useLiveFilterTrigger()
 
   const alertCount = store.attentionItems.filter(
     (i) => i.type === "critical"
@@ -160,15 +165,39 @@ export function ClinicalRibbon({
         {/* Role switcher */}
         <RoleSwitcher />
 
-        {/* Live Filter placeholder (Phase 16) */}
+        {/* Live Filter toggle */}
         <button
-          className="h-7 w-7 flex items-center justify-center rounded text-gray-300 cursor-not-allowed"
-          disabled
-          title="Live Filter (coming soon)"
-          aria-label="Live Filter not yet available"
+          className={cn(
+            "h-7 w-7 flex items-center justify-center rounded transition-colors",
+            store.liveFilterActive
+              ? store.liveFilterMuted
+                ? "bg-red-100 text-red-500"
+                : "bg-green-100 text-green-600"
+              : "text-gray-400 hover:text-gray-600"
+          )}
+          onClick={liveFilter.trigger}
+          title={
+            store.liveFilterActive
+              ? "Live Filter active (click to stop)"
+              : "Start Live Filter"
+          }
+          aria-label={store.liveFilterActive ? "Stop Live Filter" : "Start Live Filter"}
         >
-          <Mic className="h-3.5 w-3.5" />
+          {store.liveFilterActive && store.liveFilterMuted ? (
+            <MicOff className="h-3.5 w-3.5" />
+          ) : (
+            <Mic className="h-3.5 w-3.5" />
+          )}
+          {store.liveFilterActive && !store.liveFilterMuted && (
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+          )}
         </button>
+
+        {/* Voice consent dialog */}
+        <VoiceConsentDialog
+          open={liveFilter.consentOpen}
+          onOpenChange={liveFilter.setConsentOpen}
+        />
 
         {/* Patient View toggle */}
         <Button

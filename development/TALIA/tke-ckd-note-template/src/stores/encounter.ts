@@ -105,6 +105,17 @@ interface EncounterState {
   // Phase 15 actions - Patient View
   patientViewOpen: boolean
   setPatientViewOpen: (open: boolean) => void
+
+  // Phase 16 actions - Live Filter (Ambient Voice)
+  liveFilterConsented: boolean
+  liveFilterActive: boolean
+  liveFilterMuted: boolean
+  voiceTranscript: string[]
+  setLiveFilterConsented: (consented: boolean) => void
+  setLiveFilterActive: (active: boolean) => void
+  setLiveFilterMuted: (muted: boolean) => void
+  appendVoiceTranscript: (text: string) => void
+  clearVoiceTranscript: () => void
 }
 
 const emptyProgress: EncounterProgress = {
@@ -148,6 +159,10 @@ const initialState = {
   preFlightOpen: false,
   encounterAttested: false,
   patientViewOpen: false,
+  liveFilterConsented: false,
+  liveFilterActive: false,
+  liveFilterMuted: false,
+  voiceTranscript: [] as string[],
 }
 
 export const useEncounterStore = create<EncounterState>((set, get) => ({
@@ -560,6 +575,14 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
 
   // Phase 15: Patient View
   setPatientViewOpen: (open) => set({ patientViewOpen: open }),
+
+  // Phase 16: Live Filter (Ambient Voice)
+  setLiveFilterConsented: (consented) => set({ liveFilterConsented: consented }),
+  setLiveFilterActive: (active) => set({ liveFilterActive: active }),
+  setLiveFilterMuted: (muted) => set({ liveFilterMuted: muted }),
+  appendVoiceTranscript: (text) =>
+    set((prev) => ({ voiceTranscript: [...prev.voiceTranscript, text] })),
+  clearVoiceTranscript: () => set({ voiceTranscript: [] }),
 
   clearEncounter: () => set(initialState),
 }))

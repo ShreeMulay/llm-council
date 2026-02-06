@@ -7,6 +7,7 @@ import { DashboardDrawer } from "@/components/DashboardDrawer"
 import { CommandPalette } from "@/components/CommandPalette"
 import { PreFlightCheck } from "@/components/PreFlightCheck"
 import { PatientView } from "@/components/PatientView"
+import { LiveFilter } from "@/components/LiveFilter"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
@@ -509,6 +510,9 @@ export default function App() {
 
       {/* Patient View */}
       <PatientView />
+
+      {/* Live Filter (Ambient Voice) */}
+      <LiveFilter />
     </div>
   )
 }
