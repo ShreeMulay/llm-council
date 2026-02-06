@@ -123,6 +123,18 @@ body {
 /* ===== Progress Bar Segments ===== */
 /* Multi-segment progress bar uses inline styles in App.tsx */
 
+/* ===== Accessibility - Focus Visible (WCAG 2.2) ===== */
+*:focus-visible {
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+[role="radio"]:focus-visible {
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #3B82F6;
+}
+
 /* ===== Draft Aesthetic (Phase 11) ===== */
 /* AI-generated content before acceptance uses dashed borders */
 .ai-draft {

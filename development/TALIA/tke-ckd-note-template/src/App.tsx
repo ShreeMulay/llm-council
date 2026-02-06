@@ -8,6 +8,7 @@ import { CommandPalette } from "@/components/CommandPalette"
 import { PreFlightCheck } from "@/components/PreFlightCheck"
 import { PatientView } from "@/components/PatientView"
 import { LiveFilter } from "@/components/LiveFilter"
+import { KeyboardShortcuts } from "@/components/KeyboardShortcuts"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
@@ -282,6 +283,14 @@ export default function App() {
 
   return (
     <div className={cn("min-h-screen bg-gray-50 flex flex-col overflow-hidden", roleConfig.borderClass)}>
+      {/* Skip to content - accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-blue-600 focus:underline"
+      >
+        Skip to main content
+      </a>
+
       {/* Clinical Ribbon - slim sticky header */}
       <ClinicalRibbon
         onMenuToggle={() => setSidebarOpen((prev) => !prev)}
@@ -359,7 +368,7 @@ export default function App() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-auto">
+        <main id="main-content" className="flex-1 overflow-auto" role="main">
           {/* Needs Attention queue */}
           <NeedsAttention />
 
@@ -513,6 +522,9 @@ export default function App() {
 
       {/* Live Filter (Ambient Voice) */}
       <LiveFilter />
+
+      {/* Keyboard Shortcuts (Shift+?) */}
+      <KeyboardShortcuts />
     </div>
   )
 }
