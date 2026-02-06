@@ -22,7 +22,7 @@ export function RoleSwitcher() {
               "px-1.5 py-0.5 text-[10px] font-semibold rounded transition-colors",
               isActive
                 ? `${config.bgColor} ${config.color}`
-                : "text-gray-400 hover:text-gray-600"
+                : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
             )}
             onClick={() => setUserRole(role)}
             title={`Switch to ${config.label} role`}

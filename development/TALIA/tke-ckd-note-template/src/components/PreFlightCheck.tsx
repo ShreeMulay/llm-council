@@ -42,38 +42,38 @@ const STATE_CONFIG: Record<
 > = {
   accepted: {
     icon: CheckCircle2,
-    color: "text-green-600",
-    bg: "bg-green-50",
+    color: "text-[var(--color-success)]",
+    bg: "bg-[var(--color-success-light)]",
     label: "Accepted",
   },
   edited: {
     icon: Pencil,
-    color: "text-purple-600",
-    bg: "bg-purple-50",
+    color: "text-[color:var(--color-domain-pharmacotherapy)]",
+    bg: "bg-[color:var(--color-domain-pharmacotherapy)]/10",
     label: "Edited",
   },
   ai_ready: {
     icon: Bot,
-    color: "text-blue-600",
-    bg: "bg-blue-50",
+    color: "text-[var(--accent-primary)]",
+    bg: "bg-[var(--color-info-light)]",
     label: "AI Ready",
   },
   needs_review: {
     icon: Flag,
-    color: "text-yellow-600",
-    bg: "bg-yellow-50",
+    color: "text-[var(--color-warning)]",
+    bg: "bg-[var(--color-warning-light)]",
     label: "Needs Review",
   },
   critical: {
     icon: XCircle,
-    color: "text-red-600",
-    bg: "bg-red-50",
+    color: "text-[var(--color-error)]",
+    bg: "bg-[var(--color-error-light)]",
     label: "Critical",
   },
   conflict: {
     icon: AlertTriangle,
-    color: "text-orange-600",
-    bg: "bg-orange-50",
+    color: "text-[var(--color-warning)]",
+    bg: "bg-[var(--color-warning-light)]",
     label: "Conflict",
   },
 }
@@ -182,7 +182,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-blue-600" />
+            <ShieldCheck className="h-5 w-5 text-[var(--accent-primary)]" />
             Pre-Flight Check
           </DialogTitle>
           <DialogDescription>
@@ -193,11 +193,11 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
         {/* Attested success state */}
         {store.encounterAttested && (
           <div className="flex flex-col items-center justify-center py-8">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-            <p className="text-lg font-semibold text-green-700">
+            <CheckCircle2 className="h-16 w-16 text-[var(--color-success)] mb-4" />
+            <p className="text-lg font-semibold text-[var(--color-success-text)]">
               Note Attested
             </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-[var(--text-muted)] mt-1">
               Encounter note has been finalized and signed off.
             </p>
           </div>
@@ -207,32 +207,32 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
             {/* Stats Overview */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-green-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-green-600">
+              <div className="bg-[var(--color-success-light)] rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-[var(--color-success)]">
                   {stats.finalized}
                 </div>
-                <div className="text-[10px] text-green-700 uppercase font-medium">
+                <div className="text-[10px] text-[var(--color-success-text)] uppercase font-medium">
                   Finalized
                 </div>
               </div>
-              <div className="bg-blue-50 rounded-lg p-3 text-center">
-                <div className="text-2xl font-bold text-blue-600">
+              <div className="bg-[var(--color-info-light)] rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-[var(--accent-primary)]">
                   {stats.aiReady + stats.needsReview}
                 </div>
-                <div className="text-[10px] text-blue-700 uppercase font-medium">
+                <div className="text-[10px] text-[var(--color-info-text)] uppercase font-medium">
                   Pending
                 </div>
               </div>
               <div
                 className={cn(
                   "rounded-lg p-3 text-center",
-                  stats.blockers > 0 ? "bg-red-50" : "bg-gray-50"
+                  stats.blockers > 0 ? "bg-[var(--color-error-light)]" : "bg-[var(--bg-surface-sunken)]"
                 )}
               >
                 <div
                   className={cn(
                     "text-2xl font-bold",
-                    stats.blockers > 0 ? "text-red-600" : "text-gray-400"
+                    stats.blockers > 0 ? "text-[var(--color-error)]" : "text-[var(--text-muted)]"
                   )}
                 >
                   {stats.blockers}
@@ -240,7 +240,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                 <div
                   className={cn(
                     "text-[10px] uppercase font-medium",
-                    stats.blockers > 0 ? "text-red-700" : "text-gray-500"
+                    stats.blockers > 0 ? "text-[var(--color-error-text)]" : "text-[var(--text-muted)]"
                   )}
                 >
                   Blockers
@@ -250,7 +250,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
 
             {/* Blocker warning */}
             {stats.blockers > 0 && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <div className="flex items-center gap-2 p-3 bg-[var(--color-error-light)] border border-[var(--color-error)]/30 rounded-lg text-sm text-[var(--color-error-text)]">
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 <span>
                   {stats.critical > 0 &&
@@ -265,7 +265,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
 
             {/* Section Grid by Domain */}
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+              <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 Section Review
               </h3>
@@ -274,7 +274,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                 if (!sections || sections.length === 0) return null
                 return (
                   <div key={domain}>
-                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1 px-1">
+                    <div className="text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1 px-1">
                       {DOMAIN_DISPLAY_NAMES[domain]}
                     </div>
                     <div className="space-y-1">
@@ -291,8 +291,8 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                           <button
                             key={section.section_id}
                             className={cn(
-                              "w-full flex items-center gap-2 px-3 py-2 rounded-md border text-left text-sm transition-colors hover:bg-gray-50",
-                              isBlocker && "border-red-200 bg-red-50/50"
+                              "w-full flex items-center gap-2 px-3 py-2 rounded-md border text-left text-sm transition-colors hover:bg-[var(--bg-surface-sunken)]",
+                              isBlocker && "border-[var(--color-error)]/30 bg-[var(--color-error-light)]"
                             )}
                             onClick={() => jumpToSection(section.section_id)}
                             title={`Jump to ${section.display_name}`}
@@ -303,11 +303,11 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                                 config.color
                               )}
                             />
-                            <span className="flex-1 truncate text-gray-700">
+                            <span className="flex-1 truncate text-[var(--text-secondary)]">
                               {section.section_number}. {section.display_name}
                             </span>
                             {hasAI && (
-                              <Bot className="h-3 w-3 text-blue-400 flex-shrink-0" />
+                              <Bot className="h-3 w-3 text-[var(--accent-primary)] flex-shrink-0" />
                             )}
                             <Badge
                               variant="outline"
@@ -330,7 +330,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
             {/* Note Summary Preview */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center gap-1.5">
+                <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider flex items-center gap-1.5">
                   <FileText className="h-3.5 w-3.5" />
                   Note Summary
                 </h3>
@@ -341,14 +341,14 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                   onClick={handleCopySummary}
                 >
                   {copied ? (
-                    <Check className="h-3 w-3 text-green-500" />
+                    <Check className="h-3 w-3 text-[var(--color-success)]" />
                   ) : (
                     <Copy className="h-3 w-3" />
                   )}
                   {copied ? "Copied" : "Copy"}
                 </Button>
               </div>
-              <pre className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 max-h-[200px] overflow-y-auto whitespace-pre-wrap font-mono border border-gray-200">
+              <pre className="text-xs text-[var(--text-secondary)] bg-[var(--bg-surface-sunken)] rounded-lg p-3 max-h-[200px] overflow-y-auto whitespace-pre-wrap font-mono border border-[var(--border-default)]">
                 {noteSummary}
               </pre>
             </div>
@@ -356,10 +356,10 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
             {/* Audit Trail: AI modifications */}
             {Object.keys(store.aiInterpretations).length > 0 && (
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
                   AI Audit Trail
                 </h3>
-                <div className="text-xs text-gray-500 space-y-1">
+                <div className="text-xs text-[var(--text-muted)] space-y-1">
                   {Object.entries(store.aiInterpretations).map(
                     ([sectionId, interp]) => {
                       const section = sectionRegistry.sections.find(
@@ -372,24 +372,24 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
                           key={sectionId}
                           className="flex items-center gap-2"
                         >
-                          <Bot className="h-3 w-3 text-blue-400" />
-                          <span className="text-gray-600">
+                          <Bot className="h-3 w-3 text-[var(--accent-primary)]" />
+                          <span className="text-[var(--text-secondary)]">
                             {section?.display_name ?? sectionId}
                           </span>
-                          <span className="text-gray-400">-</span>
-                          <span className="text-gray-500">
+                          <span className="text-[var(--text-muted)]">-</span>
+                          <span className="text-[var(--text-muted)]">
                             {interp.agentId}
                           </span>
-                          <span className="text-gray-400">
+                          <span className="text-[var(--text-muted)]">
                             ({Math.round(interp.confidence * 100)}%)
                           </span>
                           <span
                             className={cn(
                               "text-[10px] px-1 rounded",
-                              state === "accepted" && "bg-green-100 text-green-700",
-                              state === "edited" && "bg-purple-100 text-purple-700",
-                              state === "ai_ready" && "bg-blue-100 text-blue-700",
-                              state === "critical" && "bg-red-100 text-red-700"
+                              state === "accepted" && "bg-[var(--color-success-light)] text-[var(--color-success-text)]",
+                              state === "edited" && "bg-[color:var(--color-domain-pharmacotherapy)]/15 text-[color:var(--color-domain-pharmacotherapy)]",
+                              state === "ai_ready" && "bg-[var(--color-info-light)] text-[var(--color-info-text)]",
+                              state === "critical" && "bg-[var(--color-error-light)] text-[var(--color-error-text)]"
                             )}
                           >
                             {state}
@@ -403,16 +403,16 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
             )}
 
             {/* Attestation */}
-            <div className="border-t border-gray-200 pt-4 space-y-3">
+            <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
               <label className="flex items-start gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={attestChecked}
                   onChange={(e) => setAttestChecked(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="mt-0.5 h-4 w-4 rounded border-[var(--border-strong)] text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
                   disabled={stats.blockers > 0 || !permissions.canAttest}
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-[var(--text-secondary)]">
                   I have reviewed all sections and attest that this note
                   accurately represents the clinical encounter. AI-generated
                   content has been verified for accuracy.
@@ -420,7 +420,7 @@ export function PreFlightCheck({ sectionRegistry }: PreFlightCheckProps) {
               </label>
 
               {!permissions.canAttest && (
-                <p className="text-xs text-amber-600 italic">
+                <p className="text-xs text-[var(--color-warning)] italic">
                   Only the Provider role can attest. Current role: {roleLabel}
                 </p>
               )}

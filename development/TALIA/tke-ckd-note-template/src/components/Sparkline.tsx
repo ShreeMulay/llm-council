@@ -30,7 +30,7 @@ export function Sparkline({
 }: SparklineProps) {
   if (data.length < 2) {
     return (
-      <span className={cn("text-[10px] text-gray-400", className)}>
+      <span className={cn("text-[10px] text-[var(--text-muted)]", className)}>
         --
       </span>
     )
@@ -124,7 +124,7 @@ export function Sparkline({
         <span
           className={cn(
             "text-[10px] font-medium tabular-nums",
-            outOfRange ? "text-red-600" : "text-gray-600"
+            outOfRange ? "text-[var(--color-error)]" : "text-[var(--text-secondary)]"
           )}
         >
           {lastValue}

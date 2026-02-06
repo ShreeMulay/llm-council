@@ -17,9 +17,9 @@ const SOURCE_ICONS: Record<string, typeof Info> = {
 }
 
 const CONFIDENCE_STYLES: Record<string, string> = {
-  high: "bg-green-100 text-green-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  low: "bg-red-100 text-red-700",
+  high: "bg-[var(--color-success-light)] text-[var(--color-success-text)]",
+  medium: "bg-[var(--color-warning-light)] text-[var(--color-warning-text)]",
+  low: "bg-[var(--color-error-light)] text-[var(--color-error-text)]",
 }
 
 const CONFIDENCE_LABELS: Record<string, string> = {
@@ -60,8 +60,8 @@ export function ProvenancePopover({
         className={cn(
           "inline-flex items-center gap-0.5 text-xs transition-colors rounded px-1 py-0.5",
           hasConflict
-            ? "text-orange-500 hover:text-orange-700 hover:bg-orange-50"
-            : "text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+            ? "text-[var(--color-warning)] hover:text-[var(--color-warning-text)] hover:bg-[var(--color-warning-light)]"
+            : "text-[var(--text-muted)] hover:text-[var(--text-secondary)] hover:bg-[var(--bg-surface-sunken)]"
         )}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
@@ -84,15 +84,15 @@ export function ProvenancePopover({
 
       {/* Hover popover - quick preview */}
       {hovered && !expanded && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-56 bg-white border border-gray-200 rounded-md shadow-lg p-2 pointer-events-none">
-          <div className="text-[10px] font-medium text-gray-500 uppercase mb-1">
+        <div className="absolute left-0 top-full mt-1 z-50 w-56 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-md shadow-lg p-2 pointer-events-none">
+          <div className="text-[10px] font-medium text-[var(--text-muted)] uppercase mb-1">
             Sources
           </div>
           {previewCitations.map((c, i) => {
             const Icon = SOURCE_ICONS[c.source] ?? Info
             return (
-              <div key={i} className="flex items-center gap-1.5 py-0.5 text-xs text-gray-700">
-                <Icon className="h-3 w-3 text-gray-400 flex-shrink-0" />
+              <div key={i} className="flex items-center gap-1.5 py-0.5 text-xs text-[var(--text-secondary)]">
+                <Icon className="h-3 w-3 text-[var(--text-muted)] flex-shrink-0" />
                 <span className="truncate">{c.label}</span>
                 <span
                   className={cn(
@@ -106,7 +106,7 @@ export function ProvenancePopover({
             )
           })}
           {citations.length > 2 && (
-            <div className="text-[10px] text-gray-400 mt-1">
+            <div className="text-[10px] text-[var(--text-muted)] mt-1">
               +{citations.length - 2} more (click to expand)
             </div>
           )}
@@ -121,13 +121,13 @@ export function ProvenancePopover({
             className="fixed inset-0 z-40"
             onClick={() => setExpanded(false)}
           />
-          <div className="absolute left-0 top-full mt-1 z-50 w-72 bg-white border border-gray-200 rounded-md shadow-lg p-3">
+          <div className="absolute left-0 top-full mt-1 z-50 w-72 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-md shadow-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-gray-700">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">
                 Data Sources ({citations.length})
               </span>
               {hasConflict && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 font-medium">
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-warning-light)] text-[var(--color-warning-text)] font-medium">
                   Conflict
                 </span>
               )}
@@ -138,12 +138,12 @@ export function ProvenancePopover({
                 return (
                   <div
                     key={i}
-                    className="flex items-start gap-2 p-1.5 rounded hover:bg-gray-50"
+                    className="flex items-start gap-2 p-1.5 rounded hover:bg-[var(--bg-surface-sunken)]"
                   >
-                    <Icon className="h-3.5 w-3.5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <Icon className="h-3.5 w-3.5 text-[var(--text-muted)] mt-0.5 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1">
-                        <span className="text-xs font-medium text-gray-800 truncate">
+                        <span className="text-xs font-medium text-[var(--text-primary)] truncate">
                           {c.label}
                         </span>
                         <span
@@ -155,11 +155,11 @@ export function ProvenancePopover({
                           {CONFIDENCE_LABELS[c.confidence]}
                         </span>
                       </div>
-                      <div className="text-[10px] text-gray-500 truncate">
+                      <div className="text-[10px] text-[var(--text-muted)] truncate">
                         {c.detail}
                       </div>
                       {c.timestamp && (
-                        <div className="text-[10px] text-gray-400">
+                        <div className="text-[10px] text-[var(--text-muted)]">
                           {new Date(c.timestamp).toLocaleDateString()}
                         </div>
                       )}

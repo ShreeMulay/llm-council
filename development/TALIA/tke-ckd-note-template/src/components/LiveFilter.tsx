@@ -32,21 +32,21 @@ export function LiveFilter() {
   }
 
   return (
-    <div className="live-filter-bar fixed bottom-14 left-1/2 -translate-x-1/2 z-20 bg-white border border-gray-200 rounded-full shadow-lg px-3 py-1.5 flex items-center gap-2">
+    <div className="live-filter-bar fixed bottom-14 left-1/2 -translate-x-1/2 z-20 bg-[var(--bg-surface)] border border-[var(--border-default)] rounded-full shadow-lg px-3 py-1.5 flex items-center gap-2">
       {/* Recording indicator */}
       <span
         className={cn(
           "w-2.5 h-2.5 rounded-full",
           store.liveFilterMuted || paused
-            ? "bg-gray-400"
-            : "bg-red-500 animate-pulse"
+            ? "bg-[var(--text-muted)]"
+            : "bg-[var(--color-error)] animate-pulse"
         )}
         aria-label={
           store.liveFilterMuted ? "Muted" : paused ? "Paused" : "Recording"
         }
       />
 
-      <span className="text-xs text-gray-600 font-medium">Live Filter</span>
+      <span className="text-xs text-[var(--text-secondary)] font-medium">Live Filter</span>
 
       {/* Mute toggle */}
       <Button
@@ -57,9 +57,9 @@ export function LiveFilter() {
         title={store.liveFilterMuted ? "Unmute" : "Mute"}
       >
         {store.liveFilterMuted ? (
-          <MicOff className="h-3.5 w-3.5 text-red-500" />
+          <MicOff className="h-3.5 w-3.5 text-[var(--color-error)]" />
         ) : (
-          <Mic className="h-3.5 w-3.5 text-green-600" />
+          <Mic className="h-3.5 w-3.5 text-[var(--color-success)]" />
         )}
       </Button>
 
@@ -72,15 +72,15 @@ export function LiveFilter() {
         title={paused ? "Resume" : "Pause"}
       >
         {paused ? (
-          <Play className="h-3.5 w-3.5 text-blue-600" />
+          <Play className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
         ) : (
-          <Pause className="h-3.5 w-3.5 text-gray-600" />
+          <Pause className="h-3.5 w-3.5 text-[var(--text-secondary)]" />
         )}
       </Button>
 
       {/* Transcript count */}
       {store.voiceTranscript.length > 0 && (
-        <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-medium">
+        <span className="text-[10px] bg-[var(--color-info-light)] text-[var(--accent-primary)] px-1.5 py-0.5 rounded-full font-medium">
           {store.voiceTranscript.length} items
         </span>
       )}
@@ -94,7 +94,7 @@ export function LiveFilter() {
           onClick={store.clearVoiceTranscript}
           title="Clear transcript"
         >
-          <Trash2 className="h-3 w-3 text-gray-400" />
+          <Trash2 className="h-3 w-3 text-[var(--text-muted)]" />
         </Button>
       )}
 
@@ -106,7 +106,7 @@ export function LiveFilter() {
         onClick={() => store.setLiveFilterActive(false)}
         title="Stop Live Filter"
       >
-        <X className="h-3.5 w-3.5 text-gray-500" />
+        <X className="h-3.5 w-3.5 text-[var(--text-muted)]" />
       </Button>
     </div>
   )

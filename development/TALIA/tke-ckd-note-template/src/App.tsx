@@ -11,6 +11,7 @@ import { LiveFilter } from "@/components/LiveFilter"
 import { KeyboardShortcuts } from "@/components/KeyboardShortcuts"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
+import { applyTheme } from "@/lib/themes"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
 import { getPermissions, ROLE_CONFIGS } from "@/lib/role-permissions"
 import { RefreshCw, X } from "lucide-react"
@@ -109,6 +110,11 @@ export default function App() {
   const store = useEncounterStore()
   const [loading, setLoading] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // Apply theme on mount
+  useEffect(() => {
+    applyTheme(store.theme)
+  }, [store.theme])
 
   useEffect(() => {
     // Initialize with sample data for demo
@@ -247,7 +253,7 @@ export default function App() {
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-gray-400" />
+        <RefreshCw className="h-8 w-8 animate-spin text-[var(--text-muted)]" />
       </div>
     )
   }
@@ -282,11 +288,11 @@ export default function App() {
   }
 
   return (
-    <div className={cn("min-h-screen bg-gray-50 flex flex-col overflow-hidden", roleConfig.borderClass)}>
+    <div className={cn("min-h-screen bg-[var(--bg-app)] flex flex-col overflow-hidden", roleConfig.borderClass)}>
       {/* Skip to content - accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-white focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-blue-600 focus:underline"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-[var(--bg-surface)] focus:px-4 focus:py-2 focus:rounded focus:shadow-lg focus:text-[var(--accent-primary)] focus:underline"
       >
         Skip to main content
       </a>
@@ -302,7 +308,7 @@ export default function App() {
         {/* Sidebar Overlay (mobile) */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 z-30 bg-black/50 md:hidden"
+            className="fixed inset-0 z-30 bg-[var(--overlay-bg)] md:hidden"
             onClick={() => setSidebarOpen(false)}
           />
         )}
@@ -310,11 +316,11 @@ export default function App() {
         {/* Left Sidebar - Domain Navigation (slim) */}
         <aside
           className={cn(
-            "fixed inset-y-0 left-0 z-40 w-48 bg-white border-r border-gray-200 flex-shrink-0 transform transition-transform duration-200 md:relative md:translate-x-0 pt-10 md:pt-0",
+            "fixed inset-y-0 left-0 z-40 w-48 bg-[var(--bg-surface)] border-r border-[var(--border-default)] flex-shrink-0 transform transition-transform duration-200 md:relative md:translate-x-0 pt-10 md:pt-0",
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           )}
         >
-          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 md:hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border-default)] md:hidden">
             <span className="text-sm font-semibold">Sections</span>
             <Button
               variant="ghost"
@@ -335,8 +341,8 @@ export default function App() {
                 <button
                   key={domain}
                   className={cn(
-                    "w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-1.5 hover:bg-gray-100 transition-colors",
-                    store.activeDomainIndex === meta?.index && "bg-gray-100"
+                    "w-full text-left px-2 py-1.5 rounded text-xs flex items-center gap-1.5 hover:bg-[var(--bg-surface-sunken)] transition-colors",
+                    store.activeDomainIndex === meta?.index && "bg-[var(--bg-surface-sunken)]"
                   )}
                   onClick={() => {
                     const firstSection = sections[0]
@@ -358,7 +364,7 @@ export default function App() {
                   <span className="truncate">
                     {DOMAIN_DISPLAY_NAMES[domain]}
                   </span>
-                  <span className="ml-auto text-[10px] text-gray-400">
+                  <span className="ml-auto text-[10px] text-[var(--text-muted)]">
                     {sections.length}
                   </span>
                 </button>
@@ -386,7 +392,7 @@ export default function App() {
 
               return (
                 <div key={domain} className="space-y-2">
-                  <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1">
+                  <h2 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider px-1">
                     {DOMAIN_DISPLAY_NAMES[domain]}
                   </h2>
                   {sections.map((section) => (
@@ -431,14 +437,14 @@ export default function App() {
       </div>
 
       {/* Sticky Footer - Progress Bar + Finalize */}
-      <footer className="sticky-footer sticky bottom-0 z-10 bg-white border-t border-gray-200 px-4 md:px-6 py-2 flex items-center gap-3">
+      <footer className="sticky-footer sticky bottom-0 z-10 bg-[var(--bg-surface)] border-t border-[var(--border-default)] px-4 md:px-6 py-2 flex items-center gap-3">
         {/* Progress bar */}
         <div className="flex-1 flex items-center gap-2">
-          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden flex">
+          <div className="flex-1 h-2 bg-[var(--bg-surface-sunken)] rounded-full overflow-hidden flex">
             {/* Green = accepted */}
             {store.progress.accepted > 0 && (
               <div
-                className="h-full bg-green-500 transition-all"
+                className="h-full bg-[var(--color-success)] transition-all"
                 style={{
                   width: `${(store.progress.accepted / store.progress.totalSections) * 100}%`,
                 }}
@@ -447,7 +453,7 @@ export default function App() {
             {/* Purple = edited */}
             {store.progress.edited > 0 && (
               <div
-                className="h-full bg-purple-500 transition-all"
+                className="h-full bg-[color:var(--color-domain-pharmacotherapy)] transition-all"
                 style={{
                   width: `${(store.progress.edited / store.progress.totalSections) * 100}%`,
                 }}
@@ -456,7 +462,7 @@ export default function App() {
             {/* Blue = ai_ready */}
             {store.progress.aiReady > 0 && (
               <div
-                className="h-full bg-blue-400 transition-all"
+                className="h-full bg-[var(--accent-primary)] transition-all"
                 style={{
                   width: `${(store.progress.aiReady / store.progress.totalSections) * 100}%`,
                 }}
@@ -465,7 +471,7 @@ export default function App() {
             {/* Yellow = needs_review */}
             {store.progress.needsReview > 0 && (
               <div
-                className="h-full bg-yellow-400 transition-all"
+                className="h-full bg-[var(--color-warning)] transition-all"
                 style={{
                   width: `${(store.progress.needsReview / store.progress.totalSections) * 100}%`,
                 }}
@@ -474,14 +480,14 @@ export default function App() {
             {/* Red = critical */}
             {store.progress.critical > 0 && (
               <div
-                className="h-full bg-red-500 transition-all"
+                className="h-full bg-[var(--color-error)] transition-all"
                 style={{
                   width: `${(store.progress.critical / store.progress.totalSections) * 100}%`,
                 }}
               />
             )}
           </div>
-          <span className="text-xs text-gray-500 whitespace-nowrap">
+          <span className="text-xs text-[var(--text-muted)] whitespace-nowrap">
             {store.progress.accepted + store.progress.edited}/
             {store.progress.totalSections} sections
           </span>

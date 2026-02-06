@@ -9,26 +9,26 @@ const TYPE_CONFIG: Record<
 > = {
   critical: {
     icon: AlertCircle,
-    color: "text-red-600",
-    bg: "bg-red-50 border-red-200 hover:bg-red-100",
+    color: "text-[var(--color-error)]",
+    bg: "bg-[var(--color-error-light)] border-[var(--color-error)]/20 hover:bg-[var(--color-error-light)]",
     label: "Critical",
   },
   changed: {
     icon: TrendingUp,
-    color: "text-orange-600",
-    bg: "bg-orange-50 border-orange-200 hover:bg-orange-100",
+    color: "text-[var(--color-warning-text)]",
+    bg: "bg-[var(--color-warning-light)] border-[var(--color-warning)]/20 hover:bg-[var(--color-warning-light)]",
     label: "Changed",
   },
   gap: {
     icon: CircleDot,
-    color: "text-yellow-600",
-    bg: "bg-yellow-50 border-yellow-200 hover:bg-yellow-100",
+    color: "text-[var(--color-warning)]",
+    bg: "bg-[var(--color-warning-light)] border-[var(--color-warning)]/20 hover:bg-[var(--color-warning-light)]",
     label: "Gap",
   },
   conflict: {
     icon: AlertTriangle,
-    color: "text-orange-600",
-    bg: "bg-orange-50 border-orange-200 hover:bg-orange-100",
+    color: "text-[var(--color-warning-text)]",
+    bg: "bg-[var(--color-warning-light)] border-[var(--color-warning)]/20 hover:bg-[var(--color-warning-light)]",
     label: "Conflict",
   },
 }
@@ -63,7 +63,7 @@ export function NeedsAttention() {
 
   return (
     <div className="needs-attention mx-4 md:mx-6 mt-3 mb-1">
-      <div className="text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+      <div className="text-[11px] font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
         Needs Attention ({items.length})
       </div>
       <div className="flex flex-wrap gap-1.5">

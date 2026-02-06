@@ -47,16 +47,16 @@ export function KeyboardShortcuts() {
           {SHORTCUTS.map((shortcut, i) => (
             <div
               key={i}
-              className="flex items-center justify-between py-1.5 border-b border-gray-100 last:border-0"
+              className="flex items-center justify-between py-1.5 border-b border-[var(--border-subtle)] last:border-0"
             >
-              <span className="text-sm text-gray-600">
+              <span className="text-sm text-[var(--text-secondary)]">
                 {shortcut.description}
               </span>
               <div className="flex gap-1">
                 {shortcut.keys.map((key) => (
                   <kbd
                     key={key}
-                    className="px-1.5 py-0.5 text-[10px] font-mono bg-gray-100 border border-gray-200 rounded text-gray-600"
+                    className="px-1.5 py-0.5 text-[10px] font-mono bg-[var(--bg-surface-sunken)] border border-[var(--border-default)] rounded text-[var(--text-secondary)]"
                   >
                     {key}
                   </kbd>

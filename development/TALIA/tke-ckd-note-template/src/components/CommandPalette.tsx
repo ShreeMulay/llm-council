@@ -17,16 +17,16 @@ interface CommandPaletteProps {
 }
 
 const DOMAIN_COLORS: Record<string, string> = {
-  header: "bg-gray-400",
-  kidney_core: "bg-blue-500",
-  cardiovascular: "bg-red-500",
-  pharmacotherapy: "bg-purple-500",
-  metabolic: "bg-orange-500",
-  ckd_complications: "bg-blue-800",
-  risk_mitigation: "bg-green-500",
-  planning: "bg-gray-500",
-  screening: "bg-teal-500",
-  care_coordination: "bg-pink-500",
+  header: "bg-[var(--text-muted)]",
+  kidney_core: "bg-[var(--color-domain-kidney-core)]",
+  cardiovascular: "bg-[var(--color-domain-cardiovascular)]",
+  pharmacotherapy: "bg-[var(--color-domain-pharmacotherapy)]",
+  metabolic: "bg-[var(--color-domain-metabolic)]",
+  ckd_complications: "bg-[var(--color-domain-ckd-complications)]",
+  risk_mitigation: "bg-[var(--color-domain-risk-mitigation)]",
+  planning: "bg-[var(--color-domain-planning)]",
+  screening: "bg-[var(--color-domain-screening)]",
+  care_coordination: "bg-[var(--color-domain-care-coordination)]",
 }
 
 const DOMAIN_ORDER: DomainGroup[] = [
@@ -123,7 +123,7 @@ export function CommandPalette({ sectionRegistry }: CommandPaletteProps) {
           const sections = sectionsByDomain[domain]
           if (!sections || sections.length === 0) return null
           const domainColor =
-            DOMAIN_COLORS[domain] ?? "bg-gray-400"
+            DOMAIN_COLORS[domain] ?? "bg-[var(--text-muted)]"
 
           return (
             <CommandGroup
@@ -139,7 +139,7 @@ export function CommandPalette({ sectionRegistry }: CommandPaletteProps) {
                   <span
                     className={`w-2 h-2 rounded-full ${domainColor} mr-2 flex-shrink-0`}
                   />
-                  <span className="text-xs text-gray-400 w-5 mr-1">
+                  <span className="text-xs text-[var(--text-muted)] w-5 mr-1">
                     {section.section_number}.
                   </span>
                   {section.display_name}

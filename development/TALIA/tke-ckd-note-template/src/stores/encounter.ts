@@ -12,6 +12,7 @@ import type {
   SparklinePoint,
 } from "@/types/schema"
 import { getCKDStage, getAlbuminuriaStage, calculateGDMTCompliance } from "@/lib/utils"
+import { type ThemeId, applyTheme, getSavedTheme } from "@/lib/themes"
 
 interface EncounterState {
   // Patient & Visit
@@ -116,6 +117,10 @@ interface EncounterState {
   setLiveFilterMuted: (muted: boolean) => void
   appendVoiceTranscript: (text: string) => void
   clearVoiceTranscript: () => void
+
+  // Phase 18 - Theme System
+  theme: ThemeId
+  setTheme: (theme: ThemeId) => void
 }
 
 const emptyProgress: EncounterProgress = {
@@ -163,6 +168,7 @@ const initialState = {
   liveFilterActive: false,
   liveFilterMuted: false,
   voiceTranscript: [] as string[],
+  theme: getSavedTheme(),
 }
 
 export const useEncounterStore = create<EncounterState>((set, get) => ({
@@ -583,6 +589,12 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
   appendVoiceTranscript: (text) =>
     set((prev) => ({ voiceTranscript: [...prev.voiceTranscript, text] })),
   clearVoiceTranscript: () => set({ voiceTranscript: [] }),
+
+  // Phase 18: Theme System
+  setTheme: (theme) => {
+    applyTheme(theme)
+    set({ theme })
+  },
 
   clearEncounter: () => set(initialState),
 }))

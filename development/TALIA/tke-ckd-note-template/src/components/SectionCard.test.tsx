@@ -380,7 +380,7 @@ describe("SectionCard", () => {
       const { container } = render(<SectionCard {...defaultProps} section={section} />)
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-blue-400")
+      expect(card.className).toContain("border-l-[var(--accent-primary)]")
     })
 
     it("applies needs_review border when sectionState is needs_review", () => {
@@ -390,7 +390,7 @@ describe("SectionCard", () => {
       )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-yellow-400")
+      expect(card.className).toContain("border-l-[var(--color-warning)]")
     })
 
     it("applies accepted border when sectionState is accepted", () => {
@@ -400,7 +400,7 @@ describe("SectionCard", () => {
       )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-green-500")
+      expect(card.className).toContain("border-l-[var(--color-success)]")
     })
 
     it("applies critical border with pulse when sectionState is critical", () => {
@@ -410,7 +410,7 @@ describe("SectionCard", () => {
       )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-red-500")
+      expect(card.className).toContain("border-l-[var(--color-error)]")
       expect(card.className).toContain("animate-pulse")
     })
 
@@ -421,7 +421,7 @@ describe("SectionCard", () => {
       )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-purple-500")
+      expect(card.className).toContain("border-l-[color:var(--color-domain-pharmacotherapy)]")
     })
 
     it("applies conflict border when sectionState is conflict", () => {
@@ -431,7 +431,7 @@ describe("SectionCard", () => {
       )
       
       const card = container.firstChild as HTMLElement
-      expect(card.className).toContain("border-l-orange-500")
+      expect(card.className).toContain("border-l-[var(--color-warning)]")
     })
   })
 

@@ -65,12 +65,12 @@ export function PatientView() {
 
         <div className="space-y-4">
           {/* Greeting */}
-          <div className="bg-blue-50 rounded-xl p-4">
-            <p className="text-sm text-blue-800">
+          <div className="bg-[var(--color-info-light)] rounded-xl p-4">
+            <p className="text-sm text-[var(--color-info-text)]">
               Hello, <strong>{store.patientName.split(" ")[0]}</strong>! Here is an easy-to-read summary of your kidney health.
-              The colored circles show if things are looking <span className="text-green-600 font-semibold">good</span>,
-              need some <span className="text-yellow-600 font-semibold">watching</span>,
-              or need <span className="text-red-600 font-semibold">attention</span>.
+              The colored circles show if things are looking <span className="text-[var(--color-success)] font-semibold">good</span>,
+              need some <span className="text-[var(--color-warning)] font-semibold">watching</span>,
+              or need <span className="text-[var(--color-error)] font-semibold">attention</span>.
             </p>
           </div>
 
@@ -154,8 +154,8 @@ export function PatientView() {
           </div>
 
           {/* Pre-Visit Questionnaire */}
-          <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-base font-semibold text-gray-800 mb-3">
+          <div className="border-t border-[var(--border-default)] pt-4">
+            <h3 className="text-base font-semibold text-[var(--text-primary)] mb-3">
               Before Your Visit
             </h3>
             <PreVisitQuestionnaire

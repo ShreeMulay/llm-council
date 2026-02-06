@@ -56,30 +56,30 @@ export function DashboardDrawer({
   return (
     <Sheet open={store.dashboardOpen} onOpenChange={store.setDashboardOpen}>
       <SheetContent side="right" className="w-80 sm:max-w-sm p-0">
-        <SheetHeader className="border-b border-gray-200 p-4">
+        <SheetHeader className="border-b border-[var(--border-default)] p-4">
           <SheetTitle>Clinical Dashboard</SheetTitle>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto">
           {/* CKD Stage */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="text-xs text-gray-500 mb-1">CKD Stage</div>
-            <div className="text-2xl font-bold text-blue-600">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <div className="text-xs text-[var(--text-muted)] mb-1">CKD Stage</div>
+            <div className="text-2xl font-bold text-[var(--accent-primary)]">
               {store.ckdStage}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-[var(--text-secondary)]">
               Albuminuria: {store.albuminuriaStage}
             </div>
           </div>
 
           {/* Trends with Sparklines */}
-          <div className="p-4 border-b border-gray-100 space-y-3">
-            <div className="text-xs text-gray-500 font-medium">Key Trends</div>
+          <div className="p-4 border-b border-[var(--border-subtle)] space-y-3">
+            <div className="text-xs text-[var(--text-muted)] font-medium">Key Trends</div>
 
             {/* eGFR */}
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-500">eGFR</div>
+                <div className="text-xs text-[var(--text-muted)]">eGFR</div>
                 <div className="text-lg font-semibold flex items-center gap-1">
                   {formatDisplayValue(
                     store.currentData["kidney_function.egfr_current"]
@@ -87,8 +87,8 @@ export function DashboardDrawer({
                   <span
                     className={cn(
                       "text-base",
-                      store.egfrTrend === "↓" && "text-red-500",
-                      store.egfrTrend === "↑" && "text-green-500"
+                      store.egfrTrend === "↓" && "text-[var(--color-error)]",
+                      store.egfrTrend === "↑" && "text-[var(--color-success)]"
                     )}
                   >
                     {store.egfrTrend}
@@ -108,7 +108,7 @@ export function DashboardDrawer({
             {/* UACR */}
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-gray-500">UACR</div>
+                <div className="text-xs text-[var(--text-muted)]">UACR</div>
                 <div className="text-lg font-semibold flex items-center gap-1">
                   {formatDisplayValue(
                     store.currentData["kidney_function.uacr_current"]
@@ -116,8 +116,8 @@ export function DashboardDrawer({
                   <span
                     className={cn(
                       "text-base",
-                      store.uacrTrend === "↑" && "text-red-500",
-                      store.uacrTrend === "↓" && "text-green-500"
+                      store.uacrTrend === "↑" && "text-[var(--color-error)]",
+                      store.uacrTrend === "↓" && "text-[var(--color-success)]"
                     )}
                   >
                     {store.uacrTrend}
@@ -138,7 +138,7 @@ export function DashboardDrawer({
             {store.sparklineData.potassium && (
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-gray-500">K+</div>
+                  <div className="text-xs text-[var(--text-muted)]">K+</div>
                   <div className="text-lg font-semibold">
                     {formatDisplayValue(
                       store.currentData["electrolytes.potassium"]
@@ -158,7 +158,7 @@ export function DashboardDrawer({
             {store.sparklineData.hemoglobin && (
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-gray-500">Hgb</div>
+                  <div className="text-xs text-[var(--text-muted)]">Hgb</div>
                   <div className="text-lg font-semibold">
                     {formatDisplayValue(
                       store.currentData["anemia.hemoglobin"]
@@ -178,7 +178,7 @@ export function DashboardDrawer({
             {store.sparklineData.systolic_bp && (
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-gray-500">Systolic BP</div>
+                  <div className="text-xs text-[var(--text-muted)]">Systolic BP</div>
                   <div className="text-lg font-semibold">
                     {formatDisplayValue(
                       store.currentData["bp_fluid.systolic_bp"]
@@ -196,8 +196,8 @@ export function DashboardDrawer({
           </div>
 
           {/* GDMT Compliance */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="text-xs text-gray-500 mb-2">GDMT Compliance</div>
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <div className="text-xs text-[var(--text-muted)] mb-2">GDMT Compliance</div>
             <div className="flex flex-wrap gap-2">
               <Badge
                 variant={
@@ -238,28 +238,28 @@ export function DashboardDrawer({
                 GLP-1
               </Badge>
             </div>
-            <div className="mt-2 text-lg font-semibold text-purple-600">
+            <div className="mt-2 text-lg font-semibold text-[color:var(--color-domain-pharmacotherapy)]">
               {store.gdmtCompliance.display} Pillars
             </div>
           </div>
 
           {/* Progress */}
-          <div className="p-4 border-b border-gray-100">
-            <div className="text-xs text-gray-500 mb-2">
+          <div className="p-4 border-b border-[var(--border-subtle)]">
+            <div className="text-xs text-[var(--text-muted)] mb-2">
               Encounter Progress
             </div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="flex-1 h-2 bg-[var(--bg-surface-sunken)] rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-green-500 rounded-full transition-all"
+                  className="h-full bg-[var(--color-success)] rounded-full transition-all"
                   style={{ width: `${store.progress.percentComplete}%` }}
                 />
               </div>
-              <span className="text-xs font-medium text-gray-600">
+              <span className="text-xs font-medium text-[var(--text-secondary)]">
                 {store.progress.percentComplete}%
               </span>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-[var(--text-muted)]">
               {store.progress.accepted + store.progress.edited}/
               {store.progress.totalSections} sections finalized
             </div>
@@ -267,8 +267,8 @@ export function DashboardDrawer({
 
           {/* Alerts */}
           {store.alerts.length > 0 && (
-            <div className="p-4 border-b border-gray-100">
-              <div className="text-xs text-gray-500 mb-2">Alerts</div>
+            <div className="p-4 border-b border-[var(--border-subtle)]">
+              <div className="text-xs text-[var(--text-muted)] mb-2">Alerts</div>
               <div className="space-y-2">
                 {store.alerts.map((alert) => (
                   <Badge
@@ -287,7 +287,7 @@ export function DashboardDrawer({
         </div>
 
         {/* Export Actions */}
-        <div className="p-4 border-t border-gray-200 space-y-2 mt-auto">
+        <div className="p-4 border-t border-[var(--border-default)] space-y-2 mt-auto">
           <Button
             className="w-full justify-start gap-2"
             variant="default"

@@ -20,15 +20,15 @@ interface AIInterpretationProps {
 function ConfidenceDot({ confidence }: { confidence: number }) {
   const color =
     confidence >= 0.8
-      ? "bg-green-500"
+      ? "bg-[var(--color-success)]"
       : confidence >= 0.5
-        ? "bg-yellow-500"
-        : "bg-red-500"
+        ? "bg-[var(--color-warning)]"
+        : "bg-[var(--color-error)]"
   const label =
     confidence >= 0.8 ? "High" : confidence >= 0.5 ? "Medium" : "Low"
 
   return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-gray-500">
+    <span className="inline-flex items-center gap-1 text-[10px] text-[var(--text-muted)]">
       <span className={cn("w-1.5 h-1.5 rounded-full", color)} />
       {label} confidence
     </span>
@@ -57,22 +57,22 @@ export function AIInterpretation({
       className={cn(
         "mt-3 rounded-md border p-3 transition-all",
         // Draft aesthetic: dashed border for unverified AI
-        isDraft && "border-dashed border-blue-300 bg-blue-50/50",
+        isDraft && "border-dashed border-[var(--accent-primary)]/40 bg-[var(--color-info-light)]",
         // Accepted: solid green
-        isAccepted && "border-solid border-green-400 bg-green-50/30",
+        isAccepted && "border-solid border-[var(--color-success)]/60 bg-[var(--color-success-light)]",
         // Edited: solid purple
-        isEdited && "border-solid border-purple-400 bg-purple-50/30",
+        isEdited && "border-solid border-[color:var(--color-domain-pharmacotherapy)]/50 bg-[color:var(--color-domain-pharmacotherapy)]/10",
         // Critical: red
-        sectionState === "critical" && "border-solid border-red-400 bg-red-50/30",
+        sectionState === "critical" && "border-solid border-[var(--color-error)]/60 bg-[var(--color-error-light)]",
         // Conflict: orange
-        sectionState === "conflict" && "border-solid border-orange-400 bg-orange-50/30"
+        sectionState === "conflict" && "border-solid border-[var(--color-warning)]/60 bg-[var(--color-warning-light)]"
       )}
     >
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <Bot className="h-3.5 w-3.5 text-blue-500" />
-          <span className="text-xs font-medium text-gray-700">
+          <Bot className="h-3.5 w-3.5 text-[var(--accent-primary)]" />
+          <span className="text-xs font-medium text-[var(--text-secondary)]">
             AI Interpretation
           </span>
           <ConfidenceDot confidence={interpretation.confidence} />
@@ -86,12 +86,12 @@ export function AIInterpretation({
         <span
           className={cn(
             "text-[10px] px-1.5 py-0.5 rounded font-medium",
-            isDraft && "bg-blue-100 text-blue-700",
-            isAccepted && "bg-green-100 text-green-700",
-            isEdited && "bg-purple-100 text-purple-700",
-            sectionState === "critical" && "bg-red-100 text-red-700",
-            sectionState === "conflict" && "bg-orange-100 text-orange-700",
-            sectionState === "needs_review" && "bg-yellow-100 text-yellow-700"
+            isDraft && "bg-[var(--color-info-light)] text-[var(--color-info-text)]",
+            isAccepted && "bg-[var(--color-success-light)] text-[var(--color-success-text)]",
+            isEdited && "bg-[color:var(--color-domain-pharmacotherapy)]/15 text-[color:var(--color-domain-pharmacotherapy)]",
+            sectionState === "critical" && "bg-[var(--color-error-light)] text-[var(--color-error-text)]",
+            sectionState === "conflict" && "bg-[var(--color-warning-light)] text-[var(--color-warning-text)]",
+            sectionState === "needs_review" && "bg-[var(--color-warning-light)] text-[var(--color-warning-text)]"
           )}
         >
           {sectionState === "ai_ready" && "AI Draft"}
@@ -106,27 +106,27 @@ export function AIInterpretation({
       {/* AI text content */}
       {editingText !== null ? (
         <textarea
-          className="w-full text-sm text-gray-800 bg-white border border-gray-200 rounded p-2 min-h-[60px] focus:outline-none focus:ring-1 focus:ring-blue-400 resize-y"
+          className="w-full text-sm text-[var(--text-primary)] bg-[var(--bg-surface)] border border-[var(--border-default)] rounded p-2 min-h-[60px] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] resize-y"
           value={editingText}
           onChange={(e) => setEditingText(e.target.value)}
           rows={3}
         />
       ) : (
-        <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">
+        <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-wrap">
           {displayText}
         </p>
       )}
 
       {/* Action items from AI */}
       {interpretation.actionItems.length > 0 && editingText === null && (
-        <div className="mt-2 pt-2 border-t border-gray-200/50">
-          <div className="text-[10px] font-medium text-gray-500 uppercase mb-1">
+        <div className="mt-2 pt-2 border-t border-[var(--border-default)]/50">
+          <div className="text-[10px] font-medium text-[var(--text-muted)] uppercase mb-1">
             Suggested Actions
           </div>
           <ul className="space-y-0.5">
             {interpretation.actionItems.map((item, i) => (
-              <li key={i} className="text-xs text-gray-600 flex items-start gap-1">
-                <span className="text-blue-400 mt-0.5">-</span>
+              <li key={i} className="text-xs text-[var(--text-secondary)] flex items-start gap-1">
+                <span className="text-[var(--accent-primary)] mt-0.5">-</span>
                 {item}
               </li>
             ))}
@@ -135,13 +135,13 @@ export function AIInterpretation({
       )}
 
       {/* Action buttons */}
-      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-gray-200/50">
+      <div className="flex items-center gap-2 mt-3 pt-2 border-t border-[var(--border-default)]/50">
         {/* Accept button */}
         {!isAccepted && !isEdited && (
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-xs gap-1 border-green-300 text-green-700 hover:bg-green-50"
+            className="h-7 text-xs gap-1 border-[var(--color-success)]/40 text-[var(--color-success-text)] hover:bg-[var(--color-success-light)]"
             onClick={() => {
               if (editingText !== null) {
                 // If edited text, mark as edited
@@ -162,7 +162,7 @@ export function AIInterpretation({
           <Button
             variant="outline"
             size="sm"
-            className="h-7 text-xs gap-1 border-purple-300 text-purple-700 hover:bg-purple-50"
+            className="h-7 text-xs gap-1 border-[color:var(--color-domain-pharmacotherapy)]/40 text-[color:var(--color-domain-pharmacotherapy)] hover:bg-[color:var(--color-domain-pharmacotherapy)]/10"
             onClick={() => setEditingText(interpretation.text)}
           >
             <Pencil className="h-3 w-3" />
@@ -187,7 +187,7 @@ export function AIInterpretation({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 text-xs gap-1 text-amber-600 hover:bg-amber-50"
+            className="h-7 text-xs gap-1 text-[var(--color-warning)] hover:bg-[var(--color-warning-light)]"
             onClick={onFlag}
           >
             <AlertTriangle className="h-3 w-3" />
@@ -199,7 +199,7 @@ export function AIInterpretation({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 text-xs ml-auto text-gray-400"
+          className="h-7 text-xs ml-auto text-[var(--text-muted)]"
           onClick={onToggleFields}
         >
           {showFields ? "Hide Fields" : "Show Fields"}

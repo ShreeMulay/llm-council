@@ -14,22 +14,22 @@ import type {
 
 /** Border color classes for section states */
 const SECTION_STATE_BORDERS: Record<SectionState, string> = {
-  needs_review: "border-l-yellow-400",
-  ai_ready: "border-l-blue-400",
-  accepted: "border-l-green-500",
-  edited: "border-l-purple-500",
-  critical: "border-l-red-500 animate-pulse",
-  conflict: "border-l-orange-500",
+  needs_review: "border-l-[var(--color-warning)]",
+  ai_ready: "border-l-[var(--accent-primary)]",
+  accepted: "border-l-[var(--color-success)]",
+  edited: "border-l-[color:var(--color-domain-pharmacotherapy)]",
+  critical: "border-l-[var(--color-error)] animate-pulse",
+  conflict: "border-l-[var(--color-warning)]",
 }
 
 /** State label for collapsed view */
 const SECTION_STATE_LABELS: Record<SectionState, { text: string; class: string }> = {
-  needs_review: { text: "Review", class: "bg-yellow-100 text-yellow-700" },
-  ai_ready: { text: "AI Ready", class: "bg-blue-100 text-blue-700" },
-  accepted: { text: "Accepted", class: "bg-green-100 text-green-700" },
-  edited: { text: "Edited", class: "bg-purple-100 text-purple-700" },
-  critical: { text: "Critical", class: "bg-red-100 text-red-700" },
-  conflict: { text: "Conflict", class: "bg-orange-100 text-orange-700" },
+  needs_review: { text: "Review", class: "bg-[var(--color-warning-light)] text-[var(--color-warning-text)]" },
+  ai_ready: { text: "AI Ready", class: "bg-[var(--color-info-light)] text-[var(--color-info-text)]" },
+  accepted: { text: "Accepted", class: "bg-[var(--color-success-light)] text-[var(--color-success-text)]" },
+  edited: { text: "Edited", class: "bg-[color:var(--color-domain-pharmacotherapy)]/15 text-[color:var(--color-domain-pharmacotherapy)]" },
+  critical: { text: "Critical", class: "bg-[var(--color-error-light)] text-[var(--color-error-text)]" },
+  conflict: { text: "Conflict", class: "bg-[var(--color-warning-light)] text-[var(--color-warning-text)]" },
 }
 
 interface SectionCardProps {
@@ -98,7 +98,7 @@ export function SectionCard({
   return (
     <div
       className={cn(
-        "border rounded-lg bg-white shadow-sm overflow-hidden",
+        "border rounded-lg bg-[var(--bg-surface)] shadow-sm overflow-hidden",
         "border-l-4",
         borderClass
       )}
@@ -106,15 +106,15 @@ export function SectionCard({
       {/* Header - always visible */}
       <button
         onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        className="w-full px-4 py-3 flex items-center justify-between hover:bg-[var(--bg-surface-sunken)] transition-colors"
       >
         <div className="flex items-center gap-2">
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-gray-500" />
+            <ChevronDown className="h-4 w-4 text-[var(--text-muted)]" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-500" />
+            <ChevronRight className="h-4 w-4 text-[var(--text-muted)]" />
           )}
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-[var(--text-primary)]">
             {section.section_number}. {section.display_name}
           </span>
           {/* Section state badge */}
@@ -150,7 +150,7 @@ export function SectionCard({
 
       {/* Collapsed summary */}
       {!isExpanded && (
-        <div className="px-4 pb-3 text-sm text-gray-600 border-t border-gray-100">
+        <div className="px-4 pb-3 text-sm text-[var(--text-secondary)] border-t border-[var(--border-subtle)]">
           {isProgressionMode && changedFields.length === 0 ? (
             <span className="italic">Unchanged from previous visit</span>
           ) : (
@@ -161,7 +161,7 @@ export function SectionCard({
 
       {/* Expanded content - AI-first layout */}
       {isExpanded && (
-        <div className="px-4 pb-4 border-t border-gray-100">
+        <div className="px-4 pb-4 border-t border-[var(--border-subtle)]">
           {/* AI Interpretation (primary content) */}
           {aiInterpretation ? (
             <AIInterpretation
@@ -175,11 +175,11 @@ export function SectionCard({
             />
           ) : (
             /* Fallback: old-style AI placeholder when no interpretation data */
-            <div className="mt-3 p-3 bg-blue-50 rounded-md border border-dashed border-blue-300">
-              <div className="text-xs font-medium text-blue-700 mb-1">
+            <div className="mt-3 p-3 bg-[var(--color-info-light)] rounded-md border border-dashed border-[var(--accent-primary)]/40">
+              <div className="text-xs font-medium text-[var(--color-info-text)] mb-1">
                 AI Interpretation
               </div>
-              <div className="text-sm text-blue-900 italic">
+              <div className="text-sm text-[var(--color-info-text)] italic">
                 {section.interpretation_prompt.slice(0, 100)}...
               </div>
             </div>
@@ -190,7 +190,7 @@ export function SectionCard({
             <div
               className={cn(
                 "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
-                aiInterpretation ? "mt-3 pt-3 border-t border-gray-100" : "pt-4"
+                aiInterpretation ? "mt-3 pt-3 border-t border-[var(--border-subtle)]" : "pt-4"
               )}
             >
               {section.fields.map((field) => {

@@ -40,9 +40,9 @@ function getZoneLabel(color: "green" | "yellow" | "red"): string {
 }
 
 const ZONE_STYLES: Record<"green" | "yellow" | "red", { bg: string; text: string; ring: string; emoji: string }> = {
-  green: { bg: "bg-green-100", text: "text-green-700", ring: "ring-green-300", emoji: "" },
-  yellow: { bg: "bg-yellow-100", text: "text-yellow-700", ring: "ring-yellow-300", emoji: "" },
-  red: { bg: "bg-red-100", text: "text-red-700", ring: "ring-red-300", emoji: "" },
+  green: { bg: "bg-[var(--color-success-light)]", text: "text-[var(--color-success-text)]", ring: "ring-[var(--color-success)]/40", emoji: "" },
+  yellow: { bg: "bg-[var(--color-warning-light)]", text: "text-[var(--color-warning-text)]", ring: "ring-[var(--color-warning)]/40", emoji: "" },
+  red: { bg: "bg-[var(--color-error-light)]", text: "text-[var(--color-error-text)]", ring: "ring-[var(--color-error)]/40", emoji: "" },
 }
 
 export function HealthGauge({
@@ -65,17 +65,17 @@ export function HealthGauge({
     <div className={cn("rounded-xl p-4 ring-1", styles.bg, styles.ring)}>
       {/* Label + Zone indicator */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-semibold text-gray-800">{label}</span>
+        <span className="text-sm font-semibold text-[var(--text-primary)]">{label}</span>
         <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full", styles.bg, styles.text)}>
           {styles.emoji} {zoneLabel}
         </span>
       </div>
 
       {/* Visual gauge bar */}
-      <div className="relative h-3 bg-gray-200 rounded-full overflow-hidden mb-2">
+      <div className="relative h-3 bg-[var(--bg-surface-sunken)] rounded-full overflow-hidden mb-2">
         {/* Green zone */}
         <div
-          className="absolute h-full bg-green-300 opacity-50"
+          className="absolute h-full bg-[var(--color-success)]/50"
           style={{
             left: `${((zones.greenLow - zones.min) / range) * 100}%`,
             width: `${((zones.greenHigh - zones.greenLow) / range) * 100}%`,
@@ -85,7 +85,7 @@ export function HealthGauge({
         <div
           className={cn(
             "absolute top-0 h-full w-1 rounded-full",
-            zone === "green" ? "bg-green-600" : zone === "yellow" ? "bg-yellow-600" : "bg-red-600"
+            zone === "green" ? "bg-[var(--color-success)]" : zone === "yellow" ? "bg-[var(--color-warning)]" : "bg-[var(--color-error)]"
           )}
           style={{ left: `${position}%` }}
         />
@@ -97,12 +97,12 @@ export function HealthGauge({
           {value}
         </span>
         {unit && (
-          <span className="text-xs text-gray-500">{unit}</span>
+          <span className="text-xs text-[var(--text-muted)]">{unit}</span>
         )}
       </div>
 
       {/* Simple description */}
-      <p className="text-xs text-gray-600 leading-relaxed">{description}</p>
+      <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{description}</p>
     </div>
   )
 }

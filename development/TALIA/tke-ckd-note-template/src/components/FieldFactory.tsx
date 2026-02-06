@@ -37,11 +37,11 @@ function DeltaMarker({
       <span
         className={cn(
           "w-1.5 h-1.5 rounded-full flex-shrink-0",
-          isCriticalChange ? "bg-red-500" : "bg-orange-400"
+          isCriticalChange ? "bg-[var(--color-error)]" : "bg-[var(--color-warning)]"
         )}
       />
       {/* "was X" subtext */}
-      <span className="text-[10px] text-gray-400">
+      <span className="text-[10px] text-[var(--text-muted)]">
         was {prevDisplay}
       </span>
     </div>
@@ -75,14 +75,14 @@ export function FieldFactory({
   const wrapperClass = cn(
     "space-y-1",
     hasChanged && "pl-2 border-l-2",
-    hasChanged && (criticalChange ? "border-l-red-500" : "border-l-orange-400")
+    hasChanged && (criticalChange ? "border-l-[var(--color-error)]" : "border-l-[var(--color-warning)]")
   )
 
   switch (field.type) {
     case "number":
       return (
         <div className={wrapperClass}>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           <Input
@@ -104,7 +104,7 @@ export function FieldFactory({
             />
           )}
           {field.target_range && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-[var(--text-muted)]">
               Target: {field.target_range}
             </span>
           )}
@@ -116,7 +116,7 @@ export function FieldFactory({
       const options = enumDef?.values ?? []
       return (
         <div className={wrapperClass}>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           <select
@@ -146,7 +146,7 @@ export function FieldFactory({
     case "text":
       return (
         <div className={wrapperClass}>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           <Input
@@ -169,7 +169,7 @@ export function FieldFactory({
     case "date":
       return (
         <div className={wrapperClass}>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           <Input
@@ -197,9 +197,9 @@ export function FieldFactory({
             checked={(value as boolean) ?? false}
             onChange={(e) => onChange(e.target.checked)}
             disabled={disabled}
-            className="h-4 w-4 rounded border-gray-300"
+            className="h-4 w-4 rounded border-[var(--border-strong)]"
           />
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           {hasChanged && (
@@ -213,7 +213,7 @@ export function FieldFactory({
     case "calculated":
       return (
         <div className={wrapperClass}>
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">
             {field.display_name}
           </label>
           <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export function FieldFactory({
               {formatValue(value as string | number, field.unit ?? undefined)}
             </Badge>
             {field.target_range && (
-              <span className="text-xs text-gray-500">
+              <span className="text-xs text-[var(--text-muted)]">
                 Target: {field.target_range}
               </span>
             )}
@@ -238,7 +238,7 @@ export function FieldFactory({
 
     default:
       return (
-        <div className="text-sm text-red-500">
+        <div className="text-sm text-[var(--color-error)]">
           Unknown field type: {field.type}
         </div>
       )

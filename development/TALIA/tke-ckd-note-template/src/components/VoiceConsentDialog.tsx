@@ -33,7 +33,7 @@ export function VoiceConsentDialog({ open, onOpenChange }: VoiceConsentDialogPro
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Mic className="h-5 w-5 text-blue-600" />
+            <Mic className="h-5 w-5 text-[var(--accent-primary)]" />
             Live Filter - Voice Recording
           </DialogTitle>
           <DialogDescription>
@@ -42,14 +42,14 @@ export function VoiceConsentDialog({ open, onOpenChange }: VoiceConsentDialogPro
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+          <div className="bg-[var(--color-info-light)] rounded-lg p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-blue-600" />
-              <span className="text-sm font-medium text-blue-800">
+              <ShieldCheck className="h-4 w-4 text-[var(--accent-primary)]" />
+              <span className="text-sm font-medium text-[var(--color-info-text)]">
                 What Live Filter Does
               </span>
             </div>
-            <ul className="text-sm text-blue-700 space-y-1 ml-6 list-disc">
+            <ul className="text-sm text-[var(--color-info-text)] space-y-1 ml-6 list-disc">
               <li>Listens to the conversation during this encounter only</li>
               <li>Extracts relevant clinical data (labs, meds, plans)</li>
               <li>Auto-populates note sections in real-time</li>
@@ -57,11 +57,11 @@ export function VoiceConsentDialog({ open, onOpenChange }: VoiceConsentDialogPro
             </ul>
           </div>
 
-          <div className="bg-amber-50 rounded-lg p-4 space-y-2">
-            <span className="text-sm font-medium text-amber-800">
+          <div className="bg-[var(--color-warning-light)] rounded-lg p-4 space-y-2">
+            <span className="text-sm font-medium text-[var(--color-warning-text)]">
               Privacy Notice
             </span>
-            <ul className="text-sm text-amber-700 space-y-1 ml-6 list-disc">
+            <ul className="text-sm text-[var(--color-warning-text)] space-y-1 ml-6 list-disc">
               <li>Recording is for this encounter only</li>
               <li>Audio is processed locally and not stored</li>
               <li>You can mute or stop at any time</li>
