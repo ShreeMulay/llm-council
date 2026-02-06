@@ -1,0 +1,103 @@
+# TKE Privacy Engine Configuration
+# Environment-specific values are set via env vars or Secret Manager
+
+project:
+  id: tke-phi-privacy-engine
+  name: TKE PHI Privacy Engine
+  region: us-central1
+  organization: The Kidney Experts, PLLC
+
+# Vertex AI / Gemini
+gemini:
+  model: gemini-1.5-pro
+  temperature: 0.0
+  max_output_tokens: 8192
+  safety_settings: BLOCK_NONE
+
+# Cloud DLP
+dlp:
+  info_types:
+    - US_SOCIAL_SECURITY_NUMBER
+    - PERSON_NAME
+    - DATE_OF_BIRTH
+    - PHONE_NUMBER
+    - EMAIL_ADDRESS
+    - LOCATION
+    - MEDICAL_RECORD_NUMBER
+    - US_HEALTHCARE_NPI
+    - US_DEA_NUMBER
+    - STREET_ADDRESS
+    - IP_ADDRESS
+    - URL
+  min_likelihood: POSSIBLE
+  # If DLP finds residual PHI after Gemini pass, flag for review
+  residual_phi_action: flag_for_review
+
+# Google Drive
+drive:
+  ingest_folder_id: "1ODNlB6tuN05CJXXfmTBSyXLUKpR9ZMH2"
+  ingest_folder_name: PHI_Ingest
+  output_folder_id: "1_vFn9kcr-4vCijI_NDWgri-hgDICND09"
+  output_folder_name: De-Identified
+  staging_bucket: tke-phi-staging
+  staging_ttl_hours: 24
+
+# Firestore
+firestore:
+  database: phi-mappings
+  collection: deid_jobs
+  mappings_collection: phi_mappings
+
+# Google Sheets (Audit Log)
+sheets:
+  audit_sheet_id: "15vfpfiR4EmcwscZuqpirQO7YuaxCPptvUHjD3oZj11I"
+  audit_sheet_url: "https://docs.google.com/spreadsheets/d/15vfpfiR4EmcwscZuqpirQO7YuaxCPptvUHjD3oZj11I/edit"
+  audit_sheet_name: "TKE PHI De-ID Audit Log"
+  columns:
+    - job_id
+    - timestamp
+    - source
+    - requestor
+    - file_name
+    - phi_count
+    - phi_types
+    - confidence_score
+    - dlp_residual_count
+    - status
+    - output_doc_url
+    - processing_time_ms
+
+# Processing
+processing:
+  confidence_threshold: 0.95
+  auto_approve_above: 0.95
+  review_required_below: 0.95
+  max_file_size_mb: 10
+  supported_formats:
+    - text/plain
+    - application/pdf
+    - application/vnd.openxmlformats-officedocument.wordprocessingml.document
+    - text/csv
+    - application/json
+    - text/markdown
+    - text/x-markdown
+
+# Service Accounts
+service_accounts:
+  processor: phi-processor@tke-phi-privacy-engine.iam.gserviceaccount.com
+  watcher: drive-watcher@tke-phi-privacy-engine.iam.gserviceaccount.com
+
+# KMS
+kms:
+  keyring: phi-keyring
+  key: phi-data-key
+  location: us-central1
+
+# Pub/Sub
+pubsub:
+  deid_topic: phi-deid-jobs
+  drive_topic: drive-file-events
+
+# GCP Project: tke-phi-privacy-engine
+# Org: thekidneyexperts.com (634034238853)
+# Billing: The Kidney Experts, PLLC (0191DF-1B962A-A0143B)

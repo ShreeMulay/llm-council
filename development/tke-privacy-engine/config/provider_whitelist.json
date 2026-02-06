@@ -1,0 +1,46 @@
+{
+  "version": "1.0",
+  "updated": "2026-02-04",
+  "providers": {
+    "physicians": [
+      {
+        "name": "Anna Lee-Mulay",
+        "credential": "MD",
+        "role": "Nephrologist",
+        "variations": ["Dr. Lee-Mulay", "Dr. Anna Lee-Mulay", "Anna Lee-Mulay, MD"]
+      },
+      {
+        "name": "Shree Mulay",
+        "credential": "MD",
+        "role": "Nephrologist",
+        "variations": ["Dr. Mulay", "Dr. Shree Mulay", "Shree Mulay, MD"]
+      }
+    ],
+    "advanced_practice": [
+      {
+        "name": "Lisa Hoehn",
+        "credential": "NP",
+        "role": "Nurse Practitioner",
+        "variations": ["Lisa Hoehn, NP", "NP Hoehn"]
+      },
+      {
+        "name": "Leslie Baum",
+        "credential": "FNP",
+        "role": "Nurse Practitioner",
+        "variations": ["Leslie Baum, FNP", "NP Baum"]
+      }
+    ],
+    "clinical_staff": [
+      {
+        "name": "Brandy Carr",
+        "credential": null,
+        "role": "Clinical Manager",
+        "variations": ["Brandy Carr"]
+      }
+    ]
+  },
+  "all_names_flat": [
+    "Anna Lee-Mulay", "Lee-Mulay", "Shree Mulay", "Mulay",
+    "Lisa Hoehn", "Hoehn", "Leslie Baum", "Baum", "Brandy Carr"
+  ]
+}

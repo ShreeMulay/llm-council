@@ -1,0 +1,48 @@
+[
+  {
+    "id": "test_1",
+    "description": "Standard clinic visit with common PHI patterns",
+    "encounter_date": "2024-01-15",
+    "text": "NEPHROLOGY CLINIC NOTE\n\nDate of Service: 01/15/2024\nProvider: Dr. Mulay\n\nPatient: Margaret Thompson\nDOB: 03/22/1958\nMRN: 847291\nPhone: (740) 555-0173\nAddress: 142 Maple Street, Zanesville, OH 43701\n\nCHIEF COMPLAINT: Follow-up for CKD Stage 3b.\n\nHISTORY OF PRESENT ILLNESS:\nMs. Thompson is a 65-year-old female with a history of CKD Stage 3b secondary to diabetic nephropathy. She was last seen on 10/12/2023. Her most recent labs from 01/08/2024 show a creatinine of 2.1 mg/dL (eGFR 28 mL/min). She reports compliance with her low-sodium diet and is tolerating lisinopril 20 mg daily without issues. She denies any edema, foamy urine, or changes in urine output.\n\nShe was referred by Dr. Patricia Hernandez at Zanesville Family Medicine.\n\nVITALS:\nBP: 132/78 mmHg\nWeight: 168 lbs\nBMI: 28.4\n\nASSESSMENT AND PLAN:\n1. CKD Stage 3b (eGFR 28) - Stable. Continue current regimen. Recheck BMP in 3 months.\n2. Hypertension - Adequately controlled on lisinopril. Continue current dose.\n3. Diabetes - A1c 7.2%, at goal. Continue metformin per PCP.\n\nFollow-up in 3 months with Dr. Mulay.\n\nElectronically signed by: Shree Mulay, MD\nNPI: 1234567890",
+    "expected_phi_count": 7,
+    "expected_phi_types": ["PERSON_NAME", "DATE_OF_BIRTH", "MEDICAL_RECORD_NUMBER", "PHONE_NUMBER", "STREET_ADDRESS", "LOCATION", "US_HEALTHCARE_NPI"],
+    "expected_providers_preserved": ["Dr. Mulay", "Shree Mulay, MD"]
+  },
+  {
+    "id": "test_2",
+    "description": "Dialysis note with center-specific identifiers",
+    "encounter_date": "2024-02-20",
+    "text": "HEMODIALYSIS PROGRESS NOTE\n\nDate: 02/20/2024\nProvider: Lisa Hoehn, NP\nDialysis Center: Zanesville Dialysis Center, Unit 3\n\nPatient: Robert James Chen\nDOB: 11/05/1952\nMRN: 663104\nSSN: ***-**-4589\n\nDIALYSIS INFORMATION:\nSchedule: MWF, 1st shift (6:00 AM)\nAccess: Left AV fistula\nMachine: Fresenius 5008S, Station 12\nDialyzer: Optiflux F180NR\nPrescribed time: 4 hours\nBlood flow rate: 400 mL/min\nDialysate flow: 800 mL/min\nTarget UF: 2.5 kg\n\nPre-dialysis vitals: BP 158/92, HR 78, Temp 97.8F, Weight 84.2 kg\nPost-dialysis vitals: BP 138/82, HR 82, Temp 97.6F, Weight 81.7 kg\n\nSESSION NOTES:\nMr. Chen tolerated dialysis well today. No cramping, hypotension, or access issues. Fistula has good thrill and bruit. Kt/V last month was 1.52 (adequate). Labs from 02/15/2024: Hgb 10.8, K 5.1 (pre), Phos 5.8, PTH 285, Albumin 3.6.\n\nPhosphorus remains elevated. Increased Velphoro to 3 tablets with meals. Reinforced dietary phosphorus restriction. Will recheck in 1 month.\n\nEmergency contact: Susan Chen (wife), (740) 555-0291\n\nSigned: Lisa Hoehn, NP",
+    "expected_phi_count": 8,
+    "expected_phi_types": ["PERSON_NAME", "DATE_OF_BIRTH", "MEDICAL_RECORD_NUMBER", "US_SOCIAL_SECURITY_NUMBER", "PHONE_NUMBER", "LOCATION"],
+    "expected_providers_preserved": ["Lisa Hoehn, NP"]
+  },
+  {
+    "id": "test_3",
+    "description": "Transplant evaluation note with donor information and UNOS ID",
+    "encounter_date": "2024-03-10",
+    "text": "KIDNEY TRANSPLANT EVALUATION NOTE\n\nDate: 03/10/2024\nProvider: Dr. Anna Lee-Mulay\nTransplant Center: Ohio State University Wexner Medical Center\n\nPatient: David Michael Williams\nDOB: 07/14/1970\nMRN: 990215\nUNOS ID: ABCD-1234-5678\nBlood Type: O+\nInsurance: Medicare #1EG4-TE5-MK72\n\nREASON FOR EVALUATION:\nMr. Williams is a 53-year-old male with ESKD secondary to IgA nephropathy, currently on peritoneal dialysis for 18 months. He is being evaluated for deceased donor kidney transplant listing.\n\nPotential living donor: His sister, Jennifer Williams (DOB 09/22/1973), has completed initial screening and is blood type compatible (O+). She resides at 2847 Oak Ridge Drive, Columbus, OH 43215. Her contact number is (614) 555-0384.\n\nTRANSPLANT WORKUP STATUS:\n- Cardiac clearance: Completed 02/28/2024, stress echo normal\n- Dental clearance: Completed\n- Cancer screening: Up to date (colonoscopy 2023, PSA normal)\n- Infectious disease panel: Completed, CMV IgG+, EBV IgG+\n- PRA: 12% (low sensitization)\n- Crossmatch with living donor: Pending\n\nPLAN:\n1. Complete crossmatch testing with sister\n2. Present at transplant selection committee 03/25/2024\n3. If approved, target living donor transplant in Q2 2024\n4. Continue PD in interim, next clinic visit 04/08/2024\n\nDiscussed risks, benefits, and alternatives with patient and family.\n\nElectronically signed by: Anna Lee-Mulay, MD",
+    "expected_phi_count": 12,
+    "expected_phi_types": ["PERSON_NAME", "DATE_OF_BIRTH", "MEDICAL_RECORD_NUMBER", "PHONE_NUMBER", "STREET_ADDRESS", "LOCATION", "US_SOCIAL_SECURITY_NUMBER"],
+    "expected_providers_preserved": ["Dr. Anna Lee-Mulay", "Anna Lee-Mulay, MD"]
+  },
+  {
+    "id": "test_4",
+    "description": "Age 90+ patient requiring special HIPAA age handling",
+    "encounter_date": "2024-04-05",
+    "text": "NEPHROLOGY CONSULTATION\n\nDate: 04/05/2024\nProvider: Leslie Baum, FNP\nFacility: Genesis Hospital, Zanesville, OH\n\nPatient: Eleanor Mae Patterson\nDOB: 06/18/1931\nMRN: 112847\nAge: 92 years old\n\nREASON FOR CONSULTATION:\nAKI on CKD. Requested by hospitalist Dr. James Morton.\n\nHISTORY OF PRESENT ILLNESS:\nMrs. Patterson is a 92-year-old female admitted on 04/03/2024 for pneumonia. She has a baseline creatinine of 1.4 mg/dL (eGFR 35, CKD Stage 3b). On admission, creatinine was found to be 2.8 mg/dL (eGFR 16). She has been receiving IV fluids and antibiotics (ceftriaxone). Urine output has been adequate at 0.8 mL/kg/hr.\n\nPast medical history includes hypertension, heart failure with preserved EF (55%), osteoarthritis, and CKD Stage 3b. She lives at Primrose Retirement Community, 500 Sunrise Blvd, Zanesville, OH 43701. Her daughter, Carol Patterson-Wright, is her healthcare POA and can be reached at (740) 555-0462.\n\nMEDICATIONS:\nAmlodipine 5 mg daily, Furosemide 20 mg daily, Acetaminophen PRN\n\nASSESSMENT:\n1. AKI Stage 2 (KDIGO) on CKD Stage 3b - Likely prerenal from pneumonia/dehydration\n2. Avoid nephrotoxins, hold furosemide until volume repleted\n3. Recheck BMP in AM\n4. Low threshold for renal ultrasound if no improvement in 48 hours\n\nWill follow daily during hospitalization. Discussed prognosis with family - given age and comorbidities, would not recommend dialysis if progresses to ESKD. Family agrees with conservative approach.\n\nSigned: Leslie Baum, FNP\nPager: 740-555-8821",
+    "expected_phi_count": 9,
+    "expected_phi_types": ["PERSON_NAME", "DATE_OF_BIRTH", "MEDICAL_RECORD_NUMBER", "PHONE_NUMBER", "STREET_ADDRESS", "LOCATION"],
+    "expected_providers_preserved": ["Leslie Baum, FNP"],
+    "notes": "Patient is 90+ years old. Under HIPAA Safe Harbor, ages over 89 must be aggregated to 90+. The exact DOB and age (92) are PHI that need special handling."
+  },
+  {
+    "id": "test_5",
+    "description": "Multi-patient rounding note with multiple PHI entities",
+    "encounter_date": "2024-05-12",
+    "text": "HOSPITAL ROUNDING NOTES - 05/12/2024\nProvider: Dr. Shree Mulay\nFacility: Genesis Hospital\n\n--- Patient 1 ---\nName: Thomas Andrew Baker\nRoom: 412-A\nMRN: 558901\nDOB: 02/28/1965\nAdmission Date: 05/10/2024\n\nDiagnosis: ESKD on HD, admitted for infected tunneled dialysis catheter\nS: Patient reports fevers resolved. Catheter site less erythematous. Blood cultures from 05/10 growing MSSA.\nO: Temp 98.6, BP 142/88. Catheter site: minimal erythema, no purulence. HD yesterday via temporary femoral catheter without issues.\nA/P: Catheter-related bloodstream infection, improving on nafcillin. Plan to remove tunneled catheter today, continue abx x 4 weeks. IR consulted for new tunneled catheter placement in 1 week. Contact: wife Maria Baker (740) 555-0193.\n\n--- Patient 2 ---\nName: Sandra Lee Kowalski\nRoom: 418-B\nMRN: 774520\nDOB: 09/03/1978\nAdmission Date: 05/11/2024\n\nDiagnosis: Nephrotic syndrome, new diagnosis\nS: Patient notes worsening bilateral leg swelling x 2 weeks, foamy urine, 15 lb weight gain. No hematuria.\nO: BP 148/94, Weight 187 lbs (baseline 172). 3+ pitting edema bilateral LE. Labs: Albumin 1.8, Cr 1.0, 24hr urine protein 8.2g, Cholesterol 342.\nA/P: Nephrotic syndrome - likely membranous nephropathy given age and presentation. Started furosemide 40mg BID, lisinopril 10mg daily. Renal biopsy scheduled 05/14/2024. Discussed with patient and husband, Mark Kowalski, who was present. Their home address is 891 Cherry Lane, Newark, OH 43055. PCP: Dr. Amanda Foster at Licking Memorial.\n\n--- Patient 3 ---\nName: William Henry Jackson\nRoom: 405\nMRN: 331876\nDOB: 12/11/1955\nAdmission Date: 05/09/2024\n\nDiagnosis: Hyperkalemia, CKD Stage 4\nS: Feeling better, no palpitations or weakness. Tolerating kayexalate.\nO: K+ this AM 5.2 (down from 7.1 on admission). EKG normalized. eGFR 22.\nA/P: Hyperkalemia resolving. D/C kayexalate, start patiromer 8.4g daily. Discharge today with follow-up in my office in 1 week. Pharmacy: CVS on Maple Ave, Zanesville. Insurance: Anthem BCBS, ID# XWB123456789.\n\nAll patients seen and examined. Notes reviewed with NP Hoehn who is co-managing patients 1 and 3.\n\nElectronically signed: Shree Mulay, MD",
+    "expected_phi_count": 22,
+    "expected_phi_types": ["PERSON_NAME", "DATE_OF_BIRTH", "MEDICAL_RECORD_NUMBER", "PHONE_NUMBER", "STREET_ADDRESS", "LOCATION"],
+    "expected_providers_preserved": ["Dr. Shree Mulay", "Shree Mulay, MD", "NP Hoehn"]
+  }
+]
