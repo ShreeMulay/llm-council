@@ -93,6 +93,14 @@ interface EncounterState {
   flagSection: (sectionId: string) => void
   setAIInterpretation: (sectionId: string, interp: AIInterpretationData) => void
   loadSparklineData: (key: string, data: SparklinePoint[]) => void
+
+  // Phase 13 actions - Pre-Flight Check
+  preFlightOpen: boolean
+  setPreFlightOpen: (open: boolean) => void
+  encounterAttested: boolean
+  attestEncounter: () => void
+  canAttest: () => boolean
+  getNoteSummary: (sections: Section[]) => string
 }
 
 const emptyProgress: EncounterProgress = {
@@ -133,6 +141,8 @@ const initialState = {
   gdmtCompliance: { count: 0, total: 4 as const, display: "0/4" },
   egfrTrend: "→" as const,
   uacrTrend: "→" as const,
+  preFlightOpen: false,
+  encounterAttested: false,
 }
 
 export const useEncounterStore = create<EncounterState>((set, get) => ({
@@ -484,6 +494,64 @@ export const useEncounterStore = create<EncounterState>((set, get) => ({
     set((prev) => ({
       sparklineData: { ...prev.sparklineData, [key]: data },
     })),
+
+  // Phase 13: Pre-Flight Check
+  setPreFlightOpen: (open) => set({ preFlightOpen: open }),
+
+  attestEncounter: () => set({ encounterAttested: true }),
+
+  canAttest: () => {
+    const { sectionStates } = get()
+    // Cannot attest if any section is critical or conflict
+    return !Object.values(sectionStates).some(
+      (s) => s === "critical" || s === "conflict"
+    )
+  },
+
+  getNoteSummary: (sections) => {
+    const { currentData, previousData, aiInterpretations, sectionStates, viewMode } = get()
+    const lines: string[] = []
+
+    lines.push("=== PRE-FLIGHT NOTE SUMMARY ===")
+    lines.push(`View: ${viewMode === "baseline" ? "Baseline (Initial)" : "Progression (Follow-up)"}`)
+    lines.push("")
+
+    // Key findings from AI
+    const aiSections = sections.filter((s) => aiInterpretations[s.section_id])
+    if (aiSections.length > 0) {
+      lines.push("--- KEY FINDINGS ---")
+      for (const section of aiSections) {
+        const interp = aiInterpretations[section.section_id]
+        const state = sectionStates[section.section_id] ?? "ai_ready"
+        lines.push(`[${state.toUpperCase()}] ${section.display_name}:`)
+        lines.push(`  ${interp.text.split("\n")[0]}`)
+        if (interp.actionItems.length > 0) {
+          lines.push(`  Actions: ${interp.actionItems.join("; ")}`)
+        }
+        lines.push("")
+      }
+    }
+
+    // Changed values summary
+    const changes: string[] = []
+    for (const section of sections) {
+      for (const field of section.fields) {
+        const key = `${section.section_id}.${field.field_id}`
+        const cur = currentData[key]
+        const prev = previousData[key]
+        if (cur !== undefined && prev !== undefined && cur !== prev) {
+          changes.push(`${field.display_name}: ${prev} → ${cur}`)
+        }
+      }
+    }
+    if (changes.length > 0) {
+      lines.push("--- CHANGES FROM PRIOR ---")
+      for (const c of changes) lines.push(`  ${c}`)
+      lines.push("")
+    }
+
+    return lines.join("\n")
+  },
 
   clearEncounter: () => set(initialState),
 }))

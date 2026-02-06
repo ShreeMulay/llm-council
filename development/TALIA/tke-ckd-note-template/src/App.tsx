@@ -5,6 +5,7 @@ import { ClinicalRibbon } from "@/components/ClinicalRibbon"
 import { NeedsAttention } from "@/components/NeedsAttention"
 import { DashboardDrawer } from "@/components/DashboardDrawer"
 import { CommandPalette } from "@/components/CommandPalette"
+import { PreFlightCheck } from "@/components/PreFlightCheck"
 import { Button } from "@/components/ui/button"
 import { cn, DOMAIN_DISPLAY_NAMES } from "@/lib/utils"
 import type { SectionRegistry, FieldTypes, DomainGroup, AIInterpretationData } from "@/types/schema"
@@ -472,18 +473,19 @@ export default function App() {
           </span>
         </div>
 
-        {/* Finalize Note button (placeholder for Phase 13 Pre-Flight) */}
+        {/* Finalize Note button → opens Pre-Flight Check */}
         <Button
           size="sm"
           className="h-8"
-          disabled={store.progress.critical > 0}
+          onClick={() => store.setPreFlightOpen(true)}
+          disabled={store.encounterAttested}
           title={
-            store.progress.critical > 0
-              ? "Resolve critical items before finalizing"
+            store.encounterAttested
+              ? "Note already attested"
               : "Open Pre-Flight Check"
           }
         >
-          Finalize Note
+          {store.encounterAttested ? "Note Attested" : "Finalize Note"}
         </Button>
       </footer>
 
@@ -495,6 +497,9 @@ export default function App() {
 
       {/* Command Palette */}
       <CommandPalette sectionRegistry={sectionRegistry} />
+
+      {/* Pre-Flight Check */}
+      <PreFlightCheck sectionRegistry={sectionRegistry} />
     </div>
   )
 }
