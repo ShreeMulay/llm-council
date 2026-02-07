@@ -1,0 +1,38 @@
+{
+  "reviewTrigger": {
+    "drafts": false,
+    "labels": [],
+    "branches": {
+      "target": ["main"]
+    }
+  },
+  "commentTypes": {
+    "logic": true,
+    "syntax": true,
+    "style": true,
+    "security": true,
+    "performance": true,
+    "info": false,
+    "advice": true
+  },
+  "severity": "medium",
+  "summary": {
+    "enabled": true,
+    "includeDiagrams": true,
+    "confidenceScores": true
+  },
+  "instructions": [
+    "This is a monorepo with multiple projects under development/.",
+    "Tech stack: TypeScript with Bun (not Node.js), React 19, Shadcn/ui v4, Tailwind CSS v4, Zod, Zustand.",
+    "Python projects use FastAPI + Pydantic v2 with uv for package management.",
+    "Prefer interfaces over types in TypeScript. Avoid enums — use const objects.",
+    "Use function declarations for React components, not arrow functions with FC.",
+    "Always use early returns and guard clauses.",
+    "Flag any hardcoded secrets, API keys, or credentials.",
+    "Flag any use of console.log in production code (should use proper logging).",
+    "Flag missing error handling in async functions.",
+    "Flag any direct DOM manipulation in React components.",
+    "Check for proper Zod validation at API boundaries.",
+    "This is a medical/healthcare adjacent project — flag any potential PHI/PII exposure."
+  ]
+}
