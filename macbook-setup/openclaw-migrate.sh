@@ -119,6 +119,22 @@ do_export() {
         cp -r "$OPENCLAW_DIR/completions" "$EXPORT_DIR/"
     fi
 
+    # --- LLM Guard Security Layer ---
+    SECURITY_LAYER_DIR="${HOME}/openclaw/security-layer"
+    if [[ -d "$SECURITY_LAYER_DIR" ]]; then
+        info "Exporting LLM Guard security layer..."
+        mkdir -p "$EXPORT_DIR/security-layer"
+        # Copy source, config, and systemd — skip .venv (will reinstall on target)
+        cp "$SECURITY_LAYER_DIR/pyproject.toml" "$EXPORT_DIR/security-layer/"
+        cp "$SECURITY_LAYER_DIR/README.md" "$EXPORT_DIR/security-layer/"
+        cp -r "$SECURITY_LAYER_DIR/src" "$EXPORT_DIR/security-layer/"
+        cp -r "$SECURITY_LAYER_DIR/systemd" "$EXPORT_DIR/security-layer/" 2>/dev/null || true
+        cp -r "$SECURITY_LAYER_DIR/scripts" "$EXPORT_DIR/security-layer/" 2>/dev/null || true
+        cp -r "$SECURITY_LAYER_DIR/tests" "$EXPORT_DIR/security-layer/" 2>/dev/null || true
+    else
+        warn "LLM Guard security layer not found at $SECURITY_LAYER_DIR, skipping"
+    fi
+
     # --- Create manifest ---
     info "Creating manifest..."
     cat > "$EXPORT_DIR/MANIFEST.json" << EOF
@@ -138,7 +154,8 @@ do_export() {
     "identity/",
     "telegram/",
     "canvas/",
-    "completions/"
+    "completions/",
+    "security-layer/ (LLM Guard proxy — src, config, systemd, tests)"
   ],
   "notes": {
     "gateway": "Config has gateway.bind=loopback. Must change to tailscale on MacBook.",
@@ -279,6 +296,14 @@ do_import() {
         cp -r "$source_dir/completions" "$OPENCLAW_DIR/"
     fi
 
+    # LLM Guard Security Layer
+    if [[ -d "$source_dir/security-layer" ]]; then
+        info "Importing LLM Guard security layer..."
+        local security_target="${HOME}/openclaw/security-layer"
+        mkdir -p "$security_target"
+        cp -r "$source_dir/security-layer/"* "$security_target/"
+    fi
+
     # Clean up extract
     rm -rf "$extract_dir"
 
@@ -351,6 +376,83 @@ do_post_import() {
         success "Shield plugin dependencies installed"
     fi
 
+    # --- Install LLM Guard security proxy ---
+    local security_dir="${HOME}/openclaw/security-layer"
+    if [[ -d "$security_dir" ]] && [[ -f "$security_dir/pyproject.toml" ]]; then
+        info "Installing LLM Guard security proxy..."
+
+        # Create venv and install
+        if command -v uv &>/dev/null; then
+            (cd "$security_dir" && uv venv .venv && uv pip install -e . 2>/dev/null) || {
+                warn "LLM Guard install via uv failed, trying pip..."
+                (cd "$security_dir" && python3 -m venv .venv && .venv/bin/pip install -e . 2>/dev/null) || {
+                    warn "LLM Guard install failed — install manually:"
+                    warn "  cd ~/openclaw/security-layer && python3 -m venv .venv && .venv/bin/pip install -e ."
+                }
+            }
+        else
+            (cd "$security_dir" && python3 -m venv .venv && .venv/bin/pip install -e . 2>/dev/null) || {
+                warn "LLM Guard install failed — install manually:"
+                warn "  cd ~/openclaw/security-layer && python3 -m venv .venv && .venv/bin/pip install -e ."
+            }
+        fi
+
+        # Create log directory
+        sudo mkdir -p /var/log/openclaw-security 2>/dev/null || mkdir -p "${HOME}/openclaw/logs"
+        sudo chown "$(whoami)" /var/log/openclaw-security 2>/dev/null || true
+
+        # Install launchd plist (macOS equivalent of systemd service)
+        local plist_dir="${HOME}/Library/LaunchAgents"
+        mkdir -p "$plist_dir"
+        cat > "$plist_dir/com.openclaw.llm-guard-proxy.plist" << PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.openclaw.llm-guard-proxy</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>${security_dir}/.venv/bin/python</string>
+        <string>-m</string>
+        <string>uvicorn</string>
+        <string>proxy.server:app</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>8080</string>
+        <string>--log-level</string>
+        <string>info</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>${security_dir}/src</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>${security_dir}/src</string>
+        <key>GUARD_PROXY_HOST</key>
+        <string>127.0.0.1</string>
+        <key>GUARD_PROXY_PORT</key>
+        <string>8080</string>
+        <key>OPENCLAW_UPSTREAM</key>
+        <string>http://127.0.0.1:18789</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/var/log/openclaw-security/llm-guard-proxy.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/openclaw-security/llm-guard-proxy.err</string>
+</dict>
+</plist>
+PLIST
+        success "LLM Guard launchd plist installed (com.openclaw.llm-guard-proxy)"
+    else
+        warn "LLM Guard security layer not found, skipping"
+    fi
+
     # --- Install OpenClaw as daemon (launchd on macOS) ---
     info "Installing OpenClaw gateway as macOS daemon (launchd)..."
     openclaw gateway install-daemon 2>/dev/null || {
@@ -390,7 +492,8 @@ do_post_import() {
     echo "  Workspace ............... Kai's brain (AGENTS.md, MEMORY.md, TOOLS.md, etc.)"
     echo "  Memory .................. main.sqlite (conversation history)"
     echo "  Channels ................ Discord @Kai, Telegram, WhatsApp"
-    echo "  Shield .................. Knostic v0.1.0 (enforce mode)"
+    echo "  Shield .................. Knostic v0.1.0 (enforce mode) — inner wall"
+    echo "  LLM Guard ............... Protect AI proxy on :8080 — outer wall"
     echo "  Credentials ............. Telegram pairing, WhatsApp session"
     echo ""
     echo -e "${YELLOW}Architecture:${NC}"
@@ -398,7 +501,8 @@ do_post_import() {
     echo "    - OpenClaw gateway on :18789"
     echo "    - Bound to Tailscale interface"
     echo "    - Discord @Kai, Telegram, WhatsApp active"
-    echo "    - Shield security layer active"
+    echo "    - Shield security layer active (inner wall)"
+    echo "    - LLM Guard proxy on :8080 (outer wall)"
     echo ""
     echo "  ChromeOS (old server):"
     echo "    - Switch to remote client mode"
