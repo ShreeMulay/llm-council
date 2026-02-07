@@ -135,7 +135,7 @@ echo ""
 # Pause for user to complete manual steps
 read -r -p "  Press ENTER when done (or type 's' to skip): " LOCKDOWN_RESPONSE
 
-if [[ "${LOCKDOWN_RESPONSE,,}" == "s" ]]; then
+if [[ "$LOCKDOWN_RESPONSE" == "s" || "$LOCKDOWN_RESPONSE" == "S" ]]; then
     warn "Apple ID lockdown skipped — remember to do this manually later!"
     warn "  System Settings → [Your Name] → iCloud → disable everything except Find My"
 else

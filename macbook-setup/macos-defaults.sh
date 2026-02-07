@@ -228,9 +228,8 @@ sudo pmset -c autorestart 1 2>/dev/null || true
 # TCP keepalive during sleep (maintains Tailscale + Discord connections)
 sudo pmset -c tcpkeepalive 1 2>/dev/null || true
 
-# Prevent sleep when lid is closed AND on power (clamshell mode)
-# This allows running with lid closed + external monitor or headless
-sudo pmset -c lidclose 0 2>/dev/null || true
+# Clamshell mode: macOS supports this natively when on AC power
+# with an external display. No pmset flag needed — just close the lid.
 
 # On battery: allow sleep after 10 min (preserve battery when unplugged)
 sudo pmset -b sleep 10 2>/dev/null || true
