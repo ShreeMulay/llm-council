@@ -1,0 +1,98 @@
+# =============================================================================
+# MacBook Pro M5 — Brewfile for AI Development Workstation
+# Dr. Shree Mulay | The Kidney Experts
+# Generated: 2026-02-06
+#
+# Usage: brew bundle --file=~/ai_projects/macbook-setup/Brewfile
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Taps
+# -----------------------------------------------------------------------------
+tap "homebrew/bundle"
+tap "oven-sh/bun"           # Official Bun tap
+tap "openclaw/apps"         # OpenClaw macOS app
+
+# -----------------------------------------------------------------------------
+# Shell & Terminal
+# -----------------------------------------------------------------------------
+brew "bash"                 # Modern bash 5.x (macOS ships 3.2 from 2007)
+brew "tmux"                 # Terminal multiplexer
+
+# -----------------------------------------------------------------------------
+# Developer Runtimes
+# -----------------------------------------------------------------------------
+brew "node@22"              # Node.js 22 LTS (required for OpenClaw)
+brew "oven-sh/bun/bun"     # Bun — primary JS/TS runtime
+brew "python@3.13"          # Python 3.13
+brew "uv"                   # Fast Python package manager
+brew "go"                   # Go language
+# Rust installed via rustup (not Homebrew) — see setup.sh
+
+# -----------------------------------------------------------------------------
+# Git & Version Control
+# -----------------------------------------------------------------------------
+brew "git"                  # Modern git (newer than Xcode's)
+brew "gh"                   # GitHub CLI
+brew "git-delta"            # Beautiful git diffs
+brew "lazygit"              # Terminal git UI
+
+# -----------------------------------------------------------------------------
+# Search & Navigation
+# -----------------------------------------------------------------------------
+brew "ripgrep"              # rg — fast grep replacement
+brew "fd"                   # fast find replacement
+brew "fzf"                  # Fuzzy finder
+brew "tree"                 # Directory tree viewer
+
+# -----------------------------------------------------------------------------
+# File Viewing & Processing
+# -----------------------------------------------------------------------------
+brew "bat"                  # cat with syntax highlighting
+brew "eza"                  # Modern ls replacement
+brew "glow"                 # Terminal markdown renderer
+brew "jq"                   # JSON processor
+brew "yq"                   # YAML processor
+
+# -----------------------------------------------------------------------------
+# System & Monitoring
+# -----------------------------------------------------------------------------
+brew "htop"                 # Process viewer
+brew "watch"                # Repeat commands periodically
+brew "curl"                 # Latest curl (macOS ships older)
+brew "wget"                 # HTTP download
+
+# -----------------------------------------------------------------------------
+# Shell Prompt & Appearance
+# -----------------------------------------------------------------------------
+brew "starship"             # Cross-shell prompt (fast, Rust-based)
+
+# -----------------------------------------------------------------------------
+# Dotfiles & Security
+# -----------------------------------------------------------------------------
+brew "chezmoi"              # Dotfile manager
+brew "age"                  # Modern file encryption
+brew "gnupg"                # GPG for git signing if needed
+
+# -----------------------------------------------------------------------------
+# Networking
+# -----------------------------------------------------------------------------
+brew "tailscale"            # Mesh VPN (CLI component)
+
+# -----------------------------------------------------------------------------
+# Cask: GUI Applications
+# -----------------------------------------------------------------------------
+cask "ghostty"              # GPU-accelerated terminal (Metal, native macOS)
+cask "cursor"               # AI-native editor (VS Code fork + Claude)
+cask "raycast"              # Spotlight replacement — clipboard, snippets, window mgmt
+cask "tailscale"            # Tailscale GUI + menu bar
+cask "rectangle"            # Window management (free, keyboard shortcuts)
+cask "stats"                # Menu bar system monitor (CPU, RAM, network)
+cask "openclaw-macos"       # OpenClaw macOS companion app (voice, Canvas, menu bar)
+
+# -----------------------------------------------------------------------------
+# Fonts
+# -----------------------------------------------------------------------------
+cask "font-jetbrains-mono"  # Proven coding font with ligatures
+cask "font-monaspace"       # GitHub's texture-healing font family
+cask "font-fira-code"       # Fira Code — popular alternative

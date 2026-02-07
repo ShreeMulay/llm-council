@@ -1,0 +1,133 @@
+# =============================================================================
+# Starship Prompt Configuration
+# Install location: ~/.config/starship.toml
+# Optimized for speed — only show what matters
+# =============================================================================
+
+# Minimal prompt — fast, informative, not cluttered
+format = """
+$directory\
+$git_branch\
+$git_status\
+$python\
+$nodejs\
+$rust\
+$golang\
+$cmd_duration\
+$line_break\
+$character"""
+
+# Don't print a new line at the start of the prompt
+add_newline = false
+
+# Timeout for commands (ms) — keep prompt snappy
+command_timeout = 500
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"
+
+[directory]
+truncation_length = 3
+truncation_symbol = ".../"
+style = "bold cyan"
+
+[git_branch]
+format = "[$symbol$branch]($style) "
+symbol = " "
+style = "bold purple"
+
+[git_status]
+format = '([$all_status$ahead_behind]($style) )'
+style = "bold red"
+conflicted = "="
+ahead = "^${count}"
+behind = "v${count}"
+diverged = "^${ahead_count}v${behind_count}"
+untracked = "?${count}"
+stashed = "$${count}"
+modified = "!${count}"
+staged = "+${count}"
+renamed = "r${count}"
+deleted = "x${count}"
+
+[python]
+format = '[py $version]($style) '
+style = "yellow"
+detect_files = ["pyproject.toml", "requirements.txt", ".python-version"]
+
+[nodejs]
+format = '[node $version]($style) '
+style = "green"
+detect_files = ["package.json", ".node-version"]
+
+[rust]
+format = '[rs $version]($style) '
+style = "bold red"
+
+[golang]
+format = '[go $version]($style) '
+style = "bold cyan"
+
+[cmd_duration]
+min_time = 2_000
+format = "[$duration]($style) "
+style = "bold yellow"
+
+# Disabled modules (save time)
+[aws]
+disabled = true
+
+[azure]
+disabled = true
+
+[gcloud]
+disabled = true
+
+[docker_context]
+disabled = true
+
+[kubernetes]
+disabled = true
+
+[package]
+disabled = true
+
+[terraform]
+disabled = true
+
+[vagrant]
+disabled = true
+
+[nix_shell]
+disabled = true
+
+[helm]
+disabled = true
+
+[java]
+disabled = true
+
+[kotlin]
+disabled = true
+
+[php]
+disabled = true
+
+[ruby]
+disabled = true
+
+[swift]
+disabled = true
+
+[elixir]
+disabled = true
+
+[erlang]
+disabled = true
+
+[lua]
+disabled = true
+
+[perl]
+disabled = true
