@@ -203,15 +203,38 @@ defaults write com.apple.TextEdit PlainTextEncoding -int 4
 defaults write com.apple.TextEdit PlainTextEncodingForWrite -int 4
 
 # =============================================================================
-# Energy & Performance
+# Energy & Performance (SERVER MODE — MacBook runs OpenClaw gateway 24/7)
 # =============================================================================
-echo "  -> Energy settings..."
+echo "  -> Energy settings (server mode — always-on for OpenClaw gateway)..."
 
-# Prevent machine from sleeping when on power adapter
+# Prevent system sleep when on power adapter (gateway must stay alive)
 sudo pmset -c sleep 0 2>/dev/null || true
+
+# Prevent display sleep when on power adapter (set to 15 min, not never)
+sudo pmset -c displaysleep 15 2>/dev/null || true
+
+# Prevent disk sleep
+sudo pmset -c disksleep 0 2>/dev/null || true
 
 # Enable lid-wake
 sudo pmset -a lidwake 1 2>/dev/null || true
+
+# Wake on network access (allows Tailscale to wake the machine)
+sudo pmset -c womp 1 2>/dev/null || true
+
+# Restart on power failure (auto-recover after power outage)
+sudo pmset -c autorestart 1 2>/dev/null || true
+
+# TCP keepalive during sleep (maintains Tailscale + Discord connections)
+sudo pmset -c tcpkeepalive 1 2>/dev/null || true
+
+# Prevent sleep when lid is closed AND on power (clamshell mode)
+# This allows running with lid closed + external monitor or headless
+sudo pmset -c lidclose 0 2>/dev/null || true
+
+# On battery: allow sleep after 10 min (preserve battery when unplugged)
+sudo pmset -b sleep 10 2>/dev/null || true
+sudo pmset -b displaysleep 5 2>/dev/null || true
 
 # =============================================================================
 # Misc

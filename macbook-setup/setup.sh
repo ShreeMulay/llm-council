@@ -300,9 +300,9 @@ else
 fi
 
 # =============================================================================
-# PHASE 9: OpenClaw CLI
+# PHASE 9: OpenClaw CLI + Local Gateway Setup
 # =============================================================================
-step "Phase 9: OpenClaw"
+step "Phase 9: OpenClaw (LOCAL gateway — this machine is the server)"
 
 if check_command openclaw; then
     success "OpenClaw CLI already installed ($(openclaw --version 2>/dev/null || echo 'installed'))"
@@ -314,13 +314,34 @@ else
     }
 fi
 
+# Update to beta channel (matches ChromeOS setup — needed for Opus 4.6 support)
+if check_command openclaw; then
+    info "Setting update channel to beta (for Opus 4.6 model catalog)..."
+    openclaw config set update.channel beta 2>/dev/null || true
+
+    info "Updating OpenClaw to latest beta..."
+    openclaw update --channel beta --yes 2>/dev/null || {
+        warn "OpenClaw update failed — may need to run manually after reboot"
+    }
+fi
+
 info ""
 info "OpenClaw macOS app should be in /Applications/OpenClaw.app"
-info "After launching, configure Remote Mode:"
-info "  openclaw config set gateway.mode remote"
-info "  openclaw config set gateway.remote.host \"<TAILSCALE_IP>\""
-info "  openclaw config set gateway.remote.port 18789"
-info "  openclaw config set gateway.remote.auth.token \"<GATEWAY_TOKEN>\""
+info ""
+echo -e "  ${BOLD}This MacBook is configured as the OpenClaw SERVER (local gateway).${NC}"
+echo -e "  ${BOLD}To complete migration, run:${NC}"
+echo ""
+echo "    # 1. Export from ChromeOS (on the ChromeOS machine):"
+echo "    ./openclaw-migrate.sh --export"
+echo ""
+echo "    # 2. Transfer tarball to this MacBook:"
+echo "    scp ~/openclaw-export-*.tar.gz shreemulay@<macbook-ip>:~/"
+echo ""
+echo "    # 3. Import on this MacBook:"
+echo "    cd ~/ai_projects/macbook-setup"
+echo "    ./openclaw-migrate.sh --import ~/openclaw-export-*.tar.gz"
+echo "    ./openclaw-migrate.sh --post-import"
+echo ""
 
 # =============================================================================
 # PHASE 10: Claude Code CLI
@@ -456,12 +477,20 @@ echo "  2. Set up SSH key:  ssh-keygen -t ed25519 -C \"your@email.com\""
 echo "  3. Add SSH key to GitHub:  cat ~/.ssh/id_ed25519.pub"
 echo "  4. Auth GitHub CLI:  gh auth login"
 echo "  5. Launch Tailscale app and sign in"
-echo "  6. Configure OpenClaw remote mode (see Phase 9 output above)"
+echo "  6. MIGRATE OpenClaw from ChromeOS (see Phase 9 output above):"
+echo "     a) On ChromeOS:  ./openclaw-migrate.sh --export"
+echo "     b) scp tarball to this MacBook"
+echo "     c) On MacBook:   ./openclaw-migrate.sh --import ~/openclaw-export-*.tar.gz"
+echo "     d) On MacBook:   ./openclaw-migrate.sh --post-import"
 echo "  7. Sync dotfiles:  chezmoi init git@github.com:shreemulay/dotfiles.git"
 echo "  8. Set up Caps Lock -> Escape:"
 echo "     System Settings -> Keyboard -> Keyboard Shortcuts -> Modifier Keys"
 echo "  9. Verify Apple ID lockdown (if skipped during Phase 1.5):"
 echo "     System Settings -> [Your Name] -> iCloud -> disable all except Find My"
+echo " 10. Switch ChromeOS to remote client mode:"
+echo "     openclaw gateway stop"
+echo "     openclaw config set gateway.mode remote"
+echo "     openclaw config set gateway.remote.host <macbook-tailscale-ip>"
 echo ""
 echo -e "${CYAN}Config files installed:${NC}"
 echo "  ~/.config/ghostty/config     (Ghostty terminal)"
