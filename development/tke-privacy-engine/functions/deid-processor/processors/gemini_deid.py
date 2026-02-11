@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 # Configuration from environment
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
 GCP_REGION = os.environ.get("GCP_REGION", "us-central1")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
-MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "8192"))
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
+MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "65536"))
 MAX_RETRIES = int(os.environ.get("GEMINI_MAX_RETRIES", "3"))
 RETRY_DELAY_SECONDS = float(os.environ.get("GEMINI_RETRY_DELAY", "2.0"))
 
@@ -66,10 +66,12 @@ def _create_client() -> genai.Client:
             "Set it to your Google Cloud project ID."
         )
 
+    # Gemini 3 models require the global endpoint; earlier models use regional
+    location = "global" if GEMINI_MODEL.startswith("gemini-3") else GCP_REGION
     client = genai.Client(
         vertexai=True,
         project=GCP_PROJECT_ID,
-        location=GCP_REGION,
+        location=location,
     )
     return client
 
@@ -218,33 +220,42 @@ async def deidentify_text(
                 len(text),
             )
 
+            # Build generation config
+            gen_config = {
+                "system_instruction": system_prompt,
+                "temperature": 0.0,
+                "max_output_tokens": MAX_OUTPUT_TOKENS,
+                "response_mime_type": "application/json",
+                "safety_settings": [
+                    types.SafetySetting(
+                        category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                        threshold="BLOCK_NONE",
+                    ),
+                    types.SafetySetting(
+                        category="HARM_CATEGORY_HARASSMENT",
+                        threshold="BLOCK_NONE",
+                    ),
+                    types.SafetySetting(
+                        category="HARM_CATEGORY_HATE_SPEECH",
+                        threshold="BLOCK_NONE",
+                    ),
+                    types.SafetySetting(
+                        category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                        threshold="BLOCK_NONE",
+                    ),
+                ],
+            }
+
+            # Gemini 3 models support thinking_level; use minimal for speed/cost
+            if GEMINI_MODEL.startswith("gemini-3"):
+                gen_config["thinking_config"] = types.ThinkingConfig(
+                    thinking_level="MINIMAL",
+                )
+
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=user_message,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_prompt,
-                    temperature=0.0,
-                    max_output_tokens=MAX_OUTPUT_TOKENS,
-                    response_mime_type="application/json",
-                    safety_settings=[
-                        types.SafetySetting(
-                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                            threshold="BLOCK_NONE",
-                        ),
-                        types.SafetySetting(
-                            category="HARM_CATEGORY_HARASSMENT",
-                            threshold="BLOCK_NONE",
-                        ),
-                        types.SafetySetting(
-                            category="HARM_CATEGORY_HATE_SPEECH",
-                            threshold="BLOCK_NONE",
-                        ),
-                        types.SafetySetting(
-                            category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                            threshold="BLOCK_NONE",
-                        ),
-                    ],
-                ),
+                config=types.GenerateContentConfig(**gen_config),
             )
 
             elapsed_ms = int((time.monotonic() - start_time) * 1000)
