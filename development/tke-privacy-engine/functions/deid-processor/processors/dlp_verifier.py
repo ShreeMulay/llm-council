@@ -149,7 +149,7 @@ def _build_inspect_config(
     )
 
 
-def _is_false_positive(finding: dlp_v2.InspectResult.Finding, deidentified_text: str) -> bool:
+def _is_false_positive(finding: dlp_v2.types.Finding, deidentified_text: str) -> bool:
     """Check if a DLP finding is a false positive in de-identified context.
 
     TKE tokens like [TKE-NAME-1] may trigger PERSON_NAME detection.
@@ -170,21 +170,63 @@ def _is_false_positive(finding: dlp_v2.InspectResult.Finding, deidentified_text:
 
     # Common medical terms that trigger PERSON_NAME false positives
     medical_false_positives = {
-        "goodpasture", "foley", "tenckhoff", "henoch", "schönlein", "schonlein",
-        "kimmelstiel", "wilson", "berger", "alport", "bartter", "gitelman",
-        "liddle", "fanconi", "wilms", "bright", "addison", "cushing", "conn",
-        "wegener", "takayasu", "kawasaki", "raynaud", "swan", "ganz",
-        "hickman", "quinton", "cimino", "brescia", "bowman", "henle",
-        "tamm", "horsfall", "doppler", "gram", "papanicolaou",
+        "goodpasture",
+        "foley",
+        "tenckhoff",
+        "henoch",
+        "schönlein",
+        "schonlein",
+        "kimmelstiel",
+        "wilson",
+        "berger",
+        "alport",
+        "bartter",
+        "gitelman",
+        "liddle",
+        "fanconi",
+        "wilms",
+        "bright",
+        "addison",
+        "cushing",
+        "conn",
+        "wegener",
+        "takayasu",
+        "kawasaki",
+        "raynaud",
+        "swan",
+        "ganz",
+        "hickman",
+        "quinton",
+        "cimino",
+        "brescia",
+        "bowman",
+        "henle",
+        "tamm",
+        "horsfall",
+        "doppler",
+        "gram",
+        "papanicolaou",
     }
     if quote.lower().strip() in medical_false_positives:
         return True
 
     # Check if the quote is part of a medical eponym phrase in context
     eponym_patterns = [
-        "syndrome", "disease", "catheter", "fistula", "graft", "stain",
-        "capsule", "loop of", "protein", "ultrasound", "phenomenon",
-        "granulomatosis", "arteritis", "vasculitis", "nephropathy",
+        "syndrome",
+        "disease",
+        "catheter",
+        "fistula",
+        "graft",
+        "stain",
+        "capsule",
+        "loop of",
+        "protein",
+        "ultrasound",
+        "phenomenon",
+        "granulomatosis",
+        "arteritis",
+        "vasculitis",
+        "nephropathy",
     ]
     # Look at surrounding context
     quote_pos = deidentified_text.find(quote)

@@ -30,7 +30,7 @@ logger.setLevel(logging.INFO)
 # Configuration from environment
 # ---------------------------------------------------------------------------
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
-STAGING_BUCKET = os.environ.get("STAGING_BUCKET", "tke-phi-staging")
+STAGING_BUCKET = os.environ.get("STAGING_BUCKET", "tke-phi-privacy-engine-staging")
 DEID_TOPIC = os.environ.get("DEID_TOPIC", "phi-deid-jobs")
 INGEST_FOLDER_ID = os.environ.get("INGEST_FOLDER_ID", "")
 OUTPUT_FOLDER_ID = os.environ.get("OUTPUT_FOLDER_ID", "")

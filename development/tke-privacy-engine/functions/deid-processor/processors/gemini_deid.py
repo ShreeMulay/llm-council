@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # Configuration from environment
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
 GCP_REGION = os.environ.get("GCP_REGION", "us-central1")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-pro")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
 MAX_OUTPUT_TOKENS = int(os.environ.get("GEMINI_MAX_OUTPUT_TOKENS", "8192"))
 MAX_RETRIES = int(os.environ.get("GEMINI_MAX_RETRIES", "3"))
 RETRY_DELAY_SECONDS = float(os.environ.get("GEMINI_RETRY_DELAY", "2.0"))

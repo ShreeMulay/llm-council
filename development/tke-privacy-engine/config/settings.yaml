@@ -9,7 +9,7 @@ project:
 
 # Vertex AI / Gemini
 gemini:
-  model: gemini-1.5-pro
+  model: gemini-2.5-pro
   temperature: 0.0
   max_output_tokens: 8192
   safety_settings: BLOCK_NONE
@@ -39,7 +39,7 @@ drive:
   ingest_folder_name: PHI_Ingest
   output_folder_id: "1_vFn9kcr-4vCijI_NDWgri-hgDICND09"
   output_folder_name: De-Identified
-  staging_bucket: tke-phi-staging
+  staging_bucket: tke-phi-privacy-engine-staging
   staging_ttl_hours: 24
 
 # Firestore

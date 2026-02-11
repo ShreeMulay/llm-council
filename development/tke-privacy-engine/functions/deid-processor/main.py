@@ -48,9 +48,7 @@ MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024
 # Load provider whitelist from environment or default path
 PROVIDER_WHITELIST_PATH = os.environ.get(
     "PROVIDER_WHITELIST_PATH",
-    os.path.join(
-        os.path.dirname(__file__), "..", "..", "config", "provider_whitelist.json"
-    ),
+    os.path.join(os.path.dirname(__file__), "provider_whitelist.json"),
 )
 
 

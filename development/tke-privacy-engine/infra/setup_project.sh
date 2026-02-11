@@ -191,6 +191,14 @@ grant_iam_roles() {
     done
     log_ok "Chat Bot IAM roles granted"
 
+    # Grant Pub/Sub service agent permission to invoke Cloud Run (needed for gen2 functions)
+    PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
+    PUBSUB_SA="service-${PROJECT_NUMBER}@gcp-sa-pubsub.iam.gserviceaccount.com"
+    gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+        --member="serviceAccount:${PUBSUB_SA}" \
+        --role="roles/run.invoker" --quiet 2>/dev/null
+    log_ok "Pub/Sub service agent granted Cloud Run invoker (for gen2 triggers)"
+
     echo ""
 }
 
@@ -213,16 +221,26 @@ setup_kms() {
     if gcloud kms keys describe phi-data-key --keyring=phi-keyring --location="$REGION" --project="$PROJECT_ID" &>/dev/null; then
         log_warn "KMS key phi-data-key already exists"
     else
+        NEXT_ROTATION=$(date -u -d "+90 days" +"%Y-%m-%dT%H:%M:%SZ")
         gcloud kms keys create phi-data-key \
             --keyring=phi-keyring \
             --location="$REGION" \
             --purpose=encryption \
             --rotation-period=90d \
+            --next-rotation-time="$NEXT_ROTATION" \
             --project="$PROJECT_ID"
         log_ok "Created KMS key: phi-data-key (90-day rotation)"
     fi
 
-    # Grant Firestore service agent access
+    log_ok "KMS keyring and key ready"
+    echo ""
+}
+
+# ─── Step 4b: Bind KMS to service agents (must run AFTER Firestore + Storage) ─
+
+bind_kms_agents() {
+    log_info "Step 4b: Binding KMS key to Firestore and Storage service agents..."
+
     PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format="value(projectNumber)")
     FIRESTORE_SA="service-${PROJECT_NUMBER}@gcp-sa-firestore.iam.gserviceaccount.com"
     STORAGE_SA="service-${PROJECT_NUMBER}@gs-project-accounts.iam.gserviceaccount.com"
@@ -241,7 +259,13 @@ setup_kms() {
         --role="roles/cloudkms.cryptoKeyEncrypterDecrypter" \
         --project="$PROJECT_ID" --quiet 2>/dev/null || true
 
-    log_ok "KMS access granted to Firestore and Storage agents"
+    # Set CMEK as default encryption on staging bucket
+    KMS_KEY="projects/${PROJECT_ID}/locations/${REGION}/keyRings/phi-keyring/cryptoKeys/phi-data-key"
+    BUCKET="${PROJECT_ID}-staging"
+    gcloud storage buckets update "gs://${BUCKET}" \
+        --default-encryption-key="$KMS_KEY" 2>/dev/null || true
+
+    log_ok "KMS access granted to Firestore and Storage agents, CMEK set on bucket"
     echo ""
 }
 
@@ -256,25 +280,28 @@ setup_firestore() {
     if gcloud firestore databases describe --database=phi-mappings --project="$PROJECT_ID" &>/dev/null; then
         log_warn "Firestore database phi-mappings already exists"
     else
+        # Create without CMEK first (Firestore service agent must exist before CMEK binding)
+        # CMEK is added via KMS key binding in setup_kms() after the agent is provisioned
         gcloud firestore databases create \
             --database=phi-mappings \
             --location="$REGION" \
             --type=firestore-native \
-            --kms-key-name="$KMS_KEY" \
             --project="$PROJECT_ID"
-        log_ok "Created Firestore database: phi-mappings (CMEK encrypted)"
+        log_ok "Created Firestore database: phi-mappings"
     fi
 
     # Set up TTL policies
     gcloud firestore fields ttls update expire_at \
         --collection-group=deid_jobs \
         --database=phi-mappings \
-        --project="$PROJECT_ID" --quiet 2>/dev/null || true
+        --enable-ttl \
+        --project="$PROJECT_ID" --quiet --async 2>/dev/null || true
 
     gcloud firestore fields ttls update expire_at \
         --collection-group=mappings \
         --database=phi-mappings \
-        --project="$PROJECT_ID" --quiet 2>/dev/null || true
+        --enable-ttl \
+        --project="$PROJECT_ID" --quiet --async 2>/dev/null || true
 
     log_ok "Firestore TTL policies configured (90-day auto-delete)"
     echo ""
@@ -334,7 +361,7 @@ setup_pubsub() {
 setup_storage() {
     log_info "Step 7: Setting up Cloud Storage..."
 
-    BUCKET="tke-phi-staging"
+    BUCKET="${PROJECT_ID}-staging"
     KMS_KEY="projects/${PROJECT_ID}/locations/${REGION}/keyRings/phi-keyring/cryptoKeys/phi-data-key"
 
     if gcloud storage buckets describe "gs://${BUCKET}" &>/dev/null; then
@@ -384,7 +411,7 @@ print_summary() {
     log_ok "Region:      $REGION"
     log_ok "KMS Key:     phi-keyring/phi-data-key"
     log_ok "Firestore:   phi-mappings (CMEK)"
-    log_ok "Storage:     gs://tke-phi-staging (24hr TTL)"
+    log_ok "Storage:     gs://${PROJECT_ID}-staging (24hr TTL)"
     log_ok "Pub/Sub:     phi-deid-jobs, drive-file-events"
     echo ""
     log_info "Service Account Emails (share Drive folders with these):"
@@ -423,6 +450,7 @@ main() {
     setup_firestore
     setup_pubsub
     setup_storage
+    bind_kms_agents   # Must run after Firestore + Storage create service agents
     print_summary
 }
 

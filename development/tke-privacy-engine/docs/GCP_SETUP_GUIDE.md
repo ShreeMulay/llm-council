@@ -382,7 +382,7 @@ Files are automatically deleted after 24 hours.
 
 ```bash
 # Create the staging bucket with CMEK
-gcloud storage buckets create gs://tke-phi-staging \
+gcloud storage buckets create gs://tke-phi-privacy-engine-staging \
   --location=$REGION \
   --default-encryption-key=$KMS_KEY \
   --uniform-bucket-level-access \
@@ -400,13 +400,13 @@ cat > /tmp/lifecycle.json << 'EOF'
 }
 EOF
 
-gcloud storage buckets update gs://tke-phi-staging \
+gcloud storage buckets update gs://tke-phi-privacy-engine-staging \
   --lifecycle-file=/tmp/lifecycle.json
 
 rm /tmp/lifecycle.json
 
 # Verify
-gcloud storage buckets describe gs://tke-phi-staging
+gcloud storage buckets describe gs://tke-phi-privacy-engine-staging
 ```
 
 ---
@@ -548,7 +548,7 @@ gcloud functions deploy drive-watcher \
   --memory=256Mi \
   --timeout=60s \
   --max-instances=3 \
-  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},INGEST_FOLDER_ID=YOUR_FOLDER_ID,STAGING_BUCKET=tke-phi-staging,DEID_TOPIC=phi-deid-jobs" \
+  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},INGEST_FOLDER_ID=YOUR_FOLDER_ID,STAGING_BUCKET=tke-phi-privacy-engine-staging,DEID_TOPIC=phi-deid-jobs" \
   --project=$PROJECT_ID
 
 # Deploy chat-bot (HTTP triggered)
@@ -564,7 +564,7 @@ gcloud functions deploy chat-bot \
   --memory=256Mi \
   --timeout=60s \
   --max-instances=5 \
-  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},STAGING_BUCKET=tke-phi-staging,DEID_TOPIC=phi-deid-jobs" \
+  --set-env-vars="GCP_PROJECT_ID=${PROJECT_ID},STAGING_BUCKET=tke-phi-privacy-engine-staging,DEID_TOPIC=phi-deid-jobs" \
   --project=$PROJECT_ID
 ```
 
@@ -684,7 +684,7 @@ gcloud firestore documents list \
 | `OUTPUT_FOLDER_ID` | De-Identified Drive folder ID | `1a2b3c4d5e6f...` |
 | `INGEST_FOLDER_ID` | PHI_Ingest Drive folder ID | `7g8h9i0j1k2l...` |
 | `MAPPING_FOLDER_ID` | PHI_Mappings Drive folder ID | `3m4n5o6p7q8r...` |
-| `STAGING_BUCKET` | GCS staging bucket name | `tke-phi-staging` |
+| `STAGING_BUCKET` | GCS staging bucket name | `tke-phi-privacy-engine-staging` |
 | `DEID_TOPIC` | Pub/Sub topic for jobs | `phi-deid-jobs` |
 | `KMS_KEY` | Cloud KMS key resource name | `projects/.../cryptoKeys/phi-data-key` |
 

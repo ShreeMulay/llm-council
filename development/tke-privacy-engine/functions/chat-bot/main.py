@@ -36,7 +36,7 @@ logger.setLevel(logging.INFO)
 # Configuration
 # ---------------------------------------------------------------------------
 GCP_PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
-STAGING_BUCKET = os.environ.get("STAGING_BUCKET", "tke-phi-staging")
+STAGING_BUCKET = os.environ.get("STAGING_BUCKET", "tke-phi-privacy-engine-staging")
 DEID_TOPIC = os.environ.get("DEID_TOPIC", "phi-deid-jobs")
 
 MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB
@@ -312,9 +312,7 @@ def _download_chat_attachment(attachment: dict[str, Any]) -> tuple[bytes, str, s
         raise ValueError("Attachment does not contain a Drive file reference")
 
     metadata = (
-        drive.files()
-        .get(fileId=file_id, fields="id,name,mimeType,size")
-        .execute()
+        drive.files().get(fileId=file_id, fields="id,name,mimeType,size").execute()
     )
 
     mime_type = metadata.get("mimeType", "")
@@ -519,13 +517,13 @@ def _handle_message(event: dict[str, Any]) -> dict[str, Any]:
 
     # Check for command prefixes
     if text.startswith("/deid"):
-        return _handle_deid_text(text[len("/deid"):], event)
+        return _handle_deid_text(text[len("/deid") :], event)
     if text.startswith("/verify"):
-        return _handle_verify(text[len("/verify"):])
+        return _handle_verify(text[len("/verify") :])
     if text.startswith("/batch"):
         return _handle_batch()
     if text.startswith("/synthetic"):
-        return _handle_synthetic(text[len("/synthetic"):], event)
+        return _handle_synthetic(text[len("/synthetic") :], event)
     if text.startswith("/help"):
         return _handle_help()
 

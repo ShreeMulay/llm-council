@@ -28,7 +28,7 @@ CHAT_BOT_SA="chat-bot@${PROJECT_ID}.iam.gserviceaccount.com"
 AUDIT_SHEET_ID="${AUDIT_SHEET_ID:?Error: AUDIT_SHEET_ID env var is required}"
 OUTPUT_FOLDER_ID="${OUTPUT_FOLDER_ID:?Error: OUTPUT_FOLDER_ID env var is required}"
 INGEST_FOLDER_ID="${INGEST_FOLDER_ID:?Error: INGEST_FOLDER_ID env var is required}"
-STAGING_BUCKET="${STAGING_BUCKET:-tke-phi-staging}"
+STAGING_BUCKET="${STAGING_BUCKET:-tke-phi-privacy-engine-staging}"
 DEID_TOPIC="${DEID_TOPIC:-phi-deid-jobs}"
 DRIVE_TOPIC="${DRIVE_TOPIC:-drive-file-events}"
 FIRESTORE_DATABASE="${FIRESTORE_DATABASE:-phi-mappings}"
@@ -56,7 +56,7 @@ deploy_processor() {
         --region="$REGION" \
         --runtime=python311 \
         --source=functions/deid-processor \
-        --entry-point=process_deid_job \
+        --entry-point=deid_pubsub \
         --trigger-topic="$DEID_TOPIC" \
         --service-account="$PHI_PROCESSOR_SA" \
         --memory=1Gi \
@@ -84,7 +84,7 @@ deploy_watcher() {
         --region="$REGION" \
         --runtime=python311 \
         --source=functions/drive-watcher \
-        --entry-point=handle_drive_event \
+        --entry-point=drive_watcher \
         --trigger-topic="$DRIVE_TOPIC" \
         --service-account="$DRIVE_WATCHER_SA" \
         --memory=256Mi \
@@ -110,7 +110,7 @@ deploy_chatbot() {
         --region="$REGION" \
         --runtime=python311 \
         --source=functions/chat-bot \
-        --entry-point=handle_chat_event \
+        --entry-point=chat_bot \
         --trigger-http \
         --allow-unauthenticated \
         --service-account="$CHAT_BOT_SA" \
@@ -189,7 +189,7 @@ main() {
 
     # Show function status
     log_info "Function status:"
-    gcloud functions list --gen2 --region="$REGION" --project="$PROJECT_ID" \
+    gcloud functions list --v2 --regions="$REGION" --project="$PROJECT_ID" \
         --format="table(name, state, serviceConfig.uri)"
 }
 

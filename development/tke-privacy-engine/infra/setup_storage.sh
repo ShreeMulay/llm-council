@@ -15,7 +15,7 @@ set -euo pipefail
 
 PROJECT_ID="${GCP_PROJECT_ID:-tke-phi-privacy-engine}"
 REGION="${GCP_REGION:-us-central1}"
-BUCKET_NAME="${STAGING_BUCKET:-tke-phi-staging}"
+BUCKET_NAME="${STAGING_BUCKET:-tke-phi-privacy-engine-staging}"
 KMS_KEYRING="phi-keyring"
 KMS_KEY="phi-data-key"
 KMS_KEY_PATH="projects/${PROJECT_ID}/locations/${REGION}/keyRings/${KMS_KEYRING}/cryptoKeys/${KMS_KEY}"
