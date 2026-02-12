@@ -1,9 +1,13 @@
 """TKE Privacy Engine - Drive Watcher Cloud Function.
 
-Triggered by Pub/Sub messages from Google Workspace Events API when files
-are uploaded to the PHI_Ingest folder in Google Drive. Downloads the file
-to a Cloud Storage staging bucket and publishes a standardized job message
-to the phi-deid-jobs Pub/Sub topic for downstream processing.
+Two entry points:
+  1. `drive_watcher` — Pub/Sub triggered by Workspace Events API push
+     notifications when files are uploaded to the PHI_Ingest folder.
+  2. `drive_poller` — HTTP triggered by Cloud Scheduler every 5 minutes.
+     Polls the PHI_Ingest folder for new files, processes any unprocessed
+     ones, and tracks state via a marker file in GCS.
+
+Both paths share the same download → stage → publish pipeline.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import os
 import uuid
 from typing import Any
 
+import flask
 import functions_framework
 from cloudevents.http import CloudEvent
 from google.cloud import pubsub_v1, storage
@@ -290,3 +295,177 @@ def drive_watcher(cloud_event: CloudEvent) -> None:
     except Exception:
         logger.exception("Unexpected error processing Drive event for job %s", job_id)
         raise  # Re-raise so Cloud Functions retries
+
+
+# ---------------------------------------------------------------------------
+# Polling: processed-files tracker (GCS marker)
+# ---------------------------------------------------------------------------
+
+MARKER_BLOB = "drive-watcher/processed_files.json"
+
+
+def _load_processed_ids() -> set[str]:
+    """Load the set of already-processed file IDs from a GCS marker file."""
+    try:
+        client = _get_storage_client()
+        bucket = client.bucket(STAGING_BUCKET)
+        blob = bucket.blob(MARKER_BLOB)
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            return set(data.get("processed_ids", []))
+    except Exception:
+        logger.warning("Could not load processed IDs marker, starting fresh")
+    return set()
+
+
+def _save_processed_ids(processed_ids: set[str]) -> None:
+    """Persist the set of processed file IDs to a GCS marker file."""
+    client = _get_storage_client()
+    bucket = client.bucket(STAGING_BUCKET)
+    blob = bucket.blob(MARKER_BLOB)
+    blob.upload_from_string(
+        json.dumps({"processed_ids": sorted(processed_ids)[-500:]}),
+        content_type="application/json",
+    )
+
+
+def _list_ingest_files() -> list[dict[str, Any]]:
+    """List files in the PHI_Ingest folder on the Shared Drive."""
+    drive = _get_drive_service()
+    query = f"'{INGEST_FOLDER_ID}' in parents and trashed = false"
+    results = (
+        drive.files()
+        .list(
+            q=query,
+            fields="files(id,name,mimeType,size,parents,owners,createdTime)",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
+            corpora="drive",
+            driveId="0APd8QGg3EJcPUk9PVA",
+            pageSize=50,
+        )
+        .execute()
+    )
+    return results.get("files", [])
+
+
+def _process_file(file_id: str, metadata: dict[str, Any]) -> str:
+    """Download, stage, and publish a single file. Returns job_id."""
+    job_id = f"deid-watch-{uuid.uuid4().hex[:12]}"
+    logger.info(
+        "Processing file %s (%s) as job %s", file_id, metadata.get("name"), job_id
+    )
+
+    # Validate
+    mime_type = metadata.get("mimeType", "")
+    if mime_type not in SUPPORTED_MIME_TYPES and mime_type not in GOOGLE_EXPORT_TYPES:
+        raise ValueError(f"Unsupported MIME type: {mime_type}")
+
+    size = int(metadata.get("size", 0))
+    if mime_type not in GOOGLE_EXPORT_TYPES and size > MAX_FILE_SIZE_BYTES:
+        raise ValueError(f"File too large: {size} bytes")
+
+    # Download
+    content, filename = _download_file(file_id, metadata)
+
+    # Stage to GCS
+    file_uri = _stage_to_gcs(job_id, filename, content)
+
+    # Determine requestor
+    owners = metadata.get("owners", [])
+    requestor = owners[0].get("emailAddress", "unknown") if owners else "drive-watcher"
+
+    # Publish job
+    _publish_job(
+        job_id=job_id,
+        file_uri=file_uri,
+        requestor=requestor,
+        source_file_id=file_id,
+    )
+
+    return job_id
+
+
+# ---------------------------------------------------------------------------
+# Cloud Function entry point: HTTP polling (Cloud Scheduler)
+# ---------------------------------------------------------------------------
+
+
+@functions_framework.http
+def drive_poller(request: flask.Request) -> flask.Response:
+    """Poll PHI_Ingest folder for new files and process them.
+
+    Designed to be called by Cloud Scheduler every 5 minutes.
+    Tracks processed files via a GCS marker to avoid duplicates.
+    """
+    logger.info("drive_poller invoked")
+
+    if not INGEST_FOLDER_ID:
+        return flask.jsonify({"error": "INGEST_FOLDER_ID not configured"}), 500
+
+    processed_ids = _load_processed_ids()
+    files = _list_ingest_files()
+    new_files = [f for f in files if f["id"] not in processed_ids]
+
+    if not new_files:
+        logger.info(
+            "No new files found in PHI_Ingest (%d already processed)",
+            len(processed_ids),
+        )
+        return flask.jsonify(
+            {
+                "status": "ok",
+                "new_files": 0,
+                "total_in_folder": len(files),
+                "already_processed": len(processed_ids),
+            }
+        )
+
+    logger.info("Found %d new file(s) to process", len(new_files))
+
+    results = []
+    for file_meta in new_files:
+        file_id = file_meta["id"]
+        try:
+            job_id = _process_file(file_id, file_meta)
+            processed_ids.add(file_id)
+            results.append(
+                {
+                    "file_id": file_id,
+                    "name": file_meta.get("name", "unknown"),
+                    "job_id": job_id,
+                    "status": "submitted",
+                }
+            )
+        except ValueError as exc:
+            logger.warning("Skipping file %s: %s", file_id, exc)
+            processed_ids.add(file_id)  # Mark as processed to avoid retrying
+            results.append(
+                {
+                    "file_id": file_id,
+                    "name": file_meta.get("name", "unknown"),
+                    "status": "skipped",
+                    "reason": str(exc),
+                }
+            )
+        except Exception as exc:
+            logger.exception("Error processing file %s", file_id)
+            results.append(
+                {
+                    "file_id": file_id,
+                    "name": file_meta.get("name", "unknown"),
+                    "status": "error",
+                    "reason": str(exc),
+                }
+            )
+
+    # Persist updated processed list
+    _save_processed_ids(processed_ids)
+
+    return flask.jsonify(
+        {
+            "status": "ok",
+            "new_files": len(new_files),
+            "results": results,
+        }
+    )

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 # TKE Privacy Engine - Cloud Functions Deployment Script
 #
-# Deploys all three Cloud Functions (gen2) to GCP:
+# Deploys Cloud Functions (gen2) to GCP:
 #   1. deid-processor  - Pub/Sub triggered, processes de-identification jobs
-#   2. drive-watcher   - Pub/Sub triggered, watches Drive for new files
-#   3. chat-bot        - HTTP triggered, handles Google Chat interactions
+#   2. drive-watcher   - Pub/Sub triggered, watches Drive for new files (push)
+#   3. drive-poller    - HTTP triggered, polls Drive for new files (Cloud Scheduler)
+#   4. chat-bot        - HTTP triggered, handles Google Chat interactions
 #
 # Usage:
 #   ./infra/deploy.sh              # Deploy all functions
 #   ./infra/deploy.sh processor    # Deploy only deid-processor
 #   ./infra/deploy.sh watcher      # Deploy only drive-watcher
+#   ./infra/deploy.sh poller       # Deploy only drive-poller + Cloud Scheduler
 #   ./infra/deploy.sh chatbot      # Deploy only chat-bot
 
 set -euo pipefail
@@ -102,6 +104,71 @@ DEID_TOPIC=${DEID_TOPIC}" \
     log_ok "drive-watcher deployed successfully"
 }
 
+deploy_poller() {
+    log_info "Deploying drive-poller (HTTP endpoint for Cloud Scheduler)..."
+
+    gcloud functions deploy drive-poller \
+        --gen2 \
+        --region="$REGION" \
+        --runtime=python311 \
+        --source=functions/drive-watcher \
+        --entry-point=drive_poller \
+        --trigger-http \
+        --no-allow-unauthenticated \
+        --service-account="$DRIVE_WATCHER_SA" \
+        --memory=256Mi \
+        --timeout=120s \
+        --min-instances=0 \
+        --max-instances=1 \
+        --set-env-vars="\
+GCP_PROJECT_ID=${PROJECT_ID},\
+INGEST_FOLDER_ID=${INGEST_FOLDER_ID},\
+OUTPUT_FOLDER_ID=${OUTPUT_FOLDER_ID},\
+STAGING_BUCKET=${STAGING_BUCKET},\
+DEID_TOPIC=${DEID_TOPIC}" \
+        --project="$PROJECT_ID" \
+        --quiet
+
+    POLLER_URL=$(gcloud functions describe drive-poller \
+        --gen2 \
+        --region="$REGION" \
+        --format="value(serviceConfig.uri)" \
+        --project="$PROJECT_ID")
+
+    log_ok "drive-poller deployed: ${POLLER_URL}"
+
+    # Create or update Cloud Scheduler job (every 5 minutes)
+    log_info "Setting up Cloud Scheduler job..."
+
+    if gcloud scheduler jobs describe phi-drive-poll \
+        --location="$REGION" \
+        --project="$PROJECT_ID" &>/dev/null; then
+        gcloud scheduler jobs update http phi-drive-poll \
+            --location="$REGION" \
+            --schedule="*/5 * * * *" \
+            --uri="${POLLER_URL}" \
+            --http-method=POST \
+            --oidc-service-account-email="$DRIVE_WATCHER_SA" \
+            --oidc-token-audience="${POLLER_URL}" \
+            --project="$PROJECT_ID" \
+            --quiet
+        log_ok "Cloud Scheduler job updated"
+    else
+        gcloud scheduler jobs create http phi-drive-poll \
+            --location="$REGION" \
+            --schedule="*/5 * * * *" \
+            --uri="${POLLER_URL}" \
+            --http-method=POST \
+            --oidc-service-account-email="$DRIVE_WATCHER_SA" \
+            --oidc-token-audience="${POLLER_URL}" \
+            --time-zone="America/Chicago" \
+            --description="Poll PHI_Ingest Drive folder for new files every 5 minutes" \
+            --project="$PROJECT_ID" \
+            --quiet
+        log_ok "Cloud Scheduler job created (every 5 min)"
+    fi
+}
+
 deploy_chatbot() {
     log_info "Deploying chat-bot..."
 
@@ -166,6 +233,9 @@ main() {
         watcher)
             deploy_watcher
             ;;
+        poller)
+            deploy_poller
+            ;;
         chatbot)
             deploy_chatbot
             ;;
@@ -174,11 +244,13 @@ main() {
             echo ""
             deploy_watcher
             echo ""
+            deploy_poller
+            echo ""
             deploy_chatbot
             ;;
         *)
             log_error "Unknown target: ${target}"
-            echo "Usage: $0 [processor|watcher|chatbot|all]"
+            echo "Usage: $0 [processor|watcher|poller|chatbot|all]"
             exit 1
             ;;
     esac
