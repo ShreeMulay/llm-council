@@ -75,6 +75,7 @@ def _upload_md_to_drive(
         .create(
             body=file_metadata,
             media_body=media,
+            supportsAllDrives=True,
             fields="id, webViewLink",
         )
         .execute()
