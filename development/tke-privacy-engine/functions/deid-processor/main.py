@@ -26,6 +26,7 @@ from outputs.docs_writer import write_deid_doc
 from outputs.markdown_writer import write_deid_markdown
 from outputs.sheets_writer import append_audit_row
 from outputs.firestore_writer import store_phi_mapping
+from whitelist_reader import load_provider_names as load_provider_names_from_sheet
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -100,27 +101,17 @@ class DeIDResult(BaseModel):
 # Provider Whitelist
 # ---------------------------------------------------------------------------
 def load_provider_names() -> list[str]:
-    """Load TKE provider names from the whitelist JSON file.
+    """Load TKE provider names — Google Sheets first, JSON fallback.
+
+    Primary source: "Providers" tab in the Audit Sheet (editable by staff).
+    Fallback: Static ``provider_whitelist.json`` if Sheet is unreachable.
 
     Returns:
         Flat list of all provider name variations.
     """
-    try:
-        whitelist_path = os.path.normpath(PROVIDER_WHITELIST_PATH)
-        with open(whitelist_path) as f:
-            data = json.load(f)
-        names = data.get("all_names_flat", [])
-        logger.info("Loaded %d provider names from whitelist", len(names))
-        return names
-    except FileNotFoundError:
-        logger.warning(
-            "Provider whitelist not found at %s. All names will be treated as potential PHI.",
-            PROVIDER_WHITELIST_PATH,
-        )
-        return []
-    except (json.JSONDecodeError, KeyError) as e:
-        logger.error("Failed to parse provider whitelist: %s", e)
-        return []
+    return load_provider_names_from_sheet(
+        json_fallback_path=os.path.normpath(PROVIDER_WHITELIST_PATH),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -280,8 +271,12 @@ async def process_deid_job(job: DeIDJob) -> DeIDResult:
     )
 
     # Step 4: DLP verification on the de-identified output
+    #         Pass provider names so DLP doesn't flag them as residual PHI
     logger.info("Running DLP verification on de-identified output...")
-    dlp_result = await verify_deidentified_text(gemini_result.deidentified_text)
+    dlp_result = await verify_deidentified_text(
+        gemini_result.deidentified_text,
+        provider_names=provider_names,
+    )
     logger.info(
         "DLP verification: %d residual findings, needs_review=%s",
         dlp_result.total_findings,

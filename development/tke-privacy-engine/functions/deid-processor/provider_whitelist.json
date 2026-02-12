@@ -1,19 +1,29 @@
 {
-  "version": "1.0",
-  "updated": "2026-02-04",
+  "version": "2.0",
+  "updated": "2026-02-11",
+  "note": "Fallback file — primary source is the Providers tab in the Audit Sheet",
   "providers": {
     "physicians": [
       {
         "name": "Anna Lee-Mulay",
         "credential": "MD",
         "role": "Nephrologist",
+        "status": "active",
         "variations": ["Dr. Lee-Mulay", "Dr. Anna Lee-Mulay", "Anna Lee-Mulay, MD"]
       },
       {
         "name": "Shree Mulay",
         "credential": "MD",
         "role": "Nephrologist",
-        "variations": ["Dr. Mulay", "Dr. Shree Mulay", "Shree Mulay, MD"]
+        "status": "active",
+        "variations": ["Dr. Mulay", "Dr. Shree Mulay", "Shree Mulay, MD", "Dr. S. Mulay"]
+      },
+      {
+        "name": "Ramakant Mulay",
+        "credential": "MD",
+        "role": "Nephrologist",
+        "status": "former",
+        "variations": ["Dr. Ramakant Mulay", "Dr. R. Mulay", "Ramakant Mulay, MD", "R. Mulay"]
       }
     ],
     "advanced_practice": [
@@ -21,13 +31,29 @@
         "name": "Lisa Hoehn",
         "credential": "NP",
         "role": "Nurse Practitioner",
-        "variations": ["Lisa Hoehn, NP", "NP Hoehn"]
+        "status": "active",
+        "variations": ["Lisa Hoehn, NP", "NP Hoehn", "Lisa Hoehn, FNP"]
       },
       {
         "name": "Leslie Baum",
         "credential": "FNP",
         "role": "Nurse Practitioner",
-        "variations": ["Leslie Baum, FNP", "NP Baum"]
+        "status": "active",
+        "variations": ["Leslie Baum, FNP", "NP Baum", "Leslie Baum, NP"]
+      },
+      {
+        "name": "Courtney Roberson",
+        "credential": "FNP",
+        "role": "Nurse Practitioner",
+        "status": "active",
+        "variations": ["Courtney Roberson, NP", "Courtney Roberson, FNP", "NP Roberson"]
+      },
+      {
+        "name": "Clay Walker",
+        "credential": "PA-C",
+        "role": "Physician Assistant",
+        "status": "former",
+        "variations": ["Clay Walker, PA-C", "Clay Walker, PA", "PA Walker"]
       }
     ],
     "clinical_staff": [
@@ -35,12 +61,23 @@
         "name": "Brandy Carr",
         "credential": null,
         "role": "Clinical Manager",
+        "status": "active",
         "variations": ["Brandy Carr"]
+      },
+      {
+        "name": "Myk Robinson",
+        "credential": null,
+        "role": "IT Manager",
+        "status": "active",
+        "variations": ["Myk Robinson"]
       }
     ]
   },
   "all_names_flat": [
     "Anna Lee-Mulay", "Lee-Mulay", "Shree Mulay", "Mulay",
-    "Lisa Hoehn", "Hoehn", "Leslie Baum", "Baum", "Brandy Carr"
+    "Ramakant Mulay", "R. Mulay",
+    "Lisa Hoehn", "Hoehn", "Leslie Baum", "Baum",
+    "Courtney Roberson", "Roberson", "Clay Walker", "Walker",
+    "Brandy Carr", "Myk Robinson", "Robinson"
   ]
 }

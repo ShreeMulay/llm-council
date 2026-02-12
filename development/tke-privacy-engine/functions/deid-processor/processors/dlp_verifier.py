@@ -149,15 +149,22 @@ def _build_inspect_config(
     )
 
 
-def _is_false_positive(finding: dlp_v2.types.Finding, deidentified_text: str) -> bool:
+def _is_false_positive(
+    finding: dlp_v2.types.Finding,
+    deidentified_text: str,
+    provider_names: list[str] | None = None,
+) -> bool:
     """Check if a DLP finding is a false positive in de-identified context.
 
     TKE tokens like [TKE-NAME-1] may trigger PERSON_NAME detection.
     Medical terms may trigger false positives.
+    TKE provider names are preserved intentionally and should not be flagged.
 
     Args:
         finding: A DLP finding to evaluate.
         deidentified_text: The full de-identified text for context.
+        provider_names: Optional list of TKE provider name variations to
+            whitelist.  These are treating providers, not patient PHI.
 
     Returns:
         True if the finding is likely a false positive.
@@ -167,6 +174,17 @@ def _is_false_positive(finding: dlp_v2.types.Finding, deidentified_text: str) ->
     # TKE tokens are not PHI — they are our replacement tokens
     if quote.startswith("[TKE-") and quote.endswith("]"):
         return True
+
+    # TKE provider names are preserved intentionally — not patient PHI
+    if provider_names and finding.info_type.name == "PERSON_NAME":
+        quote_lower = quote.lower().strip()
+        for name in provider_names:
+            if quote_lower == name.lower():
+                return True
+            # Handle partial matches: DLP might flag "Mulay" from "Dr. Mulay"
+            # or "Shree Mulay" from "Dr. Shree Mulay"
+            if name.lower() in quote_lower or quote_lower in name.lower():
+                return True
 
     # Common medical terms that trigger PERSON_NAME false positives
     medical_false_positives = {
@@ -265,6 +283,7 @@ async def verify_deidentified_text(
     deidentified_text: str,
     info_types: list[str] | None = None,
     min_likelihood: dlp_v2.Likelihood | None = None,
+    provider_names: list[str] | None = None,
 ) -> DLPVerificationResult:
     """Run Cloud DLP on de-identified text to catch residual PHI.
 
@@ -275,6 +294,9 @@ async def verify_deidentified_text(
         deidentified_text: The text that has already been de-identified by Gemini.
         info_types: Optional list of info type names to scan for.
         min_likelihood: Optional minimum likelihood threshold.
+        provider_names: Optional list of TKE provider name variations.  These
+            names are preserved intentionally in the output and should be
+            treated as false positives when DLP flags them.
 
     Returns:
         DLPVerificationResult with any residual PHI findings.
@@ -327,8 +349,8 @@ async def verify_deidentified_text(
 
     if response.result and response.result.findings:
         for finding in response.result.findings:
-            # Skip false positives
-            if _is_false_positive(finding, deidentified_text):
+            # Skip false positives (TKE tokens, medical eponyms, provider names)
+            if _is_false_positive(finding, deidentified_text, provider_names):
                 logger.debug(
                     "DLP false positive filtered: %s (%s)",
                     finding.quote,

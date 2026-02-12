@@ -18,6 +18,8 @@ from googleapiclient.errors import HttpError
 logger = logging.getLogger(__name__)
 
 # Scopes required for Docs + Drive
+# drive.file: create files in shared drive folders
+# documents: populate doc body via batchUpdate
 SCOPES = [
     "https://www.googleapis.com/auth/documents",
     "https://www.googleapis.com/auth/drive.file",
@@ -32,10 +34,14 @@ def _get_credentials() -> service_account.Credentials:
 
         creds, _ = default(scopes=SCOPES)
     except Exception:
-        logger.warning("ADC not available; falling back to GOOGLE_APPLICATION_CREDENTIALS")
+        logger.warning(
+            "ADC not available; falling back to GOOGLE_APPLICATION_CREDENTIALS"
+        )
         sa_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
         if sa_path:
-            creds = service_account.Credentials.from_service_account_file(sa_path, scopes=SCOPES)
+            creds = service_account.Credentials.from_service_account_file(
+                sa_path, scopes=SCOPES
+            )
     if creds is None:
         raise RuntimeError("No valid Google credentials found for Docs/Drive APIs")
     return creds
@@ -102,7 +108,9 @@ def _build_doc_body(
 
     # Summary divider
     summary_header = sections[4]
-    requests.append({"insertText": {"location": {"index": idx}, "text": summary_header}})
+    requests.append(
+        {"insertText": {"location": {"index": idx}, "text": summary_header}}
+    )
     requests.append(
         {
             "updateParagraphStyle": {
@@ -162,7 +170,9 @@ def write_deid_doc(
     """
     folder_id = output_folder_id or os.environ.get("OUTPUT_FOLDER_ID")
     if not folder_id:
-        raise ValueError("OUTPUT_FOLDER_ID env var or output_folder_id param is required")
+        raise ValueError(
+            "OUTPUT_FOLDER_ID env var or output_folder_id param is required"
+        )
 
     creds = _get_credentials()
     docs_service = build("docs", "v1", credentials=creds, cache_discovery=False)
@@ -171,27 +181,38 @@ def write_deid_doc(
     # Build title
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     # Strip extension from original filename for cleaner title
-    base_name = original_filename.rsplit(".", 1)[0] if "." in original_filename else original_filename
+    base_name = (
+        original_filename.rsplit(".", 1)[0]
+        if "." in original_filename
+        else original_filename
+    )
     doc_title = f"De-ID_{base_name}_{timestamp}"
 
     try:
-        # 1. Create the document
-        doc = docs_service.documents().create(body={"title": doc_title}).execute()
-        doc_id = doc["documentId"]
-        logger.info("Created Google Doc: %s (ID: %s)", doc_title, doc_id)
+        # 1. Create the document directly in the shared drive folder.
+        #    Using Drive API files().create() instead of Docs API documents().create()
+        #    because service accounts don't have storage quota for "My Drive".
+        #    Creating directly in the shared folder avoids the 403 error.
+        file_metadata = {
+            "name": doc_title,
+            "mimeType": "application/vnd.google-apps.document",
+            "parents": [folder_id],
+        }
+        doc = (
+            drive_service.files()
+            .create(
+                body=file_metadata,
+                supportsAllDrives=True,
+                fields="id",
+            )
+            .execute()
+        )
+        doc_id = doc["id"]
+        logger.info(
+            "Created Google Doc in shared folder: %s (ID: %s)", doc_title, doc_id
+        )
 
-        # 2. Move to the output folder
-        #    New files are created in the service account's root Drive.
-        #    We move them into the shared De-Identified folder.
-        drive_service.files().update(
-            fileId=doc_id,
-            addParents=folder_id,
-            removeParents="root",
-            fields="id, parents",
-        ).execute()
-        logger.info("Moved doc %s to folder %s", doc_id, folder_id)
-
-        # 3. Populate the document body
+        # 2. Populate the document body
         body_requests = _build_doc_body(
             deid_text=deid_text,
             original_filename=original_filename,
