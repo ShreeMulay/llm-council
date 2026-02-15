@@ -17,7 +17,7 @@ uv run python -m backend.main
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
 | GPT-5.2 | OpenAI Codex OAuth | Anchor/Reasoning | `reasoningEffort: high` |
-| Claude Opus 4.5 | Anthropic OAuth | Lead Coder + **Chairman** | - |
+| Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
 | Gemini 3 Pro Preview | OpenRouter | Knowledge Generalist | - |
 | DeepSeek V3.2 | OpenRouter | Architect/Reasoner | - |
 | GLM 4.7 | Cerebras Direct | Tool Specialist | - |
@@ -25,7 +25,7 @@ uv run python -m backend.main
 
 ### Chairman Selection (LLM Council Decision)
 
-**Claude Opus 4.5** was selected as chairman by unanimous council vote (4-0).
+**Claude Opus 4.6** was selected as chairman by unanimous council vote (4-0).
 
 Key reasoning:
 - **Synthesis > Reasoning**: Chairman's job is to integrate perspectives, not be the smartest
@@ -72,7 +72,7 @@ MCP Config:
 
 **OAuth (loaded from `~/.local/share/opencode/auth.json`):**
 - `openai` / `codex` - For GPT-5.2 via Codex OAuth
-- `anthropic` - For Claude Opus 4.5 via Anthropic OAuth
+- `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
 
 **API Keys (loaded from `~/.bash_secrets`):**
 - `OPENROUTER_API_KEY` - For Gemini, DeepSeek, Grok
@@ -82,12 +82,12 @@ MCP Config:
 
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.2
-- `opus` -> anthropic/claude-opus-4.5
+- `opus` -> anthropic/claude-opus-4.6
 - `gemini` or `pro` -> google/gemini-3-pro-preview
 - `deepseek` -> deepseek/deepseek-v3.2
 - `glm` -> zai-glm-4.7
 - `grok` -> x-ai/grok-4.1-fast
-- `sonnet` -> anthropic/claude-3.5-sonnet
+- `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)
 
 ## Tech Stack

@@ -9,7 +9,7 @@ The system SHALL dynamically fetch and cache available models from OpenRouter AP
 - **GIVEN** valid OPENROUTER_API_KEY from bash_secrets
 - **WHEN** the `/api/models?provider=openrouter` endpoint is called
 - **THEN** it returns array of model objects with:
-  - `id`: Model identifier (e.g., "anthropic/claude-opus-4.5")
+  - `id`: Model identifier (e.g., "anthropic/claude-opus-4.6")
   - `name`: Human-readable name
   - `context_length`: Maximum tokens
   - `pricing.prompt`: Input cost per token

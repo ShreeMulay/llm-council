@@ -54,13 +54,13 @@ When users query the system, it proceeds in 3 stages:
 ### Council Members (4 models)
 | Model | Provider | Alias |
 |-------|----------|-------|
-| anthropic/claude-opus-4.5 | OpenRouter | `opus` |
+| anthropic/claude-opus-4.6 | OpenRouter | `opus` |
 | google/gemini-3-flash-preview | OpenRouter | `gemini`, `flash` |
 | x-ai/grok-4.1-fast | OpenRouter | `grok` |
 | zai-glm-4.7 | Cerebras | `glm` |
 
 ### Chairman
-- **Model**: anthropic/claude-opus-4.5
+- **Model**: anthropic/claude-opus-4.6
 - **Rationale**: Best synthesis and reasoning capability
 
 ## API Design

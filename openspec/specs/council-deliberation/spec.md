@@ -99,13 +99,13 @@ The system SHALL route queries to appropriate API providers.
 
 ```python
 DEFAULT_COUNCIL_MODELS = [
-    "anthropic/claude-opus-4.5",      # OpenRouter
+    "anthropic/claude-opus-4.6",      # OpenRouter
     "google/gemini-3-flash-preview",  # OpenRouter
     "x-ai/grok-4.1-fast",             # OpenRouter
     "zai-glm-4.7",                    # Cerebras
 ]
 
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.5"
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.6"
 ```
 
 ### Cerebras Model IDs

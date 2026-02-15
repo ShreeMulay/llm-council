@@ -4,10 +4,7 @@ import os
 from pathlib import Path
 
 # Import secrets from bash_secrets
-from .secrets import (
-    OPENROUTER_API_KEY, CEREBRAS_API_KEY, ANTHROPIC_API_KEY,
-    MOONSHOT_API_KEY, GROK_API_KEY, GEMINI_API_KEY,
-)
+from .secrets import OPENROUTER_API_KEY, CEREBRAS_API_KEY, ANTHROPIC_API_KEY
 
 # Directories
 DATA_DIR = Path("data")
@@ -31,31 +28,26 @@ OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODELS_URL = "https://openrouter.ai/api/v1/models"
 CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions"
 CEREBRAS_MODELS_URL = "https://api.cerebras.ai/v1/models"
-MOONSHOT_API_URL = "https://api.moonshot.ai/v1/chat/completions"
-XAI_API_URL = "https://api.x.ai/v1/chat/completions"
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
-# Council Models - 7 models for deliberation
-# 1. GPT-5.2 via OpenRouter (Anchor/Reasoning)
-# 2. Claude Opus 4.6 via Anthropic Direct (Chairman + Lead)
-# 3. GLM 4.7 via Cerebras Direct (Tool Specialist)
-# 4. Gemini 3 Pro via Google Direct (Generalist)
-# 5. Grok 4 via xAI Direct (Real-time Intel)
-# 6. Kimi K2.5 via Moonshot Direct (Reasoning)
-# 7. DeepSeek V3.1 via OpenRouter (Architect)
-# All models fall back to OpenRouter if primary provider fails.
+# Council Models - 6 models for deliberation
+# 1. GPT-5.2 via OpenAI Codex OAuth (Anchor/Reasoning)
+# 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder)
+# 3. Gemini 3 Pro Preview via OpenRouter (Generalist)
+# 4. DeepSeek V3.2 via OpenRouter (Architect/Reasoner)
+# 5. GLM 4.7 via Cerebras Direct (Tool Specialist)
+# 6. Grok 4.1 Fast via OpenRouter (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
-    "openai/gpt-5.2",                  # OpenRouter (Anchor)
-    "anthropic/claude-opus-4-6",       # Anthropic Direct (Lead)
-    "z-ai/glm-5",                       # OpenRouter (Tool Specialist)
-    "google/gemini-3-pro",             # Google Direct (Generalist)
-    "x-ai/grok-4",                     # xAI Direct (Real-time Intel)
-    "moonshot/kimi-k2.5",              # Moonshot Direct (Reasoning)
-    "deepseek/deepseek-chat",          # OpenRouter (Architect)
+    "openai/gpt-5.2",  # OpenAI Codex OAuth (Anchor)
+    "anthropic/claude-opus-4.6",  # Anthropic OAuth (Lead Coder)
+    "google/gemini-3-pro-preview",  # OpenRouter (Generalist)
+    "deepseek/deepseek-v3.2",  # OpenRouter (Architect)
+    "zai-glm-4.7",  # Cerebras Direct (Tool Specialist)
+    "x-ai/grok-4.1-fast",  # OpenRouter (Real-time Intel)
 ]
 
 # Chairman Model - synthesizes final response
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4-6"
+# Claude Opus 4.6 for best synthesis capability (council unanimous decision)
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.6"
 
 # Override via environment
 COUNCIL_MODELS = (
@@ -75,53 +67,29 @@ CEREBRAS_MODEL_IDS = [
     "gpt-oss-120b",
 ]
 
-MOONSHOT_MODEL_IDS = [
-    "moonshot/kimi-k2.5",
-    "kimi-k2.5",
+# OpenAI models that should be routed directly via Codex OAuth
+# NOTE: Codex OAuth uses the Responses API, not Chat Completions.
+# For now, route all OpenAI models through OpenRouter instead.
+# TODO: Implement Responses API client if direct OpenAI access is needed.
+OPENAI_MODEL_IDS = [
+    # Disabled - Codex OAuth token doesn't work with Chat Completions API
+    # "openai/gpt-5.2",
+    # "openai/gpt-5.1",
+    # "openai/gpt-4o",
+    # "openai/gpt-4-turbo",
 ]
-
-XAI_MODEL_IDS = [
-    "x-ai/grok-4",
-    "x-ai/grok-4-fast",
-    "x-ai/grok-4.1-fast",
-]
-
-GEMINI_DIRECT_MODEL_IDS = [
-    "google/gemini-3-flash",
-    "google/gemini-3-flash-preview",
-    "google/gemini-3-pro",
-    "google/gemini-3-pro-preview",
-    "google/gemini-2.0-flash",
-]
-
-# OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
-OPENROUTER_FALLBACK_MAP = {
-    "anthropic/claude-opus-4-6": "anthropic/claude-opus-4-6",
-    "zai-glm-4.7": "z-ai/glm-4.7",
-    "z-ai/glm-5": "z-ai/glm-5",
-    "google/gemini-3-flash": "google/gemini-2.0-flash-001",
-    "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
-    "openai/gpt-5.2": "openai/gpt-5.2",
-    "x-ai/grok-4": "x-ai/grok-4",
-    "moonshot/kimi-k2.5": "moonshotai/kimi-k2.5",
-    "deepseek/deepseek-chat": "deepseek/deepseek-chat",
-}
-
-# OpenAI models (disabled - Codex OAuth uses Responses API, not Chat Completions)
-OPENAI_MODEL_IDS = []
 
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
     "gpt": "openai/gpt-5.2",
-    "opus": "anthropic/claude-opus-4-6",
-    "gemini": "google/gemini-3-pro",
-    "pro": "google/gemini-3-pro",
-    "flash": "google/gemini-3-flash",
-    "deepseek": "deepseek/deepseek-chat",
-    "glm": "z-ai/glm-5",
-    "grok": "x-ai/grok-4",
-    "kimi": "moonshot/kimi-k2.5",
+    "opus": "anthropic/claude-opus-4.6",
+    "gemini": "google/gemini-3-pro-preview",
+    "pro": "google/gemini-3-pro-preview",
+    "deepseek": "deepseek/deepseek-v3.2",
+    "glm": "zai-glm-4.7",
+    "grok": "x-ai/grok-4.1-fast",
     "sonnet": "anthropic/claude-sonnet-4.5",
+    "flash": "google/gemini-3-flash-preview",  # backward compat
 }
 
 
@@ -130,29 +98,11 @@ def is_cerebras_model(model_id: str) -> bool:
     return model_id in CEREBRAS_MODEL_IDS
 
 
-def is_moonshot_model(model_id: str) -> bool:
-    """Check if a model ID should be routed to Moonshot."""
-    return model_id in MOONSHOT_MODEL_IDS or model_id.startswith("moonshot/")
-
-
-def is_xai_model(model_id: str) -> bool:
-    """Check if a model ID should be routed to xAI."""
-    return model_id in XAI_MODEL_IDS or model_id.startswith("x-ai/")
-
-
-def is_gemini_direct_model(model_id: str) -> bool:
-    """Check if a model ID should be routed to Google Gemini directly."""
-    return model_id in GEMINI_DIRECT_MODEL_IDS
-
-
-def get_openrouter_fallback(model_id: str) -> str | None:
-    """Get the OpenRouter model ID for fallback routing."""
-    return OPENROUTER_FALLBACK_MAP.get(model_id)
-
-
 def is_openai_model(model_id: str) -> bool:
-    """Check if a model ID should be routed to OpenAI directly."""
-    return model_id in OPENAI_MODEL_IDS
+    """Check if a model ID should be routed to OpenAI directly via Codex OAuth."""
+    # Disabled - Codex OAuth uses Responses API, not Chat Completions
+    # All OpenAI models now route through OpenRouter
+    return model_id in OPENAI_MODEL_IDS  # Empty list = always False
 
 
 def resolve_model_alias(alias: str) -> str:

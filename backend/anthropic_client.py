@@ -25,15 +25,13 @@ OPENCODE_AUTH_PATHS = [
 
 # Model ID mapping: council ID -> Anthropic model ID
 ANTHROPIC_MODEL_MAP = {
-    "anthropic/claude-opus-4-6": "claude-opus-4-6",
     "anthropic/claude-opus-4.6": "claude-opus-4-6",
     "anthropic/claude-opus-4.5": "claude-opus-4-20250514",
     "anthropic/claude-sonnet-4.5": "claude-sonnet-4-20250514",
     "anthropic/claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
     "anthropic/claude-3.5-haiku": "claude-3-5-haiku-20241022",
-    "claude-opus-4.5": "claude-opus-4-20250514",
     "claude-opus-4.6": "claude-opus-4-6",
-    "claude-opus-4-6": "claude-opus-4-6",
+    "claude-opus-4.5": "claude-opus-4-20250514",
     "claude-sonnet-4.5": "claude-sonnet-4-20250514",
 }
 
@@ -89,11 +87,11 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
             },
             headers={"Content-Type": "application/json"},
         )
-        
+
         if not response.is_success:
             print(f"Token refresh failed: {response.status_code} - {response.text}")
             return None
-        
+
         data = response.json()
         return {
             "access": data.get("access_token"),
@@ -107,22 +105,22 @@ async def get_valid_oauth_token() -> Optional[tuple[str, Path]]:
     creds = load_oauth_credentials()
     if not creds:
         return None
-    
+
     current_time = int(time.time() * 1000)
-    
+
     # Check if token is expired (with 60 second buffer)
     if creds["access"] and creds["expires"] > current_time + 60000:
         return creds["access"], creds["auth_path"]
-    
+
     # Need to refresh
     if not creds["refresh"]:
         return None
-    
+
     print("OAuth token expired, refreshing...")
     new_tokens = await refresh_oauth_token(creds["refresh"])
     if not new_tokens:
         return None
-    
+
     # Save new tokens
     save_oauth_credentials(
         creds["auth_path"],
@@ -130,7 +128,7 @@ async def get_valid_oauth_token() -> Optional[tuple[str, Path]]:
         new_tokens["refresh"],
         new_tokens["expires"],
     )
-    
+
     print("OAuth token refreshed successfully")
     return new_tokens["access"], creds["auth_path"]
 
@@ -154,53 +152,54 @@ async def call_anthropic_oauth(
 ) -> dict[str, Any]:
     """
     Call the Anthropic API using OAuth authentication (Max plan).
-    
-    Uses the Claude Code workaround: sends claude-code beta header and 
+
+    Uses the Claude Code workaround: sends claude-code beta header and
     system prompt prefix to bypass OAuth restriction.
     """
     anthropic_model = get_anthropic_model_id(model)
-    
+
     headers = {
         "authorization": f"Bearer {access_token}",
         "anthropic-version": ANTHROPIC_API_VERSION,
         "anthropic-beta": CLAUDE_CODE_BETA_FLAGS,
         "content-type": "application/json",
     }
-    
+
     messages = [{"role": "user", "content": prompt}]
-    
+
     final_system = CLAUDE_CODE_SYSTEM_PREFIX
     if system_prompt:
         final_system = f"{CLAUDE_CODE_SYSTEM_PREFIX}\n\n{system_prompt}"
-    
+
     payload = {
         "model": anthropic_model,
         "max_tokens": max_tokens,
         "messages": messages,
         "system": final_system,
     }
-    
+
     async with httpx.AsyncClient(timeout=900.0) as client:
         response = await client.post(ANTHROPIC_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
-    
+
     # Extract response text
     content_blocks = data.get("content", [])
     response_text = ""
     for block in content_blocks:
         if block.get("type") == "text":
             response_text += block.get("text", "")
-    
+
     # Extract usage
     usage = data.get("usage", {})
-    
+
     return {
         "response": response_text,
         "usage": {
             "prompt_tokens": usage.get("input_tokens", 0),
             "completion_tokens": usage.get("output_tokens", 0),
-            "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+            "total_tokens": usage.get("input_tokens", 0)
+            + usage.get("output_tokens", 0),
         },
         "provider": "anthropic-oauth",
         "model": anthropic_model,
@@ -215,55 +214,56 @@ async def call_anthropic_api_key(
 ) -> dict[str, Any]:
     """
     Call the Anthropic API using API key authentication.
-    
+
     Args:
         model: Model identifier
         prompt: User message content
         max_tokens: Maximum tokens in response
         system_prompt: Optional system message
-    
+
     Returns:
         dict with 'response', 'usage', and 'provider' keys
     """
     if not ANTHROPIC_API_KEY:
         raise ValueError("ANTHROPIC_API_KEY not found in secrets")
-    
+
     anthropic_model = get_anthropic_model_id(model)
-    
+
     headers = {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": ANTHROPIC_API_VERSION,
         "content-type": "application/json",
     }
-    
+
     payload = {
         "model": anthropic_model,
         "max_tokens": max_tokens,
         "messages": [{"role": "user", "content": prompt}],
     }
-    
+
     if system_prompt:
         payload["system"] = system_prompt
-    
+
     async with httpx.AsyncClient(timeout=900.0) as client:
         response = await client.post(ANTHROPIC_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
-    
+
     content_blocks = data.get("content", [])
     response_text = ""
     for block in content_blocks:
         if block.get("type") == "text":
             response_text += block.get("text", "")
-    
+
     usage = data.get("usage", {})
-    
+
     return {
         "response": response_text,
         "usage": {
             "prompt_tokens": usage.get("input_tokens", 0),
             "completion_tokens": usage.get("output_tokens", 0),
-            "total_tokens": usage.get("input_tokens", 0) + usage.get("output_tokens", 0),
+            "total_tokens": usage.get("input_tokens", 0)
+            + usage.get("output_tokens", 0),
         },
         "provider": "anthropic",
         "model": anthropic_model,
@@ -289,8 +289,10 @@ async def call_anthropic(
                 system_prompt=system_prompt,
             )
         except httpx.HTTPStatusError as e:
-            print(f"OAuth call failed ({e.response.status_code}): {e.response.text[:200]}")
-    
+            print(
+                f"OAuth call failed ({e.response.status_code}): {e.response.text[:200]}"
+            )
+
     return await call_anthropic_api_key(
         model=model,
         prompt=prompt,
@@ -302,7 +304,7 @@ async def call_anthropic(
 def is_anthropic_model(model_id: str) -> bool:
     """Check if a model should be routed to Anthropic directly."""
     return (
-        model_id.startswith("anthropic/") or 
-        model_id.startswith("claude-") or
-        model_id in ANTHROPIC_MODEL_MAP
+        model_id.startswith("anthropic/")
+        or model_id.startswith("claude-")
+        or model_id in ANTHROPIC_MODEL_MAP
     )
