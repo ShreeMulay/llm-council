@@ -170,9 +170,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult multiple LLMs (Opus 4.5, Gemini Flash 3.0, Grok 4.1, GLM 4.7) for peer-reviewed answers. " +
-          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis. " +
-          "Use for complex questions requiring multiple perspectives or when high accuracy is critical.",
+          "Consult 6 LLMs (Opus 4.6, GLM 4.7, Gemini Flash, Grok 4, Kimi K2.5, DeepSeek V3.1) for peer-reviewed answers. " +
+          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.6). " +
+          "All models have OpenRouter fallback. Use for complex questions requiring multiple perspectives.",
         inputSchema: {
           type: "object" as const,
           properties: {

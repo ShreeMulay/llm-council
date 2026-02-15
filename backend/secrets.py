@@ -38,6 +38,10 @@ def load_bash_secrets() -> dict:
                 "OPENROUTER_API_KEY",
                 "CEREBRAS_API_KEY",
                 "ANTHROPIC_API_KEY",
+                "MOONSHOT_API_KEY",
+                "GROK_API_KEY",
+                "GEMINI_API_KEY",
+                "GOOGLE_AI_API_KEY",
             ):
                 secrets[key] = value
     
@@ -72,6 +76,9 @@ def get_secret(key: str) -> Optional[str]:
 OPENROUTER_API_KEY: Optional[str] = _secrets.get("OPENROUTER_API_KEY")
 CEREBRAS_API_KEY: Optional[str] = _secrets.get("CEREBRAS_API_KEY")
 ANTHROPIC_API_KEY: Optional[str] = _secrets.get("ANTHROPIC_API_KEY")
+MOONSHOT_API_KEY: Optional[str] = _secrets.get("MOONSHOT_API_KEY")
+GROK_API_KEY: Optional[str] = _secrets.get("GROK_API_KEY")
+GEMINI_API_KEY: Optional[str] = _secrets.get("GEMINI_API_KEY") or _secrets.get("GOOGLE_AI_API_KEY")
 
 
 def validate_required_keys() -> None:

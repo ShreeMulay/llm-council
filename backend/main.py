@@ -21,6 +21,16 @@ from .council import (
 )
 from .model_discovery import get_model_discovery
 from .opencode_integration import handle_council_command, MCP_TOOL_SCHEMA, MODEL_ALIASES_HELP
+from .webhooks import (
+    CouncilAsyncRequest,
+    JobInfo,
+    JobStatus,
+    create_job,
+    get_job,
+    list_jobs,
+    run_council_async,
+    cleanup_old_jobs,
+)
 
 app = FastAPI(
     title="LLM Council API",
@@ -110,12 +120,19 @@ async def api_info():
     """API information and help."""
     return {
         "name": "LLM Council API",
-        "version": "1.0.0",
+        "version": "1.1.0",
         "description": "Multi-model LLM deliberation with peer review",
         "endpoints": {
-            "/api/council": "Execute council deliberation (POST)",
+            "/api/council": "Execute council deliberation (POST, sync)",
+            "/api/council/async": "Execute council with webhook callback (POST, async)",
+            "/api/council/jobs": "List async jobs (GET)",
+            "/api/council/jobs/{job_id}": "Get job status (GET)",
             "/api/models": "List available models (GET)",
             "/api/mcp/schema": "MCP tool schema (GET)"
+        },
+        "webhook_events": {
+            "council.completed": "Deliberation finished successfully",
+            "council.failed": "Deliberation failed with error"
         },
         "model_aliases": MODEL_ALIASES_HELP
     }
@@ -199,6 +216,112 @@ async def council_deliberation(request: CouncilRequest):
 async def mcp_schema():
     """Return MCP tool schema for registration."""
     return MCP_TOOL_SCHEMA
+
+
+# ============================================================================
+# Async Council with Webhook Callbacks
+# ============================================================================
+
+@app.post("/api/council/async")
+async def council_async(request: CouncilAsyncRequest):
+    """
+    Execute council deliberation asynchronously with webhook callback.
+    
+    Returns immediately with a job_id. When deliberation completes,
+    the result is POSTed to the webhook_url.
+    
+    Webhook payload format:
+    {
+        "event": "council.completed" | "council.failed",
+        "job_id": "uuid",
+        "query": "original query",
+        "result": { ... },  // Full council result (on success)
+        "error": "...",     // Error message (on failure)
+        "metadata": { ... } // Pass-through metadata from request
+    }
+    
+    If webhook_secret is provided, the payload is signed with HMAC-SHA256
+    and the signature is included in the X-Webhook-Signature header.
+    """
+    # Create job
+    job_id = create_job(request)
+    
+    # Start background task
+    asyncio.create_task(run_council_async(job_id, handle_council_command))
+    
+    return {
+        "status": "accepted",
+        "job_id": job_id,
+        "message": "Council deliberation started. Results will be POSTed to webhook_url when complete.",
+        "webhook_url": str(request.webhook_url),
+        "poll_url": f"/api/council/jobs/{job_id}",
+    }
+
+
+@app.get("/api/council/jobs")
+async def list_council_jobs(
+    limit: int = 50,
+    status: Optional[str] = None,
+):
+    """
+    List recent async council jobs.
+    
+    Args:
+        limit: Maximum number of jobs to return (default 50)
+        status: Filter by status (pending, running, completed, failed, webhook_sent, webhook_failed)
+    """
+    status_enum = None
+    if status:
+        try:
+            status_enum = JobStatus(status)
+        except ValueError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status: {status}. Valid values: {[s.value for s in JobStatus]}"
+            )
+    
+    jobs = list_jobs(limit=limit, status=status_enum)
+    return {
+        "jobs": [j.model_dump() for j in jobs],
+        "count": len(jobs),
+    }
+
+
+@app.get("/api/council/jobs/{job_id}")
+async def get_council_job(job_id: str, include_result: bool = False):
+    """
+    Get status of a specific async council job.
+    
+    Args:
+        job_id: The job UUID
+        include_result: If true, include the full result (can be large)
+    """
+    job = get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
+    
+    response = {
+        "job_id": job["job_id"],
+        "status": job["status"],
+        "query": job["query"],
+        "webhook_url": job["webhook_url"],
+        "created_at": job["created_at"],
+        "started_at": job["started_at"],
+        "completed_at": job["completed_at"],
+        "error": job["error"],
+    }
+    
+    if include_result and job.get("result"):
+        response["result"] = job["result"]
+    
+    return response
+
+
+@app.delete("/api/council/jobs/cleanup")
+async def cleanup_jobs(max_age_hours: int = 24):
+    """Remove jobs older than max_age_hours (default 24)."""
+    removed = cleanup_old_jobs(max_age_hours)
+    return {"removed": removed, "max_age_hours": max_age_hours}
 
 
 # ============================================================================

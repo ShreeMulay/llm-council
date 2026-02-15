@@ -10,12 +10,55 @@ from .config import (
     CHAIRMAN_MODEL,
     is_cerebras_model,
     is_openai_model,
+    is_moonshot_model,
+    is_xai_model,
+    is_gemini_direct_model,
+    get_openrouter_fallback,
 )
 from .openrouter import query_model as query_openrouter_model
 from .openrouter import query_models_parallel as query_openrouter_models_parallel
 from .cerebras import query_cerebras_model, query_cerebras_models_parallel
 from .anthropic_client import call_anthropic, is_anthropic_model
 from .openai_client import call_openai
+from .moonshot_client import query_moonshot_model
+from .xai_client import query_xai_model
+from .gemini_client import query_gemini_model
+
+
+async def _query_primary(
+    model_id: str,
+    messages: List[Dict[str, str]],
+    max_tokens: int = 4096,
+    temperature: float = 0.7
+) -> Optional[Dict[str, Any]]:
+    """Query a model via its primary (direct) provider. Returns None on failure."""
+    if is_cerebras_model(model_id):
+        return await query_cerebras_model(model_id, messages, max_tokens, temperature)
+    elif is_anthropic_model(model_id):
+        prompt = messages[-1].get("content", "") if messages else ""
+        result = await call_anthropic(model_id, prompt, max_tokens)
+        return {
+            "content": result.get("response", ""),
+            "usage": result.get("usage", {}),
+            "provider": "anthropic"
+        }
+    elif is_moonshot_model(model_id):
+        return await query_moonshot_model(model_id, messages, max_tokens, temperature)
+    elif is_xai_model(model_id):
+        return await query_xai_model(model_id, messages, max_tokens, temperature)
+    elif is_gemini_direct_model(model_id):
+        return await query_gemini_model(model_id, messages, max_tokens, temperature)
+    elif is_openai_model(model_id):
+        prompt = messages[-1].get("content", "") if messages else ""
+        result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
+        return {
+            "content": result.get("response", ""),
+            "usage": result.get("usage", {}),
+            "provider": "openai"
+        }
+    else:
+        # No direct provider — go straight to OpenRouter
+        return await query_openrouter_model(model_id, messages, max_tokens, temperature)
 
 
 async def query_single_model(
@@ -25,46 +68,26 @@ async def query_single_model(
     temperature: float = 0.7
 ) -> Optional[Dict[str, Any]]:
     """
-    Query a single model via the appropriate provider.
-    
-    Args:
-        model_id: Model identifier
-        messages: Messages to send
-        max_tokens: Maximum output tokens
-        temperature: Sampling temperature
-    
-    Returns:
-        Response dict or None on error
+    Query a single model via primary provider, with OpenRouter fallback.
     """
-    if is_cerebras_model(model_id):
-        return await query_cerebras_model(model_id, messages, max_tokens, temperature)
-    elif is_anthropic_model(model_id):
+    try:
+        result = await _query_primary(model_id, messages, max_tokens, temperature)
+        if result and result.get("content"):
+            return result
+    except Exception as e:
+        print(f"Primary provider failed for {model_id}: {e}")
+
+    # Fallback to OpenRouter
+    or_model = get_openrouter_fallback(model_id)
+    if or_model:
+        print(f"Falling back to OpenRouter for {model_id} -> {or_model}")
         try:
-            prompt = messages[-1].get("content", "") if messages else ""
-            result = await call_anthropic(model_id, prompt, max_tokens)
-            return {
-                "content": result.get("response", ""),
-                "usage": result.get("usage", {}),
-                "provider": "anthropic"
-            }
+            return await query_openrouter_model(or_model, messages, max_tokens, temperature)
         except Exception as e:
-            print(f"Anthropic API error for {model_id}: {e}")
+            print(f"OpenRouter fallback also failed for {model_id}: {e}")
             return None
-    elif is_openai_model(model_id):
-        try:
-            prompt = messages[-1].get("content", "") if messages else ""
-            # Use 'high' reasoning effort for council deliberation (per LLM Council recommendation)
-            result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
-            return {
-                "content": result.get("response", ""),
-                "usage": result.get("usage", {}),
-                "provider": "openai"
-            }
-        except Exception as e:
-            print(f"OpenAI API error for {model_id}: {e}")
-            return None
-    else:
-        return await query_openrouter_model(model_id, messages, max_tokens, temperature)
+
+    return None
 
 
 async def query_anthropic_single(model_id: str, messages: List[Dict[str, str]], max_tokens: int) -> Tuple[str, Optional[Dict[str, Any]]]:

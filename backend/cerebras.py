@@ -52,8 +52,11 @@ async def query_cerebras_model(
             response.raise_for_status()
             data = response.json()
             
+            msg = data["choices"][0]["message"]
+            # GLM 4.7 may return 'reasoning' instead of 'content' for short outputs
+            text = msg.get("content") or msg.get("reasoning") or ""
             return {
-                "content": data["choices"][0]["message"]["content"],
+                "content": text,
                 "usage": data.get("usage", {}),
                 "model": model_id,
                 "provider": "cerebras"
