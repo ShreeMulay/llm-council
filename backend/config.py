@@ -35,18 +35,20 @@ MOONSHOT_API_URL = "https://api.moonshot.ai/v1/chat/completions"
 XAI_API_URL = "https://api.x.ai/v1/chat/completions"
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
-# Council Models - 6 models for deliberation
-# 1. Claude Opus 4.6 via Anthropic Direct (Chairman + Lead)
-# 2. GLM 4.7 via Cerebras Direct (Tool Specialist)
-# 3. Gemini Flash 3.0 via Google Direct (Generalist)
-# 4. Grok 4 via xAI Direct (Real-time Intel)
-# 5. Kimi K2.5 via Moonshot Direct (Reasoning)
-# 6. DeepSeek V3.1 via OpenRouter (Architect)
+# Council Models - 7 models for deliberation
+# 1. GPT-5.2 via OpenRouter (Anchor/Reasoning)
+# 2. Claude Opus 4.6 via Anthropic Direct (Chairman + Lead)
+# 3. GLM 4.7 via Cerebras Direct (Tool Specialist)
+# 4. Gemini 3 Pro via Google Direct (Generalist)
+# 5. Grok 4 via xAI Direct (Real-time Intel)
+# 6. Kimi K2.5 via Moonshot Direct (Reasoning)
+# 7. DeepSeek V3.1 via OpenRouter (Architect)
 # All models fall back to OpenRouter if primary provider fails.
 DEFAULT_COUNCIL_MODELS = [
+    "openai/gpt-5.2",                  # OpenRouter (Anchor)
     "anthropic/claude-opus-4-6",       # Anthropic Direct (Lead)
     "zai-glm-4.7",                     # Cerebras Direct (Tool Specialist)
-    "google/gemini-3-flash",           # Google Direct (Generalist)
+    "google/gemini-3-pro",             # Google Direct (Generalist)
     "x-ai/grok-4",                     # xAI Direct (Real-time Intel)
     "moonshot/kimi-k2.5",              # Moonshot Direct (Reasoning)
     "deepseek/deepseek-chat",          # OpenRouter (Architect)
@@ -87,6 +89,7 @@ XAI_MODEL_IDS = [
 GEMINI_DIRECT_MODEL_IDS = [
     "google/gemini-3-flash",
     "google/gemini-3-flash-preview",
+    "google/gemini-3-pro",
     "google/gemini-3-pro-preview",
     "google/gemini-2.0-flash",
 ]
@@ -96,6 +99,8 @@ OPENROUTER_FALLBACK_MAP = {
     "anthropic/claude-opus-4-6": "anthropic/claude-opus-4-6",
     "zai-glm-4.7": "z-ai/glm-4.7",
     "google/gemini-3-flash": "google/gemini-2.0-flash-001",
+    "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
+    "openai/gpt-5.2": "openai/gpt-5.2",
     "x-ai/grok-4": "x-ai/grok-4",
     "moonshot/kimi-k2.5": "moonshotai/kimi-k2.5",
     "deepseek/deepseek-chat": "deepseek/deepseek-chat",
@@ -106,14 +111,16 @@ OPENAI_MODEL_IDS = []
 
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
+    "gpt": "openai/gpt-5.2",
     "opus": "anthropic/claude-opus-4-6",
-    "gemini": "google/gemini-3-flash",
+    "gemini": "google/gemini-3-pro",
+    "pro": "google/gemini-3-pro",
     "flash": "google/gemini-3-flash",
     "deepseek": "deepseek/deepseek-chat",
     "glm": "zai-glm-4.7",
     "grok": "x-ai/grok-4",
     "kimi": "moonshot/kimi-k2.5",
-    "sonnet": "anthropic/claude-3.5-sonnet",
+    "sonnet": "anthropic/claude-sonnet-4.5",
 }
 
 
