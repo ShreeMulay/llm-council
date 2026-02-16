@@ -47,7 +47,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.2",                  # OpenRouter (Anchor)
     "anthropic/claude-opus-4-6",       # Anthropic Direct (Lead)
-    "zai-glm-4.7",                     # Cerebras Direct (Tool Specialist)
+    "z-ai/glm-5",                       # OpenRouter (Tool Specialist)
     "google/gemini-3-pro",             # Google Direct (Generalist)
     "x-ai/grok-4",                     # xAI Direct (Real-time Intel)
     "moonshot/kimi-k2.5",              # Moonshot Direct (Reasoning)
@@ -98,6 +98,7 @@ GEMINI_DIRECT_MODEL_IDS = [
 OPENROUTER_FALLBACK_MAP = {
     "anthropic/claude-opus-4-6": "anthropic/claude-opus-4-6",
     "zai-glm-4.7": "z-ai/glm-4.7",
+    "z-ai/glm-5": "z-ai/glm-5",
     "google/gemini-3-flash": "google/gemini-2.0-flash-001",
     "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
     "openai/gpt-5.2": "openai/gpt-5.2",
@@ -117,7 +118,7 @@ MODEL_ALIASES = {
     "pro": "google/gemini-3-pro",
     "flash": "google/gemini-3-flash",
     "deepseek": "deepseek/deepseek-chat",
-    "glm": "zai-glm-4.7",
+    "glm": "z-ai/glm-5",
     "grok": "x-ai/grok-4",
     "kimi": "moonshot/kimi-k2.5",
     "sonnet": "anthropic/claude-sonnet-4.5",
