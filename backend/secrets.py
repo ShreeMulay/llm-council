@@ -8,27 +8,27 @@ from typing import Optional
 def load_bash_secrets() -> dict:
     """
     Source ~/.bash_secrets and extract environment variables.
-    
+
     Returns:
         dict: API keys and secrets extracted from bash_secrets
-    
+
     Raises:
         FileNotFoundError: If bash_secrets file doesn't exist
         subprocess.CalledProcessError: If sourcing fails
     """
     bash_secrets_path = Path.home() / ".bash_secrets"
-    
+
     if not bash_secrets_path.exists():
         raise FileNotFoundError(f"bash_secrets not found at {bash_secrets_path}")
-    
+
     # Source the file and capture exported variables
     result = subprocess.run(
         ["bash", "-c", f"source {bash_secrets_path} && env"],
         capture_output=True,
         text=True,
-        check=True
+        check=True,
     )
-    
+
     secrets = {}
     for line in result.stdout.splitlines():
         if "=" in line:
@@ -42,9 +42,10 @@ def load_bash_secrets() -> dict:
                 "GROK_API_KEY",
                 "GEMINI_API_KEY",
                 "GOOGLE_AI_API_KEY",
+                "FIREWORKS_API_KEY",
             ):
                 secrets[key] = value
-    
+
     return secrets
 
 
@@ -62,10 +63,10 @@ except subprocess.CalledProcessError as e:
 def get_secret(key: str) -> Optional[str]:
     """
     Get a secret by key.
-    
+
     Args:
         key: The secret key name
-    
+
     Returns:
         The secret value or None if not found
     """
@@ -78,13 +79,16 @@ CEREBRAS_API_KEY: Optional[str] = _secrets.get("CEREBRAS_API_KEY")
 ANTHROPIC_API_KEY: Optional[str] = _secrets.get("ANTHROPIC_API_KEY")
 MOONSHOT_API_KEY: Optional[str] = _secrets.get("MOONSHOT_API_KEY")
 GROK_API_KEY: Optional[str] = _secrets.get("GROK_API_KEY")
-GEMINI_API_KEY: Optional[str] = _secrets.get("GEMINI_API_KEY") or _secrets.get("GOOGLE_AI_API_KEY")
+GEMINI_API_KEY: Optional[str] = _secrets.get("GEMINI_API_KEY") or _secrets.get(
+    "GOOGLE_AI_API_KEY"
+)
+FIREWORKS_API_KEY: Optional[str] = _secrets.get("FIREWORKS_API_KEY")
 
 
 def validate_required_keys() -> None:
     """
     Validate that all required API keys are present.
-    
+
     Raises:
         ValueError: If a required key is missing
     """

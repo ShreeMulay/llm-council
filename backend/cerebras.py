@@ -13,7 +13,7 @@ CEREBRAS_API_URL = "https://api.cerebras.ai/v1"
 async def query_cerebras_model(
     model_id: str,
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0
 ) -> Optional[Dict[str, Any]]:
@@ -75,7 +75,7 @@ async def query_cerebras_model(
 async def query_cerebras_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     temperature: float = 0.7
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """

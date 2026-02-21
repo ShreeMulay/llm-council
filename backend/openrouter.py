@@ -11,7 +11,7 @@ from .config import OPENROUTER_API_URL, OPENROUTER_MODELS_URL
 async def query_model(
     model: str,
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0
 ) -> Optional[Dict[str, Any]]:
@@ -80,7 +80,7 @@ async def query_model(
 async def query_models_parallel(
     models: List[str],
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     temperature: float = 0.7
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """

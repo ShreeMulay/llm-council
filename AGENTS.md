@@ -1,6 +1,6 @@
 # LLM Council - OpenCode Project
 
-Multi-model LLM deliberation system with peer review. Queries 6 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
+Multi-model LLM deliberation system with peer review. Queries 7 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
 
 ## Quick Start
 
@@ -12,15 +12,16 @@ uv run python -m backend.main
 ./start.sh
 ```
 
-## Council Models (6-Member Configuration)
+## Council Models (7-Member Configuration)
 
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
-| GPT-5.2 | OpenAI Codex OAuth | Anchor/Reasoning | `reasoningEffort: high` |
+| GPT-5.2 | OpenRouter | Anchor/Reasoning | `reasoningEffort: high` |
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
+| Kimi K2.5 | Fireworks Direct | Reasoning | 200 tok/s, 3.4x faster than OR |
+| GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
 | Gemini 3 Pro Preview | OpenRouter | Knowledge Generalist | - |
 | DeepSeek V3.2 | OpenRouter | Architect/Reasoner | - |
-| GLM 4.7 | Cerebras Direct | Tool Specialist | - |
 | Grok 4.1 Fast | OpenRouter | Real-time Intel | `reasoning: disabled` |
 
 ### Chairman Selection (LLM Council Decision)
@@ -75,17 +76,19 @@ MCP Config:
 - `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For Gemini, DeepSeek, Grok
-- `CEREBRAS_API_KEY` - For GLM 4.7
+- `OPENROUTER_API_KEY` - For GPT-5.2, Gemini, DeepSeek, Grok (+ fallback)
+- `FIREWORKS_API_KEY` - For Kimi K2.5, GLM-5 (primary, 3.4x faster)
+- `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
 
 ## Model Aliases
 
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.2
 - `opus` -> anthropic/claude-opus-4.6
+- `kimi` -> fireworks/kimi-k2.5
+- `glm` -> fireworks/glm-5
 - `gemini` or `pro` -> google/gemini-3-pro-preview
 - `deepseek` -> deepseek/deepseek-v3.2
-- `glm` -> zai-glm-4.7
 - `grok` -> x-ai/grok-4.1-fast
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)

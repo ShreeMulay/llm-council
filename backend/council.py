@@ -9,6 +9,7 @@ from .config import (
     COUNCIL_MODELS,
     CHAIRMAN_MODEL,
     is_cerebras_model,
+    is_fireworks_model,
     is_openai_model,
     is_moonshot_model,
     is_xai_model,
@@ -23,16 +24,19 @@ from .openai_client import call_openai
 from .moonshot_client import query_moonshot_model
 from .xai_client import query_xai_model
 from .gemini_client import query_gemini_model
+from .fireworks_client import query_fireworks_model, query_fireworks_models_parallel
 
 
 async def _query_primary(
     model_id: str,
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
-    temperature: float = 0.7
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
 ) -> Optional[Dict[str, Any]]:
     """Query a model via its primary (direct) provider. Returns None on failure."""
-    if is_cerebras_model(model_id):
+    if is_fireworks_model(model_id):
+        return await query_fireworks_model(model_id, messages, max_tokens, temperature)
+    elif is_cerebras_model(model_id):
         return await query_cerebras_model(model_id, messages, max_tokens, temperature)
     elif is_anthropic_model(model_id):
         prompt = messages[-1].get("content", "") if messages else ""
@@ -40,7 +44,7 @@ async def _query_primary(
         return {
             "content": result.get("response", ""),
             "usage": result.get("usage", {}),
-            "provider": "anthropic"
+            "provider": "anthropic",
         }
     elif is_moonshot_model(model_id):
         return await query_moonshot_model(model_id, messages, max_tokens, temperature)
@@ -50,11 +54,13 @@ async def _query_primary(
         return await query_gemini_model(model_id, messages, max_tokens, temperature)
     elif is_openai_model(model_id):
         prompt = messages[-1].get("content", "") if messages else ""
-        result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
+        result = await call_openai(
+            model_id, prompt, max_tokens, reasoning_effort="high"
+        )
         return {
             "content": result.get("response", ""),
             "usage": result.get("usage", {}),
-            "provider": "openai"
+            "provider": "openai",
         }
     else:
         # No direct provider — go straight to OpenRouter
@@ -64,8 +70,8 @@ async def _query_primary(
 async def query_single_model(
     model_id: str,
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
-    temperature: float = 0.7
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
 ) -> Optional[Dict[str, Any]]:
     """
     Query a single model via primary provider, with OpenRouter fallback.
@@ -82,7 +88,9 @@ async def query_single_model(
     if or_model:
         print(f"Falling back to OpenRouter for {model_id} -> {or_model}")
         try:
-            return await query_openrouter_model(or_model, messages, max_tokens, temperature)
+            return await query_openrouter_model(
+                or_model, messages, max_tokens, temperature
+            )
         except Exception as e:
             print(f"OpenRouter fallback also failed for {model_id}: {e}")
             return None
@@ -90,7 +98,9 @@ async def query_single_model(
     return None
 
 
-async def query_anthropic_single(model_id: str, messages: List[Dict[str, str]], max_tokens: int) -> Tuple[str, Optional[Dict[str, Any]]]:
+async def query_anthropic_single(
+    model_id: str, messages: List[Dict[str, str]], max_tokens: int
+) -> Tuple[str, Optional[Dict[str, Any]]]:
     """Query single Anthropic model and return (model_id, result) tuple."""
     try:
         prompt = messages[-1].get("content", "") if messages else ""
@@ -98,7 +108,7 @@ async def query_anthropic_single(model_id: str, messages: List[Dict[str, str]], 
         return model_id, {
             "content": result.get("response", ""),
             "usage": result.get("usage", {}),
-            "provider": "anthropic"
+            "provider": "anthropic",
         }
     except Exception as e:
         print(f"Anthropic API error for {model_id}: {e}")
@@ -108,8 +118,8 @@ async def query_anthropic_single(model_id: str, messages: List[Dict[str, str]], 
 async def query_anthropic_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
-    temperature: float = 0.7
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """Query multiple Anthropic models in parallel."""
     tasks = [query_anthropic_single(m, messages, max_tokens) for m in model_ids]
@@ -117,16 +127,20 @@ async def query_anthropic_models_parallel(
     return dict(results_list)
 
 
-async def query_openai_single(model_id: str, messages: List[Dict[str, str]], max_tokens: int) -> Tuple[str, Optional[Dict[str, Any]]]:
+async def query_openai_single(
+    model_id: str, messages: List[Dict[str, str]], max_tokens: int
+) -> Tuple[str, Optional[Dict[str, Any]]]:
     """Query single OpenAI model and return (model_id, result) tuple."""
     try:
         prompt = messages[-1].get("content", "") if messages else ""
         # Use 'high' reasoning effort for council deliberation
-        result = await call_openai(model_id, prompt, max_tokens, reasoning_effort="high")
+        result = await call_openai(
+            model_id, prompt, max_tokens, reasoning_effort="high"
+        )
         return model_id, {
             "content": result.get("response", ""),
             "usage": result.get("usage", {}),
-            "provider": "openai"
+            "provider": "openai",
         }
     except Exception as e:
         print(f"OpenAI API error for {model_id}: {e}")
@@ -136,8 +150,8 @@ async def query_openai_single(model_id: str, messages: List[Dict[str, str]], max
 async def query_openai_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
-    temperature: float = 0.7
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """Query multiple OpenAI models in parallel."""
     tasks = [query_openai_single(m, messages, max_tokens) for m in model_ids]
@@ -148,53 +162,75 @@ async def query_openai_models_parallel(
 async def query_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
-    temperature: float = 0.7
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """
     Query multiple models via their respective providers in parallel.
-    
+
     Args:
         model_ids: List of model IDs
         messages: Messages to send
         max_tokens: Maximum output tokens
         temperature: Sampling temperature
-    
+
     Returns:
         Dict mapping model_id to response (or None on error)
     """
+    fireworks_ids = [m for m in model_ids if is_fireworks_model(m)]
     cerebras_ids = [m for m in model_ids if is_cerebras_model(m)]
     anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
     openai_ids = [m for m in model_ids if is_openai_model(m)]
     # OpenRouter handles everything else (Gemini, DeepSeek, Grok, etc.)
-    openrouter_ids = [m for m in model_ids if not is_cerebras_model(m) and not is_anthropic_model(m) and not is_openai_model(m)]
-    
+    routed = set(fireworks_ids + cerebras_ids + anthropic_ids + openai_ids)
+    openrouter_ids = [m for m in model_ids if m not in routed]
+
     results = {}
     tasks = []
-    
+
+    if fireworks_ids:
+        tasks.append(
+            query_fireworks_models_parallel(
+                fireworks_ids, messages, max_tokens, temperature
+            )
+        )
+
     if cerebras_ids:
-        tasks.append(query_cerebras_models_parallel(cerebras_ids, messages, max_tokens, temperature))
-    
+        tasks.append(
+            query_cerebras_models_parallel(
+                cerebras_ids, messages, max_tokens, temperature
+            )
+        )
+
     if anthropic_ids:
-        tasks.append(query_anthropic_models_parallel(anthropic_ids, messages, max_tokens, temperature))
-    
+        tasks.append(
+            query_anthropic_models_parallel(
+                anthropic_ids, messages, max_tokens, temperature
+            )
+        )
+
     if openai_ids:
-        tasks.append(query_openai_models_parallel(openai_ids, messages, max_tokens, temperature))
-    
+        tasks.append(
+            query_openai_models_parallel(openai_ids, messages, max_tokens, temperature)
+        )
+
     if openrouter_ids:
-        tasks.append(query_openrouter_models_parallel(openrouter_ids, messages, max_tokens, temperature))
-    
+        tasks.append(
+            query_openrouter_models_parallel(
+                openrouter_ids, messages, max_tokens, temperature
+            )
+        )
+
     if tasks:
         provider_results = await asyncio.gather(*tasks)
         for pr in provider_results:
             results.update(pr)
-    
+
     return results
 
 
 async def stage1_collect_responses(
-    user_query: str,
-    council_models: Optional[List[str]] = None
+    user_query: str, council_models: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
@@ -216,12 +252,14 @@ async def stage1_collect_responses(
     stage1_results = []
     for model, response in responses.items():
         if response is not None:  # Only include successful responses
-            stage1_results.append({
-                "model": model,
-                "response": response.get('content', ''),
-                "usage": response.get('usage', {}),
-                "provider": response.get('provider', 'unknown')
-            })
+            stage1_results.append(
+                {
+                    "model": model,
+                    "response": response.get("content", ""),
+                    "usage": response.get("usage", {}),
+                    "provider": response.get("provider", "unknown"),
+                }
+            )
 
     return stage1_results
 
@@ -229,7 +267,7 @@ async def stage1_collect_responses(
 async def stage2_collect_rankings(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
-    council_models: Optional[List[str]] = None
+    council_models: Optional[List[str]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     """
     Stage 2: Each model ranks the anonymized responses.
@@ -243,21 +281,23 @@ async def stage2_collect_rankings(
         Tuple of (rankings list, label_to_model mapping)
     """
     models = council_models or COUNCIL_MODELS
-    
+
     # Create anonymized labels for responses (Response A, Response B, etc.)
     labels = [chr(65 + i) for i in range(len(stage1_results))]  # A, B, C, ...
 
     # Create mapping from label to model name
     label_to_model = {
-        f"Response {label}": result['model']
+        f"Response {label}": result["model"]
         for label, result in zip(labels, stage1_results)
     }
 
     # Build the ranking prompt
-    responses_text = "\n\n".join([
-        f"Response {label}:\n{result['response']}"
-        for label, result in zip(labels, stage1_results)
-    ])
+    responses_text = "\n\n".join(
+        [
+            f"Response {label}:\n{result['response']}"
+            for label, result in zip(labels, stage1_results)
+        ]
+    )
 
     ranking_prompt = f"""You are evaluating different responses to the following question:
 
@@ -299,15 +339,17 @@ Now provide your evaluation and ranking:"""
     stage2_results = []
     for model, response in responses.items():
         if response is not None:
-            full_text = response.get('content', '')
+            full_text = response.get("content", "")
             parsed = parse_ranking_from_text(full_text)
-            stage2_results.append({
-                "model": model,
-                "ranking": full_text,
-                "parsed_ranking": parsed,
-                "usage": response.get('usage', {}),
-                "provider": response.get('provider', 'unknown')
-            })
+            stage2_results.append(
+                {
+                    "model": model,
+                    "ranking": full_text,
+                    "parsed_ranking": parsed,
+                    "usage": response.get("usage", {}),
+                    "provider": response.get("provider", "unknown"),
+                }
+            )
 
     return stage2_results, label_to_model
 
@@ -316,7 +358,7 @@ async def stage3_synthesize_final(
     user_query: str,
     stage1_results: List[Dict[str, Any]],
     stage2_results: List[Dict[str, Any]],
-    chairman_model: Optional[str] = None
+    chairman_model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Stage 3: Chairman synthesizes final response.
@@ -331,20 +373,24 @@ async def stage3_synthesize_final(
         Dict with 'model', 'response', 'usage' keys
     """
     chairman = chairman_model or CHAIRMAN_MODEL
-    
+
     # Build comprehensive context for chairman
-    stage1_text = "\n\n".join([
-        f"Model: {result['model']}\nResponse: {result['response']}"
-        for result in stage1_results
-    ])
+    stage1_text = "\n\n".join(
+        [
+            f"Model: {result['model']}\nResponse: {result['response']}"
+            for result in stage1_results
+        ]
+    )
 
     # Only include stage2 text if we have rankings
     stage2_text = ""
     if stage2_results:
-        stage2_text = "\n\nSTAGE 2 - Peer Rankings:\n" + "\n\n".join([
-            f"Model: {result['model']}\nRanking: {result['ranking']}"
-            for result in stage2_results
-        ])
+        stage2_text = "\n\nSTAGE 2 - Peer Rankings:\n" + "\n\n".join(
+            [
+                f"Model: {result['model']}\nRanking: {result['ranking']}"
+                for result in stage2_results
+            ]
+        )
 
     chairman_prompt = f"""You are the Chairman of an LLM Council. Multiple AI models have provided responses to a user's question{", and then ranked each other's responses" if stage2_results else ""}.
 
@@ -371,14 +417,14 @@ Provide a clear, well-reasoned final answer that represents the council's collec
         return {
             "model": chairman,
             "response": "Error: Unable to generate final synthesis.",
-            "usage": {}
+            "usage": {},
         }
 
     return {
         "model": chairman,
-        "response": response.get('content', ''),
-        "usage": response.get('usage', {}),
-        "provider": response.get('provider', 'unknown')
+        "response": response.get("content", ""),
+        "usage": response.get("usage", {}),
+        "provider": response.get("provider", "unknown"),
     }
 
 
@@ -400,28 +446,27 @@ def parse_ranking_from_text(ranking_text: str) -> List[str]:
             ranking_section = parts[1]
             # Try to extract numbered list format (e.g., "1. Response A")
             # This pattern looks for: number, period, optional space, "Response X"
-            numbered_matches = re.findall(r'\d+\.\s*Response [A-Z]', ranking_section)
+            numbered_matches = re.findall(r"\d+\.\s*Response [A-Z]", ranking_section)
             if numbered_matches:
                 # Extract just the "Response X" part
                 result = []
                 for m in numbered_matches:
-                    match = re.search(r'Response [A-Z]', m)
+                    match = re.search(r"Response [A-Z]", m)
                     if match:
                         result.append(match.group())
                 return result
 
             # Fallback: Extract all "Response X" patterns in order
-            matches = re.findall(r'Response [A-Z]', ranking_section)
+            matches = re.findall(r"Response [A-Z]", ranking_section)
             return matches
 
     # Fallback: try to find any "Response X" patterns in order
-    matches = re.findall(r'Response [A-Z]', ranking_text)
+    matches = re.findall(r"Response [A-Z]", ranking_text)
     return matches
 
 
 def calculate_aggregate_rankings(
-    stage2_results: List[Dict[str, Any]],
-    label_to_model: Dict[str, str]
+    stage2_results: List[Dict[str, Any]], label_to_model: Dict[str, str]
 ) -> List[Dict[str, Any]]:
     """
     Calculate aggregate rankings across all models.
@@ -437,7 +482,7 @@ def calculate_aggregate_rankings(
     model_positions: Dict[str, List[int]] = defaultdict(list)
 
     for ranking in stage2_results:
-        ranking_text = ranking['ranking']
+        ranking_text = ranking["ranking"]
 
         # Parse the ranking from the structured format
         parsed_ranking = parse_ranking_from_text(ranking_text)
@@ -452,14 +497,16 @@ def calculate_aggregate_rankings(
     for model, positions in model_positions.items():
         if positions:
             avg_rank = sum(positions) / len(positions)
-            aggregate.append({
-                "model": model,
-                "average_rank": round(avg_rank, 2),
-                "rankings_count": len(positions)
-            })
+            aggregate.append(
+                {
+                    "model": model,
+                    "average_rank": round(avg_rank, 2),
+                    "rankings_count": len(positions),
+                }
+            )
 
     # Sort by average rank (lower is better)
-    aggregate.sort(key=lambda x: x['average_rank'])
+    aggregate.sort(key=lambda x: x["average_rank"])
 
     return aggregate
 
@@ -468,7 +515,7 @@ async def run_full_council(
     user_query: str,
     final_only: bool = False,
     council_models: Optional[List[str]] = None,
-    chairman_model: Optional[str] = None
+    chairman_model: Optional[str] = None,
 ) -> Tuple[List, List, Dict, Dict]:
     """
     Run the complete 3-stage council process.
@@ -487,21 +534,22 @@ async def run_full_council(
 
     # If no models responded successfully, return error
     if not stage1_results:
-        return [], [], {
-            "model": chairman_model or CHAIRMAN_MODEL,
-            "response": "All models failed to respond. Please try again."
-        }, {}
+        return (
+            [],
+            [],
+            {
+                "model": chairman_model or CHAIRMAN_MODEL,
+                "response": "All models failed to respond. Please try again.",
+            },
+            {},
+        )
 
     if final_only:
         # Skip Stage 2, just synthesize from Stage 1
         stage3_result = await stage3_synthesize_final(
             user_query, stage1_results, [], chairman_model
         )
-        metadata = {
-            "aggregate_rankings": [],
-            "label_to_model": {},
-            "final_only": True
-        }
+        metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True}
         return stage1_results, [], stage3_result, metadata
 
     # Stage 2: Collect rankings
@@ -514,17 +562,14 @@ async def run_full_council(
 
     # Stage 3: Synthesize final answer
     stage3_result = await stage3_synthesize_final(
-        user_query,
-        stage1_results,
-        stage2_results,
-        chairman_model
+        user_query, stage1_results, stage2_results, chairman_model
     )
 
     # Prepare metadata
     metadata = {
         "label_to_model": label_to_model,
         "aggregate_rankings": aggregate_rankings,
-        "final_only": False
+        "final_only": False,
     }
 
     return stage1_results, stage2_results, stage3_result, metadata
@@ -550,16 +595,18 @@ Title:"""
     messages = [{"role": "user", "content": title_prompt}]
 
     # Use a fast model for title generation
-    response = await query_single_model("google/gemini-2.0-flash-exp", messages, max_tokens=50)
+    response = await query_single_model(
+        "google/gemini-2.0-flash-exp", messages, max_tokens=50
+    )
 
     if response is None:
         # Fallback to a generic title
         return "New Conversation"
 
-    title = response.get('content', 'New Conversation').strip()
+    title = response.get("content", "New Conversation").strip()
 
     # Clean up the title - remove quotes, limit length
-    title = title.strip('"\'')
+    title = title.strip("\"'")
 
     # Truncate if too long
     if len(title) > 50:

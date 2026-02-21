@@ -147,7 +147,7 @@ async def call_anthropic_oauth(
     model: str,
     prompt: str,
     access_token: str,
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     system_prompt: Optional[str] = None,
 ) -> dict[str, Any]:
     """
@@ -209,7 +209,7 @@ async def call_anthropic_oauth(
 async def call_anthropic_api_key(
     model: str,
     prompt: str,
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     system_prompt: Optional[str] = None,
 ) -> dict[str, Any]:
     """
@@ -273,7 +273,7 @@ async def call_anthropic_api_key(
 async def call_anthropic(
     model: str,
     prompt: str,
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     system_prompt: Optional[str] = None,
 ) -> dict[str, Any]:
     """Call Anthropic API - tries OAuth (Max plan) first, falls back to API key."""

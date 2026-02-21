@@ -170,9 +170,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult multiple LLMs (Opus 4.6, Gemini Flash 3.0, Grok 4.1, GLM 4.7) for peer-reviewed answers. " +
-          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis. " +
-          "Use for complex questions requiring multiple perspectives or when high accuracy is critical.",
+          "Consult 7 LLMs (GPT-5.2, Opus 4.6, Kimi K2.5, GLM-5, Gemini 3 Pro, DeepSeek V3.2, Grok 4.1) for peer-reviewed answers. " +
+          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.6). " +
+          "Kimi K2.5 + GLM-5 via Fireworks (3.4x faster). Use for complex questions requiring multiple perspectives.",
         inputSchema: {
           type: "object" as const,
           properties: {

@@ -140,7 +140,7 @@ async def get_valid_oauth_token() -> Optional[tuple[str, Path, str]]:
 async def call_openai(
     model: str,
     prompt: str,
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     system_prompt: Optional[str] = None,
     reasoning_effort: str = DEFAULT_REASONING_EFFORT,
 ) -> dict[str, Any]:

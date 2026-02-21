@@ -22,7 +22,7 @@ def get_moonshot_model_id(council_model_id: str) -> str:
 async def query_moonshot_model(
     model_id: str,
     messages: List[Dict[str, str]],
-    max_tokens: int = 4096,
+    max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0
 ) -> Optional[Dict[str, Any]]:
