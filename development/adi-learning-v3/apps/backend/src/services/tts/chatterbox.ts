@@ -12,7 +12,9 @@ export class ChatterboxProvider implements ITTSProvider {
 
   constructor() {
     this.apiKey = process.env.LINGUALEAP_CHATTERBOX_API_KEY || '';
-    this.endpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
+    // Strip trailing /v1 if present to avoid double-pathing (env may include /v1)
+    const rawEndpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
+    this.endpoint = rawEndpoint.replace(/\/v1\/?$/, '');
   }
 
   isAvailable(): boolean {

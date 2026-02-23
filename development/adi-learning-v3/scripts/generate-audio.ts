@@ -136,7 +136,9 @@ async function generateElevenLabs(text: string): Promise<Buffer> {
 
 async function generateChatterbox(text: string): Promise<Buffer> {
   const apiKey = process.env.LINGUALEAP_CHATTERBOX_API_KEY;
-  const endpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
+  const rawEndpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
+  // Strip trailing /v1 if present to avoid double-pathing
+  const endpoint = rawEndpoint.replace(/\/v1\/?$/, '');
   if (!apiKey) throw new Error('LINGUALEAP_CHATTERBOX_API_KEY not set');
 
   const response = await fetch(`${endpoint}/v1/audio/speech`, {
