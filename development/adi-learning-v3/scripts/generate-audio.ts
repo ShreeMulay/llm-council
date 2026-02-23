@@ -136,22 +136,21 @@ async function generateElevenLabs(text: string): Promise<Buffer> {
 
 async function generateChatterbox(text: string): Promise<Buffer> {
   const apiKey = process.env.LINGUALEAP_CHATTERBOX_API_KEY;
-  const rawEndpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
-  // Strip trailing /v1 if present to avoid double-pathing
-  const endpoint = rawEndpoint.replace(/\/v1\/?$/, '');
   if (!apiKey) throw new Error('LINGUALEAP_CHATTERBOX_API_KEY not set');
 
-  const response = await fetch(`${endpoint}/v1/audio/speech`, {
+  // Resemble.ai synthesis endpoint — returns JSON with base64-encoded audio
+  const voiceUuid = 'fb2d2858'; // Lucy (friendly female)
+  const response = await fetch('https://f.cluster.resemble.ai/synthesize', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      input: text,
-      voice: 'alloy',
-      model: 'chatterbox',
-      exaggeration: 0.6,
+      voice_uuid: voiceUuid,
+      data: text,
+      output_format: 'mp3',
+      sample_rate: 44100,
     }),
   });
 
@@ -159,28 +158,19 @@ async function generateChatterbox(text: string): Promise<Buffer> {
     throw new Error(`Chatterbox error ${response.status}: ${await response.text()}`);
   }
 
-  const wavBuffer = Buffer.from(await response.arrayBuffer());
+  const result = await response.json() as {
+    success: boolean;
+    audio_content: string;
+    duration: number;
+    issues?: string[];
+  };
 
-  // Convert WAV to MP3 using ffmpeg
-  const proc = Bun.spawn(['ffmpeg', '-i', 'pipe:0', '-f', 'mp3', '-ab', '128k', '-ar', '44100', '-y', 'pipe:1'], {
-    stdin: 'pipe',
-    stdout: 'pipe',
-    stderr: 'pipe',
-  });
-
-  const writer = proc.stdin.getWriter();
-  await writer.write(wavBuffer);
-  await writer.close();
-
-  const mp3 = Buffer.from(await new Response(proc.stdout).arrayBuffer());
-  const exitCode = await proc.exited;
-
-  if (exitCode !== 0) {
-    console.warn('ffmpeg failed, returning WAV');
-    return wavBuffer;
+  if (!result.success || !result.audio_content) {
+    throw new Error(`Chatterbox synthesis failed: ${JSON.stringify(result.issues || [])}`);
   }
 
-  return mp3;
+  // audio_content is base64-encoded MP3 — no ffmpeg conversion needed
+  return Buffer.from(result.audio_content, 'base64');
 }
 
 // ─── Main ──────────────────────────────────────────────

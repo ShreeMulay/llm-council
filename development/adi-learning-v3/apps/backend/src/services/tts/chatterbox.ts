@@ -1,20 +1,19 @@
 import type { TTSVoice } from '@adi/shared';
 import type { ITTSProvider, TTSSynthesizeOptions } from './types';
-import { $ } from 'bun';
 
-// Resemble.ai cloud API
-const DEFAULT_VOICE = 'alloy';
+// Resemble.ai cloud API (Chatterbox model)
+// Synthesis: POST https://f.cluster.resemble.ai/synthesize
+// Voices:    GET  https://app.resemble.ai/api/v2/voices
+const SYNTH_ENDPOINT = 'https://f.cluster.resemble.ai/synthesize';
+const VOICES_ENDPOINT = 'https://app.resemble.ai/api/v2/voices';
+const DEFAULT_VOICE_UUID = 'fb2d2858'; // Lucy (friendly female)
 
 export class ChatterboxProvider implements ITTSProvider {
   readonly name = 'chatterbox' as const;
   private apiKey: string;
-  private endpoint: string;
 
   constructor() {
     this.apiKey = process.env.LINGUALEAP_CHATTERBOX_API_KEY || '';
-    // Strip trailing /v1 if present to avoid double-pathing (env may include /v1)
-    const rawEndpoint = process.env.LINGUALEAP_CHATTERBOX_ENDPOINT || 'https://api.resemble.ai';
-    this.endpoint = rawEndpoint.replace(/\/v1\/?$/, '');
   }
 
   isAvailable(): boolean {
@@ -22,26 +21,23 @@ export class ChatterboxProvider implements ITTSProvider {
   }
 
   getDefaultVoice(): string {
-    return DEFAULT_VOICE;
+    return DEFAULT_VOICE_UUID;
   }
 
   async synthesize(text: string, options?: TTSSynthesizeOptions): Promise<Buffer> {
-    const voice = options?.voice || DEFAULT_VOICE;
+    const voiceUuid = options?.voice || DEFAULT_VOICE_UUID;
 
-    // Try the OpenAI-compatible endpoint first (self-hosted pattern)
-    const response = await fetch(`${this.endpoint}/v1/audio/speech`, {
+    const response = await fetch(SYNTH_ENDPOINT, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        input: text,
-        voice,
-        model: 'chatterbox',
-        exaggeration: 0.6,
-        cfg_weight: 0.5,
-        temperature: 0.8,
+        voice_uuid: voiceUuid,
+        data: text,
+        output_format: 'mp3',
+        sample_rate: 44100,
       }),
     });
 
@@ -50,70 +46,67 @@ export class ChatterboxProvider implements ITTSProvider {
       throw new Error(`Chatterbox API error (${response.status}): ${err}`);
     }
 
-    const wavBuffer = Buffer.from(await response.arrayBuffer());
+    const result = await response.json() as {
+      success: boolean;
+      audio_content: string;
+      duration: number;
+      issues?: string[];
+    };
 
-    // Convert WAV to MP3 using ffmpeg
-    return this.wavToMp3(wavBuffer);
-  }
-
-  private async wavToMp3(wavBuffer: Buffer): Promise<Buffer> {
-    try {
-      // Use ffmpeg to convert WAV → MP3 via stdin/stdout
-      const proc = Bun.spawn(
-        ['ffmpeg', '-i', 'pipe:0', '-f', 'mp3', '-ab', '128k', '-ar', '44100', '-y', 'pipe:1'],
-        {
-          stdin: 'pipe',
-          stdout: 'pipe',
-          stderr: 'pipe',
-        },
-      );
-
-      // Write WAV data to stdin
-      const writer = proc.stdin.getWriter();
-      await writer.write(wavBuffer);
-      await writer.close();
-
-      // Read MP3 from stdout
-      const output = await new Response(proc.stdout).arrayBuffer();
-      const exitCode = await proc.exited;
-
-      if (exitCode !== 0) {
-        const stderr = await new Response(proc.stderr).text();
-        throw new Error(`ffmpeg conversion failed: ${stderr}`);
-      }
-
-      return Buffer.from(output);
-    } catch (err) {
-      // Fallback: return WAV if ffmpeg fails
-      console.warn('[chatterbox] ffmpeg conversion failed, returning WAV:', err);
-      return wavBuffer;
+    if (!result.success || !result.audio_content) {
+      throw new Error(`Chatterbox synthesis failed: ${JSON.stringify(result.issues || [])}`);
     }
+
+    // audio_content is base64-encoded MP3
+    return Buffer.from(result.audio_content, 'base64');
   }
 
   async listVoices(): Promise<TTSVoice[]> {
-    // OpenAI-compatible voices
-    const builtinVoices: TTSVoice[] = [
-      { id: 'alloy', name: 'Alloy (balanced)' },
-      { id: 'echo', name: 'Echo (warm)' },
-      { id: 'fable', name: 'Fable (storyteller)' },
-      { id: 'onyx', name: 'Onyx (deep)' },
-      { id: 'nova', name: 'Nova (friendly)' },
-      { id: 'shimmer', name: 'Shimmer (bright)' },
-    ];
-
     try {
-      // Try to fetch from API
-      const response = await fetch(`${this.endpoint}/v1/models`, {
+      const response = await fetch(`${VOICES_ENDPOINT}?page=1&page_size=50`, {
         headers: { Authorization: `Bearer ${this.apiKey}` },
       });
-      if (response.ok) {
-        // If the API returns voices, use those
-        return builtinVoices;
-      }
-    } catch {
-      // Ignore - use builtin list
-    }
 
-    return builtinVoices;
+      if (!response.ok) {
+        throw new Error(`Voice list error: ${response.status}`);
+      }
+
+      const data = await response.json() as {
+        success: boolean;
+        items: Array<{
+          uuid: string;
+          name: string;
+          default_language: string;
+          voice_type: string;
+          voice_status: string;
+        }>;
+      };
+
+      if (!data.success || !data.items) {
+        return this.fallbackVoices();
+      }
+
+      // Filter to ready English voices
+      return data.items
+        .filter((v) => v.voice_status === 'Ready' && v.default_language?.includes('en'))
+        .map((v) => ({
+          id: v.uuid,
+          name: `${v.name} (${v.voice_type})`,
+        }));
+    } catch (err) {
+      console.warn('[chatterbox] Failed to fetch voices, using fallback:', err);
+      return this.fallbackVoices();
+    }
+  }
+
+  private fallbackVoices(): TTSVoice[] {
+    return [
+      { id: 'fb2d2858', name: 'Lucy (friendly)' },
+      { id: '91b49260', name: 'Abigail (warm)' },
+      { id: '08975946', name: 'Meera (clear)' },
+      { id: 'cfb9967c', name: 'Fiona (bright)' },
+      { id: '7c4296be', name: 'Grant (male)' },
+      { id: 'c1faa6af', name: 'Chloe (gentle)' },
+    ];
   }
 }
