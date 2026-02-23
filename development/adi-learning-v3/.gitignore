@@ -1,0 +1,12 @@
+node_modules/
+dist/
+*.db
+*.db-journal
+.env
+.env.local
+*.log
+.vite/
+bun.lock
+apps/backend/data/
+apps/frontend/public/audio/elevenlabs/*.mp3
+apps/frontend/public/audio/chatterbox/*.mp3
