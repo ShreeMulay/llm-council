@@ -6,6 +6,7 @@ import { audio } from '@/services/audio';
 import { useGameStore } from '@/stores/gameStore';
 import { recordStoryProgress } from '@/services/api';
 import { STORIES, type Story, type StoryCard } from '@/data/storyData';
+import { StoryIllustration } from './StoryIllustration';
 import { shuffle } from '@/lib/utils';
 
 export default function StorySequencingGame() {
@@ -100,7 +101,7 @@ export default function StorySequencingGame() {
               whileDrag={{ scale: 1.05, boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}
             >
               <span className="text-xs text-white/50 font-bold w-6">{i + 1}.</span>
-              <span className="text-4xl">{card.emoji}</span>
+              <StoryIllustration storyId={story.id} order={card.order} size={56} />
               <span className="text-lg font-semibold text-white flex-1">{card.text}</span>
               <span className="text-white/30 text-2xl">&#x283F;</span>
             </Reorder.Item>

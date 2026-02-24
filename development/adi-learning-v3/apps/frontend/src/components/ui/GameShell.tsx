@@ -5,6 +5,7 @@ import { Progress } from './progress';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useGameStore } from '@/stores/gameStore';
 import { CelebrationOverlay } from './CelebrationOverlay';
+import { BadgeToast } from '@/components/badges/BadgeDisplay';
 import { audio } from '@/services/audio';
 import { useEffect } from 'react';
 
@@ -78,6 +79,9 @@ export function GameShell({ title, emoji, children, progress, bgClass, onBack }:
 
       {/* Celebration overlay */}
       {showCelebration && <CelebrationOverlay onDismiss={dismissCelebration} />}
+
+      {/* Badge toast */}
+      <BadgeToast />
     </div>
   );
 }

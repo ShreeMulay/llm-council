@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Settings } from 'lucide-react';
+import { Settings, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SkillCard } from './SkillCard';
 import { SettingsPanel } from '@/components/settings/SettingsPanel';
+import { BadgeToast, TrophyCase } from '@/components/badges/BadgeDisplay';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useProgressStore } from '@/stores/progressStore';
+import { useBadgeStore } from '@/stores/badgeStore';
 import { audio } from '@/services/audio';
 
 const SKILLS = [
@@ -20,6 +22,7 @@ const SKILLS = [
 export default function HomeHub() {
   const { showSettings, toggleSettings } = useSettingsStore();
   const { skills, fetchProgress } = useProgressStore();
+  const { toggleTrophyCase } = useBadgeStore();
 
   useEffect(() => {
     audio.init();
@@ -30,7 +33,9 @@ export default function HomeHub() {
     <div className="flex flex-col h-full w-full overflow-auto">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-5 pb-2 shrink-0">
-        <div />
+        <Button variant="ghost" size="icon" onClick={toggleTrophyCase} className="text-yellow-200 hover:text-yellow-100">
+          <Trophy size={24} />
+        </Button>
         <motion.h1
           className="text-3xl font-extrabold text-white text-center drop-shadow-lg"
           initial={{ y: -20, opacity: 0 }}
@@ -69,8 +74,10 @@ export default function HomeHub() {
         ))}
       </div>
 
-      {/* Settings Panel */}
+      {/* Overlays */}
       {showSettings && <SettingsPanel />}
+      <TrophyCase />
+      <BadgeToast />
     </div>
   );
 }
