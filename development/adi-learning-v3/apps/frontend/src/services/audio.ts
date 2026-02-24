@@ -33,7 +33,7 @@ const PREGEN_WORDS = new Set([
   'bird', 'frog', 'cow', 'duck',
 ]);
 
-// Letter sound patterns: "J says juh, like Jump!" → letter-J-sound
+// Letter sound patterns: "J says juh, like Jump!" -> letter-J-sound
 const LETTER_SOUND_RE = /^([A-Z]) says \w+, like \w+!$/;
 const LETTER_NAME_RE = /^This is the letter ([A-Z]).$/;
 
@@ -99,6 +99,24 @@ function getPregenUrl(fileId: string): string {
   return `/audio/${engine}/${fileId}.mp3`;
 }
 
+// ─── Speech Queue Item ─────────────────────────────────
+
+interface QueueItem {
+  /** Pre-generated file ID (e.g. 'number-42') */
+  fileId?: string;
+  /** Raw text to speak via API/fallback */
+  text?: string;
+  /** Fallback text if fileId fails */
+  fallbackText?: string;
+  /** Resolve when this item finishes playing */
+  resolve: () => void;
+  /** Reject on error */
+  reject: (err: Error) => void;
+}
+
+/** Gap between queued speech items in ms */
+const QUEUE_GAP_MS = 200;
+
 // ─── Audio Service ─────────────────────────────────────
 
 class AudioService {
@@ -106,6 +124,18 @@ class AudioService {
   private drumSynth: Tone.MembraneSynth | null = null;
   private isInitialized = false;
   private currentAudio: HTMLAudioElement | null = null;
+
+  // ─── Speech Queue ────────────────────────────────
+  private queue: QueueItem[] = [];
+  private isDraining = false;
+
+  // ─── Background Music ────────────────────────────
+  private bgSynth: Tone.PolySynth | null = null;
+  private bgLoop: Tone.Loop | null = null;
+  private bgGain: Tone.Gain | null = null;
+  private bgPlaying = false;
+  private normalBgVolume = -28; // dB
+  private duckedBgVolume = -40; // dB when speech is playing
 
   async init() {
     if (this.isInitialized) return;
@@ -120,14 +150,29 @@ class AudioService {
     this.drumSynth = new Tone.MembraneSynth().toDestination();
     this.drumSynth.volume.value = -5;
 
+    // Background music synth → gain node → destination
+    this.bgGain = new Tone.Gain(1).toDestination();
+    this.bgGain.gain.value = Tone.dbToGain(this.normalBgVolume);
+
+    this.bgSynth = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: 'sine' },
+      envelope: { attack: 1.5, decay: 0.5, sustain: 0.8, release: 2 },
+    }).connect(this.bgGain);
+
     this.isInitialized = true;
+
+    // Auto-start background music if enabled
+    const settings = useSettingsStore.getState();
+    if (settings.backgroundMusic) {
+      this.startBackgroundMusic();
+    }
   }
 
   private get isMuted(): boolean {
     return useSettingsStore.getState().volume === 0;
   }
 
-  // ─── SFX ──────────────────────────────────────────
+  // ─── SFX (unchanged — Tone.js synths, no conflict with speech queue) ──
 
   playSuccess() {
     if (!this.isInitialized || this.isMuted) return;
@@ -178,74 +223,270 @@ class AudioService {
     });
   }
 
-  // ─── Voice (TTS) ──────────────────────────────────
+  // ─── Voice (TTS) — Queue-based ───────────────────
 
   /**
-   * Play a pre-generated audio clip by its file ID.
-   * e.g. speakById('number-42') → /audio/elevenlabs/number-42.mp3
+   * Speak a pre-generated audio clip by file ID. Queued — waits for
+   * any previously queued speech to finish before playing.
    *
    * Falls back to speak(text) via API if the file fails to load.
    */
   async speakById(fileId: string, fallbackText?: string): Promise<void> {
     if (this.isMuted) return;
-    this.stopSpeaking();
-
-    const url = getPregenUrl(fileId);
-
-    try {
-      await this.playAudioUrl(url);
-    } catch {
-      // Static file failed — fall back to API or browser TTS
-      if (fallbackText) {
-        await this.speakViaApi(fallbackText);
-      }
-    }
+    return this.enqueue({ fileId, fallbackText });
   }
 
-  /** Fire-and-forget speakById */
+  /** Fire-and-forget queued speakById */
   sayByIdAsync(fileId: string, fallbackText?: string): void {
     this.speakById(fileId, fallbackText).catch(() => {});
   }
 
   /**
-   * Speak text. Tries pre-generated static files first, then API, then browser TTS.
+   * Speak text. Queued — waits for any previously queued speech.
    *
-   * Flow:
-   *   1. resolveToFileId(text) → if found, play /audio/{engine}/{id}.mp3
+   * Flow per item:
+   *   1. resolveToFileId(text) -> if found, play /audio/{engine}/{id}.mp3
    *   2. Else, POST /api/tts/speak (live API call)
    *   3. Else, browser SpeechSynthesis fallback
    */
   async speak(text: string): Promise<void> {
     if (this.isMuted) return;
-    this.stopSpeaking();
-
-    // 1. Try pre-generated clip
-    const fileId = resolveToFileId(text);
-    if (fileId) {
-      const url = getPregenUrl(fileId);
-      try {
-        await this.playAudioUrl(url);
-        return;
-      } catch {
-        // Static file missing or failed — fall through to API
-      }
-    }
-
-    // 2. Try backend TTS API
-    await this.speakViaApi(text);
+    return this.enqueue({ text });
   }
 
-  /** Fire-and-forget speak (don't await) */
+  /** Fire-and-forget queued speak */
   sayAsync(text: string): void {
     this.speak(text).catch(() => {});
   }
 
+  /**
+   * Immediately speak, interrupting any queued/current speech.
+   * Use for navigation transitions or explicit user-triggered speech.
+   */
+  async speakImmediate(text: string): Promise<void> {
+    if (this.isMuted) return;
+    this.stopSpeaking(); // clears queue + stops current audio
+
+    const fileId = resolveToFileId(text);
+    if (fileId) {
+      const url = getPregenUrl(fileId);
+      try {
+        this.duckBgMusic();
+        await this.playAudioUrl(url);
+        this.unduckBgMusic();
+        return;
+      } catch {
+        // fall through
+      }
+    }
+
+    this.duckBgMusic();
+    await this.speakViaApi(text);
+    this.unduckBgMusic();
+  }
+
+  /**
+   * Immediately speak a file ID, interrupting everything.
+   */
+  async speakByIdImmediate(fileId: string, fallbackText?: string): Promise<void> {
+    if (this.isMuted) return;
+    this.stopSpeaking();
+
+    const url = getPregenUrl(fileId);
+    try {
+      this.duckBgMusic();
+      await this.playAudioUrl(url);
+      this.unduckBgMusic();
+    } catch {
+      if (fallbackText) {
+        this.duckBgMusic();
+        await this.speakViaApi(fallbackText);
+        this.unduckBgMusic();
+      }
+    }
+  }
+
+  /**
+   * Stop all speech: cancel current audio, clear the queue.
+   */
   stopSpeaking() {
+    // Reject all pending queue items
+    for (const item of this.queue) {
+      item.reject(new Error('Speech stopped'));
+    }
+    this.queue = [];
+    this.isDraining = false;
+
     if (this.currentAudio) {
       this.currentAudio.pause();
       this.currentAudio = null;
     }
     window.speechSynthesis?.cancel();
+    this.unduckBgMusic();
+  }
+
+  // ─── Speech Queue internals ──────────────────────
+
+  private enqueue(item: Omit<QueueItem, 'resolve' | 'reject'>): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      this.queue.push({ ...item, resolve, reject });
+      // Start draining if not already in progress
+      if (!this.isDraining) {
+        this.drainQueue();
+      }
+    });
+  }
+
+  private async drainQueue(): Promise<void> {
+    if (this.isDraining) return;
+    this.isDraining = true;
+    this.duckBgMusic();
+
+    while (this.queue.length > 0) {
+      const item = this.queue[0];
+
+      try {
+        await this.playQueueItem(item);
+        item.resolve();
+      } catch (err) {
+        item.reject(err instanceof Error ? err : new Error(String(err)));
+      }
+
+      // Remove the item we just processed
+      this.queue.shift();
+
+      // Small gap between sequential speech items for natural pacing
+      if (this.queue.length > 0) {
+        await new Promise((r) => setTimeout(r, QUEUE_GAP_MS));
+      }
+    }
+
+    this.isDraining = false;
+    this.unduckBgMusic();
+  }
+
+  private async playQueueItem(item: QueueItem): Promise<void> {
+    // Case 1: fileId provided — try static file first
+    if (item.fileId) {
+      const url = getPregenUrl(item.fileId);
+      try {
+        await this.playAudioUrl(url);
+        return;
+      } catch {
+        // Static file failed — try fallback text
+        if (item.fallbackText) {
+          await this.speakViaApi(item.fallbackText);
+          return;
+        }
+        throw new Error(`Failed to play fileId: ${item.fileId}`);
+      }
+    }
+
+    // Case 2: text provided — resolve to file or API
+    if (item.text) {
+      const fileId = resolveToFileId(item.text);
+      if (fileId) {
+        const url = getPregenUrl(fileId);
+        try {
+          await this.playAudioUrl(url);
+          return;
+        } catch {
+          // Fall through to API
+        }
+      }
+      await this.speakViaApi(item.text);
+    }
+  }
+
+  // ─── Background Music ────────────────────────────
+
+  /**
+   * Start ambient background music. Gentle, looping pad chords.
+   * Auto-ducks when speech is playing.
+   */
+  startBackgroundMusic() {
+    if (!this.isInitialized || this.bgPlaying) return;
+
+    // Chord progression: C maj -> Am -> F maj -> G maj (classic calming loop)
+    const chords = [
+      ['C3', 'E3', 'G3'],  // C major
+      ['A2', 'C3', 'E3'],  // A minor
+      ['F2', 'A2', 'C3'],  // F major
+      ['G2', 'B2', 'D3'],  // G major
+    ];
+
+    let chordIndex = 0;
+
+    // Play a chord every 4 seconds (slow, ambient)
+    this.bgLoop = new Tone.Loop((time) => {
+      const chord = chords[chordIndex % chords.length];
+      this.bgSynth?.triggerAttackRelease(chord, '2n', time);
+      chordIndex++;
+    }, '4n');
+
+    // Slow tempo for ambient feel
+    Tone.getTransport().bpm.value = 40;
+    this.bgLoop.start(0);
+    Tone.getTransport().start();
+
+    this.bgPlaying = true;
+
+    // Apply current volume from settings
+    this.updateBgMusicVolume();
+  }
+
+  /**
+   * Stop background music.
+   */
+  stopBackgroundMusic() {
+    if (this.bgLoop) {
+      this.bgLoop.stop();
+      this.bgLoop.dispose();
+      this.bgLoop = null;
+    }
+    Tone.getTransport().stop();
+    this.bgPlaying = false;
+  }
+
+  /**
+   * Toggle background music on/off.
+   */
+  toggleBackgroundMusic(enabled: boolean) {
+    if (enabled) {
+      this.startBackgroundMusic();
+    } else {
+      this.stopBackgroundMusic();
+    }
+  }
+
+  /**
+   * Update background music volume from settings store.
+   * Called when bgMusicVolume setting changes.
+   */
+  updateBgMusicVolume() {
+    if (!this.bgGain) return;
+    const settings = useSettingsStore.getState();
+    const vol = settings.bgMusicVolume ?? 0.3;
+    // Map 0-1 to a dB range: 0 = -60dB (silent), 1 = -18dB (audible but quiet)
+    this.normalBgVolume = vol === 0 ? -60 : -18 - (1 - vol) * 30;
+    this.duckedBgVolume = this.normalBgVolume - 12;
+
+    // Only apply normal volume if not currently ducked (i.e., speech not playing)
+    if (!this.isDraining) {
+      this.bgGain.gain.rampTo(Tone.dbToGain(this.normalBgVolume), 0.3);
+    }
+  }
+
+  /** Duck background music volume while speech plays */
+  private duckBgMusic() {
+    if (!this.bgGain || !this.bgPlaying) return;
+    this.bgGain.gain.rampTo(Tone.dbToGain(this.duckedBgVolume), 0.3);
+  }
+
+  /** Restore background music volume after speech ends */
+  private unduckBgMusic() {
+    if (!this.bgGain || !this.bgPlaying) return;
+    this.bgGain.gain.rampTo(Tone.dbToGain(this.normalBgVolume), 0.5);
   }
 
   // ─── Internal ─────────────────────────────────────

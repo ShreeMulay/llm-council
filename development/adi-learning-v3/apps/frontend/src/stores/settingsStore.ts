@@ -5,9 +5,13 @@ import type { TTSEngine } from '@adi/shared';
 interface SettingsState {
   ttsEngine: TTSEngine;
   volume: number;
+  backgroundMusic: boolean;
+  bgMusicVolume: number;
   showSettings: boolean;
   setTTSEngine: (engine: TTSEngine) => void;
   setVolume: (volume: number) => void;
+  setBackgroundMusic: (enabled: boolean) => void;
+  setBgMusicVolume: (volume: number) => void;
   toggleSettings: () => void;
 }
 
@@ -16,9 +20,13 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       ttsEngine: 'elevenlabs',
       volume: 0.8,
+      backgroundMusic: true,
+      bgMusicVolume: 0.3,
       showSettings: false,
       setTTSEngine: (ttsEngine) => set({ ttsEngine }),
       setVolume: (volume) => set({ volume }),
+      setBackgroundMusic: (backgroundMusic) => set({ backgroundMusic }),
+      setBgMusicVolume: (bgMusicVolume) => set({ bgMusicVolume }),
       toggleSettings: () => set((s) => ({ showSettings: !s.showSettings })),
     }),
     { name: 'adi-settings' },

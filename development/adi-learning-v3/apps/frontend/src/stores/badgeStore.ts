@@ -23,6 +23,19 @@ export interface BadgeStats {
   mathCorrect: number;
 }
 
+const INITIAL_STATS: BadgeStats = {
+  totalCorrect: 0,
+  currentStreak: 0,
+  bestStreak: 0,
+  gamesPlayed: 0,
+  countingHighest: 0,
+  lettersLearned: 0,
+  rhymesCorrect: 0,
+  storiesCompleted: 0,
+  writingAccuracy: 0,
+  mathCorrect: 0,
+};
+
 interface BadgeState {
   unlockedBadges: Record<string, number>; // badge id -> unlock timestamp
   newBadges: string[]; // recently unlocked, not yet seen
@@ -33,6 +46,7 @@ interface BadgeState {
   recordLearnedLetter: (letter: string) => void; // track unique letter mastery
   dismissNewBadges: () => void;
   toggleTrophyCase: () => void;
+  resetAllProgress: () => void; // reset all badges, stats, and learned letters
 }
 
 const BADGES: Badge[] = [
@@ -84,18 +98,7 @@ export const useBadgeStore = create<BadgeState>()(
       unlockedBadges: {},
       newBadges: [],
       learnedLetters: [],
-      stats: {
-        totalCorrect: 0,
-        currentStreak: 0,
-        bestStreak: 0,
-        gamesPlayed: 0,
-        countingHighest: 0,
-        lettersLearned: 0,
-        rhymesCorrect: 0,
-        storiesCompleted: 0,
-        writingAccuracy: 0,
-        mathCorrect: 0,
-      },
+      stats: { ...INITIAL_STATS },
       showTrophyCase: false,
 
       checkAndAward: (partial) => {
@@ -160,6 +163,15 @@ export const useBadgeStore = create<BadgeState>()(
       dismissNewBadges: () => set({ newBadges: [] }),
 
       toggleTrophyCase: () => set((s) => ({ showTrophyCase: !s.showTrophyCase })),
+
+      resetAllProgress: () =>
+        set({
+          unlockedBadges: {},
+          newBadges: [],
+          stats: { ...INITIAL_STATS },
+          learnedLetters: [],
+          showTrophyCase: false,
+        }),
     }),
     { name: 'adi-badges' },
   ),
