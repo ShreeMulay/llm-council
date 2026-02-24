@@ -28,7 +28,7 @@ export default function LetterSoundsGame() {
   // ─── Learn Mode ─────────────────────────────────────
 
   function handleLearnTap() {
-    audio.sayAsync(currentLetter.soundText);
+    audio.sayByIdAsync(`letter-${currentLetter.upper}-sound`, currentLetter.soundText);
   }
 
   function nextLetter() {
@@ -84,7 +84,7 @@ export default function LetterSoundsGame() {
 
   function playQuizSound() {
     if (quizLetter) {
-      audio.sayAsync(quizLetter.soundText);
+      audio.sayByIdAsync(`letter-${quizLetter.upper}-sound`, quizLetter.soundText);
     }
   }
 

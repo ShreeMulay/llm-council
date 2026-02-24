@@ -50,7 +50,7 @@ export default function CountingGame() {
     const newCount = counted + 1;
     setCounted(newCount);
     audio.playSparkle();
-    audio.sayAsync(numberToWords(newCount));
+    audio.sayByIdAsync(`number-${newCount}`, numberToWords(newCount));
 
     if (newCount === target) {
       setDone(true);

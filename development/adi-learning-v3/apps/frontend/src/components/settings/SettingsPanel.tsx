@@ -51,7 +51,7 @@ export function SettingsPanel() {
   async function testVoice() {
     setTesting(true);
     try {
-      await audio.speak("Hi Adi! Let's learn something fun today!");
+      await audio.speakById('ui-welcome', "Welcome to Adi's Learning Adventure!");
     } finally {
       setTesting(false);
     }

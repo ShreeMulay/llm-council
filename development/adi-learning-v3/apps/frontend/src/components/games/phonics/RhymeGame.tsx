@@ -26,9 +26,9 @@ export default function RhymeGame() {
   const playWords = useCallback(async () => {
     if (!current || playing) return;
     setPlaying(true);
-    await audio.speak(current.words[0]);
+    await audio.speakById(`word-${current.words[0].toLowerCase()}`, current.words[0]);
     await new Promise((r) => setTimeout(r, 400));
-    await audio.speak(current.words[1]);
+    await audio.speakById(`word-${current.words[1].toLowerCase()}`, current.words[1]);
     setPlaying(false);
   }, [current, playing]);
 
