@@ -10,6 +10,22 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React + router — loaded on every page
+          react: ['react', 'react-dom', 'react-router-dom'],
+          // Heavy animation lib — needed by all games but can load after initial paint
+          motion: ['framer-motion'],
+          // Audio engine — only needed once user interacts
+          tone: ['tone'],
+          // State management
+          zustand: ['zustand'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     host: true,
