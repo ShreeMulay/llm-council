@@ -7,6 +7,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { recordRhymeProgress } from '@/services/api';
 import { RHYME_PAIRS, type RhymePair } from '@/data/rhymeData';
 import { shuffle } from '@/lib/utils';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 export default function RhymeGame() {
   const [pairs, setPairs] = useState<RhymePair[]>([]);
@@ -53,6 +54,7 @@ export default function RhymeGame() {
       addCorrect();
       audio.playCorrect();
       recordRhymeProgress(pairKey, true).catch(() => {});
+      useBadgeStore.getState().checkAndAward({ rhymesCorrect: 1 });
 
       if (current.rhymes) {
         audio.sayAsync(`Yes! ${current.words[0]} and ${current.words[1]} rhyme!`);

@@ -6,6 +6,7 @@ import { audio } from '@/services/audio';
 import { useGameStore } from '@/stores/gameStore';
 import { recordNumberProgress } from '@/services/api';
 import { randInt, numberToWords } from '@/lib/utils';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 const TIERS = [
   { label: '1-25', min: 1, max: 25 },
@@ -57,6 +58,7 @@ export default function CountingGame() {
       addCorrect();
       audio.playSuccess();
       recordNumberProgress(target, true).catch(() => {});
+      useBadgeStore.getState().checkAndAward({ countingHighest: target });
 
       if ((score + 1) % 5 === 0) {
         triggerCelebration();

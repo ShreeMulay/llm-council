@@ -8,6 +8,7 @@ import { recordStoryProgress } from '@/services/api';
 import { STORIES, type Story, type StoryCard } from '@/data/storyData';
 import { StoryIllustration } from './StoryIllustration';
 import { shuffle } from '@/lib/utils';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 export default function StorySequencingGame() {
   const [storyIndex, setStoryIndex] = useState(0);
@@ -40,6 +41,7 @@ export default function StorySequencingGame() {
       addCorrect();
       audio.playSuccess();
       recordStoryProgress(story.id, true).catch(() => {});
+      useBadgeStore.getState().checkAndAward({ storiesCompleted: 1 });
 
       // Narrate the story in order
       const narration = story.cards.map((c) => c.text).join('. ');

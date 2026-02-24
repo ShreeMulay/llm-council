@@ -6,6 +6,7 @@ import { audio } from '@/services/audio';
 import { useGameStore } from '@/stores/gameStore';
 import { recordWritingProgress } from '@/services/api';
 import { LETTER_DATA, type CharacterData, type Stroke } from '@/data/strokeData';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 const FIRST_NAME = 'Adalyn';
 const LAST_NAME = 'Mulay';
@@ -319,6 +320,7 @@ export default function NameWritingGame() {
     setLastAccuracy(accuracy);
     recordWritingProgress(currentChar, accuracy).catch(() => {});
     addCorrect();
+    useBadgeStore.getState().checkAndAward({ writingAccuracy: accuracy });
 
     if (accuracy >= 70) {
       audio.playSuccess();

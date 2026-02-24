@@ -27,8 +27,10 @@ interface BadgeState {
   unlockedBadges: Record<string, number>; // badge id -> unlock timestamp
   newBadges: string[]; // recently unlocked, not yet seen
   stats: BadgeStats;
+  learnedLetters: string[]; // unique letters mastered (persisted as array)
   showTrophyCase: boolean;
   checkAndAward: (stats: Partial<BadgeStats>) => string[]; // returns newly awarded badge ids
+  recordLearnedLetter: (letter: string) => void; // track unique letter mastery
   dismissNewBadges: () => void;
   toggleTrophyCase: () => void;
 }
@@ -81,6 +83,7 @@ export const useBadgeStore = create<BadgeState>()(
     (set, get) => ({
       unlockedBadges: {},
       newBadges: [],
+      learnedLetters: [],
       stats: {
         totalCorrect: 0,
         currentStreak: 0,
@@ -142,6 +145,16 @@ export const useBadgeStore = create<BadgeState>()(
         });
 
         return newlyAwarded;
+      },
+
+      recordLearnedLetter: (letter: string) => {
+        const state = get();
+        const upper = letter.toUpperCase();
+        if (state.learnedLetters.includes(upper)) return;
+        const updated = [...state.learnedLetters, upper];
+        set({ learnedLetters: updated });
+        // Also trigger badge check with updated count
+        state.checkAndAward({ lettersLearned: updated.length });
       },
 
       dismissNewBadges: () => set({ newBadges: [] }),

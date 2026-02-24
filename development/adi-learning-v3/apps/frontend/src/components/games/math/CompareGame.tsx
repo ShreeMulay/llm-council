@@ -6,6 +6,7 @@ import { audio } from '@/services/audio';
 import { useGameStore } from '@/stores/gameStore';
 import { recordMathProgress } from '@/services/api';
 import { randInt } from '@/lib/utils';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 type CompareAnswer = 'more' | 'less' | 'equal';
 
@@ -95,6 +96,7 @@ export default function CompareGame() {
       addCorrect();
       audio.playCorrect();
       recordMathProgress(round.answer, true).catch(() => {});
+      useBadgeStore.getState().checkAndAward({ mathCorrect: 1 });
       if ((score + 1) % 5 === 0) triggerCelebration();
       if (streak > 0 && streak % 3 === 0) setDifficulty((d) => Math.min(d + 1, 5));
     } else {

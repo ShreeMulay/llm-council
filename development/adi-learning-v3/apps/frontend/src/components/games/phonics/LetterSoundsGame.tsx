@@ -7,6 +7,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { recordLetterProgress } from '@/services/api';
 import { TARGET_LETTERS, type LetterInfo } from '@/data/letterData';
 import { shuffle, pickRandom } from '@/lib/utils';
+import { useBadgeStore } from '@/stores/badgeStore';
 
 type Mode = 'learn' | 'quiz';
 
@@ -72,6 +73,7 @@ export default function LetterSoundsGame() {
       addCorrect();
       audio.playCorrect();
       recordLetterProgress(letter.upper, true).catch(() => {});
+      useBadgeStore.getState().recordLearnedLetter(letter.upper);
       if ((score + 1) % 5 === 0) triggerCelebration();
     } else {
       addWrong();
