@@ -49,3 +49,6 @@
 [submodule "tke-kidney-care-gem"]
 	path = tke-kidney-care-gem
 	url = git@github.com:ShreeMulay/tke-kidney-care-gem.git
+[submodule "development/noor"]
+	path = development/noor
+	url = git@github.com:ShreeMulay/noor.git
