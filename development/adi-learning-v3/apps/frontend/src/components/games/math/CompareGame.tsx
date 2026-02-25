@@ -88,10 +88,14 @@ export default function CompareGame() {
   const announceRound = useCallback((r: Round) => {
     const v = verbosityRef.current;
 
+    // Clear any leftover speech from the previous round, then queue
+    // everything sequentially so phrases play one-at-a-time with pauses.
+    audio.stopSpeaking();
+
     // All levels: read the question aloud
     const clipId = questionClipId(r.answer);
     const fallback = r.question;
-    audio.speakByIdImmediate(clipId, fallback);
+    audio.sayByIdAsync(clipId, fallback);
 
     if (v === 'medium' || v === 'full') {
       // Say both numbers: "{left} versus {right}"
@@ -114,6 +118,9 @@ export default function CompareGame() {
 
   function announceFeedback(r: Round, correct: boolean) {
     const v = verbosityRef.current;
+
+    // Stop any remaining round narration so feedback doesn't overlap
+    audio.stopSpeaking();
 
     if (v === 'light') {
       // SFX only — already played by caller
