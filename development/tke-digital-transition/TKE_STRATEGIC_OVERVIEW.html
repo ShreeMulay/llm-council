@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TKE Strategic Operating Blueprint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0c10;
+            --surface: #161b22;
+            --surface-accent: #21262d;
+            --text: #f0f6fc;
+            --text-dim: #8b949e;
+            --teal: #2dd4bf;
+            --amber: #fbbf24;
+            --purple: #a855f7;
+            --red: #f43f5e;
+            --border: rgba(240, 246, 252, 0.1);
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        h1, h2, h3, .heading {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Navigation */
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(10, 12, 16, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 1rem 0;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: color 0.2s;
+            margin-left: 1.5rem;
+        }
+
+        nav a:hover {
+            color: var(--teal);
+        }
+
+        /* Header */
+        header {
+            padding: 8rem 0 4rem;
+            text-align: center;
+            background: radial-gradient(circle at 50% -20%, rgba(45, 212, 191, 0.15) 0%, transparent 50%);
+        }
+
+        .eyebrow {
+            color: var(--teal);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        header h1 {
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            line-height: 1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(to bottom, #fff, #8b949e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            font-weight: 300;
+            max-width: 800px;
+            margin: 0 auto 3rem;
+        }
+
+        .bhag-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 1rem;
+            display: inline-block;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bhag-box::before {
+            content: 'BHAG';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            font-size: 5rem;
+            font-weight: 900;
+            opacity: 0.03;
+            pointer-events: none;
+        }
+
+        .bhag-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.75rem;
+            color: var(--teal);
+            font-weight: 700;
+        }
+
+        .taglines {
+            margin-top: 2rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            font-size: 0.9rem;
+            color: var(--text-dim);
+        }
+
+        .tagline b { color: var(--text); }
+
+        /* Stats Section */
+        section {
+            padding: 6rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            margin-bottom: 3rem;
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+        }
+
+        .section-title h2 { font-size: 2rem; }
+        .section-title .line { flex-grow: 1; height: 1px; background: var(--border); margin-bottom: 0.5rem; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--teal);
+        }
+
+        .stat-val {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+
+        .risk-flag {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--red);
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        /* The Machine - Gears */
+        .machine-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            position: relative;
+        }
+
+        .gear-card {
+            background: var(--surface);
+            padding: 2.5rem;
+            border-radius: 1.5rem;
+            border-top: 4px solid var(--teal);
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .gear-card.engine-1 { border-color: var(--teal); }
+        .gear-card.engine-2 { border-color: var(--amber); }
+        .gear-card.engine-3 { border-color: var(--purple); }
+
+        .gear-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+            animation: spin 10s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        .gear-card h3 { font-size: 1.5rem; }
+        .gear-card ul { list-style: none; }
+        .gear-card li { margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--text-dim); position: relative; padding-left: 1.25rem; }
+        .gear-card li::before { content: '→'; position: absolute; left: 0; color: var(--text); }
+
+        .paradox-box {
+            margin-top: auto;
+            background: rgba(240, 246, 252, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            border-left: 2px solid var(--text);
+        }
+
+        /* Diagnosis Area */
+        .diagnosis-alert {
+            background: linear-gradient(135deg, #2a0a0f 0%, #0a0c10 100%);
+            border: 2px solid var(--red);
+            padding: 3rem;
+            border-radius: 1.5rem;
+            position: relative;
+        }
+
+        .diagnosis-alert h2 { color: var(--red); margin-bottom: 1.5rem; }
+        
+        .alert-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+        }
+
+        .alert-item { margin-bottom: 1.5rem; }
+        .alert-item h4 { color: var(--red); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+
+        .warning-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            border-left: 4px solid var(--red);
+            padding-left: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        /* Roadmap */
+        .roadmap-timeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
+
+        .phase-card {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            position: relative;
+        }
+
+        .phase-card::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -1rem;
+            width: 1rem;
+            height: 1px;
+            background: var(--border);
+            z-index: 1;
+        }
+
+        .phase-card:last-child::after { display: none; }
+
+        .phase-num {
+            font-weight: 900;
+            font-size: 3rem;
+            opacity: 0.1;
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+        }
+
+        .phase-tag {
+            background: var(--surface-accent);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .phase-card h4 { margin-bottom: 1rem; color: var(--teal); }
+        .phase-card li { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 0.5rem; list-style: none; }
+        .phase-card li::before { content: '•'; margin-right: 0.5rem; color: var(--teal); }
+
+        .impact-pill {
+            margin-top: 1.5rem;
+            background: rgba(45, 212, 191, 0.1);
+            color: var(--teal);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* Asset Kanban */
+        .asset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .asset-col { background: rgba(240, 246, 252, 0.02); padding: 1.5rem; border-radius: 1rem; }
+        .asset-col h3 { font-size: 1rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1.5rem; color: var(--text-dim); }
+
+        .asset-item {
+            background: var(--surface);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+        .status-dot.done { background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+        .status-dot.pending { background: var(--text-dim); }
+
+        /* Critiques */
+        .critique-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+        }
+
+        .critique-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--red);
+            position: relative;
+        }
+
+        .critique-card span {
+            font-weight: 900;
+            font-size: 2rem;
+            opacity: 0.2;
+            color: var(--red);
+            position: absolute;
+            top: 0.5rem;
+            right: 1rem;
+        }
+
+        .critique-card p { font-size: 0.85rem; font-weight: 500; }
+
+        /* Matrix Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--surface);
+            border-radius: 1rem;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            text-align: left;
+            background: var(--surface-accent);
+            padding: 1.25rem;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+
+        td {
+            padding: 1.25rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        tr:hover td { background: rgba(240, 246, 252, 0.02); }
+
+        .priority-rank {
+            background: var(--teal);
+            color: var(--bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+
+        /* Footer */
+        footer {
+            padding: 8rem 0;
+            text-align: center;
+            background: linear-gradient(to top, rgba(168, 85, 247, 0.05) 0%, transparent 100%);
+        }
+
+        .footer-quote {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(1.5rem, 3vw, 2.5rem);
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+            line-height: 1.3;
+            font-weight: 700;
+        }
+
+        .footer-quote span { color: var(--red); }
+
+        .source-tag {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto;
+            border-top: 1px solid var(--border);
+            padding-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .machine-container, .roadmap-timeline, .critique-grid {
+                grid-template-columns: 1fr;
+            }
+            .alert-grid, .asset-grid {
+                grid-template-columns: 1fr;
+            }
+            header h1 { font-size: 3rem; }
+        }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; color: black; }
+            :root {
+                --bg: #fff;
+                --surface: #f9f9f9;
+                --text: #000;
+                --text-dim: #444;
+                --border: #ddd;
+            }
+            nav, .impact-pill { display: none; }
+            section { page-break-inside: avoid; border-bottom: 2px solid #000; }
+            .bhag-box { border: 2px solid #000; }
+            header h1 { background: none; -webkit-text-fill-color: black; color: black; }
+            .gear-icon { animation: none; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="container">
+        <div class="heading" style="font-size: 1rem; color: var(--teal);">TKE STRATEGY</div>
+        <div>
+            <a href="#snapshot">SNAPSHOT</a>
+            <a href="#machine">MACHINE</a>
+            <a href="#diagnosis">DIAGNOSIS</a>
+            <a href="#roadmap">ROADMAP</a>
+            <a href="#assets">ASSETS</a>
+            <a href="#critiques">CRITIQUES</a>
+            <a href="#matrix">PRIORITIES</a>
+        </div>
+    </div>
+</nav>
+
+<header>
+    <div class="container">
+        <span class="eyebrow">The Kidney Experts</span>
+        <h1>STRATEGIC OPERATING BLUEPRINT</h1>
+        <p class="subtitle">Surviving the Gap & Scaling the Moat</p>
+        
+        <div class="bhag-box">
+            <div class="bhag-text">“Ridding the World of the Need for Dialysis!”</div>
+        </div>
+
+        <div class="taglines">
+            <div class="tagline"><b>Patient:</b> “Big Expertise. Small-Town Heart.”</div>
+            <div class="tagline">|</div>
+            <div class="tagline"><b>Internal:</b> “Treated like family. Built for impact.”</div>
+        </div>
+    </div>
+</header>
+
+<div class="container">
+    <!-- SECTION 1: SNAPSHOT -->
+    <section id="snapshot">
+        <div class="section-title">
+            <h2>Current State Snapshot</h2>
+            <div class="line"></div>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-val">4</span>
+                <span class="stat-label">Clinic Locations <br><small>~1.75 FTE Equiv.</small></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">2+5</span>
+                <span class="stat-label">MDs + APPs <br><small>35 Total Staff</small></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">850</span>
+                <span class="stat-label">Encounters / Month</span>
+            </div>
+            <div class="stat-card" style="border-color: var(--red);">
+                <span class="stat-val" style="color: var(--red);">55% <span class="risk-flag">CRITICAL RISK</span></span>
+                <span class="stat-label">Care Standardization <br><small>Paper-Based</small></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">$3.59M</span>
+                <span class="stat-label">2024 Revenue <br><small>Target: $5M (2026)</small></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-val">60%</span>
+                <span class="stat-label">CCM Enrollment <br><small>Target: 80%</small></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: THE MACHINE -->
+    <section id="machine">
+        <div class="section-title">
+            <h2>The 3 Interlocking Gears</h2>
+            <div class="line"></div>
+        </div>
+        <div class="machine-container">
+            <div class="gear-card engine-1">
+                <div class="gear-icon">⚙️</div>
+                <h3>Clinical-Economic Engine</h3>
+                <ul>
+                    <li>Standardized preventive care (Quadruple Therapy, KDIGO)</li>
+                    <li>Better outcomes → fewer dialysis starts</li>
+                    <li>Revenue Capture: CCM ($90), TCM ($175), Krystexxa ($1.5k+)</li>
+                </ul>
+                <div class="paradox-box">
+                    <b>The Paradox:</b> Keeping a patient off dialysis loses ~$250/mo in capitation but saves the system <b>$7,000-$8,000/mo</b>.
+                </div>
+            </div>
+
+            <div class="gear-card engine-2">
+                <div class="gear-icon" style="animation-delay: -2s; color: var(--amber);">⚙️</div>
+                <h3>Talent & Culture Engine</h3>
+                <ul>
+                    <li>Values: People First, Prevention Over Profit, Work Smart</li>
+                    <li>Fundamentals: Direct is Kind, Fix the System, Unreasonable Hospitality</li>
+                    <li>Principle: <b>"Shared Fate"</b> — One happens to all</li>
+                </ul>
+                <div class="paradox-box">
+                    <b>Precision Hospitality:</b> AI = Memory (Data), Humans = Heart (Empathy).
+                </div>
+            </div>
+
+            <div class="gear-card engine-3">
+                <div class="gear-icon" style="animation-delay: -5s; color: var(--purple);">⚙️</div>
+                <h3>Data & AI Engine (The Moat)</h3>
+                <ul>
+                    <li><b>Current:</b> Paper report cards → manual dual-entry by MAs</li>
+                    <li><b>Future:</b> TALIA → digital capture → CDS → pre-populated EHR</li>
+                    <li>Standardization Target: 80%+</li>
+                </ul>
+                <div class="paradox-box" style="border-left-color: var(--purple);">
+                    <b>The Key Insight:</b> "TALIA is not the moat. The proprietary <b>12-domain protocol</b> and dataset ARE."
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 3: THE DIAGNOSIS -->
+    <section id="diagnosis">
+        <div class="diagnosis-alert">
+            <h2>⚠️ THE DIAGNOSIS: WHAT'S BREAKING</h2>
+            <div class="alert-grid">
+                <div>
+                    <div class="alert-item">
+                        <h4>Fatal Friction Point</h4>
+                        <p>The paper report card + dual-entry workflow is the single point of failure. It is the "sand in the gears."</p>
+                    </div>
+                    <div class="alert-item">
+                        <h4>The Breaking Point Cascade</h4>
+                        <p>MAs break first → Scribes break second → APPs break third. <b>Catastrophic failure</b> of care delivery is imminent without relief.</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="alert-item">
+                        <h4>Hidden Inefficiency</h4>
+                        <p>Self-reported 55% standardization is likely <b>35-45%</b> in reality. The machine is running on human heroics, not systems.</p>
+                    </div>
+                    <div class="warning-text">
+                        SURVIVAL WINDOW: 12-18 MONTHS. <br>
+                        <small style="font-weight: 400; font-size: 0.9rem; color: var(--text-dim);">The "2-3 year" timeline is an illusion.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: ROADMAP -->
+    <section id="roadmap">
+        <div class="section-title">
+            <h2>The 4-Phase Action Plan</h2>
+            <div class="line"></div>
+        </div>
+        <div class="roadmap-timeline">
+            <div class="phase-card">
+                <span class="phase-num">01</span>
+                <span class="phase-tag">Days 1-30</span>
+                <h4>Stabilization</h4>
+                <ul>
+                    <li>Kill paper cards → Tablet forms</li>
+                    <li>Ambient AI Scribing (Nabla)</li>
+                    <li>Eliminate dual-entry</li>
+                </ul>
+                <div class="impact-pill">Reduces MA burden 40%</div>
+            </div>
+
+            <div class="phase-card">
+                <span class="phase-num">02</span>
+                <span class="phase-tag">Days 1-90</span>
+                <h4>Maximization</h4>
+                <ul>
+                    <li>Industrialize CCM/RPM/TCM</li>
+                    <li>Dedicated Revenue Coordinator</li>
+                    <li>Scale Specialty Clinics</li>
+                </ul>
+                <div class="impact-pill">+$80k/mo Revenue Gap</div>
+            </div>
+
+            <div class="phase-card">
+                <span class="phase-num">03</span>
+                <span class="phase-tag">Days 30-90</span>
+                <h4>Compress</h4>
+                <ul>
+                    <li>Launch "Shadow VBC" Tracking</li>
+                    <li>Direct-to-Employer Contracts</li>
+                    <li>KFRE-based Savings Proof</li>
+                </ul>
+                <div class="impact-pill">VBC Bridge shortened 50%</div>
+            </div>
+
+            <div class="phase-card">
+                <span class="phase-num">04</span>
+                <span class="phase-tag">Ongoing</span>
+                <h4>4th Gear</h4>
+                <ul>
+                    <li>TALIA as Data Asset Project</li>
+                    <li>Better (not shorter) encounters</li>
+                    <li>Narrative Engine (ASN/NKF)</li>
+                </ul>
+                <div class="impact-pill">Talent Retention Lock-in</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: ASSETS -->
+    <section id="assets">
+        <div class="section-title">
+            <h2>The 10 Action Assets</h2>
+            <div class="line"></div>
+        </div>
+        <div class="asset-grid">
+            <div class="asset-col">
+                <h3>Completed</h3>
+                <div class="asset-item">
+                    <div class="status-dot done"></div>
+                    <span>Digital 12-Domain Schema (JSON)</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot done"></div>
+                    <span>Ambient AI Evaluation Matrix</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot done"></div>
+                    <span>"Transition to Digital" Staff Memo</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot done"></div>
+                    <span>Shadow VBC Dashboard Concept</span>
+                </div>
+            </div>
+            <div class="asset-col">
+                <h3>Pending</h3>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>Revenue Coordinator Playbook</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>Direct-to-Employer Proposal</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>TALIA PRD Pivot (CDS Focus)</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>"TKE By The Numbers" Exec Summary</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>ASN/NKF Abstract Drafts</span>
+                </div>
+                <div class="asset-item">
+                    <div class="status-dot pending"></div>
+                    <span>Specialty Clinic One-Pager</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 6: CRITIQUES -->
+    <section id="critiques">
+        <div class="section-title">
+            <h2>Council Critique: Brutal Truths</h2>
+            <div class="line"></div>
+        </div>
+        <div class="critique-grid">
+            <div class="critique-card">
+                <span>1</span>
+                <p>Economic model is broken until VBC—CCM is a band-aid.</p>
+            </div>
+            <div class="critique-card">
+                <span>2</span>
+                <p>TALIA is not your moat. Rent the AI, own the clinical IP.</p>
+            </div>
+            <div class="critique-card">
+                <span>3</span>
+                <p>The "8-minute encounter" future is a trap. Go for BETTER, not shorter.</p>
+            </div>
+            <div class="critique-card">
+                <span>4</span>
+                <p>No acquisition playbook—scaling may kill your culture.</p>
+            </div>
+            <div class="critique-card">
+                <span>5</span>
+                <p>Missing a 4th Gear: The Narrative Engine. You are invisible.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 7: MATRIX -->
+    <section id="matrix">
+        <div class="section-title">
+            <h2>90-Day Priority Matrix</h2>
+            <div class="line"></div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th width="80">Priority</th>
+                    <th>Action Item</th>
+                    <th>Impact</th>
+                    <th>Cost</th>
+                    <th>Timeline</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="priority-rank">#1</span></td>
+                    <td><b>Digitize 12-domain cards on tablets</b></td>
+                    <td>Relieves all 3 gears / Fixes dual-entry</td>
+                    <td>&lt;$1,000</td>
+                    <td>30 Days</td>
+                </tr>
+                <tr>
+                    <td><span class="priority-rank">#2</span></td>
+                    <td><b>Industrialize CCM/RPM/TCM capture</b></td>
+                    <td>+$50-80K/month incremental</td>
+                    <td>$0 (Role Redesign)</td>
+                    <td>45 Days</td>
+                </tr>
+                <tr>
+                    <td><span class="priority-rank">#3</span></td>
+                    <td><b>Deploy Ambient AI (Nabla)</b></td>
+                    <td>Immediate encounter time reduction</td>
+                    <td>~$1k/mo</td>
+                    <td>30 Days</td>
+                </tr>
+                <tr>
+                    <td><span class="priority-rank">#4</span></td>
+                    <td><b>Shadow VBC + Approach 1 Payer</b></td>
+                    <td>Compresses bridge to 12-18mo</td>
+                    <td>Minimal</td>
+                    <td>60-90 Days</td>
+                </tr>
+                <tr>
+                    <td><span class="priority-rank">#5</span></td>
+                    <td><b>APP retention agreements (VBC-linked)</b></td>
+                    <td>De-risks talent vulnerability</td>
+                    <td>Deferred</td>
+                    <td>60 Days</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+<footer>
+    <div class="container">
+        <div class="footer-quote">
+            “You are not a nephrology practice with an AI project. You are a <span>clinical outcomes company</span> trapped inside a fee-for-service model that punishes your success.”
+        </div>
+        
+        <div class="footer-quote" style="font-size: 1.5rem; color: var(--text-dim);">
+            “Your job for the next 18 months: <b>survive long enough</b> — with your people intact and your data clean — for the world to catch up to what you already know.”
+        </div>
+
+        <div class="source-tag">
+            Source: Strategic Advisory Council (7 LLMs: GPT-5.2, Claude Opus 4.6, Kimi K2.5, GLM-5, Gemini 3 Pro, DeepSeek V3.2, Grok 4.1) <br>
+            Deep analysis of TKE Master Prompt, Culture Kernel, and operational history.
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
