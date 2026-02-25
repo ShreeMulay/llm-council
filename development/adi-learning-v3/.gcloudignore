@@ -1,0 +1,41 @@
+# Cloud Build ignore file
+# NOTE: gcloud uses this instead of .gitignore when uploading sources.
+# The audio MP3 files in public/audio/ are gitignored (too large for git)
+# but MUST be included in Cloud Build context for the Docker build.
+
+# Git
+.git
+.gitignore
+
+# Dependencies (reinstalled in container)
+node_modules
+
+# Build artifacts (rebuilt in container)
+dist
+apps/frontend/dist
+
+# Database (ephemeral in container)
+*.db
+*.db-journal
+apps/backend/data
+
+# Environment (passed via Cloud Run env vars)
+.env
+.env.local
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Misc
+tsconfig.tsbuildinfo
+.vite
+scripts/
+
+# NOTE: audio MP3 files in apps/frontend/public/audio/ are NOT ignored here
+# They get copied into dist/ during Vite build inside Docker

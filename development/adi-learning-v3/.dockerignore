@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Dependencies (reinstalled in container)
+node_modules
+
+# Build artifacts (rebuilt in container)
+dist
+apps/frontend/dist
+
+# Database (ephemeral in container)
+*.db
+*.db-journal
+apps/backend/data
+
+# Environment (passed via Cloud Run env vars)
+.env
+.env.local
+
+# IDE / editor
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Misc
+tsconfig.tsbuildinfo
+.vite
+scripts/
+
+# NOTE: Do NOT ignore apps/frontend/public/audio/
+# The pre-generated MP3 files must be in the build context
+# so Vite can copy them to dist/ during build
