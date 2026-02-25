@@ -57,65 +57,133 @@ const NUMBER_WORDS: Record<string, number> = {};
   }
 }
 
+// Default voice IDs for pre-generated audio (must match what was used in generate-audio.ts)
+const DEFAULT_VOICES: Record<string, string> = {
+  chatterbox: 'fb2d2858',     // Lucy
+  elevenlabs: '21m00Tcm4TlvDq8ikWAM', // Rachel
+};
+
 /**
  * Resolve text to a pre-generated audio file ID, or null if no match.
  */
 function resolveToFileId(text: string): string | null {
-  // 1. Exact UI prompt match
   const uiId = PREGEN_UI[text];
   if (uiId) return uiId;
 
-  // 2. Single word — might be a rhyme word or number word
   const trimmed = text.trim().toLowerCase();
 
-  if (PREGEN_WORDS.has(trimmed)) {
-    return `word-${trimmed}`;
-  }
+  if (PREGEN_WORDS.has(trimmed)) return `word-${trimmed}`;
+  if (NUMBER_WORDS[trimmed] !== undefined) return `number-${NUMBER_WORDS[trimmed]}`;
 
-  if (NUMBER_WORDS[trimmed] !== undefined) {
-    return `number-${NUMBER_WORDS[trimmed]}`;
-  }
-
-  // 3. Letter sound pattern
   const soundMatch = text.match(LETTER_SOUND_RE);
-  if (soundMatch) {
-    return `letter-${soundMatch[1]}-sound`;
-  }
+  if (soundMatch) return `letter-${soundMatch[1]}-sound`;
 
   const nameMatch = text.match(LETTER_NAME_RE);
-  if (nameMatch) {
-    return `letter-${nameMatch[1]}-name`;
-  }
+  if (nameMatch) return `letter-${nameMatch[1]}-name`;
 
   return null;
 }
 
-/**
- * Get the URL for a pre-generated audio file.
- * Engine is read from the settings store.
- */
 function getPregenUrl(fileId: string): string {
   const engine = useSettingsStore.getState().ttsEngine;
   return `/audio/${engine}/${fileId}.mp3`;
 }
 
+/**
+ * Check if the currently selected voice is the default for this engine.
+ * If it IS the default (or empty), we can use pre-gen files. Otherwise, we must use the live API.
+ */
+function isUsingDefaultVoice(): boolean {
+  const { ttsEngine, selectedVoice } = useSettingsStore.getState();
+  if (!selectedVoice) return true;
+  const defaultId = DEFAULT_VOICES[ttsEngine] || '';
+  return selectedVoice === defaultId;
+}
+
 // ─── Speech Queue Item ─────────────────────────────────
 
 interface QueueItem {
-  /** Pre-generated file ID (e.g. 'number-42') */
   fileId?: string;
-  /** Raw text to speak via API/fallback */
   text?: string;
-  /** Fallback text if fileId fails */
   fallbackText?: string;
-  /** Resolve when this item finishes playing */
   resolve: () => void;
-  /** Reject on error */
   reject: (err: Error) => void;
 }
 
-/** Gap between queued speech items in ms */
 const QUEUE_GAP_MS = 200;
+
+// ─── Generative Music Data ─────────────────────────────
+
+// Note name -> semitone offset from C
+const NOTE_MAP: Record<string, number> = {
+  C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5,
+  'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11,
+};
+
+const ALL_NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+// Chord quality offsets (semitones from root)
+const CHORD_TYPES: Record<string, number[]> = {
+  major: [0, 4, 7],
+  minor: [0, 3, 7],
+};
+
+// Calming chord progression patterns using Nashville numbers
+// [degree, quality] — degree is 0-indexed from root
+const PROGRESSIONS: [number, 'major' | 'minor'][][] = [
+  [[0, 'major'], [5, 'minor'], [3, 'major'], [4, 'major']],   // I  vi  IV  V
+  [[0, 'major'], [3, 'major'], [5, 'minor'], [4, 'major']],   // I  IV  vi  V
+  [[0, 'major'], [4, 'major'], [5, 'minor'], [3, 'major']],   // I  V   vi  IV
+  [[5, 'minor'], [3, 'major'], [0, 'major'], [4, 'major']],   // vi IV  I   V
+  [[0, 'major'], [3, 'major'], [0, 'major'], [4, 'major']],   // I  IV  I   V
+  [[0, 'major'], [2, 'minor'], [5, 'minor'], [3, 'major']],   // I  iii vi  IV
+  [[0, 'major'], [5, 'minor'], [2, 'minor'], [4, 'major']],   // I  vi  iii V
+  [[3, 'major'], [0, 'major'], [4, 'major'], [5, 'minor']],   // IV I   V   vi
+];
+
+// Friendly root keys for ambient music
+const ROOT_KEYS = ['C', 'D', 'Eb', 'F', 'G', 'A', 'Bb'];
+
+// Oscillator types that sound gentle/ambient
+const TIMBRES: OscillatorType[] = ['sine', 'triangle'];
+
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randRange(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
+
+/**
+ * Build a chord: [rootNote, octave, quality] -> ['C3', 'E3', 'G3']
+ */
+function buildChord(rootSemitone: number, octave: number, quality: 'major' | 'minor'): string[] {
+  const offsets = CHORD_TYPES[quality];
+  return offsets.map((offset) => {
+    const semi = (rootSemitone + offset) % 12;
+    const oct = octave + Math.floor((rootSemitone + offset) / 12);
+    return `${ALL_NOTES[semi]}${oct}`;
+  });
+}
+
+/**
+ * Generate a random chord progression for a given key.
+ * Returns an array of chord arrays (each chord = array of note strings).
+ */
+function generateProgression(rootKey: string): string[][] {
+  const rootSemi = NOTE_MAP[rootKey] ?? 0;
+  const pattern = pick(PROGRESSIONS);
+  const octave = pick([2, 3]); // Low octaves for ambient feel
+
+  // Major scale intervals in semitones: W W H W W W H
+  const majorScale = [0, 2, 4, 5, 7, 9, 11];
+
+  return pattern.map(([degree, quality]) => {
+    const scaleSemi = (rootSemi + majorScale[degree]) % 12;
+    return buildChord(scaleSemi, octave, quality);
+  });
+}
 
 // ─── Audio Service ─────────────────────────────────────
 
@@ -123,6 +191,7 @@ class AudioService {
   private sparkleSynth: Tone.PolySynth | null = null;
   private drumSynth: Tone.MembraneSynth | null = null;
   private isInitialized = false;
+  private initPromise: Promise<void> | null = null;
   private currentAudio: HTMLAudioElement | null = null;
 
   // ─── Speech Queue ────────────────────────────────
@@ -134,37 +203,68 @@ class AudioService {
   private bgLoop: Tone.Loop | null = null;
   private bgGain: Tone.Gain | null = null;
   private bgPlaying = false;
-  private normalBgVolume = -28; // dB
-  private duckedBgVolume = -40; // dB when speech is playing
+  private normalBgVolume = -28;
+  private duckedBgVolume = -40;
 
+  constructor() {
+    // Register a one-time click listener to initialize audio on first user gesture.
+    // This is required by Chrome/Safari for Web Audio API (AudioContext).
+    if (typeof document !== 'undefined') {
+      const initOnGesture = () => {
+        this.init();
+        document.removeEventListener('click', initOnGesture);
+        document.removeEventListener('touchstart', initOnGesture);
+      };
+      document.addEventListener('click', initOnGesture, { once: false });
+      document.addEventListener('touchstart', initOnGesture, { once: false });
+    }
+  }
+
+  /**
+   * Initialize Tone.js AudioContext and synths.
+   * Safe to call multiple times — only runs once.
+   * MUST be called from a user gesture (click/tap) for Chrome/Safari.
+   */
   async init() {
     if (this.isInitialized) return;
-    await Tone.start();
+    if (this.initPromise) return this.initPromise;
 
-    this.sparkleSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'triangle' },
-      envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 1 },
-    }).toDestination();
-    this.sparkleSynth.volume.value = -10;
+    this.initPromise = this._doInit();
+    return this.initPromise;
+  }
 
-    this.drumSynth = new Tone.MembraneSynth().toDestination();
-    this.drumSynth.volume.value = -5;
+  private async _doInit() {
+    try {
+      await Tone.start();
 
-    // Background music synth → gain node → destination
-    this.bgGain = new Tone.Gain(1).toDestination();
-    this.bgGain.gain.value = Tone.dbToGain(this.normalBgVolume);
+      this.sparkleSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'triangle' },
+        envelope: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 1 },
+      }).toDestination();
+      this.sparkleSynth.volume.value = -10;
 
-    this.bgSynth = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: 'sine' },
-      envelope: { attack: 1.5, decay: 0.5, sustain: 0.8, release: 2 },
-    }).connect(this.bgGain);
+      this.drumSynth = new Tone.MembraneSynth().toDestination();
+      this.drumSynth.volume.value = -5;
 
-    this.isInitialized = true;
+      // Background music synth -> gain node -> destination
+      this.bgGain = new Tone.Gain(1).toDestination();
+      this.bgGain.gain.value = Tone.dbToGain(this.normalBgVolume);
 
-    // Auto-start background music if enabled
-    const settings = useSettingsStore.getState();
-    if (settings.backgroundMusic) {
-      this.startBackgroundMusic();
+      this.bgSynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: 'sine' },
+        envelope: { attack: 1.5, decay: 0.5, sustain: 0.8, release: 2 },
+      }).connect(this.bgGain);
+
+      this.isInitialized = true;
+
+      // Auto-start background music if enabled
+      const settings = useSettingsStore.getState();
+      if (settings.backgroundMusic) {
+        this.startBackgroundMusic();
+      }
+    } catch (err) {
+      console.warn('[audio] Failed to initialize Tone.js:', err);
+      this.initPromise = null; // Allow retry
     }
   }
 
@@ -172,7 +272,7 @@ class AudioService {
     return useSettingsStore.getState().volume === 0;
   }
 
-  // ─── SFX (unchanged — Tone.js synths, no conflict with speech queue) ──
+  // ─── SFX ──────────────────────────────────────────
 
   playSuccess() {
     if (!this.isInitialized || this.isMuted) return;
@@ -226,57 +326,51 @@ class AudioService {
   // ─── Voice (TTS) — Queue-based ───────────────────
 
   /**
-   * Speak a pre-generated audio clip by file ID. Queued — waits for
-   * any previously queued speech to finish before playing.
-   *
-   * Falls back to speak(text) via API if the file fails to load.
+   * Speak a pre-generated audio clip by file ID. Queued.
+   * If a non-default voice is selected, skips pre-gen and uses live API.
    */
   async speakById(fileId: string, fallbackText?: string): Promise<void> {
     if (this.isMuted) return;
+    // If using a non-default voice, skip pre-gen and use live API instead
+    if (!isUsingDefaultVoice() && fallbackText) {
+      return this.enqueue({ text: fallbackText });
+    }
     return this.enqueue({ fileId, fallbackText });
   }
 
-  /** Fire-and-forget queued speakById */
   sayByIdAsync(fileId: string, fallbackText?: string): void {
     this.speakById(fileId, fallbackText).catch(() => {});
   }
 
   /**
-   * Speak text. Queued — waits for any previously queued speech.
-   *
-   * Flow per item:
-   *   1. resolveToFileId(text) -> if found, play /audio/{engine}/{id}.mp3
-   *   2. Else, POST /api/tts/speak (live API call)
-   *   3. Else, browser SpeechSynthesis fallback
+   * Speak text. Queued.
+   * If using default voice, tries pre-gen first, then API, then browser TTS.
+   * If using non-default voice, skips pre-gen and goes straight to API.
    */
   async speak(text: string): Promise<void> {
     if (this.isMuted) return;
     return this.enqueue({ text });
   }
 
-  /** Fire-and-forget queued speak */
   sayAsync(text: string): void {
     this.speak(text).catch(() => {});
   }
 
-  /**
-   * Immediately speak, interrupting any queued/current speech.
-   * Use for navigation transitions or explicit user-triggered speech.
-   */
   async speakImmediate(text: string): Promise<void> {
     if (this.isMuted) return;
-    this.stopSpeaking(); // clears queue + stops current audio
+    this.stopSpeaking();
 
-    const fileId = resolveToFileId(text);
-    if (fileId) {
-      const url = getPregenUrl(fileId);
-      try {
-        this.duckBgMusic();
-        await this.playAudioUrl(url);
-        this.unduckBgMusic();
-        return;
-      } catch {
-        // fall through
+    // If default voice and has pre-gen, use it
+    if (isUsingDefaultVoice()) {
+      const fileId = resolveToFileId(text);
+      if (fileId) {
+        const url = getPregenUrl(fileId);
+        try {
+          this.duckBgMusic();
+          await this.playAudioUrl(url);
+          this.unduckBgMusic();
+          return;
+        } catch { /* fall through */ }
       }
     }
 
@@ -285,12 +379,17 @@ class AudioService {
     this.unduckBgMusic();
   }
 
-  /**
-   * Immediately speak a file ID, interrupting everything.
-   */
   async speakByIdImmediate(fileId: string, fallbackText?: string): Promise<void> {
     if (this.isMuted) return;
     this.stopSpeaking();
+
+    // If using non-default voice, skip pre-gen
+    if (!isUsingDefaultVoice() && fallbackText) {
+      this.duckBgMusic();
+      await this.speakViaApi(fallbackText);
+      this.unduckBgMusic();
+      return;
+    }
 
     const url = getPregenUrl(fileId);
     try {
@@ -306,11 +405,7 @@ class AudioService {
     }
   }
 
-  /**
-   * Stop all speech: cancel current audio, clear the queue.
-   */
   stopSpeaking() {
-    // Reject all pending queue items
     for (const item of this.queue) {
       item.reject(new Error('Speech stopped'));
     }
@@ -330,7 +425,6 @@ class AudioService {
   private enqueue(item: Omit<QueueItem, 'resolve' | 'reject'>): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.queue.push({ ...item, resolve, reject });
-      // Start draining if not already in progress
       if (!this.isDraining) {
         this.drainQueue();
       }
@@ -352,10 +446,8 @@ class AudioService {
         item.reject(err instanceof Error ? err : new Error(String(err)));
       }
 
-      // Remove the item we just processed
       this.queue.shift();
 
-      // Small gap between sequential speech items for natural pacing
       if (this.queue.length > 0) {
         await new Promise((r) => setTimeout(r, QUEUE_GAP_MS));
       }
@@ -366,92 +458,133 @@ class AudioService {
   }
 
   private async playQueueItem(item: QueueItem): Promise<void> {
-    // Case 1: fileId provided — try static file first
-    if (item.fileId) {
-      const url = getPregenUrl(item.fileId);
-      try {
-        await this.playAudioUrl(url);
-        return;
-      } catch {
-        // Static file failed — try fallback text
-        if (item.fallbackText) {
-          await this.speakViaApi(item.fallbackText);
-          return;
-        }
-        throw new Error(`Failed to play fileId: ${item.fileId}`);
-      }
-    }
+    const useDefault = isUsingDefaultVoice();
 
-    // Case 2: text provided — resolve to file or API
-    if (item.text) {
-      const fileId = resolveToFileId(item.text);
-      if (fileId) {
-        const url = getPregenUrl(fileId);
+    // Case 1: fileId provided
+    if (item.fileId) {
+      // Only use pre-gen if on default voice
+      if (useDefault) {
+        const url = getPregenUrl(item.fileId);
         try {
           await this.playAudioUrl(url);
           return;
-        } catch {
-          // Fall through to API
+        } catch { /* fall through */ }
+      }
+      // Non-default voice or pre-gen failed: use API with fallback text
+      if (item.fallbackText) {
+        await this.speakViaApi(item.fallbackText);
+        return;
+      }
+      if (useDefault) {
+        throw new Error(`Failed to play fileId: ${item.fileId}`);
+      }
+      return; // No fallback text and non-default voice, skip silently
+    }
+
+    // Case 2: text provided
+    if (item.text) {
+      // Try pre-gen only if on default voice
+      if (useDefault) {
+        const fileId = resolveToFileId(item.text);
+        if (fileId) {
+          const url = getPregenUrl(fileId);
+          try {
+            await this.playAudioUrl(url);
+            return;
+          } catch { /* fall through to API */ }
         }
       }
       await this.speakViaApi(item.text);
     }
   }
 
-  // ─── Background Music ────────────────────────────
+  // ─── Background Music (Generative) ──────────────
 
   /**
-   * Start ambient background music. Gentle, looping pad chords.
-   * Auto-ducks when speech is playing.
+   * Start generative ambient background music.
+   * Each call generates a new random chord progression, tempo, and timbre.
+   * Call this when entering a game for fresh music each time.
    */
   startBackgroundMusic() {
-    if (!this.isInitialized || this.bgPlaying) return;
+    if (!this.isInitialized) return;
 
-    // Chord progression: C maj -> Am -> F maj -> G maj (classic calming loop)
-    const chords = [
-      ['C3', 'E3', 'G3'],  // C major
-      ['A2', 'C3', 'E3'],  // A minor
-      ['F2', 'A2', 'C3'],  // F major
-      ['G2', 'B2', 'D3'],  // G major
-    ];
+    // Stop any existing music first
+    if (this.bgPlaying) {
+      this.stopBackgroundMusic();
+    }
+
+    // Generate random music parameters
+    const rootKey = pick(ROOT_KEYS);
+    const chords = generateProgression(rootKey);
+    const bpm = Math.round(randRange(35, 55));
+    const timbre = pick(TIMBRES);
+    const useArpeggio = Math.random() > 0.5;
+
+    // Apply random timbre to bg synth
+    if (this.bgSynth) {
+      this.bgSynth.set({ oscillator: { type: timbre } });
+    }
 
     let chordIndex = 0;
 
-    // Play a chord every 4 seconds (slow, ambient)
-    this.bgLoop = new Tone.Loop((time) => {
-      const chord = chords[chordIndex % chords.length];
-      this.bgSynth?.triggerAttackRelease(chord, '2n', time);
-      chordIndex++;
-    }, '4n');
+    if (useArpeggio) {
+      // Gentle arpeggio: play each note of the chord sequentially
+      let noteInChord = 0;
+      this.bgLoop = new Tone.Loop((time) => {
+        const chord = chords[chordIndex % chords.length];
+        const note = chord[noteInChord % chord.length];
+        this.bgSynth?.triggerAttackRelease(note, '4n', time);
+        noteInChord++;
+        if (noteInChord >= chord.length) {
+          noteInChord = 0;
+          chordIndex++;
+        }
+      }, '8n');
+    } else {
+      // Block chords: play whole chord at once
+      this.bgLoop = new Tone.Loop((time) => {
+        const chord = chords[chordIndex % chords.length];
+        this.bgSynth?.triggerAttackRelease(chord, '2n', time);
+        chordIndex++;
+      }, '4n');
+    }
 
-    // Slow tempo for ambient feel
-    Tone.getTransport().bpm.value = 40;
+    Tone.getTransport().bpm.value = bpm;
     this.bgLoop.start(0);
     Tone.getTransport().start();
 
     this.bgPlaying = true;
-
-    // Apply current volume from settings
     this.updateBgMusicVolume();
   }
 
-  /**
-   * Stop background music.
-   */
   stopBackgroundMusic() {
     if (this.bgLoop) {
       this.bgLoop.stop();
       this.bgLoop.dispose();
       this.bgLoop = null;
     }
-    Tone.getTransport().stop();
+    if (this.bgPlaying) {
+      Tone.getTransport().stop();
+    }
     this.bgPlaying = false;
   }
 
   /**
-   * Toggle background music on/off.
+   * Regenerate background music with new random parameters.
+   * Call when entering a new game for variety.
    */
+  regenerateMusic() {
+    const settings = useSettingsStore.getState();
+    if (!settings.backgroundMusic) return;
+    this.startBackgroundMusic();
+  }
+
   toggleBackgroundMusic(enabled: boolean) {
+    // Ensure audio is initialized before toggling
+    if (enabled && !this.isInitialized) {
+      this.init().then(() => this.startBackgroundMusic());
+      return;
+    }
     if (enabled) {
       this.startBackgroundMusic();
     } else {
@@ -459,31 +592,23 @@ class AudioService {
     }
   }
 
-  /**
-   * Update background music volume from settings store.
-   * Called when bgMusicVolume setting changes.
-   */
   updateBgMusicVolume() {
     if (!this.bgGain) return;
     const settings = useSettingsStore.getState();
     const vol = settings.bgMusicVolume ?? 0.3;
-    // Map 0-1 to a dB range: 0 = -60dB (silent), 1 = -18dB (audible but quiet)
     this.normalBgVolume = vol === 0 ? -60 : -18 - (1 - vol) * 30;
     this.duckedBgVolume = this.normalBgVolume - 12;
 
-    // Only apply normal volume if not currently ducked (i.e., speech not playing)
     if (!this.isDraining) {
       this.bgGain.gain.rampTo(Tone.dbToGain(this.normalBgVolume), 0.3);
     }
   }
 
-  /** Duck background music volume while speech plays */
   private duckBgMusic() {
     if (!this.bgGain || !this.bgPlaying) return;
     this.bgGain.gain.rampTo(Tone.dbToGain(this.duckedBgVolume), 0.3);
   }
 
-  /** Restore background music volume after speech ends */
   private unduckBgMusic() {
     if (!this.bgGain || !this.bgPlaying) return;
     this.bgGain.gain.rampTo(Tone.dbToGain(this.normalBgVolume), 0.5);
@@ -511,12 +636,12 @@ class AudioService {
 
   private async speakViaApi(text: string): Promise<void> {
     try {
-      const blobUrl = await apiSpeak(text);
+      const { ttsEngine, selectedVoice } = useSettingsStore.getState();
+      const blobUrl = await apiSpeak(text, ttsEngine, selectedVoice || undefined);
       await this.playAudioUrl(blobUrl).finally(() => {
         URL.revokeObjectURL(blobUrl);
       });
     } catch {
-      // Final fallback: browser TTS
       this.speakFallback(text);
     }
   }

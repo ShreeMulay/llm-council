@@ -40,9 +40,10 @@ export async function setTTSVoice(engine: TTSEngine, voice: string) {
 }
 
 /** Get speech audio as a blob URL for playback */
-export async function speak(text: string, engine?: TTSEngine): Promise<string> {
+export async function speak(text: string, engine?: TTSEngine, voice?: string): Promise<string> {
   const body: Record<string, string> = { text };
   if (engine) body.engine = engine;
+  if (voice) body.voice = voice;
 
   const res = await fetch(`${BASE}/tts/speak`, {
     method: 'POST',

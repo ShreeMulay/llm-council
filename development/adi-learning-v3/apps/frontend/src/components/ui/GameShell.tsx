@@ -23,8 +23,9 @@ export function GameShell({ title, emoji, children, progress, bgClass, onBack }:
   const { volume, setVolume } = useSettingsStore();
   const { score, streak, showCelebration, dismissCelebration } = useGameStore();
 
+  // Generate unique background music each time a game is entered
   useEffect(() => {
-    audio.init();
+    audio.regenerateMusic();
   }, []);
 
   function handleBack() {

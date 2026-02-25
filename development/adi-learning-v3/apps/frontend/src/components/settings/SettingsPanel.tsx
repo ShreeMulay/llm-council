@@ -11,10 +11,12 @@ import type { TTSEngine, TTSVoice } from '@adi/shared';
 export function SettingsPanel() {
   const {
     ttsEngine,
+    selectedVoice,
     volume,
     backgroundMusic,
     bgMusicVolume,
     setTTSEngine: setLocalEngine,
+    setSelectedVoice,
     setVolume,
     setBackgroundMusic,
     setBgMusicVolume,
@@ -25,7 +27,7 @@ export function SettingsPanel() {
 
   const [providers, setProviders] = useState<Array<{ name: TTSEngine; active: boolean; available: boolean }>>([]);
   const [voices, setVoices] = useState<TTSVoice[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState('');
+  const [loadingVoices, setLoadingVoices] = useState(false);
   const [testing, setTesting] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
@@ -42,10 +44,12 @@ export function SettingsPanel() {
   }
 
   async function loadVoices(engine: TTSEngine) {
+    setLoadingVoices(true);
     try {
       const res = await getTTSVoices(engine);
       if (res.ok) setVoices(res.data);
     } catch { /* ignore */ }
+    setLoadingVoices(false);
   }
 
   async function handleEngineSwitch(engine: TTSEngine) {
@@ -59,13 +63,14 @@ export function SettingsPanel() {
   async function handleVoiceChange(voiceId: string) {
     setSelectedVoice(voiceId);
     try {
-      await setTTSVoice(ttsEngine, voiceId);
+      if (voiceId) await setTTSVoice(ttsEngine, voiceId);
     } catch { /* ignore */ }
   }
 
   async function testVoice() {
     setTesting(true);
     try {
+      await audio.init();
       await audio.speakByIdImmediate('ui-welcome', "Welcome to Adi's Learning Adventure!");
     } finally {
       setTesting(false);
@@ -137,9 +142,13 @@ export function SettingsPanel() {
         </div>
 
         {/* Voice selector */}
-        {voices.length > 0 && (
-          <div className="mb-6">
-            <label className="text-sm font-semibold text-muted-foreground mb-2 block">Voice</label>
+        <div className="mb-6">
+          <label className="text-sm font-semibold text-muted-foreground mb-2 block">Voice</label>
+          {loadingVoices ? (
+            <div className="w-full rounded-xl border-2 border-border p-3 text-sm text-muted-foreground bg-gray-50">
+              Loading voices...
+            </div>
+          ) : (
             <select
               className="w-full rounded-xl border-2 border-border p-3 text-sm bg-white"
               value={selectedVoice}
@@ -152,8 +161,8 @@ export function SettingsPanel() {
                 </option>
               ))}
             </select>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Volume */}
         <div className="mb-6">

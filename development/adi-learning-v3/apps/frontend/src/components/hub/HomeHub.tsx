@@ -8,7 +8,6 @@ import { BadgeToast, TrophyCase } from '@/components/badges/BadgeDisplay';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useProgressStore } from '@/stores/progressStore';
 import { useBadgeStore } from '@/stores/badgeStore';
-import { audio } from '@/services/audio';
 
 const SKILLS = [
   { id: 'name-writing', title: 'Write\nMy Name', emoji: '✍️', route: '/game/name-writing', color: 'bg-pink-100/90' },
@@ -25,7 +24,6 @@ export default function HomeHub() {
   const { toggleTrophyCase } = useBadgeStore();
 
   useEffect(() => {
-    audio.init();
     fetchProgress();
   }, [fetchProgress]);
 
