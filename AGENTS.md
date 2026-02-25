@@ -20,7 +20,7 @@ uv run python -m backend.main
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
 | Kimi K2.5 | Fireworks Direct | Reasoning | 200 tok/s, 3.4x faster than OR |
 | GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
-| Gemini 3 Pro Preview | OpenRouter | Knowledge Generalist | - |
+| Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
 | DeepSeek V3.2 | OpenRouter | Architect/Reasoner | - |
 | Grok 4.1 Fast | OpenRouter | Real-time Intel | `reasoning: disabled` |
 
@@ -87,7 +87,7 @@ Use aliases in `/council` command:
 - `opus` -> anthropic/claude-opus-4.6
 - `kimi` -> fireworks/kimi-k2.5
 - `glm` -> fireworks/glm-5
-- `gemini` or `pro` -> google/gemini-3-pro-preview
+- `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `deepseek` -> deepseek/deepseek-v3.2
 - `grok` -> x-ai/grok-4.1-fast
 - `sonnet` -> anthropic/claude-sonnet-4.5

@@ -43,7 +43,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder + Chairman)
 # 3. Kimi K2.5 via Fireworks Direct (Reasoning) — 200 tok/s, 3.4x faster than OpenRouter
 # 4. GLM-5 via Fireworks Direct (Tool Specialist) — highest output speed per Artificial Analysis
-# 5. Gemini 3 Pro Preview via OpenRouter (Generalist)
+# 5. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
 # 6. DeepSeek V3.2 via OpenRouter (Architect/Reasoner)
 # 7. Grok 4.1 Fast via OpenRouter (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
@@ -51,7 +51,7 @@ DEFAULT_COUNCIL_MODELS = [
     "anthropic/claude-opus-4.6",  # Anthropic OAuth (Lead Coder)
     "fireworks/kimi-k2.5",  # Fireworks Direct (Reasoning)
     "fireworks/glm-5",  # Fireworks Direct (Tool Specialist)
-    "google/gemini-3-pro-preview",  # OpenRouter (Generalist)
+    "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
     "deepseek/deepseek-v3.2",  # OpenRouter (Architect)
     "x-ai/grok-4.1-fast",  # OpenRouter (Real-time Intel)
 ]
@@ -99,6 +99,7 @@ GEMINI_DIRECT_MODEL_IDS = [
     "google/gemini-3-flash-preview",
     "google/gemini-3-pro",
     "google/gemini-3-pro-preview",
+    "google/gemini-3.1-pro-preview",
     "google/gemini-2.0-flash",
 ]
 
@@ -126,8 +127,8 @@ MODEL_ALIASES = {
     "opus": "anthropic/claude-opus-4.6",
     "kimi": "fireworks/kimi-k2.5",
     "glm": "fireworks/glm-5",
-    "gemini": "google/gemini-3-pro-preview",
-    "pro": "google/gemini-3-pro-preview",
+    "gemini": "google/gemini-3.1-pro-preview",
+    "pro": "google/gemini-3.1-pro-preview",
     "deepseek": "deepseek/deepseek-v3.2",
     "grok": "x-ai/grok-4.1-fast",
     "sonnet": "anthropic/claude-sonnet-4.5",

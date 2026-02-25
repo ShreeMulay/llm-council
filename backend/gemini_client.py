@@ -11,12 +11,15 @@ GEMINI_MODEL_MAP = {
     "google/gemini-3-flash": "gemini-2.0-flash",
     "google/gemini-3-flash-preview": "gemini-2.0-flash",
     "google/gemini-3-pro-preview": "gemini-2.0-flash",
+    "google/gemini-3.1-pro-preview": "gemini-2.0-flash",
     "google/gemini-2.0-flash": "gemini-2.0-flash",
 }
 
 
 def get_gemini_model_id(council_model_id: str) -> str:
-    return GEMINI_MODEL_MAP.get(council_model_id, council_model_id.replace("google/", ""))
+    return GEMINI_MODEL_MAP.get(
+        council_model_id, council_model_id.replace("google/", "")
+    )
 
 
 def convert_messages_to_gemini(messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
@@ -36,7 +39,7 @@ async def query_gemini_model(
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-    timeout: float = 900.0
+    timeout: float = 900.0,
 ) -> Optional[Dict[str, Any]]:
     if not GEMINI_API_KEY:
         print("Error: GEMINI_API_KEY not configured")
@@ -66,7 +69,7 @@ async def query_gemini_model(
                 url,
                 params={"key": GEMINI_API_KEY},
                 headers={"Content-Type": "application/json"},
-                json=payload
+                json=payload,
             )
             response.raise_for_status()
             data = response.json()
@@ -88,10 +91,12 @@ async def query_gemini_model(
                     "total_tokens": usage_meta.get("totalTokenCount", 0),
                 },
                 "model": model_id,
-                "provider": "gemini"
+                "provider": "gemini",
             }
         except httpx.HTTPStatusError as e:
-            print(f"HTTP error querying Gemini {model_id}: {e.response.status_code} - {e.response.text[:200]}")
+            print(
+                f"HTTP error querying Gemini {model_id}: {e.response.status_code} - {e.response.text[:200]}"
+            )
             return None
         except Exception as e:
             print(f"Error querying Gemini {model_id}: {e}")
