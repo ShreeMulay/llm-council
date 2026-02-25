@@ -46,3 +46,6 @@
 [submodule "development/TALIA/tke-clinical-training"]
 	path = development/TALIA/tke-clinical-training
 	url = git@github.com:ShreeMulay/tke-clinical-training.git
+[submodule "tke-kidney-care-gem"]
+	path = tke-kidney-care-gem
+	url = git@github.com:ShreeMulay/tke-kidney-care-gem.git
