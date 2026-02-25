@@ -1,16 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GameShell } from '@/components/ui/GameShell';
 import { Button } from '@/components/ui/button';
 import { audio } from '@/services/audio';
 import { useGameStore } from '@/stores/gameStore';
 import { recordMathProgress } from '@/services/api';
-import { randInt } from '@/lib/utils';
+import { randInt, numberToWords } from '@/lib/utils';
 import { useBadgeStore } from '@/stores/badgeStore';
+import { Volume2, MessageSquare, MessageSquareMore } from 'lucide-react';
 
 type CompareAnswer = 'more' | 'less' | 'equal';
+type Verbosity = 'light' | 'medium' | 'full';
 
 const GROUP_EMOJIS = ['⭐', '🍎', '🌸', '💎', '🦋', '🐟', '🌈', '🎈'];
+
+const PRAISE = ['Great job, Adi!', 'Amazing! You did it!', 'Keep going! You are doing great!'];
+const PRAISE_IDS = ['ui-great-job', 'ui-amazing', 'ui-keep-going'];
 
 interface Round {
   leftCount: number;
@@ -53,20 +58,99 @@ function generateRound(difficulty: number): Round {
   return { leftCount, rightCount, answer, question, emoji };
 }
 
+/** Map answer type to the pre-gen clip ID for the question */
+function questionClipId(answer: CompareAnswer): string {
+  if (answer === 'equal') return 'ui-equal';
+  if (answer === 'more') return 'ui-more';
+  return 'ui-less';
+}
+
+/** Build a spoken relationship string, e.g. "5 is more than 3" */
+function relationship(left: number, right: number): string {
+  if (left === right) return `Both sides have ${numberToWords(left)}. They are equal!`;
+  if (left > right) return `${numberToWords(left)} is more than ${numberToWords(right)}.`;
+  return `${numberToWords(left)} is less than ${numberToWords(right)}.`;
+}
+
 export default function CompareGame() {
   const [round, setRound] = useState<Round | null>(null);
   const [selected, setSelected] = useState<'left' | 'right' | 'equal' | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [difficulty, setDifficulty] = useState(1);
   const [roundCount, setRoundCount] = useState(0);
+  const [verbosity, setVerbosity] = useState<Verbosity>('medium');
   const { addCorrect, addWrong, score, streak, resetGame, triggerCelebration } = useGameStore();
+  const verbosityRef = useRef(verbosity);
+  verbosityRef.current = verbosity;
+
+  // ─── Voice: announce round ─────────────────────────
+
+  const announceRound = useCallback((r: Round) => {
+    const v = verbosityRef.current;
+
+    // All levels: read the question aloud
+    const clipId = questionClipId(r.answer);
+    const fallback = r.question;
+    audio.speakByIdImmediate(clipId, fallback);
+
+    if (v === 'medium' || v === 'full') {
+      // Say both numbers: "{left} versus {right}"
+      audio.sayByIdAsync(`number-${r.leftCount}`, numberToWords(r.leftCount));
+      audio.sayAsync('versus');
+      audio.sayByIdAsync(`number-${r.rightCount}`, numberToWords(r.rightCount));
+    }
+
+    if (v === 'full') {
+      // Explain the concept
+      const concept =
+        r.answer === 'more' ? 'Find the group with more. More means the bigger number!'
+        : r.answer === 'less' ? 'Find the group with less. Less means the smaller number!'
+        : 'Check if both groups have the same number!';
+      audio.sayAsync(concept);
+    }
+  }, []);
+
+  // ─── Voice: feedback on answer ─────────────────────
+
+  function announceFeedback(r: Round, correct: boolean) {
+    const v = verbosityRef.current;
+
+    if (v === 'light') {
+      // SFX only — already played by caller
+      return;
+    }
+
+    if (v === 'medium') {
+      if (correct) {
+        const idx = Math.floor(Math.random() * PRAISE.length);
+        audio.sayByIdAsync(PRAISE_IDS[idx], PRAISE[idx]);
+      } else {
+        audio.sayByIdAsync('ui-try-again', 'Oops! Try again!');
+      }
+      return;
+    }
+
+    // Full
+    if (correct) {
+      const idx = Math.floor(Math.random() * PRAISE.length);
+      audio.sayByIdAsync(PRAISE_IDS[idx], PRAISE[idx]);
+      audio.sayAsync(relationship(r.leftCount, r.rightCount));
+    } else {
+      audio.sayAsync(`Not quite! ${relationship(r.leftCount, r.rightCount)}`);
+    }
+  }
+
+  // ─── Game logic ────────────────────────────────────
 
   const nextRound = useCallback(() => {
-    setRound(generateRound(difficulty));
+    const r = generateRound(difficulty);
+    setRound(r);
     setSelected(null);
     setIsCorrect(null);
-    setRoundCount((r) => r + 1);
-  }, [difficulty]);
+    setRoundCount((prev) => prev + 1);
+    // Small delay so the UI renders before voice starts
+    setTimeout(() => announceRound(r), 300);
+  }, [difficulty, announceRound]);
 
   useEffect(() => {
     resetGame();
@@ -105,7 +189,10 @@ export default function CompareGame() {
       recordMathProgress(round.answer, false).catch(() => {});
     }
 
-    setTimeout(nextRound, 1800);
+    // Voice feedback after a short beat (let the SFX ring)
+    setTimeout(() => announceFeedback(round, correct), 600);
+
+    setTimeout(nextRound, correct ? 2400 : 3000);
   }
 
   if (!round) return null;
@@ -140,8 +227,32 @@ export default function CompareGame() {
     </motion.button>
   );
 
+  const VERBOSITY_OPTIONS: { key: Verbosity; icon: React.ReactNode; label: string }[] = [
+    { key: 'light', icon: <Volume2 size={14} />, label: 'Quiet' },
+    { key: 'medium', icon: <MessageSquare size={14} />, label: 'Medium' },
+    { key: 'full', icon: <MessageSquareMore size={14} />, label: 'Chatty' },
+  ];
+
   return (
     <GameShell title="More or Less?" emoji="⚖️" bgClass="bg-gradient-to-br from-green-400 via-emerald-400 to-teal-500">
+      {/* Verbosity toggle */}
+      <div className="flex justify-center gap-1 mb-3">
+        {VERBOSITY_OPTIONS.map((opt) => (
+          <button
+            key={opt.key}
+            onClick={() => setVerbosity(opt.key)}
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+              verbosity === opt.key
+                ? 'bg-white/90 text-emerald-700 shadow-md'
+                : 'bg-white/20 text-white/80 hover:bg-white/30'
+            }`}
+          >
+            {opt.icon}
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
       {/* Question */}
       <motion.p
         key={roundCount}

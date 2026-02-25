@@ -51,7 +51,9 @@ export default function CountingGame() {
     const newCount = counted + 1;
     setCounted(newCount);
     audio.playSparkle();
-    audio.sayByIdAsync(`number-${newCount}`, numberToWords(newCount));
+    // Use immediate mode so each tap interrupts the previous number —
+    // fast tappers hear the latest number, not a queued backlog.
+    audio.speakByIdImmediate(`number-${newCount}`, numberToWords(newCount));
 
     if (newCount === target) {
       setDone(true);
