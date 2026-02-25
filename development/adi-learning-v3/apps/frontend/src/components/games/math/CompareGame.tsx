@@ -82,30 +82,31 @@ export default function CompareGame() {
   const { addCorrect, addWrong, score, streak, resetGame, triggerCelebration } = useGameStore();
   const verbosityRef = useRef(verbosity);
   verbosityRef.current = verbosity;
+  const announceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Voice: announce round ─────────────────────────
+  // All phrases are queued so the audio service plays them one-at-a-time
+  // with natural pauses. Combined into few calls to avoid API latency gaps.
 
   const announceRound = useCallback((r: Round) => {
     const v = verbosityRef.current;
 
-    // Clear any leftover speech from the previous round, then queue
-    // everything sequentially so phrases play one-at-a-time with pauses.
+    // Clear any leftover speech from the previous round
     audio.stopSpeaking();
 
-    // All levels: read the question aloud
+    // All levels: read the question aloud (pre-gen clip, fast)
     const clipId = questionClipId(r.answer);
-    const fallback = r.question;
-    audio.sayByIdAsync(clipId, fallback);
+    audio.sayByIdAsync(clipId, r.question);
 
     if (v === 'medium' || v === 'full') {
-      // Say both numbers: "{left} versus {right}"
-      audio.sayByIdAsync(`number-${r.leftCount}`, numberToWords(r.leftCount));
-      audio.sayAsync('versus');
-      audio.sayByIdAsync(`number-${r.rightCount}`, numberToWords(r.rightCount));
+      // Combined into one phrase so it plays as a natural sentence
+      // instead of 3 separate queue items with API latency between them
+      audio.sayAsync(`${numberToWords(r.leftCount)} versus ${numberToWords(r.rightCount)}`);
     }
 
     if (v === 'full') {
-      // Explain the concept
       const concept =
         r.answer === 'more' ? 'Find the group with more. More means the bigger number!'
         : r.answer === 'less' ? 'Find the group with less. Less means the smaller number!'
@@ -122,10 +123,7 @@ export default function CompareGame() {
     // Stop any remaining round narration so feedback doesn't overlap
     audio.stopSpeaking();
 
-    if (v === 'light') {
-      // SFX only — already played by caller
-      return;
-    }
+    if (v === 'light') return; // SFX only
 
     if (v === 'medium') {
       if (correct) {
@@ -137,11 +135,10 @@ export default function CompareGame() {
       return;
     }
 
-    // Full
+    // Full: combine praise + explanation into one call
     if (correct) {
       const idx = Math.floor(Math.random() * PRAISE.length);
-      audio.sayByIdAsync(PRAISE_IDS[idx], PRAISE[idx]);
-      audio.sayAsync(relationship(r.leftCount, r.rightCount));
+      audio.sayAsync(`${PRAISE[idx]} ${relationship(r.leftCount, r.rightCount)}`);
     } else {
       audio.sayAsync(`Not quite! ${relationship(r.leftCount, r.rightCount)}`);
     }
@@ -155,13 +152,24 @@ export default function CompareGame() {
     setSelected(null);
     setIsCorrect(null);
     setRoundCount((prev) => prev + 1);
+
+    // Cancel any pending announce from a previous call
+    clearTimeout(announceTimer.current);
     // Small delay so the UI renders before voice starts
-    setTimeout(() => announceRound(r), 300);
+    announceTimer.current = setTimeout(() => announceRound(r), 300);
   }, [difficulty, announceRound]);
 
   useEffect(() => {
     resetGame();
     nextRound();
+    // Cleanup: cancel pending timers + stop speech on unmount/re-mount
+    // (prevents StrictMode double-fire overlap)
+    return () => {
+      clearTimeout(announceTimer.current);
+      clearTimeout(feedbackTimer.current);
+      clearTimeout(advanceTimer.current);
+      audio.stopSpeaking();
+    };
   }, [nextRound, resetGame]);
 
   function checkAnswer(choice: 'left' | 'right' | 'equal') {
@@ -197,9 +205,11 @@ export default function CompareGame() {
     }
 
     // Voice feedback after a short beat (let the SFX ring)
-    setTimeout(() => announceFeedback(round, correct), 600);
+    clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = setTimeout(() => announceFeedback(round, correct), 600);
 
-    setTimeout(nextRound, correct ? 2400 : 3000);
+    clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(nextRound, correct ? 2400 : 3000);
   }
 
   if (!round) return null;
