@@ -5,7 +5,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { spawn, ChildProcess } from "child_process";
+import { spawn } from "child_process";
+import { readFileSync, writeFileSync, unlinkSync, existsSync, openSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -15,19 +16,42 @@ const __dirname = path.dirname(__filename);
 const BACKEND_URL = process.env.LLM_COUNCIL_URL || "http://localhost:8800";
 const HEALTH_URL = `${BACKEND_URL}/health`;
 const BACKEND_CWD = path.join(__dirname, "../../");
+const PID_FILE = "/tmp/llm-council-backend.pid";
+const BACKEND_LOG = "/tmp/llm-council.log";
 
 // ============================================================================
 // BackendManager - Auto-spawns Python backend if not running
+//
+// Design: Backend runs DETACHED so it survives MCP server restarts.
+// Multiple MCP servers coordinate via PID file. Only spawns if no
+// healthy backend exists. Never kills backend on MCP shutdown —
+// backend persists across sessions.
 // ============================================================================
 
 class BackendManager {
-  private process: ChildProcess | null = null;
-  private isShuttingDown = false;
+  private spawnedByUs = false;
 
   async ensureRunning(): Promise<void> {
-    if (this.isShuttingDown) return;
+    // Fast path: backend is already responding
     if (await this.isAlive()) return;
-    await this.spawn();
+
+    // Check PID file — maybe backend is starting up
+    if (this.isPidAlive()) {
+      console.error("[Backend] PID file exists, process alive — waiting for ready...");
+      try {
+        await this.waitForReady(15000);
+        return;
+      } catch {
+        console.error("[Backend] PID process alive but not responding — killing stale process");
+        this.killStalePid();
+      }
+    } else {
+      // PID file missing or stale — clean up
+      this.cleanStalePidFile();
+    }
+
+    // No healthy backend — spawn one
+    await this.spawnDetached();
     await this.waitForReady();
   }
 
@@ -43,49 +67,69 @@ class BackendManager {
     }
   }
 
-  private async spawn(): Promise<void> {
-    if (this.process) {
-      // Process exists but not responding - kill it first
-      this.process.kill();
-      this.process = null;
+  /** Read PID from file and check if that process is actually running */
+  private isPidAlive(): boolean {
+    try {
+      if (!existsSync(PID_FILE)) return false;
+      const pid = parseInt(readFileSync(PID_FILE, "utf-8").trim(), 10);
+      if (isNaN(pid) || pid <= 0) return false;
+      // signal 0 = check if process exists without killing it
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /** Kill the process referenced by PID file */
+  private killStalePid(): void {
+    try {
+      if (!existsSync(PID_FILE)) return;
+      const pid = parseInt(readFileSync(PID_FILE, "utf-8").trim(), 10);
+      if (isNaN(pid) || pid <= 0) return;
+      process.kill(pid, "SIGTERM");
+      console.error(`[Backend] Sent SIGTERM to stale PID ${pid}`);
+    } catch {
+      // Process already dead
+    }
+    this.cleanStalePidFile();
+  }
+
+  /** Remove PID file if it exists */
+  private cleanStalePidFile(): void {
+    try {
+      if (existsSync(PID_FILE)) {
+        unlinkSync(PID_FILE);
+        console.error("[Backend] Cleaned stale PID file");
+      }
+    } catch {
+      // Ignore
+    }
+  }
+
+  private async spawnDetached(): Promise<void> {
+    console.error("[Backend] Starting Python backend (detached)...");
+
+    // Open log file for stdout/stderr redirect (detached processes can't pipe to parent)
+    const logFd = openSync(BACKEND_LOG, "a");
+
+    const child = spawn("uv", ["run", "python", "-m", "backend.main"], {
+      cwd: BACKEND_CWD,
+      detached: true,
+      stdio: ["ignore", logFd, logFd],
+    });
+
+    if (!child.pid) {
+      throw new Error("Failed to spawn backend process — no PID returned");
     }
 
-    console.error("[Backend] Starting Python backend...");
+    // Write PID file for coordination with other MCP server instances
+    writeFileSync(PID_FILE, String(child.pid), "utf-8");
+    console.error(`[Backend] Spawned PID ${child.pid}, wrote ${PID_FILE}`);
 
-    this.process = spawn("uv", ["run", "python", "-m", "backend.main"], {
-      cwd: BACKEND_CWD,
-      detached: false,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-
-    this.process.stdout?.on("data", (data: Buffer) => {
-      const lines = data.toString().trim().split("\n");
-      for (const line of lines) {
-        console.error(`[Backend] ${line}`);
-      }
-    });
-
-    this.process.stderr?.on("data", (data: Buffer) => {
-      const lines = data.toString().trim().split("\n");
-      for (const line of lines) {
-        console.error(`[Backend] ${line}`);
-      }
-    });
-
-    this.process.on("exit", (code, signal) => {
-      console.error(`[Backend] Process exited (code=${code}, signal=${signal})`);
-      this.process = null;
-
-      // Auto-restart if not shutting down
-      if (!this.isShuttingDown) {
-        console.error("[Backend] Will restart on next request");
-      }
-    });
-
-    this.process.on("error", (err) => {
-      console.error(`[Backend] Process error: ${err.message}`);
-      this.process = null;
-    });
+    // Unref so this MCP server can exit without killing the backend
+    child.unref();
+    this.spawnedByUs = true;
   }
 
   private async waitForReady(timeout = 30000): Promise<void> {
@@ -103,26 +147,21 @@ class BackendManager {
     throw new Error(`Backend failed to start within ${timeout / 1000}s`);
   }
 
+  /**
+   * Shutdown: Do NOT kill the backend — it's shared across sessions.
+   * The backend persists independently. Only clean up if we need to
+   * force-restart (handled by ensureRunning's stale PID logic).
+   */
   async shutdown(): Promise<void> {
-    this.isShuttingDown = true;
-    if (this.process) {
-      console.error("[Backend] Shutting down...");
-      this.process.kill("SIGTERM");
-
-      // Wait briefly for graceful shutdown
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (this.process) {
-        this.process.kill("SIGKILL");
-      }
-      this.process = null;
-    }
+    console.error("[Backend] MCP server shutting down — backend left running for other sessions");
+    // Intentionally do NOT kill the backend process.
+    // It's detached and shared across MCP server instances.
   }
 }
 
 const backendManager = new BackendManager();
 
-// Shutdown handlers
+// Shutdown handlers — graceful exit without killing backend
 process.on("SIGINT", async () => {
   await backendManager.shutdown();
   process.exit(0);
