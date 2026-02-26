@@ -1,0 +1,100 @@
+{
+  "tke_clinical_encounter": {
+    "metadata": {
+      "patient_id": "string",
+      "encounter_date": "YYYY-MM-DD",
+      "location": "enum(Jackson|Dyersburg|Union City|Covington)",
+      "ma_id": "string",
+      "provider_id": "string",
+      "encounter_type": "enum(New|Established|TCM|Hospital_Followup)"
+    },
+    "vital_signs": {
+      "blood_pressure": {
+        "systolic": "number",
+        "diastolic": "number",
+        "position": "enum(Seated|Standing|Supine)",
+        "arm": "enum(Left|Right)",
+        "is_at_goal": "boolean (calculated: <120/<80)"
+      },
+      "weight_kg": "number",
+      "bmi": "number"
+    },
+    "domain_1_proteinuria": {
+      "uacr_status": "enum(Normal|Microalbuminuria|Macroalbuminuria)",
+      "last_uacr_value": "number",
+      "last_uacr_date": "YYYY-MM-DD",
+      "needs_recheck": "boolean"
+    },
+    "domain_2_raas_blockade": {
+      "is_on_ace_arb_arni": "boolean",
+      "medication_name": "string",
+      "dose": "string",
+      "intolerance_reason": "string(optional)"
+    },
+    "domain_3_mra": {
+      "is_on_spironolactone_eplerenone": "boolean",
+      "medication_name": "string",
+      "dose": "string",
+      "intolerance_reason": "string(optional)"
+    },
+    "domain_4_sglt2_finerenone_glp1": {
+      "is_on_sglt2i": "boolean",
+      "is_on_finerenone": "boolean",
+      "is_on_glp1_ra": "boolean",
+      "quadruple_therapy_complete": "boolean (calculated)",
+      "barriers_to_access": "string(optional)"
+    },
+    "domain_5_chf_gdmt": {
+      "has_chf": "boolean",
+      "gdmt_optimized": "boolean",
+      "needs_cardiology_referral": "boolean"
+    },
+    "domain_6_anemia": {
+      "last_hgb": "number",
+      "last_tsat": "number",
+      "last_ferritin": "number",
+      "is_on_esa": "boolean",
+      "needs_iron_infusion": "boolean"
+    },
+    "domain_7_mbd": {
+      "last_pth": "number",
+      "last_calcium": "number",
+      "last_phosphorus": "number",
+      "last_vit_d": "number",
+      "is_on_binder": "boolean",
+      "is_on_active_vit_d": "boolean"
+    },
+    "domain_8_electrolytes": {
+      "last_potassium": "number",
+      "last_bicarb": "number",
+      "needs_bicarb_supplement": "boolean (calculated: <24)"
+    },
+    "domain_9_smoking": {
+      "smoking_status": "enum(Never|Former|Current)",
+      "counseling_provided": "boolean"
+    },
+    "domain_10_nsaid_ppi": {
+      "is_using_nsaid": "boolean",
+      "is_using_ppi": "boolean",
+      "counseling_provided": "boolean"
+    },
+    "domain_11_statins": {
+      "is_on_statin": "boolean",
+      "intensity": "enum(Low|Moderate|High)",
+      "intolerance_reason": "string(optional)"
+    },
+    "domain_12_diabetes_metrics": {
+      "has_diabetes": "boolean",
+      "last_a1c": "number",
+      "last_a1c_date": "YYYY-MM-DD",
+      "is_at_goal": "boolean"
+    },
+    "action_items": {
+      "labs_ordered": "boolean",
+      "referrals_placed": "string[]",
+      "medication_changes": "string",
+      "ccm_time_spent_minutes": "number",
+      "follow_up_weeks": "number"
+    }
+  }
+}
