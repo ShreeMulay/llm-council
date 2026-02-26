@@ -2,8 +2,11 @@
 
 import re
 import asyncio
+import logging
 from typing import List, Dict, Any, Tuple, Optional
 from collections import defaultdict
+
+logger = logging.getLogger("llm-council.council")
 
 from .config import (
     COUNCIL_MODELS,
@@ -81,18 +84,18 @@ async def query_single_model(
         if result and result.get("content"):
             return result
     except Exception as e:
-        print(f"Primary provider failed for {model_id}: {e}")
+        logger.warning("Primary provider failed for %s: %s", model_id, e)
 
     # Fallback to OpenRouter
     or_model = get_openrouter_fallback(model_id)
     if or_model:
-        print(f"Falling back to OpenRouter for {model_id} -> {or_model}")
+        logger.info("Falling back to OpenRouter for %s -> %s", model_id, or_model)
         try:
             return await query_openrouter_model(
                 or_model, messages, max_tokens, temperature
             )
         except Exception as e:
-            print(f"OpenRouter fallback also failed for {model_id}: {e}")
+            logger.error("OpenRouter fallback also failed for %s: %s", model_id, e)
             return None
 
     return None
@@ -111,7 +114,7 @@ async def query_anthropic_single(
             "provider": "anthropic",
         }
     except Exception as e:
-        print(f"Anthropic API error for {model_id}: {e}")
+        logger.error("Anthropic API error for %s: %s", model_id, e)
         return model_id, None
 
 
@@ -143,7 +146,7 @@ async def query_openai_single(
             "provider": "openai",
         }
     except Exception as e:
-        print(f"OpenAI API error for {model_id}: {e}")
+        logger.error("OpenAI API error for %s: %s", model_id, e)
         return model_id, None
 
 
@@ -229,6 +232,113 @@ async def query_models_parallel(
     return results
 
 
+async def query_models_with_retries(
+    model_ids: List[str],
+    messages: List[Dict[str, str]],
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
+    max_retries: int = 2,
+    backoff_base: float = 1.5,
+) -> Dict[str, Optional[Dict[str, Any]]]:
+    """
+    Query models in parallel with automatic retries for failures.
+
+    After the initial parallel burst, any models that returned None are
+    retried up to max_retries times with exponential backoff. As a final
+    fallback, failed models are attempted via OpenRouter.
+
+    Args:
+        model_ids: List of council model IDs
+        messages: Chat messages to send
+        max_tokens: Maximum output tokens
+        temperature: Sampling temperature
+        max_retries: Number of retry attempts (default 2)
+        backoff_base: Base delay in seconds, doubled each retry
+
+    Returns:
+        Dict mapping model_id to response (or None if all attempts failed)
+    """
+    # First pass: query all models in parallel
+    results = await query_models_parallel(model_ids, messages, max_tokens, temperature)
+
+    for attempt in range(max_retries):
+        # Find models that failed
+        failed = [m for m in model_ids if results.get(m) is None]
+        if not failed:
+            break
+
+        wait = backoff_base * (2**attempt)
+        logger.warning(
+            "Retry %d/%d: %d model(s) failed, waiting %.1fs before retry: %s",
+            attempt + 1,
+            max_retries,
+            len(failed),
+            wait,
+            failed,
+        )
+        await asyncio.sleep(wait)
+
+        # Retry only the failed models via their primary providers
+        retry_results = await query_models_parallel(
+            failed, messages, max_tokens, temperature
+        )
+        for model, result in retry_results.items():
+            if result is not None:
+                logger.info("Retry %d succeeded for %s", attempt + 1, model)
+                results[model] = result
+
+    # Final fallback: try OpenRouter for any models that still failed
+    still_failed = [m for m in model_ids if results.get(m) is None]
+    if still_failed:
+        logger.warning(
+            "After %d retries, %d model(s) still failed — trying OpenRouter fallback: %s",
+            max_retries,
+            len(still_failed),
+            still_failed,
+        )
+
+        async def _openrouter_fallback(
+            model: str,
+        ) -> Tuple[str, Optional[Dict[str, Any]]]:
+            or_model = get_openrouter_fallback(model)
+            if not or_model or or_model == model:
+                return model, None
+            try:
+                result = await query_openrouter_model(
+                    or_model, messages, max_tokens, temperature
+                )
+                if result is not None:
+                    result["provider"] = (
+                        f"{result.get('provider', 'openrouter')}-fallback"
+                    )
+                    logger.info(
+                        "OpenRouter fallback succeeded for %s -> %s", model, or_model
+                    )
+                return model, result
+            except Exception as e:
+                logger.error("OpenRouter fallback failed for %s: %s", model, e)
+                return model, None
+
+        fallback_results = await asyncio.gather(
+            *[_openrouter_fallback(m) for m in still_failed]
+        )
+        for model, result in fallback_results:
+            if result is not None:
+                results[model] = result
+
+    # Final status log
+    succeeded = [m for m in model_ids if results.get(m) is not None]
+    final_failed = [m for m in model_ids if results.get(m) is None]
+    logger.info(
+        "Query complete: %d/%d succeeded%s",
+        len(succeeded),
+        len(model_ids),
+        f", FAILED: {final_failed}" if final_failed else "",
+    )
+
+    return results
+
+
 async def stage1_collect_responses(
     user_query: str, council_models: Optional[List[str]] = None
 ) -> List[Dict[str, Any]]:
@@ -245,8 +355,10 @@ async def stage1_collect_responses(
     models = council_models or COUNCIL_MODELS
     messages = [{"role": "user", "content": user_query}]
 
-    # Query all models in parallel
-    responses = await query_models_parallel(models, messages)
+    logger.info("Stage 1: querying %d models with retries", len(models))
+
+    # Query all models in parallel with automatic retries
+    responses = await query_models_with_retries(models, messages)
 
     # Format results
     stage1_results = []
@@ -261,6 +373,9 @@ async def stage1_collect_responses(
                 }
             )
 
+    logger.info(
+        "Stage 1 complete: %d/%d models responded", len(stage1_results), len(models)
+    )
     return stage1_results
 
 
@@ -332,8 +447,10 @@ Now provide your evaluation and ranking:"""
 
     messages = [{"role": "user", "content": ranking_prompt}]
 
-    # Get rankings from all council models in parallel
-    responses = await query_models_parallel(models, messages)
+    logger.info("Stage 2: querying %d models for rankings with retries", len(models))
+
+    # Get rankings from all council models in parallel with retries
+    responses = await query_models_with_retries(models, messages)
 
     # Format results
     stage2_results = []
