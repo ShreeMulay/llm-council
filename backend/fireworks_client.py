@@ -51,11 +51,23 @@ async def query_fireworks_model(
     Returns:
         Dict with 'content', 'usage', 'model', 'provider' keys, or None on error
     """
+    import logging
+
+    logger = logging.getLogger("llm-council.fireworks")
+
     if not FIREWORKS_API_KEY:
-        print("Error: FIREWORKS_API_KEY not configured")
+        logger.error("FIREWORKS_API_KEY not configured")
         return None
 
     fireworks_model = get_fireworks_model_id(model_id)
+
+    # Fireworks requires stream=true for max_tokens > 4096 (non-streaming).
+    # Cap at 4096 for non-streaming requests to avoid 400 errors.
+    effective_max_tokens = min(max_tokens, 4096)
+    logger.info(
+        f"Querying Fireworks {model_id} -> {fireworks_model} "
+        f"(max_tokens={effective_max_tokens})"
+    )
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         try:
@@ -68,7 +80,7 @@ async def query_fireworks_model(
                 json={
                     "model": fireworks_model,
                     "messages": messages,
-                    "max_tokens": max_tokens,
+                    "max_tokens": effective_max_tokens,
                     "temperature": temperature,
                 },
             )
@@ -77,6 +89,7 @@ async def query_fireworks_model(
 
             msg = data["choices"][0]["message"]
             text = msg.get("content") or ""
+            logger.info(f"Fireworks {model_id} responded: {len(text)} chars")
             return {
                 "content": text,
                 "usage": data.get("usage", {}),
@@ -84,13 +97,13 @@ async def query_fireworks_model(
                 "provider": "fireworks",
             }
         except httpx.HTTPStatusError as e:
-            print(
+            logger.error(
                 f"HTTP error querying Fireworks {model_id}: "
                 f"{e.response.status_code} - {e.response.text[:200]}"
             )
             return None
         except Exception as e:
-            print(f"Error querying Fireworks {model_id}: {e}")
+            logger.error(f"Error querying Fireworks {model_id}: {e}", exc_info=True)
             return None
 
 

@@ -1,5 +1,17 @@
 """FastAPI backend for LLM Council with OpenCode integration."""
 
+import logging
+
+# File logging so errors are visible even when stderr goes to MCP socket
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)s %(message)s",
+    handlers=[
+        logging.FileHandler("/tmp/llm-council.log"),
+        logging.StreamHandler(),
+    ],
+)
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -17,10 +29,14 @@ from .council import (
     stage1_collect_responses,
     stage2_collect_rankings,
     stage3_synthesize_final,
-    calculate_aggregate_rankings
+    calculate_aggregate_rankings,
 )
 from .model_discovery import get_model_discovery
-from .opencode_integration import handle_council_command, MCP_TOOL_SCHEMA, MODEL_ALIASES_HELP
+from .opencode_integration import (
+    handle_council_command,
+    MCP_TOOL_SCHEMA,
+    MODEL_ALIASES_HELP,
+)
 from .webhooks import (
     CouncilAsyncRequest,
     JobInfo,
@@ -35,7 +51,7 @@ from .webhooks import (
 app = FastAPI(
     title="LLM Council API",
     description="Multi-model LLM deliberation system for OpenCode integration",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Enable CORS for local development and any origin (for MCP access)
@@ -52,18 +68,22 @@ app.add_middleware(
 # Request/Response Models
 # ============================================================================
 
+
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
+
     pass
 
 
 class SendMessageRequest(BaseModel):
     """Request to send a message in a conversation."""
+
     content: str
 
 
 class CouncilRequest(BaseModel):
     """Request for /council command or MCP tool."""
+
     query: str
     final_only: bool = False
     models: Optional[List[str]] = None
@@ -73,6 +93,7 @@ class CouncilRequest(BaseModel):
 
 class ConversationMetadata(BaseModel):
     """Conversation metadata for list view."""
+
     id: str
     created_at: str
     title: str
@@ -81,6 +102,7 @@ class ConversationMetadata(BaseModel):
 
 class Conversation(BaseModel):
     """Full conversation with all messages."""
+
     id: str
     created_at: str
     title: str
@@ -91,6 +113,7 @@ class Conversation(BaseModel):
 # Health and Info Endpoints
 # ============================================================================
 
+
 @app.get("/")
 async def root():
     """Health check endpoint."""
@@ -98,7 +121,7 @@ async def root():
         "status": "ok",
         "service": "LLM Council API",
         "version": "1.0.0",
-        "port": BACKEND_PORT
+        "port": BACKEND_PORT,
     }
 
 
@@ -108,10 +131,7 @@ async def health():
     return {
         "status": "healthy",
         "service": "llm-council",
-        "config": {
-            "council_models": COUNCIL_MODELS,
-            "chairman_model": CHAIRMAN_MODEL
-        }
+        "config": {"council_models": COUNCIL_MODELS, "chairman_model": CHAIRMAN_MODEL},
     }
 
 
@@ -128,13 +148,13 @@ async def api_info():
             "/api/council/jobs": "List async jobs (GET)",
             "/api/council/jobs/{job_id}": "Get job status (GET)",
             "/api/models": "List available models (GET)",
-            "/api/mcp/schema": "MCP tool schema (GET)"
+            "/api/mcp/schema": "MCP tool schema (GET)",
         },
         "webhook_events": {
             "council.completed": "Deliberation finished successfully",
-            "council.failed": "Deliberation failed with error"
+            "council.failed": "Deliberation failed with error",
         },
-        "model_aliases": MODEL_ALIASES_HELP
+        "model_aliases": MODEL_ALIASES_HELP,
     }
 
 
@@ -142,11 +162,12 @@ async def api_info():
 # Model Discovery Endpoints
 # ============================================================================
 
+
 @app.get("/api/models")
 async def get_models(provider: Optional[str] = None, refresh: bool = False):
     """
     Get available models from all providers.
-    
+
     Args:
         provider: Filter by provider ("openrouter" or "cerebras")
         refresh: Force refresh from API (bypass cache)
@@ -154,12 +175,8 @@ async def get_models(provider: Optional[str] = None, refresh: bool = False):
     discovery = get_model_discovery()
     models = await discovery.get_all_models(provider, force_refresh=refresh)
     cache_info = discovery.get_cache_info()
-    
-    return {
-        "models": models,
-        "count": len(models),
-        "cache": cache_info
-    }
+
+    return {"models": models, "count": len(models), "cache": cache_info}
 
 
 @app.get("/api/models/{provider}")
@@ -168,30 +185,27 @@ async def get_provider_models(provider: str, refresh: bool = False):
     if provider.lower() not in ["openrouter", "cerebras"]:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid provider: {provider}. Must be 'openrouter' or 'cerebras'"
+            detail=f"Invalid provider: {provider}. Must be 'openrouter' or 'cerebras'",
         )
-    
+
     discovery = get_model_discovery()
     models = await discovery.get_all_models(provider.lower(), force_refresh=refresh)
-    
-    return {
-        "provider": provider,
-        "models": models,
-        "count": len(models)
-    }
+
+    return {"provider": provider, "models": models, "count": len(models)}
 
 
 # ============================================================================
 # Council Deliberation Endpoints (OpenCode Integration)
 # ============================================================================
 
+
 @app.post("/api/council")
 async def council_deliberation(request: CouncilRequest):
     """
     Execute 3-stage council deliberation.
-    
+
     This is the main endpoint for OpenCode's /council command and MCP tool.
-    
+
     Returns:
         - markdown: Formatted markdown output for display
         - stage1: Individual model responses
@@ -206,9 +220,9 @@ async def council_deliberation(request: CouncilRequest):
         final_only=request.final_only,
         models=request.models,
         chairman=request.chairman,
-        include_details=request.include_details
+        include_details=request.include_details,
     )
-    
+
     return result
 
 
@@ -222,14 +236,15 @@ async def mcp_schema():
 # Async Council with Webhook Callbacks
 # ============================================================================
 
+
 @app.post("/api/council/async")
 async def council_async(request: CouncilAsyncRequest):
     """
     Execute council deliberation asynchronously with webhook callback.
-    
+
     Returns immediately with a job_id. When deliberation completes,
     the result is POSTed to the webhook_url.
-    
+
     Webhook payload format:
     {
         "event": "council.completed" | "council.failed",
@@ -239,16 +254,16 @@ async def council_async(request: CouncilAsyncRequest):
         "error": "...",     // Error message (on failure)
         "metadata": { ... } // Pass-through metadata from request
     }
-    
+
     If webhook_secret is provided, the payload is signed with HMAC-SHA256
     and the signature is included in the X-Webhook-Signature header.
     """
     # Create job
     job_id = create_job(request)
-    
+
     # Start background task
     asyncio.create_task(run_council_async(job_id, handle_council_command))
-    
+
     return {
         "status": "accepted",
         "job_id": job_id,
@@ -265,7 +280,7 @@ async def list_council_jobs(
 ):
     """
     List recent async council jobs.
-    
+
     Args:
         limit: Maximum number of jobs to return (default 50)
         status: Filter by status (pending, running, completed, failed, webhook_sent, webhook_failed)
@@ -277,9 +292,9 @@ async def list_council_jobs(
         except ValueError:
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid status: {status}. Valid values: {[s.value for s in JobStatus]}"
+                detail=f"Invalid status: {status}. Valid values: {[s.value for s in JobStatus]}",
             )
-    
+
     jobs = list_jobs(limit=limit, status=status_enum)
     return {
         "jobs": [j.model_dump() for j in jobs],
@@ -291,7 +306,7 @@ async def list_council_jobs(
 async def get_council_job(job_id: str, include_result: bool = False):
     """
     Get status of a specific async council job.
-    
+
     Args:
         job_id: The job UUID
         include_result: If true, include the full result (can be large)
@@ -299,7 +314,7 @@ async def get_council_job(job_id: str, include_result: bool = False):
     job = get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail=f"Job not found: {job_id}")
-    
+
     response = {
         "job_id": job["job_id"],
         "status": job["status"],
@@ -310,10 +325,10 @@ async def get_council_job(job_id: str, include_result: bool = False):
         "completed_at": job["completed_at"],
         "error": job["error"],
     }
-    
+
     if include_result and job.get("result"):
         response["result"] = job["result"]
-    
+
     return response
 
 
@@ -327,6 +342,7 @@ async def cleanup_jobs(max_age_hours: int = 24):
 # ============================================================================
 # Conversation Storage Endpoints (Legacy GUI Support)
 # ============================================================================
+
 
 @app.get("/api/conversations", response_model=List[ConversationMetadata])
 async def list_conversations():
@@ -389,10 +405,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
     # Add assistant message with all stages
     storage.add_assistant_message(
-        conversation_id,
-        stage1_results,
-        stage2_results,
-        stage3_result
+        conversation_id, stage1_results, stage2_results, stage3_result
     )
 
     # Return the complete response with metadata
@@ -400,7 +413,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         "stage1": stage1_results,
         "stage2": stage2_results,
         "stage3": stage3_result,
-        "metadata": metadata
+        "metadata": metadata,
     }
 
 
@@ -426,7 +439,9 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             # Start title generation in parallel (don't await yet)
             title_task = None
             if is_first_message:
-                title_task = asyncio.create_task(generate_conversation_title(request.content))
+                title_task = asyncio.create_task(
+                    generate_conversation_title(request.content)
+                )
 
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
@@ -435,13 +450,19 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
-            stage2_results, label_to_model = await stage2_collect_rankings(request.content, stage1_results)
-            aggregate_rankings = calculate_aggregate_rankings(stage2_results, label_to_model)
+            stage2_results, label_to_model = await stage2_collect_rankings(
+                request.content, stage1_results
+            )
+            aggregate_rankings = calculate_aggregate_rankings(
+                stage2_results, label_to_model
+            )
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': {'label_to_model': label_to_model, 'aggregate_rankings': aggregate_rankings}})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
-            stage3_result = await stage3_synthesize_final(request.content, stage1_results, stage2_results)
+            stage3_result = await stage3_synthesize_final(
+                request.content, stage1_results, stage2_results
+            )
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 
             # Wait for title generation if it was started
@@ -452,10 +473,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Save complete assistant message
             storage.add_assistant_message(
-                conversation_id,
-                stage1_results,
-                stage2_results,
-                stage3_result
+                conversation_id, stage1_results, stage2_results, stage3_result
             )
 
             # Send completion event
@@ -471,7 +489,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-        }
+        },
     )
 
 
@@ -481,5 +499,6 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
 if __name__ == "__main__":
     import uvicorn
+
     print(f"Starting LLM Council API on http://{BACKEND_HOST}:{BACKEND_PORT}")
     uvicorn.run(app, host=BACKEND_HOST, port=BACKEND_PORT)
