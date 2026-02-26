@@ -52,3 +52,6 @@
 [submodule "development/noor"]
 	path = development/noor
 	url = git@github.com:ShreeMulay/noor.git
+[submodule "development/tke-process-mapper"]
+	path = development/tke-process-mapper
+	url = git@github.com:ShreeMulay/tke-process-mapper.git
