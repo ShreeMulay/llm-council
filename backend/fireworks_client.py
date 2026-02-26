@@ -1,9 +1,9 @@
 """Fireworks AI client for high-throughput inference of open-source models.
 
 Fireworks provides OpenAI-compatible API with optimized inference (up to 200 tok/s
-on Kimi K2.5, 3.4x faster than OpenRouter for long-form responses).
+on GLM-5, 3.4x faster than OpenRouter for long-form responses).
 
-Used as primary provider for: Kimi K2.5, GLM-5
+Used as primary provider for: GLM-5
 Fallback: OpenRouter
 """
 
@@ -18,10 +18,8 @@ FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1"
 # Model ID mapping: council ID -> Fireworks model ID
 # Fireworks uses accounts/fireworks/models/<name> format
 FIREWORKS_MODEL_MAP = {
-    "fireworks/kimi-k2.5": "accounts/fireworks/models/kimi-k2p5",
     "fireworks/glm-5": "accounts/fireworks/models/glm-5",
     # Allow direct Fireworks IDs to pass through
-    "accounts/fireworks/models/kimi-k2p5": "accounts/fireworks/models/kimi-k2p5",
     "accounts/fireworks/models/glm-5": "accounts/fireworks/models/glm-5",
 }
 

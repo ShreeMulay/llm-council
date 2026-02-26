@@ -42,9 +42,8 @@ Claude Opus 4.6, serving as Chairman, reviews all ranked responses and critiques
 |--------|------|-----------|
 | **Claude Opus 4.6** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Ensures outputs are clean, practical, and well-structured. |
 | **GPT-5.2** | **Anchor & Reasoning Specialist** | Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
-| **Gemini 3 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
-| **DeepSeek V3.2** | **Architect & Deep Reasoner** | System design, structural optimization, and complex algorithmic reasoning. Excels at scalability concerns. |
-| **GLM 4.7** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. Ensures solutions actually work in practice. |
+| **GLM-5** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. Ensures solutions actually work in practice. |
+| **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
 | **Grok 4.1 Fast** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks. Keeps solutions relevant and timely. |
 
 ## Use Cases

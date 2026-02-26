@@ -12,16 +12,16 @@ uv run python -m backend.main
 ./start.sh
 ```
 
-## Council Models (7-Member Configuration)
+## Council Models (5-Member Configuration)
+
+Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing council diversity.
 
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
 | GPT-5.2 | OpenRouter | Anchor/Reasoning | `reasoningEffort: high` |
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
-| Kimi K2.5 | Fireworks Direct | Reasoning | 200 tok/s, 3.4x faster than OR |
 | GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
-| DeepSeek V3.2 | OpenRouter | Architect/Reasoner | - |
 | Grok 4.1 Fast | OpenRouter | Real-time Intel | `reasoning: disabled` |
 
 ### Chairman Selection (LLM Council Decision)
@@ -76,8 +76,8 @@ MCP Config:
 - `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.2, Gemini, DeepSeek, Grok (+ fallback)
-- `FIREWORKS_API_KEY` - For Kimi K2.5, GLM-5 (primary, 3.4x faster)
+- `OPENROUTER_API_KEY` - For GPT-5.2, Gemini, Grok (+ fallback)
+- `FIREWORKS_API_KEY` - For GLM-5 (primary, 3.4x faster)
 - `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
 
 ## Model Aliases
@@ -85,10 +85,8 @@ MCP Config:
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.2
 - `opus` -> anthropic/claude-opus-4.6
-- `kimi` -> fireworks/kimi-k2.5
 - `glm` -> fireworks/glm-5
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `deepseek` -> deepseek/deepseek-v3.2
 - `grok` -> x-ai/grok-4.1-fast
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)
