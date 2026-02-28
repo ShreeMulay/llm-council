@@ -1,15 +1,21 @@
 """FastAPI backend for LLM Council with OpenCode integration."""
 
 import logging
+import os
 
-# File logging so errors are visible even when stderr goes to MCP socket
+# Logging: file + stderr locally, stdout only in Cloud Run (captured by Cloud Logging)
+_handlers: list[logging.Handler] = [logging.StreamHandler()]
+if not os.environ.get("K_SERVICE"):
+    # Not in Cloud Run — also log to file for local debugging
+    try:
+        _handlers.append(logging.FileHandler("/tmp/llm-council.log"))
+    except OSError:
+        pass  # /tmp not writable (shouldn't happen locally)
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s %(levelname)s %(message)s",
-    handlers=[
-        logging.FileHandler("/tmp/llm-council.log"),
-        logging.StreamHandler(),
-    ],
+    handlers=_handlers,
 )
 
 from fastapi import FastAPI, HTTPException
@@ -22,6 +28,7 @@ import json
 import asyncio
 
 from . import storage
+from .auth import ApiKeyMiddleware
 from .config import BACKEND_PORT, BACKEND_HOST, COUNCIL_MODELS, CHAIRMAN_MODEL
 from .council import (
     run_full_council,
@@ -53,6 +60,10 @@ app = FastAPI(
     description="Multi-model LLM deliberation system for OpenCode integration",
     version="1.0.0",
 )
+
+# API key auth — protects /api/* routes, skips /health and /
+# Disabled when COUNCIL_API_KEY env var is not set (local dev)
+app.add_middleware(ApiKeyMiddleware)
 
 # Enable CORS for local development and any origin (for MCP access)
 app.add_middleware(

@@ -25,8 +25,9 @@ CACHE_TTL_SECONDS = 86400  # 24 hours
 CACHE_FILE = CACHE_DIR / "models.json"
 
 # Server configuration
-BACKEND_PORT = int(os.getenv("BACKEND_PORT", "8800"))
-BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
+# Cloud Run sets PORT env var; BACKEND_PORT is our custom override; 8800 is default
+BACKEND_PORT = int(os.getenv("PORT", os.getenv("BACKEND_PORT", "8800")))
+BACKEND_HOST = os.getenv("BACKEND_HOST", "0.0.0.0")
 
 # API endpoints
 OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"

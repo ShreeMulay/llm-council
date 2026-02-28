@@ -1,79 +1,112 @@
-"""Load secrets from ~/.bash_secrets for API keys."""
+"""Load API keys from environment variables (Cloud Run) or ~/.bash_secrets (local dev).
 
+Resolution order for each key:
+  1. Environment variable (set by Cloud Run via Secret Manager)
+  2. ~/.bash_secrets file (local development)
+
+This allows the same code to run in both environments without changes.
+"""
+
+import logging
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
 
+logger = logging.getLogger("llm-council.secrets")
 
-def load_bash_secrets() -> dict:
-    """
-    Source ~/.bash_secrets and extract environment variables.
+# All API keys the council uses
+_API_KEY_NAMES = (
+    "OPENROUTER_API_KEY",
+    "CEREBRAS_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "MOONSHOT_API_KEY",
+    "GROK_API_KEY",
+    "GEMINI_API_KEY",
+    "GOOGLE_AI_API_KEY",
+    "FIREWORKS_API_KEY",
+    "COUNCIL_API_KEY",
+)
 
-    Returns:
-        dict: API keys and secrets extracted from bash_secrets
 
-    Raises:
-        FileNotFoundError: If bash_secrets file doesn't exist
-        subprocess.CalledProcessError: If sourcing fails
-    """
+def _load_from_env() -> dict:
+    """Load API keys from environment variables (Cloud Run / container mode)."""
+    secrets = {}
+    for key in _API_KEY_NAMES:
+        value = os.environ.get(key)
+        if value:
+            secrets[key] = value
+    return secrets
+
+
+def _load_from_bash_secrets() -> dict:
+    """Load API keys from ~/.bash_secrets (local development mode)."""
     bash_secrets_path = Path.home() / ".bash_secrets"
 
     if not bash_secrets_path.exists():
-        raise FileNotFoundError(f"bash_secrets not found at {bash_secrets_path}")
+        return {}
 
-    # Source the file and capture exported variables
-    result = subprocess.run(
-        ["bash", "-c", f"source {bash_secrets_path} && env"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
+    try:
+        result = subprocess.run(
+            ["bash", "-c", f"source {bash_secrets_path} && env"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        logger.warning("Failed to source ~/.bash_secrets: %s", e)
+        return {}
 
     secrets = {}
     for line in result.stdout.splitlines():
         if "=" in line:
             key, _, value = line.partition("=")
-            # Only keep relevant API keys
-            if key in (
-                "OPENROUTER_API_KEY",
-                "CEREBRAS_API_KEY",
-                "ANTHROPIC_API_KEY",
-                "MOONSHOT_API_KEY",
-                "GROK_API_KEY",
-                "GEMINI_API_KEY",
-                "GOOGLE_AI_API_KEY",
-                "FIREWORKS_API_KEY",
-            ):
+            if key in _API_KEY_NAMES:
                 secrets[key] = value
 
     return secrets
 
 
-# Initialize secrets on module load
-_secrets: dict = {}
+def _load_secrets() -> dict:
+    """Load secrets: env vars first, then fill gaps from ~/.bash_secrets."""
+    secrets = _load_from_env()
+    env_count = len(secrets)
 
-try:
-    _secrets = load_bash_secrets()
-except FileNotFoundError as e:
-    print(f"Warning: {e}")
-except subprocess.CalledProcessError as e:
-    print(f"Warning: Failed to load bash_secrets: {e}")
+    if env_count >= 3:
+        # Enough keys from env — likely running in Cloud Run
+        logger.info("Loaded %d API keys from environment variables", env_count)
+        return secrets
+
+    # Fill gaps from bash_secrets (local dev mode)
+    bash_secrets = _load_from_bash_secrets()
+    for key, value in bash_secrets.items():
+        if key not in secrets:
+            secrets[key] = value
+
+    if bash_secrets:
+        logger.info(
+            "Loaded %d keys from env, %d from ~/.bash_secrets",
+            env_count,
+            len(secrets) - env_count,
+        )
+    elif env_count > 0:
+        logger.info("Loaded %d API keys from environment variables", env_count)
+    else:
+        logger.warning("No API keys found in env or ~/.bash_secrets")
+
+    return secrets
+
+
+# Initialize secrets on module load
+_secrets: dict = _load_secrets()
 
 
 def get_secret(key: str) -> Optional[str]:
-    """
-    Get a secret by key.
-
-    Args:
-        key: The secret key name
-
-    Returns:
-        The secret value or None if not found
-    """
+    """Get a secret by key name."""
     return _secrets.get(key)
 
 
-# Export API keys as module-level constants
+# Export API keys as module-level constants for backward compatibility
 OPENROUTER_API_KEY: Optional[str] = _secrets.get("OPENROUTER_API_KEY")
 CEREBRAS_API_KEY: Optional[str] = _secrets.get("CEREBRAS_API_KEY")
 ANTHROPIC_API_KEY: Optional[str] = _secrets.get("ANTHROPIC_API_KEY")
@@ -83,23 +116,14 @@ GEMINI_API_KEY: Optional[str] = _secrets.get("GEMINI_API_KEY") or _secrets.get(
     "GOOGLE_AI_API_KEY"
 )
 FIREWORKS_API_KEY: Optional[str] = _secrets.get("FIREWORKS_API_KEY")
+COUNCIL_API_KEY: Optional[str] = _secrets.get("COUNCIL_API_KEY")
 
 
 def validate_required_keys() -> None:
-    """
-    Validate that all required API keys are present.
-
-    Raises:
-        ValueError: If a required key is missing
-    """
+    """Validate that minimum required API keys are present."""
     if not OPENROUTER_API_KEY:
-        raise ValueError("OPENROUTER_API_KEY not found in bash_secrets")
-    if not CEREBRAS_API_KEY:
-        raise ValueError("CEREBRAS_API_KEY not found in bash_secrets")
+        logger.warning("OPENROUTER_API_KEY not found — OpenRouter fallback disabled")
 
 
 # Validate on import
-try:
-    validate_required_keys()
-except ValueError as e:
-    print(f"Warning: {e}")
+validate_required_keys()

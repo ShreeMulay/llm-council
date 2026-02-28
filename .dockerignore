@@ -1,0 +1,37 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# MCP server (TypeScript — not needed in container)
+mcp/
+
+# Frontend (not needed in container)
+frontend/
+
+# Data (runtime-generated)
+data/
+
+# Git
+.git/
+.gitignore
+
+# IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation
+*.md
+LICENSE
+openspec/
+
+# Beads issue tracking
+.beads/
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose*.yml

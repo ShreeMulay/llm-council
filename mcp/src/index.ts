@@ -18,6 +18,8 @@ const HEALTH_URL = `${BACKEND_URL}/health`;
 const BACKEND_CWD = path.join(__dirname, "../../");
 const PID_FILE = "/tmp/llm-council-backend.pid";
 const BACKEND_LOG = "/tmp/llm-council.log";
+const COUNCIL_API_KEY = process.env.LLM_COUNCIL_KEY || "";
+const IS_REMOTE = BACKEND_URL.startsWith("https://");
 
 // ============================================================================
 // BackendManager - Auto-spawns Python backend if not running
@@ -246,8 +248,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     throw new Error(`Unknown tool: ${name}`);
   }
 
-  // Ensure backend is running before processing request
-  await backendManager.ensureRunning();
+  // Ensure backend is running (local mode only — remote Cloud Run is always up)
+  if (!IS_REMOTE) {
+    await backendManager.ensureRunning();
+  }
 
   const query = args?.query as string;
   const finalOnly = (args?.final_only as boolean) ?? false;
@@ -275,11 +279,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
 
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (COUNCIL_API_KEY) {
+      headers["X-Council-Key"] = COUNCIL_API_KEY;
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/council`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
