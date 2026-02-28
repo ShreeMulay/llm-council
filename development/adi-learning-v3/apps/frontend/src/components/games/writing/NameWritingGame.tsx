@@ -9,12 +9,12 @@ import {
   LETTER_DATA,
   STROKE_COLORS,
   type CharacterData,
-  type Stroke,
 } from '@/data/strokeData';
 import { useBadgeStore } from '@/stores/badgeStore';
 
 const FIRST_NAME = 'Adalyn';
 const LAST_NAME = 'Mulay';
+const CANVAS_SIZE = 300;
 
 // ─── Types ─────────────────────────────────────────────
 
@@ -22,16 +22,11 @@ type TracePhase = 'watch' | 'guided' | 'free';
 
 // ─── SVG Path Helpers ──────────────────────────────────
 
-/** Create an off-screen SVG path element to measure / sample */
-function createMeasurePath(pathData: string, scale: number): {
-  path: SVGPathElement;
-  svg: SVGSVGElement;
-} {
+function createMeasurePath(pathData: string, scale: number) {
   const ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   const path = document.createElementNS(ns, 'path');
-  const scaled = scalePathData(pathData, scale);
-  path.setAttribute('d', scaled);
+  path.setAttribute('d', scalePathData(pathData, scale));
   svg.appendChild(path);
   svg.style.position = 'absolute';
   svg.style.left = '-9999px';
@@ -39,14 +34,12 @@ function createMeasurePath(pathData: string, scale: number): {
   return { path, svg };
 }
 
-/** Scale all numbers in an SVG path string */
 function scalePathData(pathStr: string, scale: number): string {
   return pathStr.replace(/(\d+\.?\d*)/g, (m) =>
     String(parseFloat(m) * scale),
   );
 }
 
-/** Sample equidistant points along a path */
 function samplePathPoints(
   pathData: string,
   scale: number,
@@ -63,15 +56,6 @@ function samplePathPoints(
   return points;
 }
 
-/** Get the total length of a path */
-function getPathLength(pathData: string, scale: number): number {
-  const { path, svg } = createMeasurePath(pathData, scale);
-  const len = path.getTotalLength();
-  document.body.removeChild(svg);
-  return len;
-}
-
-/** Get the point at a given fraction (0–1) along a path */
 function getPointAtFraction(
   pathData: string,
   scale: number,
@@ -79,31 +63,52 @@ function getPointAtFraction(
 ): { x: number; y: number } {
   const { path, svg } = createMeasurePath(pathData, scale);
   const totalLen = path.getTotalLength();
-  const pt = path.getPointAtLength(fraction * totalLen);
+  const pt = path.getPointAtLength(Math.min(1, Math.max(0, fraction)) * totalLen);
   document.body.removeChild(svg);
   return { x: pt.x, y: pt.y };
 }
 
-/** Get a direction angle at a point along the path (for arrows) */
 function getDirectionAtFraction(
   pathData: string,
   scale: number,
   fraction: number,
 ): number {
-  const epsilon = 0.005;
-  const f1 = Math.max(0, fraction - epsilon);
-  const f2 = Math.min(1, fraction + epsilon);
-  const p1 = getPointAtFraction(pathData, scale, f1);
-  const p2 = getPointAtFraction(pathData, scale, f2);
+  const eps = 0.005;
+  const p1 = getPointAtFraction(pathData, scale, Math.max(0, fraction - eps));
+  const p2 = getPointAtFraction(pathData, scale, Math.min(1, fraction + eps));
   return Math.atan2(p2.y - p1.y, p2.x - p1.x) * (180 / Math.PI);
+}
+
+/**
+ * Find the fraction (0–1) along a guide path that is nearest to a given point.
+ * Used by the smart leader dot to track the child's drawing progress.
+ */
+function nearestFractionOnPath(
+  pathData: string,
+  scale: number,
+  point: { x: number; y: number },
+  steps = 50,
+): number {
+  const { path, svg } = createMeasurePath(pathData, scale);
+  const totalLen = path.getTotalLength();
+  let bestFrac = 0;
+  let bestDist = Infinity;
+  for (let i = 0; i <= steps; i++) {
+    const frac = i / steps;
+    const pt = path.getPointAtLength(frac * totalLen);
+    const d = (pt.x - point.x) ** 2 + (pt.y - point.y) ** 2;
+    if (d < bestDist) {
+      bestDist = d;
+      bestFrac = frac;
+    }
+  }
+  document.body.removeChild(svg);
+  return bestFrac;
 }
 
 // ─── Accuracy ──────────────────────────────────────────
 
-function dist(
-  a: { x: number; y: number },
-  b: { x: number; y: number },
-): number {
+function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
@@ -133,21 +138,40 @@ function computeAccuracy(
   return Math.round(Math.max(0, Math.min(100, raw)));
 }
 
+// ─── Adaptive Phase Logic ──────────────────────────────
+// Determines which phase a new letter should start at based on
+// the child's running skill level.
+
+function pickStartPhase(
+  skillLevel: number,
+  isFirstLetterOfName: boolean,
+): TracePhase {
+  if (isFirstLetterOfName) return 'watch';
+  if (skillLevel >= 80) return 'free';
+  if (skillLevel >= 50) return 'guided';
+  return 'watch';
+}
+
+function nextPhaseAfterComplete(
+  current: TracePhase,
+): TracePhase | 'done' {
+  if (current === 'watch') return 'guided';
+  if (current === 'guided') return 'free';
+  return 'done'; // free → letter complete
+}
+
 // ─── SVG Guide Overlay ─────────────────────────────────
-// Renders guide paths, directional arrows, numbered start dots,
-// and the animated demo dot. Sits on top of the canvas with
-// pointer-events: none.
 
 interface GuideOverlayProps {
   letterData: CharacterData;
   size: number;
   strokeIndex: number;
   phase: TracePhase;
-  /** 0–1 fraction of demo animation progress per stroke */
   animProgress: number[];
-  /** Which stroke the demo is currently animating (-1 = not animating) */
   animatingStroke: number;
   showArrows: boolean;
+  /** Smart leader dot position (guided mode) */
+  leaderDot?: { x: number; y: number } | null;
 }
 
 function GuideOverlay({
@@ -158,6 +182,7 @@ function GuideOverlay({
   animProgress,
   animatingStroke,
   showArrows,
+  leaderDot,
 }: GuideOverlayProps) {
   const scale = size / 100;
 
@@ -172,17 +197,14 @@ function GuideOverlay({
         const color = STROKE_COLORS[i % STROKE_COLORS.length];
         const isComplete = i < strokeIndex;
         const isCurrent = i === strokeIndex;
-        const isFuture = i > strokeIndex;
         const isAnimating = animatingStroke === i;
 
-        // Determine opacity based on phase and state
         let opacity = 0.15;
         if (phase === 'watch') {
           opacity = isAnimating ? 0.5 : animProgress[i] > 0 ? 0.3 : 0.15;
         } else if (phase === 'guided') {
           opacity = isCurrent ? 0.5 : isComplete ? 0.2 : 0.15;
         } else {
-          // free
           opacity = isCurrent ? 0.25 : isComplete ? 0.1 : 0.1;
         }
 
@@ -190,7 +212,6 @@ function GuideOverlay({
 
         return (
           <g key={i}>
-            {/* Guide path */}
             <path
               d={scaledPath}
               fill="none"
@@ -202,7 +223,7 @@ function GuideOverlay({
               opacity={opacity}
             />
 
-            {/* Directional arrows (not in free mode) */}
+            {/* Directional arrows */}
             {showArrows &&
               (isCurrent || isAnimating || phase === 'watch') &&
               [0.2, 0.5, 0.8].map((frac) => {
@@ -219,7 +240,7 @@ function GuideOverlay({
                 );
               })}
 
-            {/* Start dot with stroke number */}
+            {/* Numbered start dot */}
             {(isCurrent || phase === 'watch') && (
               <>
                 <circle
@@ -243,7 +264,7 @@ function GuideOverlay({
               </>
             )}
 
-            {/* End dot (smaller, lighter) */}
+            {/* End dot */}
             {isCurrent && phase !== 'watch' && (
               <circle
                 cx={stroke.endPoint.x * scale}
@@ -254,46 +275,36 @@ function GuideOverlay({
               />
             )}
 
-            {/* Animated demo dot */}
-            {isAnimating && animProgress[i] !== undefined && animProgress[i] < 1 && (
+            {/* Demo animation dot */}
+            {isAnimating &&
+              animProgress[i] !== undefined &&
+              animProgress[i] < 1 &&
               (() => {
-                const pt = getPointAtFraction(
-                  stroke.path,
-                  scale,
-                  animProgress[i],
-                );
+                const pt = getPointAtFraction(stroke.path, scale, animProgress[i]);
                 return (
-                  <circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={8}
-                    fill={color}
-                    stroke="white"
-                    strokeWidth={3}
-                  >
-                    <animate
-                      attributeName="r"
-                      values="8;10;8"
-                      dur="0.6s"
-                      repeatCount="indefinite"
-                    />
+                  <circle cx={pt.x} cy={pt.y} r={8} fill={color} stroke="white" strokeWidth={3}>
+                    <animate attributeName="r" values="8;10;8" dur="0.6s" repeatCount="indefinite" />
                   </circle>
                 );
-              })()
-            )}
-
-            {/* Guided mode: leader dot */}
-            {phase === 'guided' && isCurrent && !isAnimating && (
-              (() => {
-                // Leader dot sits at a fixed progress point ahead of the user
-                // For simplicity, place it at 50% through the current stroke
-                // A more advanced version would track user progress
-                return null; // Leader dot handled separately in TracingCanvas
-              })()
-            )}
+              })()}
           </g>
         );
       })}
+
+      {/* Smart leader dot for guided mode */}
+      {leaderDot && phase === 'guided' && strokeIndex < letterData.strokes.length && (
+        <circle
+          cx={leaderDot.x}
+          cy={leaderDot.y}
+          r={10}
+          fill={STROKE_COLORS[strokeIndex % STROKE_COLORS.length]}
+          stroke="white"
+          strokeWidth={3}
+          opacity={0.9}
+        >
+          <animate attributeName="r" values="10;13;10" dur="0.8s" repeatCount="indefinite" />
+        </circle>
+      )}
     </svg>
   );
 }
@@ -304,33 +315,43 @@ interface LetterDemoProps {
   letterData: CharacterData;
   size: number;
   onComplete: () => void;
+  onSkip: () => void; // B3: touch-to-skip
 }
 
-function LetterDemo({ letterData, size, onComplete }: LetterDemoProps) {
+function LetterDemo({ letterData, size, onComplete, onSkip }: LetterDemoProps) {
   const [animatingStroke, setAnimatingStroke] = useState(-1);
   const [animProgress, setAnimProgress] = useState<number[]>(
     letterData.strokes.map(() => 0),
   );
   const animRef = useRef<number | null>(null);
+  const pauseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cueSpokenRef = useRef<Set<number>>(new Set());
+  const cancelledRef = useRef(false);
+
+  const cleanup = useCallback(() => {
+    cancelledRef.current = true;
+    if (animRef.current) cancelAnimationFrame(animRef.current);
+    if (pauseTimerRef.current) clearTimeout(pauseTimerRef.current);
+  }, []);
 
   const runDemo = useCallback(() => {
+    cancelledRef.current = false;
     cueSpokenRef.current.clear();
     let currentStroke = 0;
     let startTime = 0;
-    const STROKE_DURATION = 1200; // ms per stroke
-    const PAUSE_BETWEEN = 500;
+    const STROKE_DURATION = 1000;
+    const PAUSE_BETWEEN = 400;
 
     function animateStroke(timestamp: number) {
+      if (cancelledRef.current) return;
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const fraction = Math.min(elapsed / STROKE_DURATION, 1);
 
-      // Speak cue at start of each stroke
       if (!cueSpokenRef.current.has(currentStroke)) {
         cueSpokenRef.current.add(currentStroke);
-        const cue = letterData.strokes[currentStroke].cue;
-        audio.sayAsync(cue);
+        // B1: Use speakImmediate to cancel any prior audio
+        audio.speakImmediate(letterData.strokes[currentStroke].cue).catch(() => {});
       }
 
       setAnimatingStroke(currentStroke);
@@ -343,45 +364,54 @@ function LetterDemo({ letterData, size, onComplete }: LetterDemoProps) {
       if (fraction < 1) {
         animRef.current = requestAnimationFrame(animateStroke);
       } else {
-        // Stroke complete — pause, then next stroke or finish
         currentStroke++;
         if (currentStroke < letterData.strokes.length) {
           startTime = 0;
-          setTimeout(() => {
-            animRef.current = requestAnimationFrame(animateStroke);
+          pauseTimerRef.current = setTimeout(() => {
+            if (!cancelledRef.current) {
+              animRef.current = requestAnimationFrame(animateStroke);
+            }
           }, PAUSE_BETWEEN);
         } else {
-          // All strokes done
           setAnimatingStroke(-1);
-          setTimeout(onComplete, 600);
+          // B4: shorter end-of-demo pause
+          pauseTimerRef.current = setTimeout(() => {
+            if (!cancelledRef.current) onComplete();
+          }, 300);
         }
       }
     }
 
-    // Reset state
     setAnimProgress(letterData.strokes.map(() => 0));
     setAnimatingStroke(0);
     animRef.current = requestAnimationFrame(animateStroke);
   }, [letterData, onComplete]);
 
   useEffect(() => {
-    // Start demo after a brief pause
-    const timer = setTimeout(runDemo, 400);
+    const timer = setTimeout(runDemo, 300);
     return () => {
       clearTimeout(timer);
-      if (animRef.current) cancelAnimationFrame(animRef.current);
+      cleanup();
     };
-  }, [runDemo]);
+  }, [runDemo, cleanup]);
+
+  // B3: Touch-to-skip — touching the canvas during Watch skips to tracing
+  function handleTouchSkip(e: React.TouchEvent | React.MouseEvent) {
+    e.preventDefault();
+    cleanup();
+    audio.stopSpeaking();
+    onSkip();
+  }
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* Background canvas (blank white) */}
+      {/* Blank canvas background */}
       <canvas
         width={size}
         height={size}
         className="bg-white/20 rounded-2xl border-2 border-white/30"
       />
-      {/* SVG overlay with animated guide */}
+      {/* SVG guide overlay */}
       <GuideOverlay
         letterData={letterData}
         size={size}
@@ -391,16 +421,16 @@ function LetterDemo({ letterData, size, onComplete }: LetterDemoProps) {
         animatingStroke={animatingStroke}
         showArrows={true}
       />
+      {/* B3: Invisible touch layer to capture skip gesture */}
+      <div
+        className="absolute inset-0 rounded-2xl touch-none"
+        onMouseDown={handleTouchSkip}
+        onTouchStart={handleTouchSkip}
+      />
       {/* Label */}
-      <div className="absolute -bottom-8 left-0 right-0 text-center">
-        <motion.p
-          className="text-white/80 text-sm font-semibold"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          Watch how to write it!
-        </motion.p>
-      </div>
+      <p className="text-center text-white/70 text-xs mt-2">
+        Watch how to write it! <span className="text-white/40">(tap to skip)</span>
+      </p>
     </div>
   );
 }
@@ -414,17 +444,10 @@ interface TracingCanvasProps {
   phase: TracePhase;
 }
 
-function TracingCanvas({
-  letterData,
-  onComplete,
-  size,
-  phase,
-}: TracingCanvasProps) {
+function TracingCanvas({ letterData, onComplete, size, phase }: TracingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [currentPoints, setCurrentPoints] = useState<
-    Array<{ x: number; y: number }>
-  >([]);
+  const currentPointsRef = useRef<Array<{ x: number; y: number }>>([]);
   const [strokeIndex, setStrokeIndex] = useState(0);
   const [completedStrokes, setCompletedStrokes] = useState<
     Array<Array<{ x: number; y: number }>>
@@ -432,49 +455,62 @@ function TracingCanvas({
   const [strokeAccuracies, setStrokeAccuracies] = useState<number[]>([]);
   const cueSpokenRef = useRef<Set<number>>(new Set());
 
-  // Guided mode: leader dot progress (0–1)
-  const [leaderProgress, setLeaderProgress] = useState(0);
-  const leaderRef = useRef<number | null>(null);
+  // B5: Smart leader — tracks user progress fraction on the guide path
+  const [leaderFraction, setLeaderFraction] = useState(0);
+  const leaderTargetRef = useRef(0);
+  const leaderAnimRef = useRef<number | null>(null);
+  const userPausedRef = useRef(false);
+  const lastMoveTimeRef = useRef(0);
 
   const scale = size / 100;
 
-  // Redraw user strokes whenever state changes
+  // Redraw completed user strokes
   useEffect(() => {
     drawUserStrokes();
   }, [completedStrokes, strokeIndex]);
 
-  // Guided mode: animate leader dot
-  useEffect(() => {
-    if (phase !== 'guided') return;
-    let start = 0;
-    const LEADER_DURATION = 3000; // 3 seconds per stroke
-
-    function animateLeader(timestamp: number) {
-      if (!start) start = timestamp;
-      const fraction = Math.min((timestamp - start) / LEADER_DURATION, 1);
-      setLeaderProgress(fraction);
-      if (fraction < 1) {
-        leaderRef.current = requestAnimationFrame(animateLeader);
-      }
-    }
-
-    setLeaderProgress(0);
-    start = 0;
-    leaderRef.current = requestAnimationFrame(animateLeader);
-
-    return () => {
-      if (leaderRef.current) cancelAnimationFrame(leaderRef.current);
-    };
-  }, [phase, strokeIndex]);
-
-  // Speak cue when entering a new stroke
+  // B1: Speak cue immediately on each new stroke (cancels prior audio)
   useEffect(() => {
     if (strokeIndex < letterData.strokes.length && !cueSpokenRef.current.has(strokeIndex)) {
       cueSpokenRef.current.add(strokeIndex);
-      const cue = letterData.strokes[strokeIndex].cue;
-      audio.sayAsync(cue);
+      audio.stopSpeaking();
+      audio.speakImmediate(letterData.strokes[strokeIndex].cue).catch(() => {});
     }
   }, [strokeIndex, letterData.strokes]);
+
+  // B5: Smart leader dot animation loop (guided mode)
+  useEffect(() => {
+    if (phase !== 'guided') return;
+    setLeaderFraction(0);
+    leaderTargetRef.current = 0.15; // Start slightly ahead
+    lastMoveTimeRef.current = Date.now();
+    userPausedRef.current = false;
+
+    function tick() {
+      // Smooth lerp toward target
+      setLeaderFraction((prev) => {
+        const target = leaderTargetRef.current;
+        // Lerp speed: fast to catch up, slower when close
+        const diff = target - prev;
+        const step = diff * 0.08 + 0.002; // base creep + proportional
+        const next = Math.min(1, prev + Math.max(0.001, step));
+
+        // Minimum auto-advance: even if user doesn't draw, complete in ~8s
+        const timeSinceMove = Date.now() - lastMoveTimeRef.current;
+        if (timeSinceMove > 1500) {
+          // User paused — don't advance leader
+          return prev;
+        }
+        return next;
+      });
+      leaderAnimRef.current = requestAnimationFrame(tick);
+    }
+
+    leaderAnimRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (leaderAnimRef.current) cancelAnimationFrame(leaderAnimRef.current);
+    };
+  }, [phase, strokeIndex]);
 
   function drawUserStrokes() {
     const canvas = canvasRef.current;
@@ -483,15 +519,14 @@ function TracingCanvas({
     if (!ctx) return;
     ctx.clearRect(0, 0, size, size);
 
-    // Draw completed user strokes
     for (let si = 0; si < completedStrokes.length; si++) {
       const strokePts = completedStrokes[si];
       if (strokePts.length < 2) continue;
       const color = STROKE_COLORS[si % STROKE_COLORS.length];
       ctx.beginPath();
       ctx.moveTo(strokePts[0].x, strokePts[0].y);
-      for (let i = 1; i < strokePts.length; i++) {
-        ctx.lineTo(strokePts[i].x, strokePts[i].y);
+      for (let j = 1; j < strokePts.length; j++) {
+        ctx.lineTo(strokePts[j].x, strokePts[j].y);
       }
       ctx.strokeStyle = color;
       ctx.lineWidth = 5;
@@ -501,37 +536,42 @@ function TracingCanvas({
     }
   }
 
-  function getPos(
-    e: React.TouchEvent | React.MouseEvent,
-  ): { x: number; y: number } {
+  function getPos(e: React.TouchEvent | React.MouseEvent): { x: number; y: number } {
     const canvas = canvasRef.current!;
     const rect = canvas.getBoundingClientRect();
     if ('touches' in e) {
-      return {
-        x: e.touches[0].clientX - rect.left,
-        y: e.touches[0].clientY - rect.top,
-      };
+      return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
     }
-    return {
-      x: (e as React.MouseEvent).clientX - rect.left,
-      y: (e as React.MouseEvent).clientY - rect.top,
-    };
+    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top };
   }
 
   function handleStart(e: React.TouchEvent | React.MouseEvent) {
     e.preventDefault();
     setIsDrawing(true);
     const pos = getPos(e);
-    setCurrentPoints([pos]);
+    currentPointsRef.current = [pos];
     drawLivePoint(pos);
+    lastMoveTimeRef.current = Date.now();
   }
 
   function handleMove(e: React.TouchEvent | React.MouseEvent) {
     if (!isDrawing) return;
     e.preventDefault();
     const pos = getPos(e);
-    setCurrentPoints((prev) => [...prev, pos]);
+    currentPointsRef.current.push(pos);
     drawLiveLine(pos);
+    lastMoveTimeRef.current = Date.now();
+
+    // B5: Update leader target based on where user is on the guide path
+    if (phase === 'guided' && strokeIndex < letterData.strokes.length) {
+      const userFrac = nearestFractionOnPath(
+        letterData.strokes[strokeIndex].path,
+        scale,
+        pos,
+      );
+      // Leader stays 15–20% ahead of user
+      leaderTargetRef.current = Math.max(leaderTargetRef.current, Math.min(1, userFrac + 0.18));
+    }
   }
 
   function handleEnd() {
@@ -541,26 +581,28 @@ function TracingCanvas({
     const currentStroke = letterData.strokes[strokeIndex];
     if (!currentStroke) return;
 
-    // Sample the guide path for accuracy comparison
+    const userPts = currentPointsRef.current;
     const guidePoints = samplePathPoints(currentStroke.path, scale, 40);
-    const accuracy = computeAccuracy(currentPoints, guidePoints, size);
+    const accuracy = computeAccuracy(userPts, guidePoints, size);
     audio.playSparkle();
 
-    const newCompleted = [...completedStrokes, [...currentPoints]];
+    const newCompleted = [...completedStrokes, [...userPts]];
     const newAccuracies = [...strokeAccuracies, accuracy];
     setCompletedStrokes(newCompleted);
     setStrokeAccuracies(newAccuracies);
 
+    // B4: Instant stroke advancement (no delay between strokes)
     if (strokeIndex < letterData.strokes.length - 1) {
       setStrokeIndex(strokeIndex + 1);
-      setCurrentPoints([]);
+      currentPointsRef.current = [];
+      // Reset leader for next stroke
+      setLeaderFraction(0);
+      leaderTargetRef.current = 0.15;
     } else {
-      // All strokes done — compute average accuracy
+      // All strokes done
       const overall =
         newAccuracies.length > 0
-          ? Math.round(
-              newAccuracies.reduce((a, b) => a + b, 0) / newAccuracies.length,
-            )
+          ? Math.round(newAccuracies.reduce((a, b) => a + b, 0) / newAccuracies.length)
           : 50;
       onComplete(overall);
     }
@@ -578,8 +620,9 @@ function TracingCanvas({
 
   function drawLiveLine(pos: { x: number; y: number }) {
     const ctx = canvasRef.current?.getContext('2d');
-    if (!ctx || currentPoints.length < 1) return;
-    const prev = currentPoints[currentPoints.length - 1];
+    const pts = currentPointsRef.current;
+    if (!ctx || pts.length < 2) return;
+    const prev = pts[pts.length - 2];
     const color = STROKE_COLORS[strokeIndex % STROKE_COLORS.length];
     ctx.beginPath();
     ctx.moveTo(prev.x, prev.y);
@@ -591,19 +634,14 @@ function TracingCanvas({
     ctx.stroke();
   }
 
-  // For guided mode, render the leader dot in SVG
-  const guidedLeaderDot =
+  // Compute leader dot position for SVG overlay
+  const leaderDot =
     phase === 'guided' && strokeIndex < letterData.strokes.length
-      ? getPointAtFraction(
-          letterData.strokes[strokeIndex].path,
-          scale,
-          leaderProgress,
-        )
+      ? getPointAtFraction(letterData.strokes[strokeIndex].path, scale, leaderFraction)
       : null;
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
-      {/* User drawing canvas */}
       <canvas
         ref={canvasRef}
         width={size}
@@ -617,7 +655,6 @@ function TracingCanvas({
         onTouchMove={handleMove}
         onTouchEnd={handleEnd}
       />
-      {/* SVG guide overlay */}
       <GuideOverlay
         letterData={letterData}
         size={size}
@@ -626,45 +663,17 @@ function TracingCanvas({
         animProgress={letterData.strokes.map(() => 1)}
         animatingStroke={-1}
         showArrows={phase !== 'free'}
+        leaderDot={leaderDot}
       />
-      {/* Guided mode leader dot */}
-      {guidedLeaderDot && (
-        <svg
-          width={size}
-          height={size}
-          className="absolute inset-0 pointer-events-none"
-          viewBox={`0 0 ${size} ${size}`}
-        >
-          <circle
-            cx={guidedLeaderDot.x}
-            cy={guidedLeaderDot.y}
-            r={10}
-            fill={STROKE_COLORS[strokeIndex % STROKE_COLORS.length]}
-            stroke="white"
-            strokeWidth={3}
-            opacity={0.9}
-          >
-            <animate
-              attributeName="r"
-              values="10;12;10"
-              dur="0.8s"
-              repeatCount="indefinite"
-            />
-          </circle>
-        </svg>
-      )}
-      {/* Phase label */}
-      <div className="absolute -bottom-8 left-0 right-0 text-center">
-        <p className="text-white/70 text-xs">
-          {phase === 'guided' ? 'Follow the dot!' : 'Your turn — trace it!'}
-          {' · '}Stroke {strokeIndex + 1} of {letterData.strokes.length}
-        </p>
-      </div>
+      <p className="text-center text-white/60 text-xs mt-1">
+        {phase === 'guided' ? 'Follow the dot!' : 'Trace it!'} · Stroke{' '}
+        {strokeIndex + 1}/{letterData.strokes.length}
+      </p>
     </div>
   );
 }
 
-// ─── Name Writing Game ─────────────────────────────────
+// ─── Name Writing Game (Orchestrator) ──────────────────
 
 export default function NameWritingGame() {
   const [gamePhase, setGamePhase] = useState<'first' | 'last'>('first');
@@ -672,100 +681,174 @@ export default function NameWritingGame() {
   const [completedLetters, setCompletedLetters] = useState<string[]>([]);
   const [lastAccuracy, setLastAccuracy] = useState<number | null>(null);
   const [tracePhase, setTracePhase] = useState<TracePhase>('watch');
-  const { score, addCorrect, resetGame, triggerCelebration } = useGameStore();
+  // B2: Running skill level for adaptive phase selection
+  const [skillLevel, setSkillLevel] = useState(0);
+  const { addCorrect, resetGame, triggerCelebration } = useGameStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const name = gamePhase === 'first' ? FIRST_NAME : LAST_NAME;
   const currentChar = name[charIndex];
   const letterData = LETTER_DATA[currentChar];
 
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   // Reset on name change
   useEffect(() => {
     resetGame();
-    setTracePhase('watch');
-    audio.sayAsync(
+    setSkillLevel(0);
+    const startPhase = pickStartPhase(0, true);
+    setTracePhase(startPhase);
+    // B1: Cancel everything then speak
+    audio.stopSpeaking();
+    audio.speakImmediate(
       `Let's write your ${gamePhase === 'first' ? 'first' : 'last'} name! Start with the letter ${currentChar}.`,
-    );
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
+    ).catch(() => {});
+    return clearTimer;
   }, [gamePhase]);
 
-  // When charIndex changes, reset to watch phase for new letter
+  // B2: When charIndex changes, pick appropriate starting phase
   useEffect(() => {
-    setTracePhase('watch');
+    const isFirst = charIndex === 0;
+    const startPhase = pickStartPhase(skillLevel, isFirst);
+    setTracePhase(startPhase);
+    setLastAccuracy(null);
   }, [charIndex]);
 
-  /** Called when the watch demo finishes — advance to guided */
+  // ─── Transition Handlers ─────────────────────────
+
+  /** Watch demo finished naturally — advance to guided */
   function handleDemoComplete() {
-    audio.sayAsync('Your turn! Follow the dot.');
+    audio.stopSpeaking();
+    audio.speakImmediate('Your turn! Follow the dot.').catch(() => {});
     setTracePhase('guided');
   }
 
-  /** Called when a letter trace is complete (guided or free) */
+  /** B3: Watch demo skipped by touch — advance to guided */
+  function handleDemoSkip() {
+    audio.stopSpeaking();
+    audio.speakImmediate('Your turn!').catch(() => {});
+    setTracePhase('guided');
+  }
+
+  /** Letter trace complete (guided or free) */
   function handleLetterComplete(accuracy: number) {
+    clearTimer();
     setLastAccuracy(accuracy);
     recordWritingProgress(currentChar, accuracy).catch(() => {});
     addCorrect();
     useBadgeStore.getState().checkAndAward({ writingAccuracy: accuracy });
 
+    // B1: Cancel stale audio, play feedback SFX
+    audio.stopSpeaking();
     if (accuracy >= 70) {
       audio.playSuccess();
     } else {
       audio.playSparkle();
     }
 
-    setCompletedLetters((prev) => [...prev, currentChar]);
+    // B2: Check if there's a next phase for this letter
+    const nextP = nextPhaseAfterComplete(tracePhase);
 
-    // If guided phase just finished, advance to free trace (same letter)
-    if (tracePhase === 'guided') {
+    if (nextP !== 'done') {
+      // Advance to next phase (guided→free) for same letter
+      // B4: Short 400ms transition
       timerRef.current = setTimeout(() => {
         setLastAccuracy(null);
-        audio.sayAsync('Great! Now try it on your own.');
-        setTracePhase('free');
-      }, 1200);
+        audio.stopSpeaking();
+        if (nextP === 'free') {
+          audio.speakImmediate('Now try it on your own!').catch(() => {});
+        } else {
+          audio.speakImmediate('Your turn! Follow the dot.').catch(() => {});
+        }
+        setTracePhase(nextP);
+      }, 400);
       return;
     }
 
-    // Free phase complete — advance to next letter
+    // Free phase complete — this letter is done.
+    // B2: Update skill level (weighted moving average)
+    const newSkill = Math.round(skillLevel * 0.4 + accuracy * 0.6);
+    setSkillLevel(newSkill);
+    setCompletedLetters((prev) => [...prev, currentChar]);
+
+    // B4: Short 400ms then advance to next letter
     timerRef.current = setTimeout(() => {
       setLastAccuracy(null);
+      audio.stopSpeaking();
 
       if (charIndex < name.length - 1) {
         const nextChar = name[charIndex + 1];
+        audio.speakImmediate(`Now write ${nextChar}!`).catch(() => {});
         setCharIndex(charIndex + 1);
-        audio.sayAsync(`Nice! Now write ${nextChar}.`);
       } else if (gamePhase === 'first') {
         triggerCelebration();
-        audio.sayAsync(
-          `Amazing! You wrote ${FIRST_NAME}! Now let's write your last name.`,
-        );
+        audio
+          .speakImmediate(`Amazing! You wrote ${FIRST_NAME}! Now your last name.`)
+          .catch(() => {});
         timerRef.current = setTimeout(() => {
           setGamePhase('last');
           setCharIndex(0);
           setCompletedLetters([]);
-        }, 2500);
+        }, 1500);
       } else {
         triggerCelebration();
-        audio.sayAsync(
-          `Wonderful! You wrote your whole name: ${FIRST_NAME} ${LAST_NAME}!`,
-        );
+        audio
+          .speakImmediate(`Wonderful! You wrote your whole name: ${FIRST_NAME} ${LAST_NAME}!`)
+          .catch(() => {});
       }
-    }, 1200);
+    }, 400);
   }
 
-  /** Replay the watch demo for the current letter */
   function handleShowAgain() {
+    clearTimer();
     audio.stopSpeaking();
+    setLastAccuracy(null);
     setTracePhase('watch');
   }
 
-  /** Skip to the next letter */
   function handleSkip() {
-    handleLetterComplete(40);
+    clearTimer();
+    audio.stopSpeaking();
+    // Skip = treat as low-accuracy free trace
+    setLastAccuracy(null);
+
+    // Update skill down and advance to next letter
+    const newSkill = Math.round(skillLevel * 0.4 + 30 * 0.6);
+    setSkillLevel(newSkill);
+    setCompletedLetters((prev) => [...prev, currentChar]);
+
+    if (charIndex < name.length - 1) {
+      const nextChar = name[charIndex + 1];
+      audio.speakImmediate(`Now write ${nextChar}!`).catch(() => {});
+      setCharIndex(charIndex + 1);
+    } else if (gamePhase === 'first') {
+      triggerCelebration();
+      audio.speakImmediate(`Now your last name!`).catch(() => {});
+      timerRef.current = setTimeout(() => {
+        setGamePhase('last');
+        setCharIndex(0);
+        setCompletedLetters([]);
+      }, 1500);
+    } else {
+      triggerCelebration();
+      audio
+        .speakImmediate(`You wrote your name: ${FIRST_NAME} ${LAST_NAME}!`)
+        .catch(() => {});
+    }
   }
 
   const progress = (completedLetters.length / name.length) * 100;
+
+  // ─── Layout ──────────────────────────────────────
+  // Part A: Full-height flex column.
+  // TOP = name + phase label (shrink-0)
+  // MIDDLE = canvas (flex-1, centered)
+  // BOTTOM = feedback + buttons (shrink-0, anchored to bottom)
 
   return (
     <GameShell
@@ -774,132 +857,139 @@ export default function NameWritingGame() {
       progress={progress}
       bgClass="bg-gradient-to-br from-pink-400 via-rose-400 to-fuchsia-500"
     >
-      <div className="flex flex-col items-center gap-4">
-        {/* Name display */}
-        <div className="flex gap-1 text-4xl font-bold">
-          {name.split('').map((char, i) => (
-            <span
-              key={i}
-              className={`px-1 transition-colors ${
-                i < charIndex
-                  ? 'text-green-200'
-                  : i === charIndex
-                    ? 'text-white underline decoration-4 underline-offset-4'
-                    : 'text-white/40'
-              }`}
-            >
-              {char}
+      <div className="flex flex-col h-full">
+        {/* ── TOP: Name display + phase ── */}
+        <div className="shrink-0 flex flex-col items-center gap-1 pt-1">
+          <div className="flex gap-1 text-3xl font-bold">
+            {name.split('').map((char, i) => (
+              <span
+                key={i}
+                className={`px-0.5 transition-colors ${
+                  i < charIndex
+                    ? 'text-green-200'
+                    : i === charIndex
+                      ? 'text-white underline decoration-4 underline-offset-4'
+                      : 'text-white/40'
+                }`}
+              >
+                {char}
+              </span>
+            ))}
+          </div>
+          <div className="flex items-center gap-2 text-white/80">
+            <span className="text-sm">
+              {gamePhase === 'first' ? 'First Name' : 'Last Name'} —{' '}
+              <strong className="text-base">{currentChar}</strong>
             </span>
-          ))}
+            <span className="text-xs px-2 py-0.5 rounded-full bg-white/20">
+              {tracePhase === 'watch'
+                ? '👀 Watch'
+                : tracePhase === 'guided'
+                  ? '🎯 Follow'
+                  : '✍️ Trace'}
+            </span>
+          </div>
         </div>
 
-        {/* Phase indicator */}
-        <div className="flex items-center gap-2 text-white/80 text-lg">
-          <span>
-            {gamePhase === 'first' ? 'First Name' : 'Last Name'} —{' '}
-            <strong>{currentChar}</strong>
-          </span>
-          <span className="text-sm px-2 py-0.5 rounded-full bg-white/20">
-            {tracePhase === 'watch'
-              ? '👀 Watch'
-              : tracePhase === 'guided'
-                ? '🎯 Guided'
-                : '✍️ Free'}
-          </span>
+        {/* ── MIDDLE: Canvas (centered) ── */}
+        <div className="flex-1 flex items-center justify-center min-h-0">
+          {letterData ? (
+            <AnimatePresence mode="wait">
+              {tracePhase === 'watch' ? (
+                <motion.div
+                  key={`watch-${gamePhase}-${charIndex}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <LetterDemo
+                    letterData={letterData}
+                    size={CANVAS_SIZE}
+                    onComplete={handleDemoComplete}
+                    onSkip={handleDemoSkip}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`trace-${gamePhase}-${charIndex}-${tracePhase}`}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <TracingCanvas
+                    letterData={letterData}
+                    onComplete={handleLetterComplete}
+                    size={CANVAS_SIZE}
+                    phase={tracePhase}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          ) : (
+            <div
+              className="bg-white/20 rounded-2xl flex items-center justify-center"
+              style={{ width: CANVAS_SIZE, height: CANVAS_SIZE }}
+            >
+              <span className="text-8xl text-white/60">{currentChar}</span>
+            </div>
+          )}
         </div>
 
-        {/* Main content area */}
-        {letterData ? (
-          <AnimatePresence mode="wait">
-            {tracePhase === 'watch' ? (
+        {/* ── BOTTOM: Feedback + buttons (anchored to bottom, safe zone) ── */}
+        <div className="shrink-0 flex flex-col items-center gap-2 pb-6 pt-4">
+          {/* Accuracy toast (non-blocking, auto-fades) */}
+          <AnimatePresence>
+            {lastAccuracy !== null && (
               <motion.div
-                key={`watch-${gamePhase}-${charIndex}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
+                className="text-center"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
               >
-                <LetterDemo
-                  letterData={letterData}
-                  size={280}
-                  onComplete={handleDemoComplete}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key={`trace-${gamePhase}-${charIndex}-${tracePhase}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TracingCanvas
-                  letterData={letterData}
-                  onComplete={handleLetterComplete}
-                  size={280}
-                  phase={tracePhase}
-                />
+                <p
+                  className={`text-lg font-bold ${
+                    lastAccuracy >= 80
+                      ? 'text-green-100'
+                      : lastAccuracy >= 50
+                        ? 'text-yellow-100'
+                        : 'text-red-100'
+                  }`}
+                >
+                  {lastAccuracy >= 80
+                    ? 'Great tracing! 🌟'
+                    : lastAccuracy >= 50
+                      ? 'Good try! 👍'
+                      : 'Keep practicing! 💪'}
+                  <span className="text-white/50 text-sm ml-2">{lastAccuracy}%</span>
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
-        ) : (
-          <div className="w-[280px] h-[280px] bg-white/20 rounded-2xl flex items-center justify-center">
-            <span className="text-8xl text-white/60">{currentChar}</span>
-          </div>
-        )}
 
-        {/* Accuracy feedback */}
-        <AnimatePresence>
-          {lastAccuracy !== null && (
-            <motion.div
-              className="text-center"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-            >
-              <p
-                className={`text-2xl font-bold ${
-                  lastAccuracy >= 80
-                    ? 'text-green-100'
-                    : lastAccuracy >= 50
-                      ? 'text-yellow-100'
-                      : 'text-red-100'
-                }`}
+          {/* Action buttons — well below the canvas */}
+          <div className="flex gap-4">
+            {tracePhase !== 'watch' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-white/60 text-xs px-4 py-2"
+                onClick={handleShowAgain}
               >
-                {lastAccuracy >= 80
-                  ? 'Great tracing!'
-                  : lastAccuracy >= 50
-                    ? 'Good try!'
-                    : 'Keep practicing!'}{' '}
-                {lastAccuracy >= 80 ? '🌟' : lastAccuracy >= 50 ? '👍' : '💪'}
-              </p>
-              <p className="text-white/60 text-sm">
-                Accuracy: {lastAccuracy}%
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Action buttons */}
-        <div className="flex gap-3">
-          {tracePhase !== 'watch' && (
+                Show Me Again
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              className="bg-white/60"
-              onClick={handleShowAgain}
+              className="bg-white/60 text-xs px-4 py-2"
+              onClick={handleSkip}
             >
-              Show Me Again
+              Skip Letter
             </Button>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="bg-white/60"
-            onClick={handleSkip}
-          >
-            Skip Letter
-          </Button>
+          </div>
         </div>
       </div>
     </GameShell>
