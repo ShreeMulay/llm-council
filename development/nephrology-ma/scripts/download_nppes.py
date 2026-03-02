@@ -35,91 +35,168 @@ logger = logging.getLogger(__name__)
 NPPES_API = "https://npiregistry.cms.hhs.gov/api/"
 
 
-def fetch_nppes_api(cfg: dict) -> pd.DataFrame:
-    """Fetch nephrology NPIs from NPPES API with pagination."""
-    taxonomy_codes = cfg["taxonomy_codes"]
+def _parse_npi_record(r: dict) -> dict:
+    """Parse a single NPPES API result into a flat row."""
+    basic = r.get("basic", {})
+    addresses = r.get("addresses", [])
+    taxonomies_list = r.get("taxonomies", [])
+
+    practice_addr = next((a for a in addresses if a.get("address_purpose") == "LOCATION"), {})
+    mail_addr = next((a for a in addresses if a.get("address_purpose") == "MAILING"), {})
+
+    tax_codes = [t.get("code", "") for t in taxonomies_list]
+    primary_tax = next((t.get("code", "") for t in taxonomies_list if t.get("primary")), "")
+
+    return {
+        "npi": str(r.get("number", "")),
+        "entity_type": r.get("enumeration_type", ""),
+        "last_name": basic.get("last_name", basic.get("organization_name", "")),
+        "first_name": basic.get("first_name", ""),
+        "middle_name": basic.get("middle_name", ""),
+        "credential": basic.get("credential", ""),
+        "gender": basic.get("gender", ""),
+        "enumeration_date": basic.get("enumeration_date", ""),
+        "last_updated": basic.get("last_updated", ""),
+        "status": basic.get("status", ""),
+        "primary_taxonomy": primary_tax,
+        "all_taxonomy_codes": "|".join(tax_codes),
+        "practice_address_line1": practice_addr.get("address_1", ""),
+        "practice_address_line2": practice_addr.get("address_2", ""),
+        "practice_city": practice_addr.get("city", ""),
+        "practice_state": practice_addr.get("state", ""),
+        "practice_zip": practice_addr.get("postal_code", ""),
+        "practice_phone": practice_addr.get("telephone_number", ""),
+        "mail_address_line1": mail_addr.get("address_1", ""),
+        "mail_city": mail_addr.get("city", ""),
+        "mail_state": mail_addr.get("state", ""),
+        "mail_zip": mail_addr.get("postal_code", ""),
+    }
+
+
+US_STATES = [
+    "AL",
+    "AK",
+    "AZ",
+    "AR",
+    "CA",
+    "CO",
+    "CT",
+    "DE",
+    "DC",
+    "FL",
+    "GA",
+    "HI",
+    "ID",
+    "IL",
+    "IN",
+    "IA",
+    "KS",
+    "KY",
+    "LA",
+    "ME",
+    "MD",
+    "MA",
+    "MI",
+    "MN",
+    "MS",
+    "MO",
+    "MT",
+    "NE",
+    "NV",
+    "NH",
+    "NJ",
+    "NM",
+    "NY",
+    "NC",
+    "ND",
+    "OH",
+    "OK",
+    "OR",
+    "PA",
+    "PR",
+    "RI",
+    "SC",
+    "SD",
+    "TN",
+    "TX",
+    "UT",
+    "VT",
+    "VA",
+    "VI",
+    "WA",
+    "WV",
+    "WI",
+    "WY",
+    "GU",
+    "AS",
+    "MP",
+]
+
+
+def _fetch_state_npis(state: str, api_version: str, seen_npis: set[str]) -> list[dict]:
+    """Fetch all nephrology NPIs for a single state, paginating fully."""
     records = []
+    skip = 0
+    limit = 200
+    max_pages = 50  # safety: 50 * 200 = 10K per state (way more than needed)
 
-    for taxonomy in taxonomy_codes:
-        logger.info(f"Fetching taxonomy: {taxonomy}")
-        skip = 0
-        limit = 200
+    for _page in range(max_pages):
+        params = {
+            "version": api_version,
+            "taxonomy_description": "Nephrology",
+            "state": state,
+            "limit": limit,
+            "skip": skip,
+        }
 
-        while True:
-            params = {
-                "version": cfg["data_sources"]["nppes"]["api_version"],
-                "taxonomy_description": "Nephrology",
-                "limit": limit,
-                "skip": skip,
-            }
+        try:
+            resp = requests.get(NPPES_API, params=params, timeout=30)
+            resp.raise_for_status()
+            data = resp.json()
+        except (requests.RequestException, json.JSONDecodeError) as e:
+            logger.warning(f"API error for {state} at skip={skip}: {e}")
+            break
 
-            try:
-                resp = requests.get(NPPES_API, params=params, timeout=30)
-                resp.raise_for_status()
-                data = resp.json()
-            except (requests.RequestException, json.JSONDecodeError) as e:
-                logger.warning(f"API error at skip={skip}: {e}")
-                break
+        results = data.get("results", [])
+        if not results:
+            break
 
-            results = data.get("results", [])
-            if not results:
-                break
+        for r in results:
+            npi = str(r.get("number", ""))
+            if npi and npi not in seen_npis:
+                seen_npis.add(npi)
+                records.append(_parse_npi_record(r))
 
-            for r in results:
-                basic = r.get("basic", {})
-                addresses = r.get("addresses", [])
-                taxonomies_list = r.get("taxonomies", [])
+        if len(results) < limit:
+            break
 
-                # Find practice address (purpose = LOCATION)
-                practice_addr = next(
-                    (a for a in addresses if a.get("address_purpose") == "LOCATION"), {}
-                )
-                mail_addr = next(
-                    (a for a in addresses if a.get("address_purpose") == "MAILING"), {}
-                )
+        skip += limit
 
-                tax_codes = [t.get("code", "") for t in taxonomies_list]
-                primary_tax = next(
-                    (t.get("code", "") for t in taxonomies_list if t.get("primary")), ""
-                )
+    return records
 
-                records.append(
-                    {
-                        "npi": str(r.get("number", "")),
-                        "entity_type": r.get("enumeration_type", ""),
-                        "last_name": basic.get("last_name", basic.get("organization_name", "")),
-                        "first_name": basic.get("first_name", ""),
-                        "middle_name": basic.get("middle_name", ""),
-                        "credential": basic.get("credential", ""),
-                        "gender": basic.get("gender", ""),
-                        "enumeration_date": basic.get("enumeration_date", ""),
-                        "last_updated": basic.get("last_updated", ""),
-                        "status": basic.get("status", ""),
-                        "primary_taxonomy": primary_tax,
-                        "all_taxonomy_codes": "|".join(tax_codes),
-                        "practice_address_line1": practice_addr.get("address_1", ""),
-                        "practice_address_line2": practice_addr.get("address_2", ""),
-                        "practice_city": practice_addr.get("city", ""),
-                        "practice_state": practice_addr.get("state", ""),
-                        "practice_zip": practice_addr.get("postal_code", ""),
-                        "practice_phone": practice_addr.get("telephone_number", ""),
-                        "mail_address_line1": mail_addr.get("address_1", ""),
-                        "mail_city": mail_addr.get("city", ""),
-                        "mail_state": mail_addr.get("state", ""),
-                        "mail_zip": mail_addr.get("postal_code", ""),
-                    }
-                )
 
-            result_count = data.get("result_count", 0)
-            skip += limit
+def fetch_nppes_api(cfg: dict) -> pd.DataFrame:
+    """Fetch nephrology NPIs from NPPES API, partitioned by state.
 
-            if skip >= result_count:
-                break
+    The NPPES API has a ~1,200 record ceiling per unpartitioned search.
+    Partitioning by state ensures we capture the full ~15K+ US nephrology workforce.
+    """
+    api_version = cfg["data_sources"]["nppes"]["api_version"]
+    all_records: list[dict] = []
+    seen_npis: set[str] = set()
 
-        logger.info(f"  Taxonomy {taxonomy}: {len(records)} total records so far")
+    logger.info(f"Fetching nephrology NPIs by state ({len(US_STATES)} states/territories)...")
 
-    df = pd.DataFrame(records)
-    # Deduplicate by NPI
+    for state in tqdm(US_STATES, desc="States"):
+        state_records = _fetch_state_npis(state, api_version, seen_npis)
+        all_records.extend(state_records)
+        if state_records:
+            logger.info(f"  {state}: +{len(state_records)} new NPIs ({len(all_records)} total)")
+
+    logger.info(f"Finished: {len(all_records)} unique nephrology NPIs across all states")
+
+    df = pd.DataFrame(all_records)
+    # Safety dedup (should already be unique via seen_npis set)
     df = df.drop_duplicates(subset=["npi"])
     logger.info(f"Total unique nephrology NPIs: {len(df)}")
     return df

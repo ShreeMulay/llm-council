@@ -1,6 +1,7 @@
 """BigQuery helper functions shared across all pipeline scripts."""
 
 import logging
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -12,10 +13,37 @@ from scripts.config_loader import get_dataset, get_project_id, get_table_ref, lo
 logger = logging.getLogger(__name__)
 
 
+def _get_gcloud_credentials():
+    """Fall back to gcloud CLI credentials when ADC is not configured."""
+    import google.auth
+    import google.auth.transport.requests
+    import google.oauth2.credentials
+
+    # Get access token from gcloud CLI
+    result = subprocess.run(
+        ["gcloud", "auth", "print-access-token"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    token = result.stdout.strip()
+    return google.oauth2.credentials.Credentials(token=token)
+
+
 def get_client(cfg: dict | None = None) -> bigquery.Client:
-    """Create a BigQuery client for the configured project."""
+    """Create a BigQuery client for the configured project.
+
+    Tries Application Default Credentials first, falls back to gcloud CLI token.
+    """
     cfg = cfg or load_config()
-    return bigquery.Client(project=get_project_id(cfg))
+    project_id = get_project_id(cfg)
+
+    try:
+        return bigquery.Client(project=project_id)
+    except Exception:
+        logger.info("ADC not found, falling back to gcloud CLI credentials")
+        credentials = _get_gcloud_credentials()
+        return bigquery.Client(project=project_id, credentials=credentials)
 
 
 def load_dataframe(
