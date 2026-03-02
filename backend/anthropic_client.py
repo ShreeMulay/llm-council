@@ -276,7 +276,11 @@ async def call_anthropic(
     max_tokens: int = 32768,
     system_prompt: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Call Anthropic API - tries OAuth (Max plan) first, falls back to API key."""
+    """Call Anthropic API - tries OAuth (Max plan) first, falls back to API key.
+
+    Note: In Cloud Run, is_anthropic_model() returns False so this function
+    is never called — all Anthropic models route through OpenRouter instead.
+    """
     oauth_result = await get_valid_oauth_token()
     if oauth_result:
         access_token, _ = oauth_result
@@ -292,6 +296,10 @@ async def call_anthropic(
             print(
                 f"OAuth call failed ({e.response.status_code}): {e.response.text[:200]}"
             )
+            # Fall through to API key as a second attempt
+
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("No Anthropic auth available (no OAuth token, no API key)")
 
     return await call_anthropic_api_key(
         model=model,
@@ -302,7 +310,17 @@ async def call_anthropic(
 
 
 def is_anthropic_model(model_id: str) -> bool:
-    """Check if a model should be routed to Anthropic directly."""
+    """Check if a model should be routed to Anthropic directly.
+
+    In Cloud Run there is no auth.json for OAuth and the API key lacks
+    Opus 4.6 access, so we return False to let all Anthropic models
+    fall through to OpenRouter instead of wasting time on retries.
+    """
+    from .config import IS_CLOUD_RUN
+
+    if IS_CLOUD_RUN:
+        return False
+
     return (
         model_id.startswith("anthropic/")
         or model_id.startswith("claude-")

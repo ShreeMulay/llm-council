@@ -67,7 +67,9 @@ async def _query_primary(
         }
     else:
         # No direct provider — go straight to OpenRouter
-        return await query_openrouter_model(model_id, messages, max_tokens, temperature)
+        # Use the fallback mapping if available (e.g. council ID -> OpenRouter ID)
+        or_model = get_openrouter_fallback(model_id) or model_id
+        return await query_openrouter_model(or_model, messages, max_tokens, temperature)
 
 
 async def query_single_model(
@@ -185,8 +187,13 @@ async def query_models_parallel(
     anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
     openai_ids = [m for m in model_ids if is_openai_model(m)]
     # OpenRouter handles everything else (Gemini, DeepSeek, Grok, etc.)
+    # In Cloud Run, is_anthropic_model() returns False so Anthropic models
+    # land here too — translate via fallback map so OpenRouter gets correct IDs.
     routed = set(fireworks_ids + cerebras_ids + anthropic_ids + openai_ids)
-    openrouter_ids = [m for m in model_ids if m not in routed]
+    openrouter_raw = [m for m in model_ids if m not in routed]
+    # Build mapping from OpenRouter ID -> original council ID for re-keying results
+    or_id_map = {(get_openrouter_fallback(m) or m): m for m in openrouter_raw}
+    openrouter_ids = list(or_id_map.keys())
 
     results = {}
     tasks = []
@@ -228,6 +235,12 @@ async def query_models_parallel(
         provider_results = await asyncio.gather(*tasks)
         for pr in provider_results:
             results.update(pr)
+
+    # Re-key OpenRouter results from translated IDs back to council IDs.
+    # e.g. "anthropic/claude-opus-4-6" -> "anthropic/claude-opus-4.6"
+    for or_id, council_id in or_id_map.items():
+        if or_id != council_id and or_id in results:
+            results[council_id] = results.pop(or_id)
 
     return results
 

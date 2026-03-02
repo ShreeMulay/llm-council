@@ -3,6 +3,9 @@
 import os
 from pathlib import Path
 
+# Cloud Run detection — K_SERVICE is set automatically by Cloud Run
+IS_CLOUD_RUN = bool(os.getenv("K_SERVICE"))
+
 # Import secrets from bash_secrets
 from .secrets import (
     OPENROUTER_API_KEY,
