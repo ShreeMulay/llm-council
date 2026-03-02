@@ -55,3 +55,6 @@
 [submodule "development/tke-process-mapper"]
 	path = development/tke-process-mapper
 	url = git@github.com:ShreeMulay/tke-process-mapper.git
+[submodule "development/nephrology-ma"]
+	path = development/nephrology-ma
+	url = https://github.com/ShreeMulay/nephrology-ma.git
