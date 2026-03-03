@@ -241,6 +241,121 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   };
 });
 
+// ============================================================================
+// SSE Stream Consumer — reads /api/council/stream, logs progress, returns result
+// ============================================================================
+
+interface SSEEvent {
+  event?: string;
+  stage?: number;
+  model?: string;
+  response?: string;
+  provider?: string;
+  progress?: string;
+  count?: string;
+  message?: string;
+  markdown?: string;
+  models?: string[];
+  chairman?: string;
+  parsed_ranking?: string[];
+  tokens?: number;
+  timing?: { elapsed_seconds: number };
+  stage1?: unknown[];
+  stage2?: unknown[];
+  stage3?: unknown;
+  metadata?: unknown;
+  config?: unknown;
+}
+
+async function consumeSSEStream(
+  response: Response,
+): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error("No response body for SSE stream");
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let markdown = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // Process complete SSE lines
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const jsonStr = line.slice(6).trim();
+      if (!jsonStr) continue;
+
+      try {
+        const evt: SSEEvent = JSON.parse(jsonStr);
+
+        switch (evt.event) {
+          case "stage_start":
+            if (evt.stage === 1) {
+              console.error(`[Council] Stage 1: querying ${evt.models?.length ?? "?"} models...`);
+            } else if (evt.stage === 2) {
+              console.error(`[Council] Stage 2: peer rankings...`);
+            } else if (evt.stage === 3) {
+              console.error(`[Council] Stage 3: chairman ${evt.chairman ?? ""} synthesizing...`);
+            }
+            break;
+
+          case "model_response":
+            if (evt.stage === 1) {
+              const preview = (evt.response ?? "").slice(0, 80);
+              console.error(`[Council] ${evt.progress} ${evt.model} (${evt.provider}): ${preview}...`);
+            } else if (evt.stage === 2) {
+              console.error(`[Council] ${evt.progress} ${evt.model} ranked`);
+            }
+            break;
+
+          case "model_failed":
+            console.error(`[Council] ${evt.progress} ${evt.model} FAILED`);
+            break;
+
+          case "synthesis":
+            console.error(`[Council] Chairman ${evt.model} responded (${(evt.response ?? "").length} chars)`);
+            break;
+
+          case "stage_complete":
+            console.error(`[Council] Stage ${evt.stage} complete: ${evt.count}`);
+            break;
+
+          case "error":
+            throw new Error(evt.message ?? "Unknown streaming error");
+
+          case "complete":
+            if (evt.markdown) {
+              markdown = evt.markdown;
+            }
+            if (evt.timing) {
+              console.error(`[Council] Done in ${evt.timing.elapsed_seconds}s`);
+            }
+            break;
+        }
+      } catch (e) {
+        if (e instanceof Error && e.message !== "Unknown streaming error" && !e.message.startsWith("All models")) {
+          // JSON parse error — skip malformed line
+          continue;
+        }
+        throw e;
+      }
+    }
+  }
+
+  return markdown;
+}
+
+// ============================================================================
+// Tool Handler — uses streaming with sync fallback
+// ============================================================================
+
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -269,22 +384,66 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
 
-  try {
-    const requestBody: CouncilRequest = {
-      query,
-      final_only: finalOnly,
-      include_details: includeDetails,
-    };
+  const requestBody: CouncilRequest = {
+    query,
+    final_only: finalOnly,
+    include_details: includeDetails,
+  };
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (COUNCIL_API_KEY) {
+    headers["X-Council-Key"] = COUNCIL_API_KEY;
+  }
+
+  try {
+    // Try streaming endpoint first
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
 
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    if (COUNCIL_API_KEY) {
-      headers["X-Council-Key"] = COUNCIL_API_KEY;
+    console.error(`[Council] Starting streaming deliberation...`);
+    const streamResponse = await fetch(`${BACKEND_URL}/api/council/stream`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (streamResponse.ok && streamResponse.headers.get("content-type")?.includes("text/event-stream")) {
+      const markdown = await consumeSSEStream(streamResponse);
+      if (markdown) {
+        return {
+          content: [{ type: "text" as const, text: markdown }],
+        };
+      }
+      // Empty markdown — fall through to sync
+      console.error("[Council] Streaming returned empty result, falling back to sync");
+    } else {
+      console.error(`[Council] Streaming unavailable (${streamResponse.status}), using sync`);
     }
+  } catch (streamError) {
+    const msg = streamError instanceof Error ? streamError.message : "unknown";
+    if (streamError instanceof Error && streamError.name === "AbortError") {
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: `Council deliberation timed out after ${COUNCIL_TIMEOUT_MS / 1000}s. Try using final_only: true for faster results.`,
+          },
+        ],
+        isError: true,
+      };
+    }
+    console.error(`[Council] Streaming failed (${msg}), falling back to sync`);
+  }
+
+  // Fallback: sync endpoint
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
 
     const response = await fetch(`${BACKEND_URL}/api/council`, {
       method: "POST",

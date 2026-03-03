@@ -3,7 +3,7 @@
 import re
 import asyncio
 import logging
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple, Optional, AsyncGenerator
 from collections import defaultdict
 
 logger = logging.getLogger("llm-council.council")
@@ -703,6 +703,279 @@ async def run_full_council(
     }
 
     return stage1_results, stage2_results, stage3_result, metadata
+
+
+async def _query_single_with_retry(
+    model_id: str,
+    messages: List[Dict[str, str]],
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
+    max_retries: int = 2,
+    backoff_base: float = 1.5,
+) -> Dict[str, Any]:
+    """
+    Query a single model with retries and OpenRouter fallback.
+
+    Uses the SAME provider routing as query_models_parallel:
+    fireworks, cerebras, anthropic, openai → direct providers.
+    Everything else → OpenRouter (with ID translation via fallback map).
+
+    Returns a dict with model, response, usage, provider keys.
+    Always returns a result (with empty response on total failure).
+    """
+    # Determine if this model has a direct provider (matching query_models_parallel logic)
+    has_direct_provider = (
+        is_fireworks_model(model_id)
+        or is_cerebras_model(model_id)
+        or is_anthropic_model(model_id)
+        or is_openai_model(model_id)
+    )
+
+    async def _try_query() -> Optional[Dict[str, Any]]:
+        if has_direct_provider:
+            return await _query_primary(model_id, messages, max_tokens, temperature)
+        else:
+            # Route through OpenRouter (same as query_models_parallel's openrouter_raw path)
+            or_model = get_openrouter_fallback(model_id) or model_id
+            return await query_openrouter_model(
+                or_model, messages, max_tokens, temperature
+            )
+
+    for attempt in range(max_retries + 1):
+        try:
+            result = await _try_query()
+            if result and result.get("content"):
+                return {
+                    "model": model_id,
+                    "response": result.get("content", ""),
+                    "usage": result.get("usage", {}),
+                    "provider": result.get("provider", "unknown"),
+                }
+        except Exception as e:
+            logger.warning(
+                "Attempt %d/%d failed for %s: %s",
+                attempt + 1,
+                max_retries + 1,
+                model_id,
+                e,
+            )
+        if attempt < max_retries:
+            wait = backoff_base * (2**attempt)
+            await asyncio.sleep(wait)
+
+    # Final fallback: OpenRouter (only if we were using a direct provider)
+    if has_direct_provider:
+        or_model = get_openrouter_fallback(model_id)
+        if or_model:
+            try:
+                result = await query_openrouter_model(
+                    or_model, messages, max_tokens, temperature
+                )
+                if result and result.get("content"):
+                    return {
+                        "model": model_id,
+                        "response": result.get("content", ""),
+                        "usage": result.get("usage", {}),
+                        "provider": f"{result.get('provider', 'openrouter')}-fallback",
+                    }
+            except Exception as e:
+                logger.error("OpenRouter fallback failed for %s: %s", model_id, e)
+
+    return {
+        "model": model_id,
+        "response": "",
+        "usage": {},
+        "provider": "failed",
+    }
+
+
+async def stream_council(
+    user_query: str,
+    final_only: bool = False,
+    council_models: Optional[List[str]] = None,
+    chairman_model: Optional[str] = None,
+) -> AsyncGenerator[Dict[str, Any], None]:
+    """
+    Stream the council deliberation, yielding events as each model responds.
+
+    Events yielded:
+        {"event": "stage_start", "stage": 1}
+        {"event": "model_response", "stage": 1, "model": "...", "response": "...", ...}
+        {"event": "stage_complete", "stage": 1, "count": "5/5"}
+        {"event": "stage_start", "stage": 2}  (if not final_only)
+        {"event": "model_response", "stage": 2, "model": "...", "ranking": "...", ...}
+        {"event": "stage_complete", "stage": 2, "count": "5/5"}
+        {"event": "stage_start", "stage": 3}
+        {"event": "synthesis", "model": "...", "response": "..."}
+        {"event": "complete", "stage1": [...], "stage2": [...], "stage3": {...}, "metadata": {...}}
+    """
+    models = council_models or COUNCIL_MODELS
+    chairman = chairman_model or CHAIRMAN_MODEL
+    messages = [{"role": "user", "content": user_query}]
+
+    # --- Stage 1: Stream individual responses ---
+    yield {"event": "stage_start", "stage": 1, "models": models}
+    logger.info("Stream Stage 1: querying %d models", len(models))
+
+    stage1_results: List[Dict[str, Any]] = []
+    tasks = {
+        asyncio.create_task(_query_single_with_retry(m, messages)): m for m in models
+    }
+
+    responded = 0
+    for coro in asyncio.as_completed(tasks.keys()):
+        result = await coro
+        responded += 1
+        if result.get("response"):
+            stage1_results.append(result)
+            yield {
+                "event": "model_response",
+                "stage": 1,
+                "model": result["model"],
+                "response": result["response"][:200]
+                + ("..." if len(result["response"]) > 200 else ""),
+                "provider": result["provider"],
+                "tokens": result.get("usage", {}).get("total_tokens", 0),
+                "progress": f"{responded}/{len(models)}",
+            }
+        else:
+            yield {
+                "event": "model_failed",
+                "stage": 1,
+                "model": result["model"],
+                "progress": f"{responded}/{len(models)}",
+            }
+
+    yield {
+        "event": "stage_complete",
+        "stage": 1,
+        "count": f"{len(stage1_results)}/{len(models)}",
+    }
+    logger.info(
+        "Stream Stage 1 complete: %d/%d models responded",
+        len(stage1_results),
+        len(models),
+    )
+
+    if not stage1_results:
+        yield {
+            "event": "error",
+            "message": "All models failed to respond.",
+        }
+        return
+
+    # --- Stage 2: Peer rankings (if not final_only) ---
+    stage2_results: List[Dict[str, Any]] = []
+    label_to_model: Dict[str, str] = {}
+    aggregate_rankings: List[Dict[str, Any]] = []
+
+    if not final_only:
+        yield {"event": "stage_start", "stage": 2, "models": models}
+        logger.info("Stream Stage 2: querying %d models for rankings", len(models))
+
+        labels = [chr(65 + i) for i in range(len(stage1_results))]
+        label_to_model = {
+            f"Response {label}": result["model"]
+            for label, result in zip(labels, stage1_results)
+        }
+        responses_text = "\n\n".join(
+            f"Response {label}:\n{result['response']}"
+            for label, result in zip(labels, stage1_results)
+        )
+        ranking_prompt = f"""You are evaluating different responses to the following question:
+
+Question: {user_query}
+
+Here are the responses from different models (anonymized):
+
+{responses_text}
+
+Your task:
+1. First, evaluate each response individually. For each response, explain what it does well and what it does poorly.
+2. Then, at the very end of your response, provide a final ranking.
+
+IMPORTANT: Your final ranking MUST be formatted EXACTLY as follows:
+- Start with the line "FINAL RANKING:" (all caps, with colon)
+- Then list the responses from best to worst as a numbered list
+- Each line should be: number, period, space, then ONLY the response label (e.g., "1. Response A")
+- Do not add any other text or explanations in the ranking section
+
+Now provide your evaluation and ranking:"""
+
+        ranking_messages = [{"role": "user", "content": ranking_prompt}]
+        ranking_tasks = {
+            asyncio.create_task(_query_single_with_retry(m, ranking_messages)): m
+            for m in models
+        }
+
+        ranked = 0
+        for coro in asyncio.as_completed(ranking_tasks.keys()):
+            result = await coro
+            ranked += 1
+            if result.get("response"):
+                parsed = parse_ranking_from_text(result["response"])
+                stage2_entry = {
+                    "model": result["model"],
+                    "ranking": result["response"],
+                    "parsed_ranking": parsed,
+                    "usage": result.get("usage", {}),
+                    "provider": result.get("provider", "unknown"),
+                }
+                stage2_results.append(stage2_entry)
+                yield {
+                    "event": "model_response",
+                    "stage": 2,
+                    "model": result["model"],
+                    "parsed_ranking": parsed,
+                    "provider": result["provider"],
+                    "progress": f"{ranked}/{len(models)}",
+                }
+            else:
+                yield {
+                    "event": "model_failed",
+                    "stage": 2,
+                    "model": result["model"],
+                    "progress": f"{ranked}/{len(models)}",
+                }
+
+        aggregate_rankings = calculate_aggregate_rankings(
+            stage2_results, label_to_model
+        )
+        yield {
+            "event": "stage_complete",
+            "stage": 2,
+            "count": f"{len(stage2_results)}/{len(models)}",
+        }
+
+    # --- Stage 3: Chairman synthesis ---
+    yield {"event": "stage_start", "stage": 3, "chairman": chairman}
+    logger.info("Stream Stage 3: chairman %s synthesizing", chairman)
+
+    stage3_result = await stage3_synthesize_final(
+        user_query, stage1_results, stage2_results, chairman
+    )
+
+    yield {
+        "event": "synthesis",
+        "model": stage3_result.get("model", chairman),
+        "response": stage3_result.get("response", ""),
+        "provider": stage3_result.get("provider", "unknown"),
+    }
+
+    # --- Final complete event with all data ---
+    metadata = {
+        "label_to_model": label_to_model,
+        "aggregate_rankings": aggregate_rankings,
+        "final_only": final_only,
+    }
+
+    yield {
+        "event": "complete",
+        "stage1": stage1_results,
+        "stage2": stage2_results,
+        "stage3": stage3_result,
+        "metadata": metadata,
+    }
 
 
 async def generate_conversation_title(user_query: str) -> str:

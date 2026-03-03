@@ -32,6 +32,7 @@ from .auth import ApiKeyMiddleware
 from .config import BACKEND_PORT, BACKEND_HOST, COUNCIL_MODELS, CHAIRMAN_MODEL
 from .council import (
     run_full_council,
+    stream_council,
     generate_conversation_title,
     stage1_collect_responses,
     stage2_collect_rankings,
@@ -235,6 +236,84 @@ async def council_deliberation(request: CouncilRequest):
     )
 
     return result
+
+
+@app.post("/api/council/stream")
+async def council_stream(request: CouncilRequest):
+    """
+    Stream council deliberation as Server-Sent Events.
+
+    Each model's response is sent as it arrives, so the client sees
+    incremental progress instead of waiting for all models to finish.
+
+    SSE event format:
+        data: {"event": "stage_start", "stage": 1, "models": [...]}
+        data: {"event": "model_response", "stage": 1, "model": "...", ...}
+        data: {"event": "stage_complete", "stage": 1, "count": "5/5"}
+        data: {"event": "stage_start", "stage": 3}
+        data: {"event": "synthesis", "model": "...", "response": "..."}
+        data: {"event": "complete", "stage1": [...], "stage2": [...], ...}
+    """
+    import time
+
+    start_time = time.time()
+
+    # Resolve model aliases
+    council_models = None
+    if request.models:
+        from .config import resolve_model_alias
+
+        council_models = [resolve_model_alias(m) for m in request.models]
+
+    chairman_model = None
+    if request.chairman:
+        from .config import resolve_model_alias
+
+        chairman_model = resolve_model_alias(request.chairman)
+
+    async def event_generator():
+        try:
+            async for event in stream_council(
+                user_query=request.query,
+                final_only=request.final_only,
+                council_models=council_models,
+                chairman_model=chairman_model,
+            ):
+                # On complete event, add timing info and format markdown
+                if event.get("event") == "complete":
+                    elapsed = time.time() - start_time
+                    event["timing"] = {"elapsed_seconds": round(elapsed, 2)}
+                    event["config"] = {
+                        "council_models": council_models or COUNCIL_MODELS,
+                        "chairman_model": chairman_model or CHAIRMAN_MODEL,
+                        "final_only": request.final_only,
+                    }
+                    # Generate markdown for the final result
+                    from .opencode_integration import format_council_markdown
+
+                    event["markdown"] = format_council_markdown(
+                        query=request.query,
+                        stage1_results=event.get("stage1", []),
+                        stage2_results=event.get("stage2", []),
+                        stage3_result=event.get("stage3", {}),
+                        metadata=event.get("metadata", {}),
+                        include_details=request.include_details,
+                        elapsed_seconds=elapsed,
+                    )
+
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/api/mcp/schema")
