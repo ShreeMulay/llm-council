@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/* TKE Knowledge Base Theme — Professional medical interface */
+@theme {
+  --color-tke-navy: #1a2332;
+  --color-tke-navy-light: #243044;
+  --color-tke-blue: #2563eb;
+  --color-tke-blue-light: #3b82f6;
+  --color-tke-sky: #e0f2fe;
+  --color-tke-slate: #64748b;
+  --color-tke-border: #e2e8f0;
+  --color-tke-bg: #f8fafc;
+  --color-tke-surface: #ffffff;
+  --color-tke-accent: #059669;
+  --color-tke-warning: #d97706;
+  --color-tke-danger: #dc2626;
+  --color-tke-text: #1e293b;
+  --color-tke-text-muted: #64748b;
+
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/* Base reset */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--color-tke-bg);
+  color: var(--color-tke-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background-color: var(--color-tke-slate); border-radius: 3px; }
+
+/* Markdown in answers */
+.markdown-answer h1, .markdown-answer h2, .markdown-answer h3 {
+  font-weight: 600;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+.markdown-answer h1 { font-size: 1.25rem; }
+.markdown-answer h2 { font-size: 1.125rem; }
+.markdown-answer h3 { font-size: 1rem; }
+.markdown-answer p { margin-bottom: 0.75em; line-height: 1.65; }
+.markdown-answer ul, .markdown-answer ol {
+  margin-bottom: 0.75em;
+  padding-left: 1.5em;
+}
+.markdown-answer li { margin-bottom: 0.25em; line-height: 1.6; }
+.markdown-answer strong { font-weight: 600; }
+
+.markdown-answer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  font-size: 0.875rem;
+}
+.markdown-answer th, .markdown-answer td {
+  border: 1px solid var(--color-tke-border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+.markdown-answer th {
+  background-color: var(--color-tke-sky);
+  font-weight: 600;
+}
+
+/* Typing animation */
+@keyframes pulse-dot {
+  0%, 80%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
+}
+.typing-dot { animation: pulse-dot 1.4s infinite ease-in-out; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
