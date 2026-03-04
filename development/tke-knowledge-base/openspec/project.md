@@ -45,7 +45,7 @@ Build in concentric layers, each independently useful:
 |-----------|-----------|-----------|
 | Vector DB | Qdrant Cloud (free tier) | $0 |
 | Embeddings | Voyage 4-large (1024 dims) | ~$2-5 |
-| Chat LLM | Gemini 3.0 Flash (1M context) | ~$15-40 |
+| Chat LLM | Gemini 3.1 Pro | ~$15-40 |
 | Backend | Python (FastAPI) | — |
 | Frontend | React 19 + Shadcn/ui v4 | — |
 | Metadata | SQLite (Bun.sqlite) | — |

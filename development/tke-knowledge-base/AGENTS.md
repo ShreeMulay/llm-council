@@ -11,7 +11,7 @@ Serves physicians, APPs, clinical staff, and operational teams via AI chatbot/RA
 |-----------|-----------|
 | Vector DB | Qdrant Cloud |
 | Embeddings | Voyage 4-large |
-| Chat LLM | Gemini 3.0 Flash |
+| Chat LLM | Gemini 3.1 Pro |
 | Backend | Python (FastAPI) |
 | Frontend | React 19 + Shadcn/ui v4 + Tailwind v4 |
 | Metadata | SQLite |

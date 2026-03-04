@@ -161,8 +161,8 @@ def search(
         List of scored points with metadata
     """
     client = client or get_client()
-    top_k = top_k or settings.search_top_k
-    score_threshold = score_threshold or settings.score_threshold
+    top_k = top_k if top_k is not None else settings.search_top_k
+    score_threshold = score_threshold if score_threshold is not None else settings.score_threshold
 
     # Build filter
     query_filter = None
@@ -222,7 +222,6 @@ def get_collection_info(client: QdrantClient | None = None) -> dict:
     info = client.get_collection(settings.qdrant_collection)
     return {
         "points_count": info.points_count,
-        "vectors_count": info.vectors_count,
         "status": info.status.value,
-        "segments_count": len(info.segments) if info.segments else 0,
+        "indexed_vectors_count": info.indexed_vectors_count,
     }

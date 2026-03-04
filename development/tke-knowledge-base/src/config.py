@@ -25,14 +25,12 @@ class Settings(BaseSettings):
 
     # Voyage AI
     voyage_api_key: str = Field(default="", description="Voyage AI API key")
-    voyage_model: str = Field(default="voyage-3-large", description="Voyage embedding model")
+    voyage_model: str = Field(default="voyage-4-large", description="Voyage embedding model")
     voyage_batch_size: int = Field(default=96, description="Max texts per embedding request")
 
     # Gemini
     gemini_api_key: str = Field(default="", description="Google Gemini API key")
-    gemini_model: str = Field(
-        default="gemini-2.5-flash-preview-05-20", description="Gemini model for chat"
-    )
+    gemini_model: str = Field(default="gemini-3.1-pro-preview", description="Gemini model for chat")
 
     # Chunking
     chunk_size: int = Field(default=600, description="Target chunk size in tokens")
@@ -40,7 +38,7 @@ class Settings(BaseSettings):
 
     # Retrieval
     search_top_k: int = Field(default=10, description="Number of results from vector search")
-    score_threshold: float = Field(default=0.65, description="Minimum similarity score")
+    score_threshold: float = Field(default=0.45, description="Minimum similarity score")
     context_top_k: int = Field(default=5, description="Number of chunks to include in context")
 
     # Metadata DB

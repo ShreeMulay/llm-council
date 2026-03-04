@@ -1,0 +1,483 @@
+{
+  "timestamp": "2026-03-04T10:42:33",
+  "total_queries": 15,
+  "avg_overall_score": 0.8493333333333334,
+  "results": [
+    {
+      "id": "q001",
+      "question": "What is the KDIGO target for proteinuria in CKD?",
+      "difficulty": "easy",
+      "expected_domain": "proteinuria",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "proteinuria",
+        "smoking_cessation",
+        "statins_lipids"
+      ],
+      "term_coverage": 0.3333333333333333,
+      "terms_found": [
+        "UACR",
+        "30 mg/g"
+      ],
+      "terms_missing": [
+        "A1",
+        "A2",
+        "A3",
+        "300 mg/g"
+      ],
+      "has_citations": true,
+      "citation_count": 7,
+      "is_non_answer": true,
+      "chunk_count": 5,
+      "avg_score": 0.64170103,
+      "top_score": 0.6876081,
+      "confidence": 0.64170103,
+      "query_time_ms": 21826,
+      "overall_score": 0.3833333333333333,
+      "answer_preview": "I don't have sufficient information on this topic in my knowledge base to specify the exact *KDIGO* target for proteinuria. The provided text only explicitly cites KDIGO guidelines for blood pressure "
+    },
+    {
+      "id": "q002",
+      "question": "When should I start Farxiga in a CKD patient?",
+      "difficulty": "easy",
+      "expected_domain": "sglt2_inhibitors",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "sglt2_inhibitors"
+      ],
+      "term_coverage": 0.75,
+      "terms_found": [
+        "dapagliflozin",
+        "eGFR",
+        "proteinuria"
+      ],
+      "terms_missing": [
+        "DAPA-CKD"
+      ],
+      "has_citations": true,
+      "citation_count": 11,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.6984896,
+      "top_score": 0.7176851,
+      "confidence": 0.6984896,
+      "query_time_ms": 26405,
+      "overall_score": 0.9000000000000001,
+      "answer_preview": "Farxiga (dapagliflozin) should be initiated in chronic kidney disease (CKD) patients who meet specific kidney function and proteinuria thresholds, or who have qualifying comorbidities. \n\n**Initiation "
+    },
+    {
+      "id": "q003",
+      "question": "What is the dosing for Kerendia?",
+      "difficulty": "easy",
+      "expected_domain": "finerenone_mra",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "finerenone_mra",
+        "raas_blockade"
+      ],
+      "term_coverage": 0.6,
+      "terms_found": [
+        "finerenone",
+        "potassium",
+        "eGFR"
+      ],
+      "terms_missing": [
+        "10mg",
+        "20mg"
+      ],
+      "has_citations": true,
+      "citation_count": 12,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.660698762,
+      "top_score": 0.7186162,
+      "confidence": 0.660698762,
+      "query_time_ms": 18733,
+      "overall_score": 0.8400000000000001,
+      "answer_preview": "The dosing for Kerendia (finerenone) is determined by the patient's baseline estimated glomerular filtration rate (eGFR) and requires careful titration based on serum potassium levels. \n\n**Initial Dos"
+    },
+    {
+      "id": "q004",
+      "question": "What are the four pillars of GDMT for HFrEF?",
+      "difficulty": "medium",
+      "expected_domain": "chf_gdmt",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "chf_gdmt",
+        "raas_blockade",
+        "sglt2_inhibitors"
+      ],
+      "term_coverage": 1.0,
+      "terms_found": [
+        "ARNI",
+        "beta-blocker",
+        "MRA",
+        "SGLT2",
+        "Entresto"
+      ],
+      "terms_missing": [],
+      "has_citations": true,
+      "citation_count": 8,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.53799688,
+      "top_score": 0.59063405,
+      "confidence": 0.53799688,
+      "query_time_ms": 17680,
+      "overall_score": 1.0,
+      "answer_preview": "Based on the provided clinical protocol, the four pillars of Guideline-Directed Medical Therapy (GDMT) for Heart Failure with reduced Ejection Fraction (HFrEF) are:\n\n*   **SGLT2 Inhibitors (SGLT2i):**"
+    },
+    {
+      "id": "q005",
+      "question": "What is the hemoglobin target for ESA therapy in CKD?",
+      "difficulty": "easy",
+      "expected_domain": "anemia_ckd_mbd",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "anemia_ckd_mbd"
+      ],
+      "term_coverage": 1.0,
+      "terms_found": [
+        "hemoglobin",
+        "10",
+        "11.5",
+        "ESA",
+        "KDIGO"
+      ],
+      "terms_missing": [],
+      "has_citations": true,
+      "citation_count": 7,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.58531823,
+      "top_score": 0.6612456,
+      "confidence": 0.58531823,
+      "query_time_ms": 20958,
+      "overall_score": 1.0,
+      "answer_preview": "The hemoglobin (Hb) target for Erythropoiesis-Stimulating Agent (ESA) therapy\u2014such as Epogen / Procrit (epoetin alfa) or Aranesp (darbepoetin alfa)\u2014in Chronic Kidney Disease (CKD) is **10.0 to 11.5 g/"
+    },
+    {
+      "id": "q006",
+      "question": "How do I manage hyperkalemia in a patient on RAAS blockade and finerenone?",
+      "difficulty": "hard",
+      "expected_domain": "electrolytes",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "electrolytes",
+        "finerenone_mra",
+        "raas_blockade"
+      ],
+      "term_coverage": 0.16666666666666666,
+      "terms_found": [
+        "finerenone"
+      ],
+      "terms_missing": [
+        "potassium",
+        "patiromer",
+        "Veltassa",
+        "Lokelma",
+        "SZC"
+      ],
+      "has_citations": true,
+      "citation_count": 1,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.6617679240000001,
+      "top_score": 0.6720537,
+      "confidence": 0.6617679240000001,
+      "query_time_ms": 21028,
+      "overall_score": 0.6666666666666667,
+      "answer_preview": "To manage hyperkalemia in a patient on RAAS blockade and Kerendia (finerenone), the overarching goal per KDIGO 2024 guidelines is to treat the hyperkalemia to *enable* the continuation of these life-s"
+    },
+    {
+      "id": "q007",
+      "question": "What is the eGFR threshold for metformin in CKD?",
+      "difficulty": "easy",
+      "expected_domain": "diabetes",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "diabetes",
+        "general",
+        "glp1_agonists",
+        "sglt2_inhibitors"
+      ],
+      "term_coverage": 0.75,
+      "terms_found": [
+        "metformin",
+        "eGFR",
+        "30"
+      ],
+      "terms_missing": [
+        "dose reduction"
+      ],
+      "has_citations": true,
+      "citation_count": 8,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.644770218,
+      "top_score": 0.67063046,
+      "confidence": 0.644770218,
+      "query_time_ms": 11381,
+      "overall_score": 0.9000000000000001,
+      "answer_preview": "The eGFR thresholds for Glucophage (metformin) dictate dosing, initiation, and discontinuation to prevent metformin-associated lactic acidosis (MALA) [Source 1]. \n\nHere are the specific eGFR threshold"
+    },
+    {
+      "id": "q008",
+      "question": "Compare rituximab and cyclophosphamide for membranous nephropathy",
+      "difficulty": "hard",
+      "expected_domain": "gn_immunosuppression",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "gn_immunosuppression",
+        "transplant_immunosuppression"
+      ],
+      "term_coverage": 0.6,
+      "terms_found": [
+        "rituximab",
+        "cyclophosphamide",
+        "membranous"
+      ],
+      "terms_missing": [
+        "MENTOR",
+        "remission"
+      ],
+      "has_citations": false,
+      "citation_count": 0,
+      "is_non_answer": true,
+      "chunk_count": 5,
+      "avg_score": 0.54511477,
+      "top_score": 0.60186154,
+      "confidence": 0.54511477,
+      "query_time_ms": 10889,
+      "overall_score": 0.49,
+      "answer_preview": "I don't have sufficient information on this topic in my knowledge base. The provided context discusses Rituxan (rituximab) and Cytoxan (cyclophosphamide) for conditions involving PR3-ANCA, crescentic "
+    },
+    {
+      "id": "q009",
+      "question": "What tacrolimus trough level should I target in the first 3 months post-transplant?",
+      "difficulty": "medium",
+      "expected_domain": "transplant_immunosuppression",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "proteinuria",
+        "transplant_immunosuppression"
+      ],
+      "term_coverage": 1.0,
+      "terms_found": [
+        "tacrolimus",
+        "trough",
+        "8",
+        "10",
+        "ng/mL"
+      ],
+      "terms_missing": [],
+      "has_citations": true,
+      "citation_count": 8,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.54542513,
+      "top_score": 0.6305529,
+      "confidence": 0.54542513,
+      "query_time_ms": 15584,
+      "overall_score": 1.0,
+      "answer_preview": "For the first 3 months post-transplant, the target whole blood trough level for Prograf or Envarsus XR (tacrolimus) is **8\u201312 ng/mL** [Source 1]. \n\nHere are the specific details and monitoring require"
+    },
+    {
+      "id": "q010",
+      "question": "What are the indications for Krystexxa?",
+      "difficulty": "medium",
+      "expected_domain": "gout_uric_acid",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "gout_uric_acid"
+      ],
+      "term_coverage": 0.8,
+      "terms_found": [
+        "pegloticase",
+        "gout",
+        "refractory",
+        "uric acid"
+      ],
+      "terms_missing": [
+        "tophaceous"
+      ],
+      "has_citations": true,
+      "citation_count": 5,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.601466242,
+      "top_score": 0.6947492,
+      "confidence": 0.601466242,
+      "query_time_ms": 16441,
+      "overall_score": 0.9200000000000002,
+      "answer_preview": "**Indications for Krystexxa (pegloticase)**\n\nKrystexxa (pegloticase) is indicated for patients with severe, refractory chronic gout who experience tophi or frequent flares and have failed maximum titr"
+    },
+    {
+      "id": "q011",
+      "question": "What did the FLOW trial show about semaglutide in CKD?",
+      "difficulty": "medium",
+      "expected_domain": "glp1_agonists",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "glp1_agonists",
+        "proteinuria",
+        "sglt2_inhibitors"
+      ],
+      "term_coverage": 1.0,
+      "terms_found": [
+        "semaglutide",
+        "FLOW",
+        "kidney",
+        "composite endpoint"
+      ],
+      "terms_missing": [],
+      "has_citations": true,
+      "citation_count": 7,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.589936888,
+      "top_score": 0.7334835,
+      "confidence": 0.589936888,
+      "query_time_ms": 19633,
+      "overall_score": 1.0,
+      "answer_preview": "The FLOW trial (2024) demonstrated that Ozempic (semaglutide) provides overwhelming efficacy in improving kidney outcomes for patients with Type 2 Diabetes (T2D) and Chronic Kidney Disease (CKD), lead"
+    },
+    {
+      "id": "q012",
+      "question": "When should I use Repatha vs Leqvio for LDL management in CKD?",
+      "difficulty": "hard",
+      "expected_domain": "statins_lipids",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "statins_lipids"
+      ],
+      "term_coverage": 1.0,
+      "terms_found": [
+        "evolocumab",
+        "inclisiran",
+        "PCSK9",
+        "LDL",
+        "statin"
+      ],
+      "terms_missing": [],
+      "has_citations": true,
+      "citation_count": 11,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.580191704,
+      "top_score": 0.7087686,
+      "confidence": 0.580191704,
+      "query_time_ms": 20316,
+      "overall_score": 1.0,
+      "answer_preview": "Both Repatha (evolocumab) and Leqvio (inclisiran) are second-line PCSK9 inhibitors indicated for patients who are statin-intolerant or have not reached their LDL goal (< 70 mg/dL) despite maximized th"
+    },
+    {
+      "id": "q013",
+      "question": "What are the alternatives to NSAIDs for pain management in CKD patients?",
+      "difficulty": "medium",
+      "expected_domain": "nsaid_ppi_avoidance",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "diabetes",
+        "nsaid_ppi_avoidance"
+      ],
+      "term_coverage": 0.75,
+      "terms_found": [
+        "NSAID",
+        "alternatives",
+        "acetaminophen"
+      ],
+      "terms_missing": [
+        "nephrotoxin"
+      ],
+      "has_citations": true,
+      "citation_count": 9,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.566548856,
+      "top_score": 0.62065834,
+      "confidence": 0.566548856,
+      "query_time_ms": 18042,
+      "overall_score": 0.9000000000000001,
+      "answer_preview": "For patients with Chronic Kidney Disease (CKD), oral NSAIDs must be strictly avoided due to the risk of acute kidney injury and permanent kidney damage [Source 2, Source 4, Source 5]. \n\nThe TKE Clinic"
+    },
+    {
+      "id": "q014",
+      "question": "What is the PTH target in CKD stage 5?",
+      "difficulty": "medium",
+      "expected_domain": "anemia_ckd_mbd",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "anemia_ckd_mbd",
+        "chf_gdmt",
+        "finerenone_mra",
+        "proteinuria"
+      ],
+      "term_coverage": 0.6,
+      "terms_found": [
+        "PTH",
+        "KDIGO",
+        "dialysis"
+      ],
+      "terms_missing": [
+        "parathyroid",
+        "CKD-MBD"
+      ],
+      "has_citations": true,
+      "citation_count": 4,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.542231728,
+      "top_score": 0.70478046,
+      "confidence": 0.542231728,
+      "query_time_ms": 12599,
+      "overall_score": 0.8400000000000001,
+      "answer_preview": "The Intact PTH target for CKD stage 5 depends on whether the patient is on dialysis (Stage 5D) or not on dialysis. \n\n*   **CKD Stage 5 (Non-Dialysis):** There is no exact target. The clinical approach"
+    },
+    {
+      "id": "q015",
+      "question": "What is voclosporin and when is it used?",
+      "difficulty": "medium",
+      "expected_domain": "gn_immunosuppression",
+      "domain_hit": true,
+      "domain_in_citations": true,
+      "retrieved_domains": [
+        "chf_gdmt",
+        "gn_immunosuppression"
+      ],
+      "term_coverage": 0.75,
+      "terms_found": [
+        "voclosporin",
+        "Lupkynis",
+        "calcineurin"
+      ],
+      "terms_missing": [
+        "lupus nephritis"
+      ],
+      "has_citations": true,
+      "citation_count": 7,
+      "is_non_answer": false,
+      "chunk_count": 5,
+      "avg_score": 0.53035302,
+      "top_score": 0.5863136,
+      "confidence": 0.53035302,
+      "query_time_ms": 16253,
+      "overall_score": 0.9000000000000001,
+      "answer_preview": "Voclosporin (Lupkynis) is a novel calcineurin inhibitor (CNI) used in the management of glomerulonephritis to achieve faster proteinuria reduction [Source 1]. \n\n**Key Details and Usage:**\n*   **Mechan"
+    }
+  ]
+}
