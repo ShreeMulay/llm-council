@@ -1,0 +1,112 @@
+{
+  "version": "1.0",
+  "description": "Golden query-answer pairs for evaluating TKE Knowledge Base retrieval accuracy",
+  "note": "Expected domains and key terms help evaluate whether the right chunks are retrieved, even before checking the generated answer.",
+  "queries": [
+    {
+      "id": "q001",
+      "question": "What is the KDIGO target for proteinuria in CKD?",
+      "expected_domain": "proteinuria",
+      "expected_terms": ["UACR", "A1", "A2", "A3", "30 mg/g", "300 mg/g"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q002",
+      "question": "When should I start Farxiga in a CKD patient?",
+      "expected_domain": "sglt2_inhibitors",
+      "expected_terms": ["dapagliflozin", "eGFR", "DAPA-CKD", "proteinuria"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q003",
+      "question": "What is the dosing for Kerendia?",
+      "expected_domain": "finerenone_mra",
+      "expected_terms": ["finerenone", "10mg", "20mg", "potassium", "eGFR"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q004",
+      "question": "What are the four pillars of GDMT for HFrEF?",
+      "expected_domain": "chf_gdmt",
+      "expected_terms": ["ARNI", "beta-blocker", "MRA", "SGLT2", "Entresto"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q005",
+      "question": "What is the hemoglobin target for ESA therapy in CKD?",
+      "expected_domain": "anemia_ckd_mbd",
+      "expected_terms": ["hemoglobin", "10", "11.5", "ESA", "KDIGO"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q006",
+      "question": "How do I manage hyperkalemia in a patient on RAAS blockade and finerenone?",
+      "expected_domain": "electrolytes",
+      "expected_terms": ["potassium", "patiromer", "Veltassa", "Lokelma", "SZC", "finerenone"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "q007",
+      "question": "What is the eGFR threshold for metformin in CKD?",
+      "expected_domain": "diabetes",
+      "expected_terms": ["metformin", "eGFR", "30", "dose reduction"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "q008",
+      "question": "Compare rituximab and cyclophosphamide for membranous nephropathy",
+      "expected_domain": "gn_immunosuppression",
+      "expected_terms": ["rituximab", "cyclophosphamide", "MENTOR", "membranous", "remission"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "q009",
+      "question": "What tacrolimus trough level should I target in the first 3 months post-transplant?",
+      "expected_domain": "transplant_immunosuppression",
+      "expected_terms": ["tacrolimus", "trough", "8", "10", "ng/mL"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q010",
+      "question": "What are the indications for Krystexxa?",
+      "expected_domain": "gout_uric_acid",
+      "expected_terms": ["pegloticase", "gout", "refractory", "uric acid", "tophaceous"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q011",
+      "question": "What did the FLOW trial show about semaglutide in CKD?",
+      "expected_domain": "glp1_agonists",
+      "expected_terms": ["semaglutide", "FLOW", "kidney", "composite endpoint"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q012",
+      "question": "When should I use Repatha vs Leqvio for LDL management in CKD?",
+      "expected_domain": "statins_lipids",
+      "expected_terms": ["evolocumab", "inclisiran", "PCSK9", "LDL", "statin"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "q013",
+      "question": "What are the alternatives to NSAIDs for pain management in CKD patients?",
+      "expected_domain": "nsaid_ppi_avoidance",
+      "expected_terms": ["NSAID", "nephrotoxin", "alternatives", "acetaminophen"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q014",
+      "question": "What is the PTH target in CKD stage 5?",
+      "expected_domain": "anemia_ckd_mbd",
+      "expected_terms": ["PTH", "parathyroid", "CKD-MBD", "KDIGO", "dialysis"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "q015",
+      "question": "What is voclosporin and when is it used?",
+      "expected_domain": "gn_immunosuppression",
+      "expected_terms": ["voclosporin", "Lupkynis", "lupus nephritis", "calcineurin"],
+      "difficulty": "medium"
+    }
+  ]
+}
