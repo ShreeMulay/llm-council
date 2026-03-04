@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TALIA 1.0 — Cloud SQL Migration Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,300;0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800;1,6..12,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F0F4F8;
+    color: #1a202c;
+    line-height: 1.6;
+    padding: 24px;
+  }
+  .email-container {
+    max-width: 780px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1E3A5F 0%, #2B5F8A 50%, #1E3A5F 100%);
+    padding: 32px 40px;
+    text-align: center;
+    position: relative;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3B82F6, #14B8A6, #22C55E);
+  }
+  .header img {
+    height: 60px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    color: #ffffff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header .subtitle {
+    color: #93C5FD;
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* Email meta */
+  .email-meta {
+    background: #F8FAFC;
+    border-bottom: 1px solid #E2E8F0;
+    padding: 20px 40px;
+    font-size: 14px;
+  }
+  .email-meta table { width: 100%; }
+  .email-meta td { padding: 3px 0; vertical-align: top; }
+  .email-meta .label {
+    font-weight: 700;
+    color: #64748B;
+    width: 80px;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    padding-top: 5px;
+  }
+  .email-meta .value { color: #1E293B; }
+
+  /* Body */
+  .body { padding: 40px; }
+  .body p { margin-bottom: 16px; font-size: 15px; color: #334155; }
+  .body h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1E3A5F;
+    margin: 32px 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #E2E8F0;
+  }
+  .body h2:first-of-type { margin-top: 0; }
+  .body h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2B5F8A;
+    margin: 20px 0 8px 0;
+  }
+
+  /* Info box */
+  .info-box {
+    background: #EFF6FF;
+    border-left: 4px solid #3B82F6;
+    border-radius: 0 8px 8px 0;
+    padding: 16px 20px;
+    margin: 20px 0;
+  }
+  .info-box.success {
+    background: #F0FDF4;
+    border-left-color: #22C55E;
+  }
+  .info-box.warning {
+    background: #FFFBEB;
+    border-left-color: #F59E0B;
+  }
+  .info-box.critical {
+    background: #FEF2F2;
+    border-left-color: #EF4444;
+  }
+  .info-box strong { display: block; margin-bottom: 4px; color: #1E293B; }
+  .info-box p { margin-bottom: 0; font-size: 14px; }
+
+  /* Steps */
+  .step {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 16px;
+    background: #FAFAFA;
+    border-radius: 8px;
+    border: 1px solid #E2E8F0;
+  }
+  .step-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #1E3A5F, #2B5F8A);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+  }
+  .step-content h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1E3A5F;
+    margin-bottom: 4px;
+  }
+  .step-content p { font-size: 14px; margin-bottom: 4px; }
+  .step-content code {
+    background: #F1F5F9;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #7C3AED;
+    font-family: 'Fira Code', 'Consolas', monospace;
+  }
+
+  /* Table */
+  .spec-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+  }
+  .spec-table th {
+    background: #1E3A5F;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .spec-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid #E2E8F0;
+    color: #334155;
+  }
+  .spec-table tr:nth-child(even) td { background: #F8FAFC; }
+  .spec-table tr:hover td { background: #EFF6FF; }
+
+  /* Architecture diagram */
+  .diagram {
+    background: #1E293B;
+    color: #E2E8F0;
+    padding: 24px;
+    border-radius: 8px;
+    font-family: 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-x: auto;
+    margin: 20px 0;
+    white-space: pre;
+  }
+  .diagram .highlight { color: #22C55E; font-weight: bold; }
+  .diagram .accent { color: #3B82F6; }
+  .diagram .warn { color: #F59E0B; }
+
+  /* Timeline */
+  .timeline {
+    margin: 20px 0;
+    padding-left: 0;
+    list-style: none;
+  }
+  .timeline li {
+    position: relative;
+    padding: 12px 0 12px 32px;
+    border-left: 2px solid #E2E8F0;
+  }
+  .timeline li:last-child { border-left-color: transparent; }
+  .timeline li::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #3B82F6;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #3B82F6;
+  }
+  .timeline li strong {
+    display: block;
+    color: #1E3A5F;
+    font-size: 14px;
+  }
+  .timeline li span {
+    color: #64748B;
+    font-size: 13px;
+  }
+
+  /* Footer */
+  .footer {
+    background: #F8FAFC;
+    border-top: 1px solid #E2E8F0;
+    padding: 24px 40px;
+    text-align: center;
+    font-size: 13px;
+    color: #94A3B8;
+  }
+  .footer .tagline {
+    color: #64748B;
+    font-style: italic;
+    margin-bottom: 8px;
+  }
+  .footer .confidential {
+    color: #EF4444;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 12px;
+  }
+
+  /* Checklist */
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0;
+  }
+  .checklist li {
+    padding: 6px 0 6px 28px;
+    position: relative;
+    font-size: 14px;
+  }
+  .checklist li::before {
+    content: '\2610';
+    position: absolute;
+    left: 0;
+    font-size: 18px;
+    color: #3B82F6;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .badge.hipaa { background: #DCFCE7; color: #166534; }
+  .badge.required { background: #FEF3C7; color: #92400E; }
+  .badge.info { background: #DBEAFE; color: #1E40AF; }
+</style>
+</head>
+<body>
+
+<div class="email-container">
+
+  <!-- Header -->
+  <div class="header">
+    <img src="https://cdn-62b618b2c1ac18076cc875bf.closte.com/wp-content/uploads/2022/08/The-Kidney-Experts-Logo.png" alt="The Kidney Experts">
+    <h1>TALIA 1.0 &mdash; Cloud SQL Migration</h1>
+    <div class="subtitle">Migrating AppSheet from Google Sheets to Cloud SQL (PostgreSQL)</div>
+  </div>
+
+  <!-- Email Meta -->
+  <div class="email-meta">
+    <table>
+      <tr>
+        <td class="label">To:</td>
+        <td class="value">itsolutions@thekidneyexperts.com</td>
+      </tr>
+      <tr>
+        <td class="label">CC:</td>
+        <td class="value">brandy@thekidneyexperts.com, rhett@thekidneyexperts.com</td>
+      </tr>
+      <tr>
+        <td class="label">From:</td>
+        <td class="value">Dr. Shree Mulay</td>
+      </tr>
+      <tr>
+        <td class="label">Date:</td>
+        <td class="value">March 4, 2026</td>
+      </tr>
+      <tr>
+        <td class="label">Priority:</td>
+        <td class="value"><span class="badge required">High Priority</span> <span class="badge hipaa">HIPAA / BAA Required</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+
+    <p>Team,</p>
+
+    <p>We need to migrate our <strong>TALIA 1.0 AppSheet application</strong> from its current Google Sheets backend to a <strong>Cloud SQL (PostgreSQL)</strong> database. This is a prerequisite for our upcoming <strong>CORTEX</strong> hospital documentation system, which will share the same patient database in real-time.</p>
+
+    <div class="info-box success">
+      <strong>What Changes for AppSheet Users?</strong>
+      <p>Nothing. The AppSheet app looks and works exactly the same. It just becomes faster and more reliable because it reads from a proper database instead of a spreadsheet.</p>
+    </div>
+
+    <!-- WHY -->
+    <h2>Why Are We Doing This?</h2>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Reason</th>
+          <th>Detail</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Real-time Sharing</strong></td>
+          <td>CORTEX (our new hospital note system) needs to read and write the same patient census data as TALIA 1.0. Google Sheets has a 30-minute sync delay. Cloud SQL is instant.</td>
+        </tr>
+        <tr>
+          <td><strong>Performance</strong></td>
+          <td>As our patient list grows, Google Sheets slows down. Cloud SQL handles thousands of concurrent reads/writes without lag.</td>
+        </tr>
+        <tr>
+          <td><strong>Data Integrity</strong></td>
+          <td>Cloud SQL provides ACID transactions, foreign key constraints, and proper data typing. Sheets can have formula errors, accidental overwrites, or data type mismatches.</td>
+        </tr>
+        <tr>
+          <td><strong>HIPAA Compliance</strong></td>
+          <td>Cloud SQL on GCP is covered under our existing BAA with Google. It provides encryption at rest + in transit, audit logging, and access controls superior to Sheets.</td>
+        </tr>
+        <tr>
+          <td><strong>Backup & Recovery</strong></td>
+          <td>Automated daily backups, point-in-time recovery, and high availability configuration. Sheets versioning is limited.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ARCHITECTURE -->
+    <h2>Target Architecture</h2>
+
+    <div class="diagram"><span class="accent">BEFORE (Current)</span>
+    +--------------+        +-----------------+
+    | TALIA 1.0    |------->| Google Sheets   |
+    | (AppSheet)   |        | (13 tables)     |
+    +--------------+        +-----------------+
+           |
+           X  No connection to CORTEX
+
+<span class="highlight">AFTER (Target)</span>
+    +--------------+        +-----------------+
+    | TALIA 1.0    |------->|                 |
+    | (AppSheet)   |        |   Cloud SQL     |
+    +--------------+        |  (PostgreSQL)   |
+                            |                 |
+    +--------------+        |  Single Source   |
+    | CORTEX       |------->|  of Truth       |
+    | (Cloud Run)  |        |                 |
+    +--------------+        +-----------------+
+           |                        |
+           v                        v
+    +--------------+        +-----------------+
+    | Scribes &    |        | Automated       |
+    | Providers    |        | Backups & Audit |
+    +--------------+        +-----------------+</div>
+
+    <div class="info-box">
+      <strong>Key Point</strong>
+      <p>Both TALIA 1.0 (AppSheet) and CORTEX (Cloud Run) connect to the <strong>same</strong> Cloud SQL database. Changes made in either system are instantly visible in both. This is possible because we have <strong>AppSheet Enterprise</strong>, which supports Cloud SQL as a native data source.</p>
+    </div>
+
+    <!-- WHAT WE NEED -->
+    <h2>What We Need IT Solutions To Do</h2>
+
+    <div class="step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <h4>Create a Cloud SQL Instance</h4>
+        <p>In our existing GCP project (the one under our BAA), create a new Cloud SQL instance:</p>
+        <table class="spec-table">
+          <tr><td><strong>Engine</strong></td><td>PostgreSQL 16 (latest stable)</td></tr>
+          <tr><td><strong>Instance ID</strong></td><td><code>talia-production</code> (suggested)</td></tr>
+          <tr><td><strong>Region</strong></td><td><code>us-central1</code> (Iowa) &mdash; closest to West TN with best pricing</td></tr>
+          <tr><td><strong>Machine Type</strong></td><td><code>db-g1-small</code> (1 vCPU, 1.7 GB RAM) &mdash; can scale up later</td></tr>
+          <tr><td><strong>Storage</strong></td><td>10 GB SSD (auto-increase enabled)</td></tr>
+          <tr><td><strong>High Availability</strong></td><td>Not required initially (can enable later)</td></tr>
+          <tr><td><strong>Backups</strong></td><td>Automated daily, 7-day retention, point-in-time recovery enabled</td></tr>
+          <tr><td><strong>Encryption</strong></td><td>Google-managed encryption key (default, covered under BAA)</td></tr>
+          <tr><td><strong>Network</strong></td><td>Private IP preferred; if not possible, public IP with SSL enforcement + authorized networks only</td></tr>
+        </table>
+        <p><strong>Estimated cost:</strong> ~$25-50/month for db-g1-small</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <h4>Create Database & Service Account</h4>
+        <p>On the Cloud SQL instance:</p>
+        <ul class="checklist">
+          <li>Create database: <code>talia_production</code></li>
+          <li>Create database user: <code>talia_app</code> (strong generated password)</li>
+          <li>Create database user: <code>cortex_app</code> (separate user for CORTEX, strong generated password)</li>
+          <li>Create a GCP service account: <code>talia-appsheet@[project].iam.gserviceaccount.com</code></li>
+          <li>Grant the service account <code>roles/cloudsql.client</code> role</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <h4>Migrate AppSheet to Cloud SQL</h4>
+        <p>AppSheet has a <strong>built-in migration tool</strong>. Here's how to use it:</p>
+        <ol style="padding-left: 20px; font-size: 14px; color: #334155;">
+          <li style="margin-bottom: 8px;">Open the TALIA 1.0 app in <strong>AppSheet Editor</strong></li>
+          <li style="margin-bottom: 8px;">Go to <strong>Manage &rarr; Author &rarr; Copy App</strong></li>
+          <li style="margin-bottom: 8px;">Select <strong>"Copy to a new database"</strong></li>
+          <li style="margin-bottom: 8px;">Choose <strong>Cloud SQL (PostgreSQL)</strong> as the target</li>
+          <li style="margin-bottom: 8px;">Enter the Cloud SQL connection details (instance connection name, database, user, password)</li>
+          <li style="margin-bottom: 8px;">AppSheet will automatically:
+            <ul style="margin-top: 4px;">
+              <li>Create all tables in PostgreSQL matching the Sheets schema</li>
+              <li>Migrate all existing data</li>
+              <li>Create a new copy of the app pointing to Cloud SQL</li>
+              <li>Preserve all formulas, automations, views, and security rules</li>
+            </ul>
+          </li>
+          <li style="margin-bottom: 8px;"><strong>Test the new app thoroughly</strong> before switching users over</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <h4>Validate & Test</h4>
+        <ul class="checklist">
+          <li>Verify all 13 tables migrated correctly (row counts match)</li>
+          <li>Test all AppSheet views, filters, and slices</li>
+          <li>Test all computed columns / virtual columns</li>
+          <li>Test all automations (bots) still fire correctly</li>
+          <li>Verify data entry works (add a test patient, edit, delete)</li>
+          <li>Check performance (should be noticeably faster)</li>
+          <li>Confirm audit logging is active on Cloud SQL</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-number">5</div>
+      <div class="step-content">
+        <h4>Cutover</h4>
+        <p>Once validated:</p>
+        <ul class="checklist">
+          <li>Schedule a maintenance window (low-usage time, e.g., Saturday morning)</li>
+          <li>Final data sync from old Sheets-based app to Cloud SQL app</li>
+          <li>Switch all users to the new Cloud SQL-backed app</li>
+          <li>Monitor for 48 hours for any issues</li>
+          <li>Archive the old Google Sheets (don't delete &mdash; keep as backup for 90 days)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- TABLES -->
+    <h2>Tables to Migrate (13 Total)</h2>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Table Name</th>
+          <th>Approx Size</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1</td><td>Patients</td><td>~90 fields</td><td>Primary patient roster. Most critical table.</td></tr>
+        <tr><td>2</td><td>Providers</td><td>~30 fields</td><td>Internal + external providers, NPI data</td></tr>
+        <tr><td>3</td><td>CKD_Stage_History</td><td>~25 fields</td><td>Longitudinal CKD staging per patient</td></tr>
+        <tr><td>4</td><td>Medications</td><td>~30 fields</td><td>Active/discontinued meds, GDMT tracking</td></tr>
+        <tr><td>5</td><td>Lab_Results</td><td>~20 fields</td><td>Lab values with reference ranges</td></tr>
+        <tr><td>6</td><td>Vascular_Access</td><td>~20 fields</td><td>Fistula/graft/catheter tracking</td></tr>
+        <tr><td>7</td><td>Transplant_Referrals</td><td>~25 fields</td><td>Referral workflow, listing status</td></tr>
+        <tr><td>8</td><td>Workup_Templates</td><td>~15 fields</td><td>Standard transplant workup requirements</td></tr>
+        <tr><td>9</td><td>Workup_Items</td><td>~15 fields</td><td>Per-patient workup completion tracking</td></tr>
+        <tr><td>10</td><td>Transplant_Events</td><td>~15 fields</td><td>Milestone and complication events</td></tr>
+        <tr><td>11</td><td>Living_Donor_Evaluations</td><td>~25 fields</td><td>Living donor screening and eval</td></tr>
+        <tr><td>12</td><td>Quality_Metrics_Snapshot</td><td>~35 fields</td><td>Point-in-time quality metric captures</td></tr>
+        <tr><td>13</td><td>Epic_Import_Staging</td><td>~35 fields</td><td>Staging table for Epic data imports</td></tr>
+      </tbody>
+    </table>
+
+    <!-- TIMELINE -->
+    <h2>Proposed Timeline</h2>
+
+    <ul class="timeline">
+      <li>
+        <strong>Week 1: Setup</strong>
+        <span>Create Cloud SQL instance, database, users, service account. Configure networking and SSL.</span>
+      </li>
+      <li>
+        <strong>Week 2: Migration</strong>
+        <span>Use AppSheet "Copy App" tool to migrate all 13 tables. Validate data integrity.</span>
+      </li>
+      <li>
+        <strong>Week 3: Testing</strong>
+        <span>Dr. Mulay + team test all functionality. Fix any migration issues. Performance testing.</span>
+      </li>
+      <li>
+        <strong>Week 4: Cutover</strong>
+        <span>Final sync, switch users to new app, monitor for 48 hours. Archive old Sheets.</span>
+      </li>
+    </ul>
+
+    <!-- HIPAA -->
+    <h2>HIPAA & Security Considerations</h2>
+
+    <div class="info-box critical">
+      <strong>Critical: BAA Coverage</strong>
+      <p>The Cloud SQL instance <strong>must</strong> be created in the same GCP project/organization that is covered under our existing Business Associate Agreement (BAA) with Google. Cloud SQL is a HIPAA-eligible service under Google's BAA. Do NOT create the instance in a personal or uncovered project.</p>
+    </div>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Security Measure</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Encryption at rest (AES-256)</td><td><span class="badge hipaa">Automatic</span></td></tr>
+        <tr><td>Encryption in transit (TLS 1.3)</td><td><span class="badge hipaa">Enforce SSL</span></td></tr>
+        <tr><td>BAA coverage</td><td><span class="badge required">Verify GCP project is under BAA</span></td></tr>
+        <tr><td>Audit logging</td><td><span class="badge hipaa">Enable Cloud Audit Logs</span></td></tr>
+        <tr><td>Network security</td><td><span class="badge required">Private IP or authorized networks only</span></td></tr>
+        <tr><td>Access control</td><td><span class="badge hipaa">Separate DB users per application</span></td></tr>
+        <tr><td>Automated backups</td><td><span class="badge hipaa">Daily, 7-day retention</span></td></tr>
+        <tr><td>Point-in-time recovery</td><td><span class="badge hipaa">Enabled</span></td></tr>
+      </tbody>
+    </table>
+
+    <!-- COST -->
+    <h2>Cost Estimate</h2>
+
+    <table class="spec-table">
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Monthly Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Cloud SQL (db-g1-small, PostgreSQL 16)</td><td>~$25-30</td></tr>
+        <tr><td>Storage (10 GB SSD, auto-increase)</td><td>~$2</td></tr>
+        <tr><td>Backups (7-day retention)</td><td>~$1</td></tr>
+        <tr><td>Network egress (minimal)</td><td>~$1</td></tr>
+        <tr><td><strong>Total</strong></td><td><strong>~$30-35/month</strong></td></tr>
+      </tbody>
+    </table>
+
+    <div class="info-box success">
+      <strong>Cost Context</strong>
+      <p>This is the same Cloud SQL instance that CORTEX will use, so there's no additional database cost for CORTEX. The $30-35/month replaces the risk and limitations of Google Sheets as a production database.</p>
+    </div>
+
+    <!-- WHAT I NEED FROM YOU -->
+    <h2>What I Need From You</h2>
+
+    <ol style="padding-left: 20px; font-size: 14px; color: #334155;">
+      <li style="margin-bottom: 12px;"><strong>Confirm the GCP project</strong> that is under our BAA &mdash; provide the project ID</li>
+      <li style="margin-bottom: 12px;"><strong>Create the Cloud SQL instance</strong> per the specs above</li>
+      <li style="margin-bottom: 12px;"><strong>Send me the connection details</strong> (instance connection name, IP, database name, user credentials) via secure channel &mdash; do NOT email passwords</li>
+      <li style="margin-bottom: 12px;"><strong>Schedule a 30-minute call</strong> with me to walk through the AppSheet migration tool together</li>
+      <li style="margin-bottom: 12px;"><strong>Target completion: end of March 2026</strong></li>
+    </ol>
+
+    <p style="margin-top: 32px;">Let me know if you have any questions or need clarification on any of the above. Happy to jump on a call to discuss.</p>
+
+    <p>Thanks,<br>
+    <strong>Dr. Shree Mulay</strong><br>
+    The Kidney Experts<br>
+    <em>"Ridding the World of the Need for Dialysis!"</em></p>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="tagline">"Big Expertise. Small-Town Heart."</div>
+    <div>The Kidney Experts &bull; West Tennessee &bull; (731) 300-6155</div>
+    <div class="confidential">Confidential &mdash; Internal Use Only &mdash; Contains PHI-Adjacent Infrastructure Details</div>
+  </div>
+
+</div>
+
+</body>
+</html>
