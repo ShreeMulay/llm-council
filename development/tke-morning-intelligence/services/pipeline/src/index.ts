@@ -31,6 +31,8 @@ const PORT = parseInt(process.env.PORT ?? '8080')
 
 const server = Bun.serve({
   port: PORT,
+  // LLM content generation can take 30-60s. Bun's default is 10s.
+  idleTimeout: 120,
 
   async fetch(req) {
     const url = new URL(req.url)

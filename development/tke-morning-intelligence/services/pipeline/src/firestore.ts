@@ -79,6 +79,7 @@ export function initFirestore(): void {
   db = new Firestore({
     projectId: process.env.GCP_PROJECT_ID,
     databaseId: process.env.FIRESTORE_DATABASE_ID || '(default)',
+    ignoreUndefinedProperties: true,
   })
   console.log(`[${new Date().toISOString()}] [Firestore] Initialized (project: ${process.env.GCP_PROJECT_ID}, database: ${process.env.FIRESTORE_DATABASE_ID || '(default)'})`)
 }

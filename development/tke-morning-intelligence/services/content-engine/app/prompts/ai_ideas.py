@@ -1,18 +1,26 @@
 """Prompt template for the AI Ideas / AI Literacy section."""
 
 
-def build_prompt(beginner_topic: str, advanced_tool: dict) -> str:
+def build_prompt(beginner_topic: str, advanced_tool: "dict | object") -> str:
     """Build the AI literacy content prompt.
 
     Args:
         beginner_topic: The ChatGPT tip topic for the beginner section
             (e.g., "summarizing lab results", "drafting patient letters").
-        advanced_tool: Dict with keys 'toolName', 'toolUrl', 'category'
+        advanced_tool: Dict or Pydantic model with 'name'/'url' fields
             describing the advanced AI tool to spotlight.
 
     Returns:
         XML-tagged prompt string for Vertex AI Gemini.
     """
+    # Support both dict and Pydantic model (AiToolInfo) access patterns
+    if isinstance(advanced_tool, dict):
+        tool_name = advanced_tool.get("name", advanced_tool.get("toolName", ""))
+        tool_url = advanced_tool.get("url", advanced_tool.get("toolUrl", ""))
+    else:
+        tool_name = getattr(advanced_tool, "name", "")
+        tool_url = getattr(advanced_tool, "url", "")
+
     return f"""<system>
 You are an AI literacy educator for The Kidney Experts (TKE) morning briefing.
 Your mission is to help a nephrology team — clinical and non-clinical staff alike —
@@ -29,9 +37,8 @@ TKE's principle: "Work Smart, Not Long" — systems and AI over grinding.
     <tool>ChatGPT</tool>
   </beginner>
   <advanced>
-    <toolName>{advanced_tool.get("toolName", "")}</toolName>
-    <toolUrl>{advanced_tool.get("toolUrl", "")}</toolUrl>
-    <category>{advanced_tool.get("category", "")}</category>
+    <toolName>{tool_name}</toolName>
+    <toolUrl>{tool_url}</toolUrl>
   </advanced>
 </today_assignment>
 

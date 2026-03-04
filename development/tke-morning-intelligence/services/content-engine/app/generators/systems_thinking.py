@@ -12,7 +12,7 @@ from app.prompts.systems_thinking import build_prompt
 
 async def generate_systems_thinking(
     concept: str,
-    theme: dict | None = None,
+    theme: "dict | object | None" = None,
 ) -> tuple[SystemsThinking, str]:
     """
     Generate systems thinking content for the assigned concept.

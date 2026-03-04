@@ -20,10 +20,16 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-# Model IDs - Gemini 3.x series
-GEMINI_31_PRO = "gemini-3.1-pro-preview"
-GEMINI_3_FLASH = "gemini-3-flash-preview"
-GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite-preview"
+# Model IDs
+# Gemini 3.x preview models are listed but not yet accessible on all projects.
+# Using Gemini 2.5 stable models until 3.x access is granted.
+# When 3.x becomes available, swap back to:
+#   GEMINI_31_PRO = "gemini-3.1-pro-preview"
+#   GEMINI_3_FLASH = "gemini-3-flash-preview"
+#   GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite-preview"
+GEMINI_31_PRO = "gemini-2.5-pro"
+GEMINI_3_FLASH = "gemini-2.5-flash"
+GEMINI_31_FLASH_LITE = "gemini-2.5-flash-lite"
 
 # GCP config
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
@@ -98,12 +104,26 @@ async def generate_json(
     """
     client = get_client()
 
+    # Map thinking_level strings to thinking_budget tokens.
+    # Gemini 2.5 uses thinking_budget (int); Gemini 3.x uses thinking_level (str).
+    # For 2.5 models, we convert levels to approximate token budgets.
+    thinking_budget_map = {
+        "minimal": 0,  # disable thinking
+        "low": 1024,  # light reasoning
+        "medium": 4096,  # moderate reasoning
+        "high": 8192,  # deep reasoning
+    }
+    thinking_budget = thinking_budget_map.get(thinking_level, 1024)
+
     # Build generation config
     config: dict = {
         "temperature": temperature,
         "response_mime_type": "application/json",
-        "thinking_config": {"thinking_level": thinking_level},
     }
+
+    # Add thinking config — use thinking_budget for 2.5 models
+    if thinking_budget > 0:
+        config["thinking_config"] = {"thinking_budget": thinking_budget}
 
     # Add JSON schema enforcement if we have a Pydantic model
     if response_model is not None:

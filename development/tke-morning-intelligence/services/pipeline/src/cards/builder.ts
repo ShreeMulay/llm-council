@@ -54,13 +54,15 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse): 
           imageType: 'CIRCLE',
         },
         sections: [
-          { header: 'Systems Thinking', widgets: [{ textParagraph: { text: formatSystems(content.systems_thinking) } }], collapsible: false },
-          { header: 'Daily Wisdom', widgets: [{ textParagraph: { text: formatQuote(content.quote) } }], collapsible: true },
-          { header: 'On This Day', widgets: [{ textParagraph: { text: formatHistory(content.nephrology_history) } }], collapsible: true },
-          { header: 'Did You Know?', widgets: [{ textParagraph: { text: formatDidYouKnow(content.did_you_know) } }], collapsible: true },
-          { header: 'Medication Spotlight', widgets: [{ textParagraph: { text: formatMedication(content.medication) } }], collapsible: true },
-          { header: 'AI Ideas', widgets: [{ textParagraph: { text: formatAiIdeas(content.ai_ideas) } }], collapsible: true },
-        ],
+          // Each section is nullable — generators can fail individually.
+          // Only include sections that have content.
+          ...(content.systems_thinking ? [{ header: 'Systems Thinking', widgets: [{ textParagraph: { text: formatSystems(content.systems_thinking) } }], collapsible: false }] : []),
+          ...(content.quote ? [{ header: 'Daily Wisdom', widgets: [{ textParagraph: { text: formatQuote(content.quote) } }], collapsible: true }] : []),
+          ...(content.nephrology_history ? [{ header: 'On This Day', widgets: [{ textParagraph: { text: formatHistory(content.nephrology_history) } }], collapsible: true }] : []),
+          ...(content.did_you_know ? [{ header: 'Did You Know?', widgets: [{ textParagraph: { text: formatDidYouKnow(content.did_you_know) } }], collapsible: true }] : []),
+          ...(content.medication ? [{ header: 'Medication Spotlight', widgets: [{ textParagraph: { text: formatMedication(content.medication) } }], collapsible: true }] : []),
+          ...(content.ai_ideas ? [{ header: 'AI Ideas', widgets: [{ textParagraph: { text: formatAiIdeas(content.ai_ideas) } }], collapsible: true }] : []),
+        ].filter(s => s != null),
       },
     }],
   }

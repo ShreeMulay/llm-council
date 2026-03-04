@@ -24,12 +24,13 @@ CONCEPTS = {
 }
 
 
-def build_prompt(concept: str, theme: dict | None = None) -> str:
+def build_prompt(concept: str, theme: "dict | object | None" = None) -> str:
     """Build the systems thinking coach prompt.
 
     Args:
         concept: The systems thinking concept to teach today.
-        theme: Optional theme context with keys like 'name', 'description'.
+        theme: Optional theme context. Can be a dict or a Pydantic model
+               with 'monthly'/'weekly' fields.
 
     Returns:
         XML-tagged prompt string for Vertex AI Gemini.
@@ -40,10 +41,17 @@ def build_prompt(concept: str, theme: dict | None = None) -> str:
 
     theme_block = ""
     if theme:
+        # Support both dict and Pydantic model (ThemeInfo) access patterns
+        if isinstance(theme, dict):
+            monthly = theme.get("monthly", theme.get("name", ""))
+            weekly = theme.get("weekly", theme.get("description", ""))
+        else:
+            monthly = getattr(theme, "monthly", "")
+            weekly = getattr(theme, "weekly", "")
         theme_block = f"""
 <theme>
-  <name>{theme.get("name", "")}</name>
-  <description>{theme.get("description", "")}</description>
+  <monthly>{monthly}</monthly>
+  <weekly>{weekly}</weekly>
 </theme>"""
 
     return f"""<system>
