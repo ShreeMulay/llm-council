@@ -1,10 +1,11 @@
 # CORTEX — UX Design Specification
 
-> **Version**: 1.0
-> **Last Updated**: March 4, 2026
-> **Screens**: 6
+> **Version**: 1.1
+> **Last Updated**: March 5, 2026
+> **Screens**: 8
 > **Form Factors**: 3 (Scribe Laptop, Provider Phone, Data Entry Chromebook)
 > **Design Language**: Unified with TKE CKD note template — same base design system, "hospital mode" adaptation
+> **Review**: Incorporates LLM Council UX Review (5-model unanimous consensus)
 
 ---
 
@@ -18,6 +19,75 @@
 6. **Offline-First** — Record locally, sync when connected. Never lose audio.
 7. **EPIC Awareness** — Data flows FROM EPIC (paste/screenshot) and TO EPIC (Smart Copy). Never replace EPIC.
 8. **Transparent Auth** — No login screen. IAP (Identity-Aware Proxy) handles authentication at the infrastructure level. Users are redirected to Google Sign-In if not already signed in, then land directly on the Census screen. Personal phones and managed Chromebooks both work.
+9. **Non-Linear Workflow** — Encounters are a state machine, not a funnel. Support multiple in-progress, deferred, interrupted, and resumed encounters.
+10. **Source Provenance is Non-Negotiable** — Every data point must be traceable to its source: `[Lab 2h ago]`, `[Transcript 4:32]`, `[EPIC paste]`, `[Provider dictation]`. Inline color-coded chips.
+
+---
+
+## Encounter State Machine
+
+The 3-phase model (Hallway → In-Room → Post-Room) is the primary flow but encounters are **non-linear**. Phases are descriptive, not prescriptive — a state machine with optional transitions, not a forced funnel.
+
+### Encounter States
+
+| State | Description | Transitions From | Transitions To |
+|-------|-------------|-----------------|----------------|
+| `hallway_huddle` | Pre-room prep, EPIC data review, AI brief | (start) | `in_room`, `deferred`, `solo_prep` |
+| `in_room` | Recording active, exam, patient interaction | `hallway_huddle`, `solo_prep` | `post_room`, `interrupted` |
+| `post_room` | Dictation, note generation, review | `in_room`, `interrupted` | `review`, `hallway_huddle` (next patient) |
+| `review` | Full note review, editing, section acceptance | `post_room` | `signed`, `post_room` (re-generate) |
+| `signed` | Note finalized, attestation complete | `review` | `reopened` |
+| `deferred` | Encounter postponed — patient unavailable, off-unit, procedure | `hallway_huddle`, `in_room` | `hallway_huddle`, `in_room` |
+| `interrupted` | Recording paused mid-encounter — code blue, emergency, pager | `in_room` | `in_room` (resume), `post_room` |
+| `reopened` | Addendum needed after signing | `signed` | `review` |
+| `cross_cover` | Not-my-patient encounter — covering colleague's list | (start) | `in_room`, `post_room` |
+| `solo_prep` | Provider pre-rounding alone (no scribe available) | (start), `hallway_huddle` | `in_room` |
+
+### Non-Linear Patient Flow
+
+**Sequential patient flow is a fantasy.** The system must support:
+
+- **Multiple in-progress encounters** — like browser tabs. Provider may start Patient A's huddle, get pulled to Patient B (ICU), return to Patient A.
+- **Batch note review queue** — after finishing rounds, review all notes together. Filter by status (draft, needs review, flagged).
+- **Census as persistent home base** — always accessible, loads in <300ms. The "desktop" of the app.
+- **Deferred encounters** — patient at CT scan, sleeping, off-unit. Mark deferred, return later.
+- **Cross-cover encounters** — covering a colleague's patient. Different context, lighter note requirements.
+
+### State Machine Diagram
+
+```
+                    ┌─────────────┐
+                    │   Census    │ (Home — always accessible)
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┬───────────────┐
+              │            │            │               │
+              ▼            ▼            ▼               ▼
+        ┌───────────┐ ┌─────────┐ ┌──────────┐  ┌───────────┐
+        │ Hallway   │ │  Solo   │ │  Cross   │  │ Batch     │
+        │ Huddle    │ │  Prep   │ │  Cover   │  │ Review    │
+        └─────┬─────┘ └────┬────┘ └────┬─────┘  │ Queue     │
+              │            │           │         └───────────┘
+    ┌─────────┤            │           │
+    │         ▼            ▼           │
+    │   ┌───────────┐                  │
+    │   │  In-Room  │◀─────────────────┘
+    │   │(Recording)│
+    │   └─────┬─────┘
+    │         │ ◀── Interrupted ──▶ Resume
+    │         ▼
+    │   ┌───────────┐
+    │   │ Post-Room │
+    │   └─────┬─────┘
+    │         │
+    │   ┌─────▼─────┐
+    │   │  Review   │ ◀── Batch Review Queue
+    │   └─────┬─────┘
+    │         │
+    │   ┌─────▼─────┐
+    ▼   │  Signed   │──▶ Reopened (Addendum)
+Deferred└───────────┘
+```
 
 ---
 
@@ -334,6 +404,13 @@ The most critical screen. Where providers review, edit, and approve AI-generated
 └────────────────────────────────────────────────────────────────────┘
 ```
 
+#### Council Disagreement Display — Progressive Disclosure
+
+The council's disagreement UI follows these rules:
+- **Default view**: Chairman's synthesis only. One-line flag: "Models differed on HD hold duration."
+- **Expanded view** (tap to open): Shows all three opinions using **Model A / Model B / Model C** labels — never brand names (Gemini/Claude/Mistral). Rationale from each.
+- **Provider resolves**: Provider's choice is logged as feedback for future model improvement.
+
 ### Key Elements
 
 | Element | Description |
@@ -348,6 +425,20 @@ The most critical screen. Where providers review, edit, and approve AI-generated
 | **Accept/Edit/Flag** | Per-section actions. Accept locks the section. Edit opens inline editor. Flag marks for follow-up. |
 | **Accept All Green** | One button to accept all 🟢 sections. Massive time saver. |
 | **Sign Note** | Final action. Locks note, creates audit record. |
+
+### Source Provenance — Inline Chips
+
+Every data point in the note displays an inline source chip. Color-coded by recency and source type:
+
+| Chip | Color | Example |
+|------|-------|---------|
+| `[Lab 2h ago]` | Blue | Creatinine 2.4 `[Lab 2h ago]` |
+| `[Transcript 4:32]` | Purple | "Patient reports improved dyspnea" `[Transcript 4:32]` |
+| `[EPIC paste]` | Teal | Medication list `[EPIC paste, confirmed]` |
+| `[Provider dictation]` | Orange | "Plan to hold HD" `[Dictation 5:22]` |
+| `[AI inferred]` | Gray | "Likely prerenal component" `[AI inferred, 2/3 agree]` |
+
+Clicking a transcript chip plays the audio from that timestamp ("karaoke highlighting" pattern from Abridge).
 
 ### Layout (Provider Phone — Review Mode)
 
@@ -395,6 +486,39 @@ The most critical screen. Where providers review, edit, and approve AI-generated
 - "Dictate Fix" button — hold to speak correction
 - Swipe right = Accept, Swipe left = Flag
 - Large touch targets (minimum 48px)
+
+### Mobile Review: Hybrid "Needs Review" Filter + 5-Layer Safety
+
+**Default phone view**: Show only yellow/red sections in clinical order. Green sections collapsed into summary: "6 sections verified by AI -- tap to expand."
+
+#### Clinical Significance Badge
+
+Each section tagged with clinical significance independent of AI confidence:
+
+| Badge | Meaning | Phone Behavior |
+|-------|---------|----------------|
+| CRITICAL | Critical values, new diagnoses, medication changes | Always expanded, floats to top |
+| MODERATE | Clinically meaningful but stable | Shown in order, collapsed |
+| LOW | Routine, stable, unchanged | Collapsed into summary line |
+
+#### Swipe Gestures (Phone)
+
+| Gesture | Action | Threshold | Feedback |
+|---------|--------|-----------|----------|
+| **Swipe right (full)** | Accept section | >75% screen width | Haptic buzz, green checkmark, 8-sec undo toast |
+| **Tap flag icon** | Flag for review | Single tap + reason selector | Asymmetric friction (flagging is intentionally harder than accepting) |
+
+#### "Accept All Green" — 5-Layer Safety Framework
+
+"Accept All Green" is the primary efficiency feature but requires safety guardrails:
+
+| Layer | Gate | Description |
+|-------|------|-------------|
+| **1. Scroll-Through Gate** | Must scroll past all sections before "Accept All" activates | Prevents blind acceptance |
+| **2. Mandatory A/P Expand** | Assessment & Plan sections auto-expand even if green | Forces reading the core content |
+| **3. Smart Exclusions** | Auto-excludes from "Accept All": new consults, critical labs, medication changes, new diagnoses | High-risk sections always require individual review |
+| **4. Random Spot-Checks** | ~1x per session, a random green section requires individual acceptance | Maintains vigilance |
+| **5. Graduated Trust** | "Accept All" disabled for first 2 weeks of use per provider | Forces section-by-section review while learning the system |
 
 ---
 
@@ -629,7 +753,128 @@ Final review before signing. Billing justification. Export to EPIC.
 
 ---
 
+## Screen 7: Handoff Screen (SBAR)
+
+### Purpose
+Auto-generated SBAR handoff summary from the Assessment & Plan. For shift changes, cross-cover, and communication with primary team.
+
+### Layout (Scribe Laptop)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ ← Census    HANDOFF SUMMARY    March 5, 2026 — Dr. Mulay's List  │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  ACTIVE PATIENTS: 12                    [Export All] [Print]       │
+│                                                                    │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Smith, John — ICU 4A-12 — Day 2                              │  │
+│  │ ────────────────────────────────────────────────────────────  │  │
+│  │ S: AKI Stage 2→1 improving. Cr 2.4↓. K normalized.          │  │
+│  │ B: Prerenal ATN, off pressors. UOP trending up 80mL/hr.     │  │
+│  │ A: Improving. HD held. Monitor for continued recovery.       │  │
+│  │ R: Recheck BMP AM. If Cr >3.0 or UOP drops, call nephro.    │  │
+│  │    F/u urology re: foley removal (pending).                  │  │
+│  │    24h urine protein NOT yet collected — reorder.            │  │
+│  │                                                               │  │
+│  │ [Copy SBAR] [Send to EPIC Chat]                               │  │
+│  ├──────────────────────────────────────────────────────────────┤  │
+│  │ Garcia, Maria — 4B-8 — Day 3                                 │  │
+│  │ ────────────────────────────────────────────────────────────  │  │
+│  │ S: CKD G4 + HF. Volume overloaded. BNP 1200.               │  │
+│  │ B: Diuretic-resistant. On Lasix drip 10mg/hr. I/O -500.    │  │
+│  │ A: May need ultrafiltration if no response by AM.            │  │
+│  │ R: Repeat BMP + BNP AM. If UOP <30mL/hr x4h, call nephro.  │  │
+│  │                                                               │  │
+│  │ [Copy SBAR] [Send to EPIC Chat]                               │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                    │
+│  [Export All as PDF]  [Send All to EPIC Secure Chat]               │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Elements
+
+| Element | Description |
+|---------|-------------|
+| **Auto-generated SBAR** | Pulled from signed note's Assessment & Plan. AI formats into Situation/Background/Assessment/Recommendation. |
+| **Outstanding items** | Unfulfilled plan items from previous days surfaced in Recommendations. |
+| **One-tap export** | Copy single patient SBAR or export all. Send to EPIC Secure Chat if available. |
+| **Cross-cover context** | When covering colleague's patients, handoff screen provides rapid context without reading full notes. |
+| **Print-friendly** | Formatted for 8.5x11 single-page handoff sheet per patient. |
+
+### Layout (Provider Phone)
+
+Single column, one patient per screen. Swipe between patients. "Send All" button at bottom.
+
+---
+
+## Screen 8: Batch Note Review Queue
+
+### Purpose
+Review all notes after finishing rounds. Centralized queue for efficiency — review, accept, sign multiple notes in sequence.
+
+### Layout (Scribe Laptop)
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│ ← Census    BATCH REVIEW    5 notes pending                       │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  FILTER: [All ▾] [Needs Review] [Flagged] [Ready to Sign]        │
+│  SORT:   [Acuity ▾] [Time Generated] [Patient Name]              │
+│                                                                    │
+│  ┌────┬──────────────────────────────────────────────────────────┐│
+│  │ 1  │ Smith, John — ICU 4A-12 — Progress Note                 ││
+│  │    │ 5 sections: 3🟢 1🟡 1🔴  |  Generated 8:42 AM           ││
+│  │    │ 🔴 1 council disagreement  |  Acuity: High               ││
+│  ├────┼──────────────────────────────────────────────────────────┤│
+│  │ 2  │ Garcia, Maria — 4B-8 — Progress Note                    ││
+│  │    │ 4 sections: 4🟢  |  Generated 9:15 AM                   ││
+│  │    │ ✅ Ready to sign  |  Acuity: Medium                      ││
+│  ├────┼──────────────────────────────────────────────────────────┤│
+│  │ 3  │ Williams, Robert — 3A-5 — Progress Note                 ││
+│  │    │ 3 sections: 2🟢 1🟡  |  Generated 9:30 AM               ││
+│  │    │ ⚠️ Flagged by scribe  |  Acuity: Low                     ││
+│  └────┴──────────────────────────────────────────────────────────┘│
+│                                                                    │
+│  [Sign All Ready (2)] — signs all notes where all sections green  │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Elements
+
+| Element | Description |
+|---------|-------------|
+| **Filter & Sort** | Filter by review status, sort by acuity or time. |
+| **At-a-glance status** | Section confidence summary, council disagreement count, scribe flags. |
+| **Click to open** | Opens full Note Review screen (Screen 3) for that patient. |
+| **Sign All Ready** | Batch-sign all notes where every section is green and accepted. Safety gate: only available if all sections individually reviewed. |
+| **Sequential review** | Arrow keys or swipe to move between notes in queue. |
+
+---
+
 ## Cross-Cutting UX Patterns
+
+### Longitudinal Tracking (Day-Over-Day)
+
+The Hallway Huddle (Screen 2A) includes longitudinal tracking:
+
+| Feature | Description |
+|---------|-------------|
+| **Domain trends** | Day-over-day domain status: AKI Day 1 🔴 → Day 2 🟡 → Day 3 🟢 |
+| **Plan evolution** | Yesterday's plan items tracked: ✅ completed, ⏳ pending, ❌ not done |
+| **Outstanding items** | Unfulfilled items from any prior day persist until resolved or dismissed |
+| **Diff view** | Compare yesterday's note vs today's. Catches copy-forward errors. Highlights changed sections, new findings, resolved issues. |
+
+### Communication Log
+
+Lightweight dictation tagged to a patient encounter, captured outside the formal note:
+
+- **Phone call documentation** — "Called primary team re: HD timing"
+- **Family updates** — "Spoke with daughter re: GOC"
+- **Nurse communication** — "RN reports UOP dropped to 20mL/hr"
+- **Auto-incorporated** — Tagged communications pulled into note's relevant domain section
 
 ### Offline Mode
 
@@ -755,3 +1000,17 @@ All 18 domain colors are used for domain tags, sidebar indicators, and confidenc
 3. **Addendum format** — How are addenda structured in EPIC?
 4. **Co-signature workflow** — Do scribes draft and providers co-sign? Or direct sign?
 5. **Note versioning display** — How many prior versions to show in review?
+
+---
+
+## Patterns to Steal (Competitive Intelligence)
+
+Identified during LLM Council UX review — features from existing ambient documentation tools worth adapting:
+
+| Product | Pattern | CORTEX Adaptation |
+|---------|---------|-------------------|
+| **Abridge** | "Karaoke highlighting" — click note text, source audio plays with word-level sync | Transcript chip `[Transcript 4:32]` plays audio from timestamp. Word-level highlighting during playback. |
+| **DAX (Nuance)** | Live confidence waves — visual indicator during recording showing STT confidence in real-time | Subtle confidence indicator on in-room screen. Flags low-confidence segments for re-listen. |
+| **DeepScribe** | Smart silence detection — filters non-clinical small talk from transcript | Pre-processing filter before entity extraction. Reduces noise in council input. |
+| **Dragon Medical** | Custom nephrology vocabulary with context-aware corrections | Context biasing (already in STT spec). Add provider-specific vocabulary learning over time. |
+| **Abridge** | Copy-forward detection — flags when today's note is suspiciously similar to yesterday's | Diff view in longitudinal tracking. Alert: "Assessment unchanged for 3 days — verify." |

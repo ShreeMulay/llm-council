@@ -1,27 +1,27 @@
 # CORTEX — Data Model Specification
 
 > **Version**: 1.0
-> **Last Updated**: March 4, 2026
-> **Database**: Cloud SQL (PostgreSQL 16)
+> **Last Updated**: March 5, 2026
+> **Database**: Cloud SQL (MySQL 8.4)
 > **Shared Instance**: CORTEX tables coexist with TALIA 1.0 (AppSheet) tables
-> **Schema**: `cortex` (separate schema from TALIA 1.0's `public` schema)
+> **Database**: `cortex` (separate database from TALIA 1.0's `talia_production` database)
 
 ---
 
 ## 1. Schema Strategy
 
-CORTEX and TALIA 1.0 share a single Cloud SQL PostgreSQL instance but use separate schemas:
+CORTEX and TALIA 1.0 share a single Cloud SQL MySQL instance but use separate databases:
 
 ```
-PostgreSQL Instance (db-g1-small, us-central1)
-├── Schema: public        ← TALIA 1.0 (AppSheet) tables
+MySQL Instance (db-g1-small, us-central1)
+├── Database: talia_production  ← TALIA 1.0 (AppSheet) tables
 │   ├── hospital_census
 │   ├── patient_registry
 │   ├── provider_schedule
 │   ├── quality_metrics
 │   └── ... (13 AppSheet tables total)
 │
-├── Schema: cortex        ← CORTEX tables (this spec)
+├── Database: cortex            ← CORTEX tables (this spec)
 │   ├── users
 │   ├── encounters
 │   ├── recordings
@@ -40,17 +40,17 @@ PostgreSQL Instance (db-g1-small, us-central1)
 │   ├── feedback
 │   └── audit_log
 │
-└── Schema: shared        ← Cross-references (future)
+└── Cross-database queries (same instance) ← Cross-references (future)
     └── patient_cortex_link (maps AppSheet patient to CORTEX encounter)
 ```
 
-### Cross-Schema Access
+### Cross-Database Access
 
-CORTEX reads from `public.hospital_census` (TALIA 1.0) to populate the patient census screen. This is a **read-only** relationship — CORTEX never writes to TALIA 1.0 tables.
+CORTEX reads from `talia_production.hospital_census` (TALIA 1.0) to populate the patient census screen. This is a **read-only** relationship — CORTEX never writes to TALIA 1.0 tables.
 
 ```sql
 -- CORTEX reads census from TALIA 1.0
-SELECT * FROM public.hospital_census 
+SELECT * FROM talia_production.hospital_census 
 WHERE provider_id = :provider_id 
 AND status = 'active';
 ```
@@ -64,8 +64,8 @@ AND status = 'active';
 CORTEX users (providers, scribes, data entry, admin, QA). Authentication is handled by IAP (Identity-Aware Proxy) at the infrastructure level. This table stores the user profile and RBAC role. The `google_id` is populated from the IAP JWT `sub` claim.
 
 ```sql
-CREATE TABLE cortex.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE users (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
     google_id VARCHAR(255) UNIQUE NOT NULL,       -- IAP JWT 'sub' claim (stable user identifier)
     email VARCHAR(255) UNIQUE NOT NULL,            -- IAP JWT 'email' claim (@thekidneyexperts.com)
     first_name VARCHAR(100) NOT NULL,
@@ -73,18 +73,18 @@ CREATE TABLE cortex.users (
     role VARCHAR(20) NOT NULL DEFAULT 'scribe',    -- 'provider', 'scribe', 'data_entry', 'admin', 'qa'
     npi VARCHAR(10),                                -- National Provider Identifier (providers only)
     specialty VARCHAR(100),                         -- e.g., 'Nephrology'
-    assigned_provider_id UUID REFERENCES cortex.users(id),  -- Scribe → Provider assignment
+    assigned_provider_id CHAR(36) REFERENCES users(id),  -- Scribe → Provider assignment
     is_active BOOLEAN NOT NULL DEFAULT true,
-    last_login_at TIMESTAMPTZ,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    last_login_at DATETIME,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_role CHECK (role IN ('provider', 'scribe', 'data_entry', 'admin', 'qa'))
 );
 
-CREATE INDEX idx_users_email ON cortex.users(email);
-CREATE INDEX idx_users_role ON cortex.users(role);
-CREATE INDEX idx_users_assigned_provider ON cortex.users(assigned_provider_id);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_assigned_provider ON users(assigned_provider_id);
 ```
 
 ### encounters
@@ -92,8 +92,8 @@ CREATE INDEX idx_users_assigned_provider ON cortex.users(assigned_provider_id);
 The central table. One row per patient encounter (one rounding visit = one encounter).
 
 ```sql
-CREATE TABLE cortex.encounters (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE encounters (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
     patient_mrn VARCHAR(20) NOT NULL,
     patient_name VARCHAR(255) NOT NULL,              -- Denormalized for display
     room_number VARCHAR(20),
@@ -101,42 +101,42 @@ CREATE TABLE cortex.encounters (
     admission_day INTEGER NOT NULL DEFAULT 0,        -- Day 0 = new consult
     
     -- Encounter metadata
-    encounter_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    encounter_date DATE NOT NULL DEFAULT (CURRENT_DATE),
     note_type VARCHAR(30) NOT NULL,                  -- 'consult_hp', 'progress_note', 'critical_care', 'acp', 'procedure'
     consult_reason TEXT,                              -- Verbatim from referring team
     
-    -- Active domains (JSONB array of domain IDs)
-    active_domains JSONB NOT NULL DEFAULT '[]'::jsonb,  -- e.g., ["aki", "electrolytes", "volume_hemodynamics"]
+    -- Active domains (JSON array of domain IDs)
+    active_domains JSON NOT NULL DEFAULT (JSON_ARRAY()),  -- e.g., ["aki", "electrolytes", "volume_hemodynamics"]
     acuity_score INTEGER CHECK (acuity_score BETWEEN 1 AND 10),
     
     -- 3-Phase workflow state
     phase VARCHAR(20) NOT NULL DEFAULT 'hallway_huddle',  -- 'hallway_huddle', 'in_room', 'post_room', 'review', 'signed'
     
     -- Participants
-    provider_id UUID NOT NULL REFERENCES cortex.users(id),
-    scribe_id UUID REFERENCES cortex.users(id),
+    provider_id CHAR(36) NOT NULL REFERENCES users(id),
+    scribe_id CHAR(36) REFERENCES users(id),
     
     -- Council tier
     council_tier VARCHAR(10),                        -- 'full', 'quick', 'single'
     
     -- Timestamps
-    hallway_started_at TIMESTAMPTZ,
-    in_room_started_at TIMESTAMPTZ,
-    post_room_started_at TIMESTAMPTZ,
-    note_generated_at TIMESTAMPTZ,
-    note_signed_at TIMESTAMPTZ,
+    hallway_started_at DATETIME,
+    in_room_started_at DATETIME,
+    post_room_started_at DATETIME,
+    note_generated_at DATETIME,
+    note_signed_at DATETIME,
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_note_type CHECK (note_type IN ('consult_hp', 'progress_note', 'critical_care', 'acp', 'procedure')),
     CONSTRAINT valid_phase CHECK (phase IN ('hallway_huddle', 'in_room', 'post_room', 'review', 'signed'))
 );
 
-CREATE INDEX idx_encounters_provider_date ON cortex.encounters(provider_id, encounter_date);
-CREATE INDEX idx_encounters_patient_mrn ON cortex.encounters(patient_mrn);
-CREATE INDEX idx_encounters_phase ON cortex.encounters(phase);
-CREATE INDEX idx_encounters_date ON cortex.encounters(encounter_date);
+CREATE INDEX idx_encounters_provider_date ON encounters(provider_id, encounter_date);
+CREATE INDEX idx_encounters_patient_mrn ON encounters(patient_mrn);
+CREATE INDEX idx_encounters_phase ON encounters(phase);
+CREATE INDEX idx_encounters_date ON encounters(encounter_date);
 ```
 
 ---
@@ -148,9 +148,9 @@ CREATE INDEX idx_encounters_date ON cortex.encounters(encounter_date);
 Audio recording files. One encounter may have multiple recordings (hallway dictation, in-room, post-room dictation).
 
 ```sql
-CREATE TABLE cortex.recordings (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE recordings (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     
     -- Recording metadata
     recording_phase VARCHAR(20) NOT NULL,            -- 'hallway_huddle', 'in_room', 'post_room'
@@ -173,17 +173,17 @@ CREATE TABLE cortex.recordings (
     offline_encrypted BOOLEAN NOT NULL DEFAULT false,
     
     -- Pause tracking
-    pauses JSONB DEFAULT '[]'::jsonb,                -- [{start_ms: 120000, end_ms: 135000, reason: "sensitive"}]
+    pauses JSON DEFAULT (JSON_ARRAY()),              -- [{start_ms: 120000, end_ms: 135000, reason: "sensitive"}]
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_recording_phase CHECK (recording_phase IN ('hallway_huddle', 'in_room', 'post_room')),
     CONSTRAINT valid_status CHECK (status IN ('uploading', 'uploaded', 'transcribing', 'transcribed', 'failed'))
 );
 
-CREATE INDEX idx_recordings_encounter ON cortex.recordings(encounter_id);
-CREATE INDEX idx_recordings_status ON cortex.recordings(status);
+CREATE INDEX idx_recordings_encounter ON recordings(encounter_id);
+CREATE INDEX idx_recordings_status ON recordings(status);
 ```
 
 ### transcripts
@@ -191,10 +191,10 @@ CREATE INDEX idx_recordings_status ON cortex.recordings(status);
 Full transcript for a recording. One recording = one transcript.
 
 ```sql
-CREATE TABLE cortex.transcripts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    recording_id UUID NOT NULL REFERENCES cortex.recordings(id),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE transcripts (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    recording_id CHAR(36) NOT NULL REFERENCES recordings(id),
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     
     -- Full text
     full_text TEXT NOT NULL,
@@ -208,13 +208,13 @@ CREATE TABLE cortex.transcripts (
     
     -- Diarization
     speaker_count INTEGER,
-    speakers JSONB,                                   -- [{"label": "Dr. Mulay", "role": "provider"}, {"label": "Patient", "role": "patient"}]
+    speakers JSON,                                    -- [{"label": "Dr. Mulay", "role": "provider"}, {"label": "Patient", "role": "patient"}]
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_transcripts_recording ON cortex.transcripts(recording_id);
-CREATE INDEX idx_transcripts_encounter ON cortex.transcripts(encounter_id);
+CREATE INDEX idx_transcripts_recording ON transcripts(recording_id);
+CREATE INDEX idx_transcripts_encounter ON transcripts(encounter_id);
 ```
 
 ### transcript_segments
@@ -222,9 +222,9 @@ CREATE INDEX idx_transcripts_encounter ON cortex.transcripts(encounter_id);
 Word/phrase-level segments with timestamps and speaker labels. Used for audio-to-text traceability.
 
 ```sql
-CREATE TABLE cortex.transcript_segments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    transcript_id UUID NOT NULL REFERENCES cortex.transcripts(id),
+CREATE TABLE transcript_segments (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    transcript_id CHAR(36) NOT NULL REFERENCES transcripts(id),
     
     segment_index INTEGER NOT NULL,                  -- Order within transcript
     speaker_label VARCHAR(50),                       -- 'Dr. Mulay', 'Patient', 'Nurse', 'Family'
@@ -240,8 +240,8 @@ CREATE TABLE cortex.transcript_segments (
     CONSTRAINT valid_timing CHECK (end_ms > start_ms)
 );
 
-CREATE INDEX idx_segments_transcript ON cortex.transcript_segments(transcript_id);
-CREATE INDEX idx_segments_timing ON cortex.transcript_segments(transcript_id, start_ms);
+CREATE INDEX idx_segments_transcript ON transcript_segments(transcript_id);
+CREATE INDEX idx_segments_timing ON transcript_segments(transcript_id, start_ms);
 ```
 
 ---
@@ -253,10 +253,10 @@ CREATE INDEX idx_segments_timing ON cortex.transcript_segments(transcript_id, st
 Pasted text from EPIC (labs, meds, vitals, notes). One encounter may have multiple pastes.
 
 ```sql
-CREATE TABLE cortex.epic_data_pastes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
-    pasted_by UUID NOT NULL REFERENCES cortex.users(id),
+CREATE TABLE epic_data_pastes (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
+    pasted_by CHAR(36) NOT NULL REFERENCES users(id),
     
     -- Raw input
     raw_text TEXT,                                    -- Pasted text
@@ -265,7 +265,7 @@ CREATE TABLE cortex.epic_data_pastes (
     
     -- Parsed output
     detected_data_type VARCHAR(30),                  -- 'labs', 'vitals', 'medications', 'notes', 'orders', 'mixed'
-    parsed_data JSONB,                               -- Structured extracted data
+    parsed_data JSON,                                -- Structured extracted data
     parse_confidence FLOAT,
     
     -- Identity verification
@@ -274,16 +274,16 @@ CREATE TABLE cortex.epic_data_pastes (
     
     -- Status
     status VARCHAR(20) NOT NULL DEFAULT 'pending',   -- 'pending', 'parsed', 'confirmed', 'rejected'
-    confirmed_by UUID REFERENCES cortex.users(id),
-    confirmed_at TIMESTAMPTZ,
+    confirmed_by CHAR(36) REFERENCES users(id),
+    confirmed_at DATETIME,
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_input_type CHECK (input_type IN ('text_paste', 'screenshot')),
     CONSTRAINT valid_status CHECK (status IN ('pending', 'parsed', 'confirmed', 'rejected'))
 );
 
-CREATE INDEX idx_epic_pastes_encounter ON cortex.epic_data_pastes(encounter_id);
+CREATE INDEX idx_epic_pastes_encounter ON epic_data_pastes(encounter_id);
 ```
 
 ### entity_extractions
@@ -291,24 +291,24 @@ CREATE INDEX idx_epic_pastes_encounter ON cortex.epic_data_pastes(encounter_id);
 Structured entities extracted from transcripts by Gemini Flash.
 
 ```sql
-CREATE TABLE cortex.entity_extractions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
-    transcript_id UUID REFERENCES cortex.transcripts(id),
+CREATE TABLE entity_extractions (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
+    transcript_id CHAR(36) REFERENCES transcripts(id),
     
     -- Extraction results
-    entities JSONB NOT NULL,                         -- Full structured extraction (see tech-stack.md for schema)
+    entities JSON NOT NULL,                          -- Full structured extraction (see tech-stack.md for schema)
     
     -- Processing metadata
     model VARCHAR(50) NOT NULL,                      -- 'gemini-2.0-flash' etc.
     model_version VARCHAR(50),
     extraction_type VARCHAR(20) NOT NULL,             -- 'transcript', 'epic_paste', 'screenshot'
-    source_id UUID,                                   -- Reference to transcript or epic_data_paste
+    source_id CHAR(36),                               -- Reference to transcript or epic_data_paste
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_extractions_encounter ON cortex.entity_extractions(encounter_id);
+CREATE INDEX idx_extractions_encounter ON entity_extractions(encounter_id);
 ```
 
 ---
@@ -320,50 +320,50 @@ CREATE INDEX idx_extractions_encounter ON cortex.entity_extractions(encounter_id
 The clinical note. Each encounter typically produces one note (but may have addenda).
 
 ```sql
-CREATE TABLE cortex.notes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE notes (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     
     -- Note metadata
     note_type VARCHAR(30) NOT NULL,                  -- Mirrors encounter note_type
     version INTEGER NOT NULL DEFAULT 1,              -- Increments on edit
     is_addendum BOOLEAN NOT NULL DEFAULT false,
-    parent_note_id UUID REFERENCES cortex.notes(id), -- For addenda
+    parent_note_id CHAR(36) REFERENCES notes(id),    -- For addenda
     
     -- Content
     full_text TEXT,                                   -- Plain text rendering of full note
-    structured_content JSONB,                        -- Structured note by domain/section
+    structured_content JSON,                         -- Structured note by domain/section
     
     -- Status
     status VARCHAR(20) NOT NULL DEFAULT 'generating', -- 'generating', 'draft', 'review', 'signed', 'amended'
     
     -- Council metadata
     council_tier VARCHAR(10),                        -- 'full', 'quick', 'single'
-    council_run_id UUID,                             -- Reference to council_runs
+    council_run_id CHAR(36),                         -- Reference to council_runs
     
     -- Billing
     suggested_billing_code VARCHAR(10),              -- E/M code: '99231', '99232', '99233', etc.
     final_billing_code VARCHAR(10),                  -- Provider's final selection
-    billing_justification JSONB,                     -- Structured evidence for billing code
+    billing_justification JSON,                      -- Structured evidence for billing code
     
     -- Signing
-    signed_by UUID REFERENCES cortex.users(id),
-    signed_at TIMESTAMPTZ,
+    signed_by CHAR(36) REFERENCES users(id),
+    signed_at DATETIME,
     attestation_text TEXT,                            -- The attestation statement at signing
     
     -- Export
-    exported_at TIMESTAMPTZ,
+    exported_at DATETIME,
     export_format VARCHAR(20),                       -- 'smart_copy', 'pdf', 'print'
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_status CHECK (status IN ('generating', 'draft', 'review', 'signed', 'amended'))
 );
 
-CREATE INDEX idx_notes_encounter ON cortex.notes(encounter_id);
-CREATE INDEX idx_notes_status ON cortex.notes(status);
-CREATE INDEX idx_notes_signed_by ON cortex.notes(signed_by, signed_at);
+CREATE INDEX idx_notes_encounter ON notes(encounter_id);
+CREATE INDEX idx_notes_status ON notes(status);
+CREATE INDEX idx_notes_signed_by ON notes(signed_by, signed_at);
 ```
 
 ### note_sections
@@ -371,9 +371,9 @@ CREATE INDEX idx_notes_signed_by ON cortex.notes(signed_by, signed_at);
 Individual sections within a note, organized by domain. Each section has its own confidence score and review status.
 
 ```sql
-CREATE TABLE cortex.note_sections (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    note_id UUID NOT NULL REFERENCES cortex.notes(id),
+CREATE TABLE note_sections (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    note_id CHAR(36) NOT NULL REFERENCES notes(id),
     
     -- Domain mapping
     domain_id VARCHAR(50) NOT NULL,                  -- e.g., 'aki', 'electrolytes', 'volume_hemodynamics'
@@ -388,32 +388,32 @@ CREATE TABLE cortex.note_sections (
     
     -- Confidence & provenance
     confidence VARCHAR(10) NOT NULL DEFAULT 'medium', -- 'high', 'medium', 'low'
-    provenance JSONB,                                 -- Source tags for each data point
-    high_risk_fields JSONB,                          -- Fields requiring verification
+    provenance JSON,                                  -- Source tags for each data point
+    high_risk_fields JSON,                           -- Fields requiring verification
     
     -- Council disagreement
     has_disagreement BOOLEAN NOT NULL DEFAULT false,
-    disagreement_details JSONB,                      -- All 3 model opinions + chairman rationale
+    disagreement_details JSON,                       -- All 3 model opinions + chairman rationale
     
     -- Review status
     review_status VARCHAR(20) NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'edited', 'flagged'
-    reviewed_by UUID REFERENCES cortex.users(id),
-    reviewed_at TIMESTAMPTZ,
+    reviewed_by CHAR(36) REFERENCES users(id),
+    reviewed_at DATETIME,
     
     -- If edited, store the diff
-    original_content JSONB,                          -- Content before provider edits
-    edit_diff JSONB,                                 -- What was changed
+    original_content JSON,                           -- Content before provider edits
+    edit_diff JSON,                                  -- What was changed
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_confidence CHECK (confidence IN ('high', 'medium', 'low')),
     CONSTRAINT valid_review_status CHECK (review_status IN ('pending', 'accepted', 'edited', 'flagged'))
 );
 
-CREATE INDEX idx_note_sections_note ON cortex.note_sections(note_id);
-CREATE INDEX idx_note_sections_domain ON cortex.note_sections(domain_id);
-CREATE INDEX idx_note_sections_confidence ON cortex.note_sections(confidence);
+CREATE INDEX idx_note_sections_note ON note_sections(note_id);
+CREATE INDEX idx_note_sections_domain ON note_sections(domain_id);
+CREATE INDEX idx_note_sections_confidence ON note_sections(confidence);
 ```
 
 ### note_versions
@@ -421,28 +421,28 @@ CREATE INDEX idx_note_sections_confidence ON cortex.note_sections(confidence);
 Full version history of every note. Immutable — captures the note state at each version.
 
 ```sql
-CREATE TABLE cortex.note_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    note_id UUID NOT NULL REFERENCES cortex.notes(id),
+CREATE TABLE note_versions (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    note_id CHAR(36) NOT NULL REFERENCES notes(id),
     version_number INTEGER NOT NULL,
     
     -- Snapshot of note at this version
     full_text TEXT NOT NULL,
-    structured_content JSONB NOT NULL,
-    sections_snapshot JSONB NOT NULL,                -- All sections at this version
+    structured_content JSON NOT NULL,
+    sections_snapshot JSON NOT NULL,                  -- All sections at this version
     
     -- What changed
     change_type VARCHAR(20) NOT NULL,                -- 'generated', 'edited', 'signed', 'addendum'
     change_description TEXT,
-    changed_by UUID NOT NULL REFERENCES cortex.users(id),
+    changed_by CHAR(36) NOT NULL REFERENCES users(id),
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Immutable: no updated_at
     CONSTRAINT unique_note_version UNIQUE (note_id, version_number)
 );
 
-CREATE INDEX idx_note_versions_note ON cortex.note_versions(note_id);
+CREATE INDEX idx_note_versions_note ON note_versions(note_id);
 ```
 
 ---
@@ -454,10 +454,10 @@ CREATE INDEX idx_note_versions_note ON cortex.note_versions(note_id);
 Structured procedure documentation (HD, CVVH, CVVHDF, SLED, PD, PLEX, Aquadex, catheter placement).
 
 ```sql
-CREATE TABLE cortex.procedure_notes (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    note_id UUID NOT NULL REFERENCES cortex.notes(id),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE procedure_notes (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    note_id CHAR(36) NOT NULL REFERENCES notes(id),
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     
     -- Procedure identification
     procedure_type VARCHAR(30) NOT NULL,             -- 'hd', 'cvvh', 'cvvhdf', 'sled', 'pd', 'plex', 'aquadex', 'catheter'
@@ -469,8 +469,8 @@ CREATE TABLE cortex.procedure_notes (
     access_site VARCHAR(50),
     access_inserted_date DATE,
     
-    -- Dialysis parameters (JSONB for flexibility across modalities)
-    prescription JSONB,                              -- Modality-specific parameters
+    -- Dialysis parameters (JSON for flexibility across modalities)
+    prescription JSON,                               -- Modality-specific parameters
     
     -- Weight & UF
     pre_weight_kg DECIMAL(5,1),
@@ -481,10 +481,10 @@ CREATE TABLE cortex.procedure_notes (
     
     -- Anticoagulation
     anticoag_type VARCHAR(30),                       -- 'heparin', 'acd_a', 'citrate', 'none'
-    anticoag_details JSONB,
+    anticoag_details JSON,
     
     -- Monitoring
-    monitoring_checklist JSONB,                      -- [{item: "Pre/Post vitals", checked: true}]
+    monitoring_checklist JSON,                       -- [{item: "Pre/Post vitals", checked: true}]
     
     -- Complications
     complications VARCHAR(20) DEFAULT 'none',        -- 'none', 'minor', 'major'
@@ -499,16 +499,16 @@ CREATE TABLE cortex.procedure_notes (
     plex_sessions_planned INTEGER,
     
     -- Template
-    template_id UUID,                                -- If created from saved template
+    template_id CHAR(36),                            -- If created from saved template
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_procedure_type CHECK (procedure_type IN ('hd', 'cvvh', 'cvvhdf', 'sled', 'pd', 'plex', 'aquadex', 'catheter'))
 );
 
-CREATE INDEX idx_procedure_notes_encounter ON cortex.procedure_notes(encounter_id);
-CREATE INDEX idx_procedure_notes_type ON cortex.procedure_notes(procedure_type);
+CREATE INDEX idx_procedure_notes_encounter ON procedure_notes(encounter_id);
+CREATE INDEX idx_procedure_notes_type ON procedure_notes(procedure_type);
 ```
 
 ---
@@ -520,26 +520,26 @@ CREATE INDEX idx_procedure_notes_type ON cortex.procedure_notes(procedure_type);
 Tracks each council execution (the full pipeline: generate → review → synthesize).
 
 ```sql
-CREATE TABLE cortex.council_runs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
-    note_id UUID REFERENCES cortex.notes(id),
+CREATE TABLE council_runs (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
+    note_id CHAR(36) REFERENCES notes(id),
     
     -- Configuration
     tier VARCHAR(10) NOT NULL,                       -- 'full', 'quick', 'single'
-    models_used JSONB NOT NULL,                      -- ["gemini-3.1-pro", "claude-sonnet-4.6", "mistral-medium-3"]
+    models_used JSON NOT NULL,                       -- ["gemini-3.1-pro", "claude-sonnet-4.6", "mistral-medium-3"]
     chairman_model VARCHAR(50),
     
     -- Pipeline status
     status VARCHAR(20) NOT NULL DEFAULT 'generating', -- 'generating', 'reviewing', 'synthesizing', 'complete', 'failed'
     
     -- Timing
-    generation_started_at TIMESTAMPTZ,
-    generation_completed_at TIMESTAMPTZ,
-    review_started_at TIMESTAMPTZ,
-    review_completed_at TIMESTAMPTZ,
-    synthesis_started_at TIMESTAMPTZ,
-    synthesis_completed_at TIMESTAMPTZ,
+    generation_started_at DATETIME,
+    generation_completed_at DATETIME,
+    review_started_at DATETIME,
+    review_completed_at DATETIME,
+    synthesis_started_at DATETIME,
+    synthesis_completed_at DATETIME,
     total_duration_ms INTEGER,
     
     -- Token usage
@@ -551,11 +551,11 @@ CREATE TABLE cortex.council_runs (
     error_message TEXT,
     retry_count INTEGER DEFAULT 0,
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_council_runs_encounter ON cortex.council_runs(encounter_id);
-CREATE INDEX idx_council_runs_status ON cortex.council_runs(status);
+CREATE INDEX idx_council_runs_encounter ON council_runs(encounter_id);
+CREATE INDEX idx_council_runs_status ON council_runs(status);
 ```
 
 ### council_outputs
@@ -563,9 +563,9 @@ CREATE INDEX idx_council_runs_status ON cortex.council_runs(status);
 Individual model outputs at each step of the council pipeline.
 
 ```sql
-CREATE TABLE cortex.council_outputs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    council_run_id UUID NOT NULL REFERENCES cortex.council_runs(id),
+CREATE TABLE council_outputs (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    council_run_id CHAR(36) NOT NULL REFERENCES council_runs(id),
     
     -- Model identification
     model_name VARCHAR(50) NOT NULL,                 -- 'gemini-3.1-pro', 'claude-sonnet-4.6', 'mistral-medium-3'
@@ -573,24 +573,24 @@ CREATE TABLE cortex.council_outputs (
     
     -- Content
     output_text TEXT,
-    structured_output JSONB,
+    structured_output JSON,
     
     -- Review-specific (Step 2)
-    reviewed_models JSONB,                           -- Which models' notes were reviewed
-    quality_scores JSONB,                            -- Scores given to each reviewed note
-    issues_found JSONB,                              -- Flagged issues
-    ranking JSONB,                                   -- Ranking of reviewed notes
+    reviewed_models JSON,                            -- Which models' notes were reviewed
+    quality_scores JSON,                             -- Scores given to each reviewed note
+    issues_found JSON,                               -- Flagged issues
+    ranking JSON,                                    -- Ranking of reviewed notes
     
     -- Performance
     input_tokens INTEGER,
     output_tokens INTEGER,
     latency_ms INTEGER,
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_council_outputs_run ON cortex.council_outputs(council_run_id);
-CREATE INDEX idx_council_outputs_model ON cortex.council_outputs(model_name);
+CREATE INDEX idx_council_outputs_run ON council_outputs(council_run_id);
+CREATE INDEX idx_council_outputs_model ON council_outputs(model_name);
 ```
 
 ---
@@ -602,24 +602,24 @@ CREATE INDEX idx_council_outputs_model ON cortex.council_outputs(model_name);
 See `compliance.md` for full consent framework. Schema:
 
 ```sql
-CREATE TABLE cortex.consent_records (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE consent_records (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     patient_mrn VARCHAR(20) NOT NULL,
     consent_type VARCHAR(20) NOT NULL,               -- 'verbal', 'declined', 'unable', 'representative'
     consented_by VARCHAR(50) NOT NULL,               -- 'patient', 'poa', 'legal_rep'
     consented_by_name VARCHAR(255),
     consented_by_relationship VARCHAR(100),
     inability_reason TEXT,
-    provider_present_id UUID NOT NULL REFERENCES cortex.users(id),
-    captured_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    provider_present_id CHAR(36) NOT NULL REFERENCES users(id),
+    captured_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Immutable
     CONSTRAINT valid_consent_type CHECK (consent_type IN ('verbal', 'declined', 'unable', 'representative'))
 );
 
-CREATE INDEX idx_consent_encounter ON cortex.consent_records(encounter_id);
-CREATE INDEX idx_consent_patient ON cortex.consent_records(patient_mrn);
+CREATE INDEX idx_consent_encounter ON consent_records(encounter_id);
+CREATE INDEX idx_consent_patient ON consent_records(patient_mrn);
 ```
 
 ### audit_log
@@ -627,32 +627,31 @@ CREATE INDEX idx_consent_patient ON cortex.consent_records(patient_mrn);
 See `compliance.md` for full audit framework. Schema:
 
 ```sql
-CREATE TABLE cortex.audit_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE audit_log (
+    id CHAR(36) NOT NULL,
     event_type VARCHAR(50) NOT NULL,
-    user_id UUID REFERENCES cortex.users(id),
+    user_id CHAR(36),
     patient_mrn VARCHAR(20),
     resource_type VARCHAR(50),
-    resource_id UUID,
+    resource_id CHAR(36),
     action VARCHAR(20) NOT NULL,
-    details JSONB,
-    ip_address INET,
+    details JSON,
+    ip_address VARCHAR(45),                          -- IPv4 or IPv6 address
     user_agent TEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     -- Immutable: no UPDATE or DELETE
-) PARTITION BY RANGE (created_at);
+    -- Note: MySQL requires partition column in PRIMARY KEY
+    PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE COLUMNS(created_at) (
+    PARTITION p2026_03 VALUES LESS THAN ('2026-04-01'),
+    PARTITION p2026_04 VALUES LESS THAN ('2026-05-01')
+    -- ... generate monthly
+);
 
--- Monthly partitions
-CREATE TABLE cortex.audit_log_2026_03 PARTITION OF cortex.audit_log
-    FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
-CREATE TABLE cortex.audit_log_2026_04 PARTITION OF cortex.audit_log
-    FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
--- ... generate monthly
-
-CREATE INDEX idx_audit_user ON cortex.audit_log(user_id, created_at);
-CREATE INDEX idx_audit_patient ON cortex.audit_log(patient_mrn, created_at);
-CREATE INDEX idx_audit_event ON cortex.audit_log(event_type, created_at);
+CREATE INDEX idx_audit_user ON audit_log(user_id, created_at);
+CREATE INDEX idx_audit_patient ON audit_log(patient_mrn, created_at);
+CREATE INDEX idx_audit_event ON audit_log(event_type, created_at);
 ```
 
 ### break_glass_log
@@ -660,18 +659,20 @@ CREATE INDEX idx_audit_event ON cortex.audit_log(event_type, created_at);
 Emergency access log. See `compliance.md`.
 
 ```sql
-CREATE TABLE cortex.break_glass_log (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES cortex.users(id),
+CREATE TABLE break_glass_log (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL REFERENCES users(id),
     patient_mrn VARCHAR(20) NOT NULL,
     reason TEXT NOT NULL,
-    accessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    reviewed_by UUID REFERENCES cortex.users(id),
-    reviewed_at TIMESTAMPTZ
+    accessed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_by CHAR(36) REFERENCES users(id),
+    reviewed_at DATETIME
 );
 
-CREATE INDEX idx_break_glass_user ON cortex.break_glass_log(user_id);
-CREATE INDEX idx_break_glass_reviewed ON cortex.break_glass_log(reviewed_by) WHERE reviewed_at IS NULL;
+CREATE INDEX idx_break_glass_user ON break_glass_log(user_id);
+-- Note: MySQL does not support partial indexes. This index covers all rows;
+-- filter WHERE reviewed_at IS NULL at the application layer.
+CREATE INDEX idx_break_glass_reviewed ON break_glass_log(reviewed_by);
 ```
 
 ---
@@ -683,10 +684,10 @@ CREATE INDEX idx_break_glass_reviewed ON cortex.break_glass_log(reviewed_by) WHE
 Provider feedback on AI-generated content. Used for quality improvement.
 
 ```sql
-CREATE TABLE cortex.feedback (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    note_id UUID NOT NULL REFERENCES cortex.notes(id),
-    note_section_id UUID REFERENCES cortex.note_sections(id),
+CREATE TABLE feedback (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    note_id CHAR(36) NOT NULL REFERENCES notes(id),
+    note_section_id CHAR(36) REFERENCES note_sections(id),
     
     -- Feedback type
     feedback_type VARCHAR(20) NOT NULL,              -- 'accept', 'edit', 'flag', 'billing_change', 'disagreement_resolution'
@@ -694,7 +695,7 @@ CREATE TABLE cortex.feedback (
     -- Content (for edits)
     original_content TEXT,
     final_content TEXT,
-    edit_diff JSONB,
+    edit_diff JSON,
     
     -- For disagreement resolution
     chosen_model VARCHAR(50),                        -- Which model the provider agreed with
@@ -705,14 +706,14 @@ CREATE TABLE cortex.feedback (
     
     -- Context
     council_tier VARCHAR(10),
-    provider_id UUID NOT NULL REFERENCES cortex.users(id),
+    provider_id CHAR(36) NOT NULL REFERENCES users(id),
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_feedback_note ON cortex.feedback(note_id);
-CREATE INDEX idx_feedback_type ON cortex.feedback(feedback_type);
-CREATE INDEX idx_feedback_provider ON cortex.feedback(provider_id);
+CREATE INDEX idx_feedback_note ON feedback(note_id);
+CREATE INDEX idx_feedback_type ON feedback(feedback_type);
+CREATE INDEX idx_feedback_provider ON feedback(provider_id);
 ```
 
 ---
@@ -724,40 +725,40 @@ CREATE INDEX idx_feedback_provider ON cortex.feedback(provider_id);
 AI-generated billing code suggestions with evidence.
 
 ```sql
-CREATE TABLE cortex.billing_suggestions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    note_id UUID NOT NULL REFERENCES cortex.notes(id),
-    encounter_id UUID NOT NULL REFERENCES cortex.encounters(id),
+CREATE TABLE billing_suggestions (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    note_id CHAR(36) NOT NULL REFERENCES notes(id),
+    encounter_id CHAR(36) NOT NULL REFERENCES encounters(id),
     
     -- Suggested code
     suggested_code VARCHAR(10) NOT NULL,             -- E/M code: '99231', '99232', '99233', '99253', etc.
     coding_method VARCHAR(10) NOT NULL,              -- 'mdm' (medical decision making), 'time'
     
     -- MDM components
-    mdm_problems JSONB,                              -- Number and complexity of problems addressed
-    mdm_data JSONB,                                  -- Amount and complexity of data reviewed
-    mdm_risk JSONB,                                  -- Risk of complications/morbidity/mortality
+    mdm_problems JSON,                               -- Number and complexity of problems addressed
+    mdm_data JSON,                                   -- Amount and complexity of data reviewed
+    mdm_risk JSON,                                   -- Risk of complications/morbidity/mortality
     
     -- Time-based
     total_time_minutes INTEGER,
-    time_components JSONB,                           -- Breakdown: face-to-face, chart review, coordination, etc.
+    time_components JSON,                            -- Breakdown: face-to-face, chart review, coordination, etc.
     
     -- Evidence (transcript-linked)
-    evidence JSONB NOT NULL,                         -- [{criterion, evidence_text, transcript_timestamp, source}]
+    evidence JSON NOT NULL,                          -- [{criterion, evidence_text, transcript_timestamp, source}]
     
     -- Alternative codes
-    alternative_codes JSONB,                         -- Other defensible codes with justification
+    alternative_codes JSON,                          -- Other defensible codes with justification
     
     -- Resolution
     final_code VARCHAR(10),                          -- What the provider selected
-    provider_id UUID REFERENCES cortex.users(id),
-    resolved_at TIMESTAMPTZ,
+    provider_id CHAR(36) REFERENCES users(id),
+    resolved_at DATETIME,
     
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_billing_encounter ON cortex.billing_suggestions(encounter_id);
-CREATE INDEX idx_billing_code ON cortex.billing_suggestions(suggested_code);
+CREATE INDEX idx_billing_encounter ON billing_suggestions(encounter_id);
+CREATE INDEX idx_billing_code ON billing_suggestions(suggested_code);
 ```
 
 ---
@@ -819,22 +820,22 @@ CREATE INDEX idx_billing_code ON cortex.billing_suggestions(suggested_code);
 
 ## 12. Migration Strategy
 
-### Phase 1: CORTEX Schema Creation
+### Phase 1: CORTEX Database Creation
 
 ```sql
--- 1. Create schema
-CREATE SCHEMA IF NOT EXISTS cortex;
+-- 1. Create database
+CREATE DATABASE IF NOT EXISTS cortex;
 
 -- 2. Create all tables (in dependency order)
 -- users → encounters → recordings → transcripts → ...
 
 -- 3. Create indexes
 
--- 4. Set up row-level security policies
-ALTER TABLE cortex.encounters ENABLE ROW LEVEL SECURITY;
-CREATE POLICY provider_access ON cortex.encounters
-    FOR ALL TO cortex_app
-    USING (provider_id = current_setting('app.current_user_id')::uuid);
+-- 4. Row-level security
+-- Note: MySQL does not have native row-level security (RLS).
+-- Row-level access control is enforced at the application layer:
+-- FastAPI middleware filters all queries by provider_id based on the
+-- authenticated user's identity from the IAP JWT token.
 ```
 
 ### Phase 2: TALIA 1.0 Migration (Separate)
@@ -845,7 +846,7 @@ The TALIA 1.0 migration from Google Sheets to Cloud SQL is documented in `docs/c
 
 ```sql
 -- View joining TALIA census with CORTEX encounters
-CREATE VIEW cortex.census_with_encounters AS
+CREATE VIEW census_with_encounters AS
 SELECT 
     c.patient_mrn,
     c.patient_name,
@@ -859,12 +860,13 @@ SELECT
     e.acuity_score,
     n.status AS note_status,
     n.suggested_billing_code
-FROM public.hospital_census c
-LEFT JOIN cortex.encounters e ON e.patient_mrn = c.patient_mrn 
+FROM talia_production.hospital_census c
+LEFT JOIN encounters e ON e.patient_mrn = c.patient_mrn 
     AND e.encounter_date = CURRENT_DATE
-LEFT JOIN cortex.notes n ON n.encounter_id = e.id
-WHERE c.provider_id = current_setting('app.current_user_id')
-AND c.status = 'active';
+LEFT JOIN notes n ON n.encounter_id = e.id
+-- Note: Provider filtering is enforced at the application layer
+-- (FastAPI middleware filters by provider_id from IAP JWT)
+WHERE c.status = 'active';
 ```
 
 ---

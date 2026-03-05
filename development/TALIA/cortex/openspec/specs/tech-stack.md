@@ -18,7 +18,7 @@ All components run on Google Cloud Platform under The Kidney Experts' existing B
 │                                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐│
 │  │Cloud Run │  │Cloud SQL │  │   GCS    │  │ Vertex AI        ││
-│  │(Backend) │  │(Postgres)│  │ (Audio)  │  │ (Models + RAG)   ││
+│  │(Backend) │  │(MySQL8.4)│  │ (Audio)  │  │ (Models + RAG)   ││
 │  └──────────┘  └──────────┘  └──────────┘  └──────────────────┘│
 │                                                                  │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                      │
@@ -319,44 +319,65 @@ See `note-council.md` for detailed council architecture. Summary:
 
 ## 8. Database
 
-### Cloud SQL (PostgreSQL 16) — Shared with TALIA 1.0
+### Cloud SQL (MySQL 8.4 LTS) — Shared with TALIA 1.0
 
 | Property | Value |
 |----------|-------|
-| **Engine** | PostgreSQL 16 |
+| **Engine** | MySQL 8.4 (Innovation LTS, GA October 2024) |
 | **Instance** | db-g1-small (1 vCPU, 1.7 GB RAM) |
 | **Region** | us-central1 |
 | **Storage** | 20 GB SSD (auto-expand) |
 | **HA** | Single zone (Phase 1), regional HA (Phase 2) |
 | **Backup** | Automated daily, 7-day retention, PITR enabled |
 | **Encryption** | Google-managed encryption keys (CMEK optional later) |
+| **Maintenance** | Minor/security patches: auto-applied by Google in maintenance window (<60s downtime). Major upgrades: user-initiated (you control timing). |
 | **Cost** | ~$30-35/month |
 
-### Database Schema Ownership
+#### Why MySQL Over PostgreSQL
+
+PostgreSQL has known connection pool stability issues with AppSheet. AppSheet opens a connection per table during sync, and connections persist for minutes. PostgreSQL's process-per-connection architecture leads to "too many connections" errors with as few as 3-4 concurrent AppSheet users. PgBouncer mitigates but introduces its own issues ("Exception while reading from stream"). MySQL's thread-per-connection model handles AppSheet's chatty sync pattern natively.
+
+CORTEX does NOT require PostgreSQL-specific features:
+- **AI processing** → Vertex AI + Cloud Run (Python), not in SQL
+- **Vector search** → Vertex AI RAG Engine (Spanner-backed), not pgvector
+- **JSONB** → MySQL 8.4 JSON type is sufficient (store/retrieve blobs, no in-DB JSON path queries at scale)
+- **CTEs/Window functions** → MySQL 8.0+ supports these
+- **Performance** → Negligible difference at TKE scale (~15-20 concurrent users)
+
+### Database Separation Strategy
+
+In MySQL, schemas and databases are synonymous. CORTEX and TALIA 1.0 use separate databases on the same Cloud SQL instance:
 
 ```
-TALIA 1.0 tables (AppSheet):    → Migrated from Google Sheets
-  hospital_census
-  patient_registry
-  provider_schedule
-  quality_metrics
-  ... (13 existing AppSheet tables)
-
-CORTEX tables (new):             → Created by CORTEX backend
-  encounters
-  transcripts
-  transcript_segments
-  notes
-  note_sections
-  note_versions
-  recordings
-  epic_data_pastes
-  entity_extractions
-  consent_records
-  audit_log
-  procedure_notes
-  billing_suggestions
+MySQL Instance (db-g1-small, us-central1)
+├── Database: talia_production    ← TALIA 1.0 (AppSheet) tables
+│   ├── hospital_census
+│   ├── patient_registry
+│   ├── provider_schedule
+│   ├── quality_metrics
+│   └── ... (13 AppSheet tables total)
+│
+├── Database: cortex              ← CORTEX tables (this spec)
+│   ├── users
+│   ├── encounters
+│   ├── recordings
+│   ├── transcripts
+│   ├── transcript_segments
+│   ├── entity_extractions
+│   ├── epic_data_pastes
+│   ├── notes
+│   ├── note_sections
+│   ├── note_versions
+│   ├── procedure_notes
+│   ├── consent_records
+│   ├── billing_suggestions
+│   ├── council_runs
+│   ├── council_outputs
+│   ├── feedback
+│   └── audit_log
 ```
+
+Cross-database queries work natively: `SELECT * FROM talia_production.hospital_census WHERE ...`
 
 See `data-model.md` for complete CORTEX schema definition.
 
@@ -679,7 +700,7 @@ git push → GitHub Actions:
 | Component | Monthly Estimate |
 |-----------|-----------------|
 | Cloud Run (backend, 2 instances) | $50-100 |
-| Cloud SQL (db-g1-small) | $30-35 |
+| Cloud SQL MySQL 8.4 (db-g1-small) | $30-35 |
 | STT — Chirp 3 (Phase 1) | ~$1,200 |
 | STT — Voxtral (Phase 1.5) | ~$112 |
 | Gemini Flash (entity extraction) | ~$1 |
@@ -701,7 +722,7 @@ git push → GitHub Actions:
 | STT (Phase 1.5) | Voxtral | Continue Chirp | 10-21x cheaper, better noise robustness, diarization |
 | Backend | FastAPI (Python) | Express (Node), Go | Python ML ecosystem, Gemini SDK, team familiarity |
 | Frontend | Next.js + React | SvelteKit, Remix | Largest ecosystem, SSR, Shadcn/ui support |
-| Database (ops) | Cloud SQL PostgreSQL | Firestore, Spanner | SQL familiarity, AppSheet compatibility, cost |
+| Database (ops) | Cloud SQL MySQL 8.4 | PostgreSQL, Firestore, Spanner | AppSheet connection stability (PG pool exhaustion), thread-per-connection model, Google recommends MySQL for AppSheet |
 | Database (analytics) | BigQuery | PostgreSQL views | Scale, cost (pay per query), ML integration |
 | RAG | Vertex AI RAG Engine | Pinecone, Weaviate, pgvector | "I don't want to manage a RAG!" — fully managed |
 | Auth | IAP (Identity-Aware Proxy) | Firebase Auth, Auth0, App-level OAuth | Zero-trust, infrastructure-level, free, Context-Aware Access |

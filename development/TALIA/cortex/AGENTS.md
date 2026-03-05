@@ -20,7 +20,7 @@
 - **Entity Extraction**: Gemini Flash (post-transcription) + Gemini Flash Vision (screenshots)
 - **Note Council**: 3-model (Gemini 3.1 Pro, Claude Sonnet 4.6, Mistral Medium 3) → Chairman synthesis
 - **RAG**: Vertex AI RAG Engine (fully managed)
-- **Ops DB**: Cloud SQL (PostgreSQL) — shared with TALIA 1.0 (AppSheet)
+- **Ops DB**: Cloud SQL (MySQL 8.4) — shared with TALIA 1.0 (AppSheet); MySQL chosen for AppSheet connection stability
 - **Auth**: Identity-Aware Proxy (IAP) — zero-trust, @thekidneyexperts.com, Context-Aware Access
 - **Backend**: Cloud Run + FastAPI (Python)
 

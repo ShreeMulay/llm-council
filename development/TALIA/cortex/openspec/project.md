@@ -85,7 +85,7 @@ Both scribe and provider are equally important users. Either may be unavailable 
            │
            ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                      Cloud SQL (PostgreSQL)                      │
+│                      Cloud SQL (MySQL 8.4)                       │
 │                    SHARED WITH TALIA 1.0                         │
 │                                                                  │
 │  ┌─────────────┐  ┌────────────────┐  ┌───────────────────────┐│
@@ -122,7 +122,7 @@ Both scribe and provider are equally important users. Either may be unavailable 
 | **Council Model 1** | Gemini 3.1 Pro (Vertex AI) | Native GCP, fast |
 | **Council Model 2 / Chairman** | Claude Sonnet 4.6 (Vertex AI) | FedRAMP High, Claude for Healthcare |
 | **Council Model 3** | Mistral Medium 3 (Vertex AI) | Different training data, decorrelates errors |
-| **Ops Database** | Cloud SQL (PostgreSQL) | Shared with TALIA 1.0 AppSheet |
+| **Ops Database** | Cloud SQL (MySQL 8.4) | Shared with TALIA 1.0 AppSheet; MySQL chosen for AppSheet connection stability |
 | **Analytics** | BigQuery | Downstream only, not for ops |
 | **Audio Storage** | GCS | 10-year retention per TN law |
 | **Auth** | Identity-Aware Proxy (IAP) | Zero-trust, infrastructure-level auth, @thekidneyexperts.com, Context-Aware Access policies |
@@ -192,14 +192,14 @@ TALIA 1.0 is an AppSheet application with 13 Google Sheets tables, including the
 
 ### Migration Plan
 
-Migrate TALIA 1.0 from Google Sheets to Cloud SQL (PostgreSQL) using AppSheet's built-in "Copy App to SQL Database" tool. Both TALIA 1.0 (AppSheet) and CORTEX (Cloud Run) will connect to the same Cloud SQL instance.
+Migrate TALIA 1.0 from Google Sheets to Cloud SQL (MySQL 8.4) using AppSheet's built-in "Copy App to SQL Database" tool. Both TALIA 1.0 (AppSheet) and CORTEX (Cloud Run) will connect to the same Cloud SQL instance. MySQL 8.4 was chosen over PostgreSQL based on AppSheet's known connection pool stability issues with PostgreSQL (process-per-connection architecture causes "too many connections" errors with AppSheet's sync pattern).
 
 **See**: `docs/cloud-sql-migration-email.html` for detailed migration guide sent to IT.
 
 ### Architecture
 
 ```
-TALIA 1.0 (AppSheet)  ──▶  Cloud SQL (PostgreSQL)  ◀──  CORTEX (Cloud Run)
+TALIA 1.0 (AppSheet)  ──▶  Cloud SQL (MySQL 8.4)  ◀──  CORTEX (Cloud Run)
                            Single Source of Truth
 ```
 
@@ -314,3 +314,4 @@ Not a formal MOU. The hospital already uses DAX and other STT tools — ambient 
 | 8 | BUILD not BUY | Feb 2026 | Full TALIA platform vision, tech improving daily |
 | 9 | 18 inpatient domains | Mar 2026 | Comprehensive nephrology hospital coverage |
 | 10 | Option C (shared DB) | Mar 2026 | AppSheet + CORTEX on same Cloud SQL |
+| 11 | MySQL 8.4 over PostgreSQL | Mar 2026 | AppSheet connection stability; PG process-per-connection architecture causes pool exhaustion with AppSheet sync pattern; MySQL thread-per-connection handles it natively. CORTEX AI workloads run in Vertex AI/Cloud Run, not in SQL. |

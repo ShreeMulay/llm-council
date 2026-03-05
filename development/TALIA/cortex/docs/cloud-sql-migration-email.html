@@ -298,7 +298,7 @@
   <div class="header">
     <img src="https://cdn-62b618b2c1ac18076cc875bf.closte.com/wp-content/uploads/2022/08/The-Kidney-Experts-Logo.png" alt="The Kidney Experts">
     <h1>TALIA 1.0 &mdash; Cloud SQL Migration</h1>
-    <div class="subtitle">Migrating AppSheet from Google Sheets to Cloud SQL (PostgreSQL)</div>
+    <div class="subtitle">Migrating AppSheet from Google Sheets to Cloud SQL (MySQL 8.4)</div>
   </div>
 
   <!-- Email Meta -->
@@ -332,7 +332,12 @@
 
     <p>Team,</p>
 
-    <p>We need to migrate our <strong>TALIA 1.0 AppSheet application</strong> from its current Google Sheets backend to a <strong>Cloud SQL (PostgreSQL)</strong> database. This is a prerequisite for our upcoming <strong>CORTEX</strong> hospital documentation system, which will share the same patient database in real-time.</p>
+    <p>We need to migrate our <strong>TALIA 1.0 AppSheet application</strong> from its current Google Sheets backend to a <strong>Cloud SQL (MySQL 8.4)</strong> database. This is a prerequisite for our upcoming <strong>CORTEX</strong> hospital documentation system, which will share the same patient database in real-time.</p>
+
+    <div class="info-box">
+      <strong>Why MySQL Instead of PostgreSQL?</strong>
+      <p>Per Matt's recommendation (and confirmed by our research): PostgreSQL has known connection pool stability issues with AppSheet. AppSheet opens a connection per table during sync, and PostgreSQL's process-per-connection architecture can exhaust connections with as few as 3-4 concurrent users. MySQL's thread-per-connection model handles AppSheet's sync pattern natively. Google's own AppSheet documentation defaults to MySQL for Cloud SQL setup. Our AI workloads run in Vertex AI and Cloud Run &mdash; the ops database just needs reliable CRUD, which MySQL 8.4 handles perfectly.</p>
+    </div>
 
     <div class="info-box success">
       <strong>What Changes for AppSheet Users?</strong>
@@ -388,7 +393,7 @@
     +--------------+        +-----------------+
     | TALIA 1.0    |------->|                 |
     | (AppSheet)   |        |   Cloud SQL     |
-    +--------------+        |  (PostgreSQL)   |
+    +--------------+        |  (MySQL 8.4)    |
                             |                 |
     +--------------+        |  Single Source   |
     | CORTEX       |------->|  of Truth       |
@@ -415,7 +420,7 @@
         <h4>Create a Cloud SQL Instance</h4>
         <p>In our existing GCP project (the one under our BAA), create a new Cloud SQL instance:</p>
         <table class="spec-table">
-          <tr><td><strong>Engine</strong></td><td>PostgreSQL 16 (latest stable)</td></tr>
+          <tr><td><strong>Engine</strong></td><td>MySQL 8.4 (LTS, GA October 2024)</td></tr>
           <tr><td><strong>Instance ID</strong></td><td><code>talia-production</code> (suggested)</td></tr>
           <tr><td><strong>Region</strong></td><td><code>us-central1</code> (Iowa) &mdash; closest to West TN with best pricing</td></tr>
           <tr><td><strong>Machine Type</strong></td><td><code>db-g1-small</code> (1 vCPU, 1.7 GB RAM) &mdash; can scale up later</td></tr>
@@ -453,11 +458,11 @@
           <li style="margin-bottom: 8px;">Open the TALIA 1.0 app in <strong>AppSheet Editor</strong></li>
           <li style="margin-bottom: 8px;">Go to <strong>Manage &rarr; Author &rarr; Copy App</strong></li>
           <li style="margin-bottom: 8px;">Select <strong>"Copy to a new database"</strong></li>
-          <li style="margin-bottom: 8px;">Choose <strong>Cloud SQL (PostgreSQL)</strong> as the target</li>
+          <li style="margin-bottom: 8px;">Choose <strong>Cloud SQL (MySQL)</strong> as the target</li>
           <li style="margin-bottom: 8px;">Enter the Cloud SQL connection details (instance connection name, database, user, password)</li>
           <li style="margin-bottom: 8px;">AppSheet will automatically:
             <ul style="margin-top: 4px;">
-              <li>Create all tables in PostgreSQL matching the Sheets schema</li>
+              <li>Create all tables in MySQL matching the Sheets schema</li>
               <li>Migrate all existing data</li>
               <li>Create a new copy of the app pointing to Cloud SQL</li>
               <li>Preserve all formulas, automations, views, and security rules</li>
@@ -588,7 +593,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr><td>Cloud SQL (db-g1-small, PostgreSQL 16)</td><td>~$25-30</td></tr>
+        <tr><td>Cloud SQL (db-g1-small, MySQL 8.4)</td><td>~$25-30</td></tr>
         <tr><td>Storage (10 GB SSD, auto-increase)</td><td>~$2</td></tr>
         <tr><td>Backups (7-day retention)</td><td>~$1</td></tr>
         <tr><td>Network egress (minimal)</td><td>~$1</td></tr>
