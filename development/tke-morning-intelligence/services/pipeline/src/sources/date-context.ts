@@ -29,7 +29,7 @@ export function computeDateContext(): DateContext {
   const year = parseInt(now.toLocaleDateString('en-US', { ...opts, year: 'numeric' }))
   const monthName = now.toLocaleDateString('en-US', { ...opts, month: 'long' })
   const formattedDate = now.toLocaleDateString('en-US', {
-    ...opts, weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+    ...opts, year: 'numeric', month: 'long', day: 'numeric',
   })
   const isoDate = `${year}-${String(month).padStart(2, '0')}-${String(dayOfMonth).padStart(2, '0')}`
 

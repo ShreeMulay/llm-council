@@ -109,15 +109,11 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
 
   // ── Company Culture ────────────────────────────────────
   if (culture) {
-    const cultureWidgets: unknown[] = [
-      divider(),
-      text(formatCulture(culture)),
-    ]
     sections.push({
       header: sectionHeader('🏛️', 'TKE Culture', `Fundamental #${culture.fundamental.number}`),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
-      widgets: cultureWidgets,
+      uncollapsibleWidgetsCount: 2,
+      widgets: [divider(), text(formatCulture(culture))],
     })
   }
 
@@ -136,8 +132,9 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
     sections.push({
       header: sectionHeader('💬', 'Daily Wisdom'),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
+      uncollapsibleWidgetsCount: 2,
       widgets: [
+        divider(),
         text(formatQuote(content.quote)),
       ],
     })
@@ -148,8 +145,9 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
     sections.push({
       header: sectionHeader('📜', 'On This Day in Nephrology'),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
+      uncollapsibleWidgetsCount: 2,
       widgets: [
+        divider(),
         text(formatHistory(content.nephrology_history)),
       ],
     })
@@ -160,8 +158,9 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
     sections.push({
       header: sectionHeader('🧠', 'Did You Know?'),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
+      uncollapsibleWidgetsCount: 2,
       widgets: [
+        divider(),
         text(formatDidYouKnow(content.did_you_know)),
       ],
     })
@@ -172,8 +171,9 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
     sections.push({
       header: sectionHeader('💊', 'Medication Spotlight'),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
+      uncollapsibleWidgetsCount: 2,
       widgets: [
+        divider(),
         text(formatMedication(content.medication)),
       ],
     })
@@ -184,8 +184,9 @@ export function buildMindsetCard(ctx: DailyContext, content: GenerateResponse, c
     sections.push({
       header: sectionHeader('🤖', 'AI Ideas'),
       collapsible: true,
-      uncollapsibleWidgetsCount: 1,
+      uncollapsibleWidgetsCount: 2,
       widgets: [
+        divider(),
         text(formatAiIdeas(content.ai_ideas)),
       ],
     })
@@ -594,11 +595,19 @@ function formatAiIdeas(a: AiIdeas): string {
 function formatNephMadness(nm: NephMadnessWriteup): string {
   let t = `🏆 <b>${nm.headline}</b>\n\n`
   t += `${nm.body}\n\n`
-  t += `<font color="${C.amber}">📋 ${nm.callToAction}</font>`
+  t += `<font color="${C.amber}">📋 ${linkifyUrls(nm.callToAction)}</font>`
   return t
 }
 
 // ── Utility ───────────────────────────────────────────────────
+
+/** Turn bare URLs in text into clickable <a href> links */
+function linkifyUrls(s: string): string {
+  return s.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => `<a href="${url}">${url}</a>`,
+  )
+}
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
