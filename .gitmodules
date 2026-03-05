@@ -58,3 +58,6 @@
 [submodule "development/nephrology-ma"]
 	path = development/nephrology-ma
 	url = https://github.com/ShreeMulay/nephrology-ma.git
+[submodule "development/tke-morning-intelligence"]
+	path = development/tke-morning-intelligence
+	url = git@github.com:ShreeMulay/tke-morning-intelligence.git
