@@ -61,3 +61,6 @@
 [submodule "development/tke-morning-intelligence"]
 	path = development/tke-morning-intelligence
 	url = git@github.com:ShreeMulay/tke-morning-intelligence.git
+[submodule "development/tke-knowledge-base"]
+	path = development/tke-knowledge-base
+	url = git@github.com:ShreeMulay/tke-knowledge-base.git
