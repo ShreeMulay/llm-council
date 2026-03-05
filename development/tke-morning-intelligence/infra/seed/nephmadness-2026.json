@@ -1,0 +1,95 @@
+{
+  "year": 2026,
+  "name": "NephMadness 2026",
+  "description": "Year 14 of NephMadness — a free online, CME-granting educational initiative on the AJKD Blog modeled on March Madness",
+  "bracket_url": "https://ajkdblog.org/2026/03/01/welcome-to-nephmadness-2026/",
+  "submission_deadline": "2026-03-31T15:00:00-04:00",
+  "regions": [
+    {
+      "name": "IgA Nephropathy",
+      "teamA": "New B-Cell Targets",
+      "teamB": "Complement Inhibitors",
+      "writer": "Alessandra Tomasi",
+      "committee": "Laura Mariani",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-iga-nephropathy-region/",
+      "blurb": "IgAN treatment is being revolutionized by two approaches: targeting B-cells that produce galactose-deficient IgA1, and blocking the complement pathway that drives glomerular inflammation."
+    },
+    {
+      "name": "Artificial Intelligence",
+      "teamA": "Computational Pathology",
+      "teamB": "Natural Language Processing",
+      "writer": "Neil (AJKD Blog)",
+      "committee": "Lili Chan & Kuang-Yu Jen",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-ai-region/",
+      "blurb": "AI in nephrology pits computational pathology (using deep learning to analyze kidney biopsies) against NLP (extracting insights from clinical notes, labs, and literature at scale)."
+    },
+    {
+      "name": "Genetics",
+      "teamA": "PKD Masqueraders",
+      "teamB": "Fabry Treatment",
+      "writer": "AJKD Blog",
+      "committee": "AJKD NephMadness Team",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-genetics-region/",
+      "blurb": "Genetic nephrology faces off: conditions that mimic polycystic kidney disease but have different genetic origins vs the evolving landscape of Fabry disease therapies including chaperone and gene therapies."
+    },
+    {
+      "name": "POCUS",
+      "teamA": "POCUS in AKI",
+      "teamB": "POCUS in ESKD",
+      "writer": "Priyal Sakhuja",
+      "committee": "Mohamed Hassan Kamel & Vandana Niyyar",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-pocus-region/",
+      "blurb": "Point-of-care ultrasound gives nephrologists a real-time window into kidney physiology at the bedside — comparing its use in acute kidney injury assessment vs end-stage kidney disease management."
+    },
+    {
+      "name": "Cerebronephrology",
+      "teamA": "Cerebronephrology in CKD",
+      "teamB": "Cerebronephrology in ESKD",
+      "writer": "AJKD Blog",
+      "committee": "AJKD NephMadness Team",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-cerebronephrology-region/",
+      "blurb": "The kidney-brain axis: exploring cognitive decline, stroke risk, and neurological complications in CKD patients vs those on dialysis with ESKD."
+    },
+    {
+      "name": "C3G",
+      "teamA": "C3G Diagnosis",
+      "teamB": "C3G Treatment",
+      "writer": "AJKD Blog",
+      "committee": "AJKD NephMadness Team",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-c3g-region/",
+      "blurb": "C3 glomerulopathy (C3G) is a rare complement-driven disease. The diagnostic challenge of distinguishing C3GN from dense deposit disease faces off against emerging complement-targeted treatments."
+    },
+    {
+      "name": "Trolls of Transplantation",
+      "teamA": "BK Virus",
+      "teamB": "CMV",
+      "writer": "AJKD Blog",
+      "committee": "AJKD NephMadness Team",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-trolls-of-transplantation-region/",
+      "blurb": "Two viral villains that haunt kidney transplant recipients: BK polyomavirus (causing nephropathy and graft loss) vs cytomegalovirus (causing systemic disease and indirect graft effects)."
+    },
+    {
+      "name": "Animal House",
+      "teamA": "Dogs",
+      "teamB": "Cats",
+      "writer": "Sarah Street & Susan DiGiovanni",
+      "committee": "Autumn Harris & Kelly Hyndman",
+      "url": "https://ajkdblog.org/2026/03/01/nephmadness-2026-animal-house-region/",
+      "blurb": "Veterinary nephrology meets human medicine: dogs as glomerular disease models with dialysis parallels, vs cats as CKD champions with 80% geriatric prevalence and successful kidney transplants."
+    }
+  ],
+  "schedule": {
+    "phase1_regions": {
+      "description": "Days 1-8: One region per working day, introducing both teams",
+      "dayMap": [1, 2, 3, 4, 5, 6, 7, 8]
+    },
+    "phase2_matchups": {
+      "description": "Days 9-16: Deep-dive matchup analysis, one region per day",
+      "dayMap": [9, 10, 11, 12, 13, 14, 15, 16]
+    },
+    "phase3_predictions": {
+      "description": "Days 17-21: Cross-region predictions, semifinals, championship",
+      "dayMap": [17, 18, 19, 20, 21]
+    }
+  }
+}

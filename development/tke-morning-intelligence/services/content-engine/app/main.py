@@ -18,7 +18,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel as PydanticBaseModel
 
-from app.models.requests import GenerateRequest, ThemePlanRequest, DrugEnrichRequest
+from app.models.requests import (
+    GenerateRequest,
+    ThemePlanRequest,
+    DrugEnrichRequest,
+    WeatherQuipRequest,
+    NephMadnessRegionRequest,
+    NephMadnessPredictionRequest,
+)
 from app.models.responses import GenerateResponse, ContentMeta
 from app.generators.vertex_client import init_client
 from app.generators.systems_thinking import generate_systems_thinking
@@ -27,6 +34,8 @@ from app.generators.nephrology_history import generate_nephrology_history
 from app.generators.ai_ideas import generate_ai_ideas
 from app.generators.did_you_know import generate_did_you_know
 from app.generators.medication import generate_medication
+from app.generators.weather_quip import generate_weather_quip
+from app.generators.nephmadness import generate_nephmadness_region, generate_nephmadness_prediction
 
 
 @asynccontextmanager
@@ -135,6 +144,62 @@ async def generate(request: GenerateRequest) -> GenerateResponse:
             validation_errors=errors,
         ),
     )
+
+
+@app.post("/generate-weather-quip")
+async def weather_quip(request: WeatherQuipRequest):
+    """Generate a fun weather one-liner for weekend cards."""
+    try:
+        result, model_id = await generate_weather_quip(
+            temp_f=request.temp_f,
+            description=request.description,
+            day_name=request.day_name,
+        )
+        return {"quip": result.quip, "model": model_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Weather quip generation failed: {e!s}")
+
+
+@app.post("/generate-nephmadness")
+async def nephmadness(request: NephMadnessRegionRequest):
+    """Generate a NephMadness region/matchup write-up."""
+    try:
+        result, model_id = await generate_nephmadness_region(
+            region_name=request.region_name,
+            team_a=request.team_a,
+            team_b=request.team_b,
+            blurb=request.blurb,
+            phase=request.phase,
+            phase_description=request.phase_description,
+            bracket_url=request.bracket_url,
+        )
+        return {
+            "headline": result.headline,
+            "body": result.body,
+            "callToAction": result.callToAction,
+            "model": model_id,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"NephMadness generation failed: {e!s}")
+
+
+@app.post("/generate-nephmadness-prediction")
+async def nephmadness_prediction(request: NephMadnessPredictionRequest):
+    """Generate a NephMadness cross-region prediction."""
+    try:
+        result, model_id = await generate_nephmadness_prediction(
+            all_regions=request.all_regions,
+            phase_description=request.phase_description,
+            bracket_url=request.bracket_url,
+        )
+        return {
+            "headline": result.headline,
+            "body": result.body,
+            "callToAction": result.callToAction,
+            "model": model_id,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"NephMadness prediction failed: {e!s}")
 
 
 @app.post("/plan-themes")

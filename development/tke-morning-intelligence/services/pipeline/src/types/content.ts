@@ -25,6 +25,8 @@ export const QuoteSchema = z.object({
 export const NephrologyHistorySchema = z.object({
   event: z.string().min(10),
   year: z.string().regex(/^\d{4}$/),
+  month: z.number().int().min(1).max(12),
+  day: z.number().int().min(1).max(31),
   emoji: z.string().min(1).max(4),
   significance: z.string().min(10),
   funFact: z.string().min(10),

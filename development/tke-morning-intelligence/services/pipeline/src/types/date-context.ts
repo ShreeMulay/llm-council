@@ -47,6 +47,14 @@ export const NewsArticleSchema = z.object({
   publishedAt: z.string().optional(),
 })
 
+export const DayForecastSchema = z.object({
+  dayName: z.string(),
+  high: z.number(),
+  low: z.number(),
+  description: z.string(),
+  icon: z.string(),
+})
+
 export const DailyContextSchema = z.object({
   dateInfo: DateInfoSchema,
   holidayInfo: HolidayInfoSchema,
@@ -54,6 +62,8 @@ export const DailyContextSchema = z.object({
   calendarEvents: z.array(CalendarEventSchema),
   news: z.array(NewsArticleSchema),
   trending: z.array(z.string()).optional(),
+  weekendForecast: z.array(DayForecastSchema).optional(),
+  weatherQuip: z.string().nullable().optional(),
 })
 
 export type DateInfo = z.infer<typeof DateInfoSchema>

@@ -59,6 +59,34 @@ class ThemePlanRequest(BaseModel):
     engagement_data: dict | None = None
 
 
+class WeatherQuipRequest(BaseModel):
+    """Request to generate a fun weather one-liner for weekends."""
+
+    temp_f: int = Field(description="Temperature in Fahrenheit")
+    description: str = Field(description="Weather conditions (e.g. 'clear sky', 'light rain')")
+    day_name: str = Field(description="Day name (e.g. 'Saturday', 'Sunday')")
+
+
+class NephMadnessRegionRequest(BaseModel):
+    """Request to generate a NephMadness region/matchup write-up."""
+
+    region_name: str
+    team_a: str
+    team_b: str
+    blurb: str
+    phase: str = Field(description="'region' or 'matchup'")
+    phase_description: str
+    bracket_url: str
+
+
+class NephMadnessPredictionRequest(BaseModel):
+    """Request to generate a NephMadness cross-region prediction."""
+
+    all_regions: list[dict] = Field(description="All 8 regions with name, teamA, teamB")
+    phase_description: str
+    bracket_url: str
+
+
 class DrugEnrichRequest(BaseModel):
     """Request to enrich a drug entry from external APIs."""
 

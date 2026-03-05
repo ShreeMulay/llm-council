@@ -297,6 +297,149 @@ export async function callContentEngine(
 }
 
 // ============================================
+// NephMadness
+// ============================================
+
+export interface NephMadnessWriteup {
+  headline: string
+  body: string
+  callToAction: string
+}
+
+/**
+ * Call the Content Engine /generate-nephmadness endpoint.
+ * Returns an LLM-generated bracket write-up for the Celebrations card.
+ */
+export async function callNephMadnessRegion(params: {
+  regionName: string
+  teamA: string
+  teamB: string
+  blurb: string
+  phase: string
+  phaseDescription: string
+  bracketUrl: string
+}): Promise<NephMadnessWriteup | null> {
+  const url = `${CONTENT_ENGINE_URL}/generate-nephmadness`
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30_000)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        region_name: params.regionName,
+        team_a: params.teamA,
+        team_b: params.teamB,
+        blurb: params.blurb,
+        phase: params.phase,
+        phase_description: params.phaseDescription,
+        bracket_url: params.bracketUrl,
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      console.warn(`[NephMadness] HTTP ${response.status}`)
+      return null
+    }
+
+    const data = await response.json() as NephMadnessWriteup
+    console.log(`[NephMadness] Generated: "${data.headline}"`)
+    return data
+  } catch (error) {
+    console.warn(`[NephMadness] Failed:`, error instanceof Error ? error.message : error)
+    return null
+  }
+}
+
+/**
+ * Call the Content Engine /generate-nephmadness-prediction endpoint.
+ * Returns an LLM-generated cross-region prediction.
+ */
+export async function callNephMadnessPrediction(params: {
+  allRegions: Array<{ name: string; teamA: string; teamB: string }>
+  phaseDescription: string
+  bracketUrl: string
+}): Promise<NephMadnessWriteup | null> {
+  const url = `${CONTENT_ENGINE_URL}/generate-nephmadness-prediction`
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 30_000)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        all_regions: params.allRegions,
+        phase_description: params.phaseDescription,
+        bracket_url: params.bracketUrl,
+      }),
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      console.warn(`[NephMadness] Prediction HTTP ${response.status}`)
+      return null
+    }
+
+    const data = await response.json() as NephMadnessWriteup
+    console.log(`[NephMadness] Prediction: "${data.headline}"`)
+    return data
+  } catch (error) {
+    console.warn(`[NephMadness] Prediction failed:`, error instanceof Error ? error.message : error)
+    return null
+  }
+}
+
+// ============================================
+// Weather Quip
+// ============================================
+
+/**
+ * Call the Content Engine /generate-weather-quip endpoint.
+ *
+ * Returns a fun LLM-generated one-liner for weekend weather cards.
+ * Non-critical — returns null on any failure.
+ */
+export async function callWeatherQuip(
+  tempF: number,
+  description: string,
+  dayName: string,
+): Promise<string | null> {
+  const url = `${CONTENT_ENGINE_URL}/generate-weather-quip`
+
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 15_000) // 15s timeout — fast model
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ temp_f: tempF, description, day_name: dayName }),
+      signal: controller.signal,
+    })
+    clearTimeout(timeoutId)
+
+    if (!response.ok) {
+      console.warn(`[WeatherQuip] HTTP ${response.status}`)
+      return null
+    }
+
+    const data = await response.json() as { quip?: string }
+    console.log(`[WeatherQuip] "${data.quip}"`)
+    return data.quip ?? null
+  } catch (error) {
+    console.warn(`[WeatherQuip] Failed:`, error instanceof Error ? error.message : error)
+    return null
+  }
+}
+
+// ============================================
 // Error class
 // ============================================
 

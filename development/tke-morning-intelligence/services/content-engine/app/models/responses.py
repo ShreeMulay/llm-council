@@ -28,6 +28,8 @@ class Quote(BaseModel):
 class NephrologyHistory(BaseModel):
     event: str = Field(min_length=10)
     year: str = Field(pattern=r"^\d{4}$")
+    month: int = Field(ge=1, le=12, description="Month the event occurred (1-12)")
+    day: int = Field(ge=1, le=31, description="Day of month the event occurred (1-31)")
     emoji: str = Field(min_length=1, max_length=4)
     significance: str = Field(min_length=10)
     funFact: str = Field(min_length=10)

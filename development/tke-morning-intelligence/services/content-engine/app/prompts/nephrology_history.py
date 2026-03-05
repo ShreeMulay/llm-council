@@ -57,14 +57,15 @@ TKE's BHAG: "Ridding the World of the Need for Dialysis!"
    kidney disease discoveries, notable nephrologists' contributions.
 3. If no nephrology event exists for this date, use a broader medical/scientific event
    that connects to kidney care or healthcare systems.
-4. Include the specific year the event occurred.
+4. Include the specific year, month, and day the event occurred.
 5. Explain why this event matters to modern nephrology practice.
 6. Add a fun or surprising fact related to the event.
 </instructions>
 
 <rules>
 - CRITICAL: The event MUST have occurred in {month_name}. Do NOT use events from other months.
-- The year must be historically accurate.
+- The year, month, and day must be historically accurate.
+- The month and day fields must be integers (month 1-12, day 1-31).
 - Prefer nephrology-specific events over general medical history.
 - The significance should connect to modern nephrology practice or TKE's mission.
 - The funFact should be genuinely surprising or little-known.
@@ -76,7 +77,9 @@ TKE's BHAG: "Ridding the World of the Need for Dialysis!"
 <output_schema>
 {{
   "event": "string — concise description of the historical event",
-  "year": "number — the year the event occurred",
+  "year": "string — the 4-digit year the event occurred (e.g. '1954')",
+  "month": "integer — the month the event occurred (1-12)",
+  "day": "integer — the day of month the event occurred (1-31)",
   "emoji": "string — single emoji representing the event",
   "significance": "string — why this matters to modern nephrology (1-2 sentences)",
   "funFact": "string — a surprising or little-known related fact"

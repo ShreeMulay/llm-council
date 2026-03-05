@@ -7,13 +7,16 @@
  */
 
 import { computeDateContext } from './sources/date-context'
-import { fetchWeather } from './sources/weather'
+import { fetchWeather, fetchWeekendForecast } from './sources/weather'
 import { fetchCalendarEvents } from './sources/calendar'
 import { fetchNews } from './sources/exa'
-import { buildMindsetCard, buildOperationsCard, buildCelebrationCard } from './cards/builder'
+import { getDailyCulture } from './sources/culture'
+import { getNephMadnessToday } from './sources/nephmadness'
+import { buildMindsetCard, buildOperationsCard, buildCelebrationCard, buildErrorCard } from './cards/builder'
 import { deliverToChat } from './cards/delivery'
 import { getDailyPlan, getDedupMemory, getMedication, archiveContent, updateDedupMemory } from './firestore'
-import { callContentEngine } from './content-engine'
+import { callContentEngine, callWeatherQuip, callNephMadnessRegion, callNephMadnessPrediction } from './content-engine'
+import type { NephMadnessWriteup } from './content-engine'
 import type { DailyContext, GenerateResponse } from './types'
 
 interface PipelineResult {
@@ -62,19 +65,34 @@ export async function runPipeline(): Promise<PipelineResult> {
   }
 
   // ── Step 4: Fetch External Data (parallel) ────────────────
-  const [weather, calendarEvents, news, medicationData] = await Promise.allSettled([
+  const isFridayOrWeekend = dateCtx.dateInfo.dayOfWeek === 'Friday' || dateCtx.dateInfo.isWeekend
+  const [weather, calendarEvents, news, medicationData, weekendForecastResult] = await Promise.allSettled([
     fetchWeather(),
     fetchCalendarEvents(),
     fetchNews(dateCtx),
     getMedication(dailyPlan.medication),
+    isFridayOrWeekend ? fetchWeekendForecast() : Promise.resolve([]),
   ])
+
+  // Fetch weather quip on Fri/Sat/Sun (needs weather data first)
+  let weatherQuip: string | null = null
+  const resolvedWeather = weather.status === 'fulfilled' ? weather.value : null
+  if (isFridayOrWeekend && resolvedWeather) {
+    weatherQuip = await callWeatherQuip(
+      resolvedWeather.temp,
+      resolvedWeather.description,
+      dateCtx.dateInfo.dayOfWeek,
+    )
+  }
 
   const dailyContext: DailyContext = {
     dateInfo: dateCtx.dateInfo,
     holidayInfo: dateCtx.holidayInfo,
-    weather: weather.status === 'fulfilled' ? weather.value : null,
+    weather: resolvedWeather,
     calendarEvents: calendarEvents.status === 'fulfilled' ? calendarEvents.value : [],
     news: news.status === 'fulfilled' ? news.value : [],
+    weekendForecast: weekendForecastResult.status === 'fulfilled' ? weekendForecastResult.value : [],
+    weatherQuip,
   }
 
   // Log any fetch failures (non-critical)
@@ -108,11 +126,49 @@ export async function runPipeline(): Promise<PipelineResult> {
     console.error(`[Pipeline] Content Engine error:`, msg)
   }
 
+  // ── Step 5.5: Culture Data (deterministic, no API call) ────
+  const culture = getDailyCulture(dateCtx.dateInfo.isoDate)
+  console.log(`[Pipeline] Culture: Fundamental #${culture.fundamental.number} — ${culture.fundamental.name}`)
+
+  // ── Step 5.6: NephMadness 2026 (March only, weekdays) ─────
+  let nephMadnessWriteup: NephMadnessWriteup | null = null
+  const nephMadnessToday = getNephMadnessToday(dateCtx.dateInfo.isoDate)
+  if (nephMadnessToday) {
+    console.log(`[Pipeline] NephMadness: Day ${nephMadnessToday.workingDay}/21 — ${nephMadnessToday.phase}`)
+    try {
+      if (nephMadnessToday.phase === 'prediction') {
+        // Cross-region prediction days
+        nephMadnessWriteup = await callNephMadnessPrediction({
+          allRegions: nephMadnessToday.allRegions.map(r => ({
+            name: r.name,
+            teamA: r.teamA,
+            teamB: r.teamB,
+          })),
+          phaseDescription: nephMadnessToday.phaseDescription,
+          bracketUrl: nephMadnessToday.bracketUrl,
+        })
+      } else if (nephMadnessToday.region) {
+        // Region intro or matchup deep-dive
+        nephMadnessWriteup = await callNephMadnessRegion({
+          regionName: nephMadnessToday.region.name,
+          teamA: nephMadnessToday.region.teamA,
+          teamB: nephMadnessToday.region.teamB,
+          blurb: nephMadnessToday.region.blurb,
+          phase: nephMadnessToday.phase,
+          phaseDescription: nephMadnessToday.phaseDescription,
+          bracketUrl: nephMadnessToday.bracketUrl,
+        })
+      }
+    } catch (e) {
+      errors.push(`NephMadness: ${e instanceof Error ? e.message : 'failed'}`)
+    }
+  }
+
   // ── Step 6: Format Chat Cards ─────────────────────────────
   if (content) {
-    const mindsetCard = buildMindsetCard(dailyContext, content)
+    const mindsetCard = buildMindsetCard(dailyContext, content, culture)
     const operationsCard = buildOperationsCard(dailyContext)
-    const celebrationCard = buildCelebrationCard(dailyContext)
+    const celebrationCard = buildCelebrationCard(dailyContext, nephMadnessWriteup)
 
     // ── Step 7: Deliver ───────────────────────────────────────
     try {
@@ -122,15 +178,14 @@ export async function runPipeline(): Promise<PipelineResult> {
       errors.push(`Deliver mindset: ${e instanceof Error ? e.message : 'failed'}`)
     }
 
-    if (!dailyContext.dateInfo.isWeekend) {
-      try {
-        // Small delay between messages
-        await Bun.sleep(5000)
-        await deliverToChat('operations', operationsCard)
-        delivered.push('operations')
-      } catch (e) {
-        errors.push(`Deliver operations: ${e instanceof Error ? e.message : 'failed'}`)
-      }
+    // Weekdays: full operations card | Weekends: slim on-call card
+    try {
+      // Small delay between messages
+      await Bun.sleep(5000)
+      await deliverToChat('operations', operationsCard)
+      delivered.push('operations')
+    } catch (e) {
+      errors.push(`Deliver operations: ${e instanceof Error ? e.message : 'failed'}`)
     }
 
     if (celebrationCard) {
@@ -173,27 +228,3 @@ export async function runPipeline(): Promise<PipelineResult> {
   return result
 }
 
-// ── Error card builder ─────────────────────────────────────
-
-function buildErrorCard(errors: string[]) {
-  return {
-    cardsV2: [{
-      cardId: 'error-notification',
-      card: {
-        header: {
-          title: 'Morning Intelligence Errors',
-          subtitle: new Date().toISOString(),
-          imageUrl: 'https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/error/default/48px.svg',
-          imageType: 'CIRCLE',
-        },
-        sections: [{
-          widgets: [{
-            textParagraph: {
-              text: `<b>Issues (${errors.length}):</b>\n${errors.map(e => `• ${e}`).join('\n')}\n\n<i>Content may have been sent with fallbacks.</i>`,
-            },
-          }],
-        }],
-      },
-    }],
-  }
-}

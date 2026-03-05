@@ -1,12 +1,13 @@
 """
-Vertex AI Gemini client wrapper.
+Google AI Gemini 3.x client wrapper.
 
-Uses the google-genai SDK (NOT the deprecated vertexai.generative_models).
+Uses the google-genai SDK with API key authentication to access
+Gemini 3.x preview models (not available via Vertex AI on this project).
 
 Centralizes all LLM calls with:
 - Model selection (3.1 Pro, 3 Flash, 3.1 Flash-Lite)
 - Structured JSON output with schema enforcement
-- Thinking level configuration (Gemini 3.x uses thinking_level)
+- Thinking level configuration (Gemini 3.x uses thinking_level string)
 - Retry logic with exponential backoff
 - Pydantic validation of LLM responses
 """
@@ -20,59 +21,42 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-# Model IDs
-# Gemini 3.x preview models are listed but not yet accessible on all projects.
-# Using Gemini 2.5 stable models until 3.x access is granted.
-# When 3.x becomes available, swap back to:
-#   GEMINI_31_PRO = "gemini-3.1-pro-preview"
-#   GEMINI_3_FLASH = "gemini-3-flash-preview"
-#   GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite-preview"
-GEMINI_31_PRO = "gemini-2.5-pro"
-GEMINI_3_FLASH = "gemini-2.5-flash"
-GEMINI_31_FLASH_LITE = "gemini-2.5-flash-lite"
-
-# GCP config
-PROJECT_ID = os.environ.get("GCP_PROJECT_ID", "")
-REGION = os.environ.get("GCP_REGION", "us-central1")
+# ── Model IDs (Gemini 3.x preview) ──────────────────────────
+GEMINI_31_PRO = "gemini-3.1-pro-preview"
+GEMINI_3_FLASH = "gemini-3-flash-preview"
+GEMINI_31_FLASH_LITE = "gemini-3.1-flash-lite-preview"
 
 # Singleton client - initialized in init_client()
 _client = None
 
 
-def init_client(project_id: str | None = None, region: str | None = None):
+def init_client(api_key: str | None = None):
     """
-    Initialize the google-genai client for Vertex AI.
+    Initialize the google-genai client using API key authentication.
 
+    Uses GOOGLE_AI_API_KEY env var for Gemini 3.x preview access.
     Call this once at startup (in FastAPI lifespan).
-    Uses Application Default Credentials on GCP, or GOOGLE_APPLICATION_CREDENTIALS locally.
     """
     global _client
 
     from google import genai
 
-    resolved_project = project_id or PROJECT_ID
-    resolved_region = region or REGION
+    resolved_key = api_key or os.environ.get("GOOGLE_AI_API_KEY", "")
 
-    if not resolved_project:
-        raise ValueError("GCP_PROJECT_ID must be set via env var or passed to init_client()")
+    if not resolved_key:
+        raise ValueError(
+            "GOOGLE_AI_API_KEY must be set via env var or passed to init_client(). "
+            "This key is required for Gemini 3.x preview model access."
+        )
 
-    _client = genai.Client(
-        vertexai=True,
-        project=resolved_project,
-        location=resolved_region,
-    )
+    _client = genai.Client(api_key=resolved_key)
 
-    logger.info(
-        "Vertex AI client initialized: project=%s, region=%s",
-        resolved_project,
-        resolved_region,
-    )
+    logger.info("Google AI client initialized with API key (Gemini 3.x preview)")
 
 
 def get_client():
     """Get the initialized genai client. Lazy-initializes if not yet done."""
     if _client is None:
-        # Lazy init — tries to initialize with env vars
         init_client()
     return _client
 
@@ -86,13 +70,14 @@ async def generate_json(
     max_retries: int = 2,
 ) -> tuple[dict, str]:
     """
-    Generate structured JSON from a Vertex AI Gemini model.
+    Generate structured JSON from a Gemini 3.x model.
 
     Args:
         prompt: The full prompt text (with XML tags, instructions, etc.)
         model_id: Which Gemini model to use
         response_model: Optional Pydantic model for response validation
-        thinking_level: 'minimal', 'low', 'medium', 'high'
+        thinking_level: 'low', 'medium', 'high' (Gemini 3.x string format)
+                        Note: gemini-3.1-pro-preview minimum is 'low' (no 'minimal')
         temperature: Sampling temperature (lower = more deterministic)
         max_retries: Number of retries on parse/validation failure
 
@@ -104,16 +89,11 @@ async def generate_json(
     """
     client = get_client()
 
-    # Map thinking_level strings to thinking_budget tokens.
-    # Gemini 2.5 uses thinking_budget (int); Gemini 3.x uses thinking_level (str).
-    # For 2.5 models, we convert levels to approximate token budgets.
-    thinking_budget_map = {
-        "minimal": 0,  # disable thinking
-        "low": 1024,  # light reasoning
-        "medium": 4096,  # moderate reasoning
-        "high": 8192,  # deep reasoning
-    }
-    thinking_budget = thinking_budget_map.get(thinking_level, 1024)
+    # Gemini 3.x uses thinking_level as a string.
+    # gemini-3.1-pro-preview does NOT support "minimal" — minimum is "low".
+    valid_levels = {"low", "medium", "high"}
+    if thinking_level not in valid_levels:
+        thinking_level = "low"
 
     # Build generation config
     config: dict = {
@@ -121,9 +101,8 @@ async def generate_json(
         "response_mime_type": "application/json",
     }
 
-    # Add thinking config — use thinking_budget for 2.5 models
-    if thinking_budget > 0:
-        config["thinking_config"] = {"thinking_budget": thinking_budget}
+    # Add thinking config — Gemini 3.x uses thinking_level (string)
+    config["thinking_config"] = {"thinking_level": thinking_level}
 
     # Add JSON schema enforcement if we have a Pydantic model
     if response_model is not None:
