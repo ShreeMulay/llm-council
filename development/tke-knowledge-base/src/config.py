@@ -13,6 +13,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 GUIDELINES_DIR = CONTENT_DIR / "guidelines"
 PROTOCOLS_DIR = CONTENT_DIR / "protocols"
 DRUG_INFO_DIR = CONTENT_DIR / "drug_info"
+ALGORITHMS_DIR = CONTENT_DIR / "algorithms"
+REFERENCES_DIR = CONTENT_DIR / "references"
 
 
 class Settings(BaseSettings):

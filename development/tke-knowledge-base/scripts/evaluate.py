@@ -79,8 +79,21 @@ def evaluate_single(golden: dict, verbose: bool = False) -> dict:
     has_citations = "[Source" in response.answer
     citation_count = response.answer.count("[Source")
 
-    # 4. Non-answer detection: did the system admit "I don't have information"?
-    is_non_answer = "I don't have" in response.answer or "don't have specific" in response.answer
+    # 4. Non-answer detection: is the ENTIRE response essentially a non-answer?
+    # Only flag if the response starts with a refusal, not if it mentions missing
+    # details within an otherwise substantive answer.
+    non_answer_phrases = [
+        "I don't have sufficient information",
+        "I don't have specific information on this topic",
+        "don't have enough information",
+        "not available in my knowledge base",
+        "no relevant information found",
+    ]
+    first_300 = response.answer[:300].lower()
+    is_non_answer = any(phrase.lower() in first_300 for phrase in non_answer_phrases)
+    # Very short answers with "I don't have" are also non-answers
+    if not is_non_answer and len(response.answer.strip()) < 200:
+        is_non_answer = "i don't have" in response.answer.lower()
 
     # 5. Chunk count and scores
     chunk_count = len(response.citations)

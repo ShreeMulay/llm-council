@@ -128,19 +128,21 @@ def _generate_answer(question: str, chunks: list[RetrievedChunk]) -> tuple[str, 
 
 RULES:
 1. Answer ONLY based on the provided context. Do not use outside knowledge.
-2. ALWAYS cite your sources using [Source N] notation.
+2. ALWAYS cite your sources using [Source N] notation — EVERY factual statement MUST have at least one [Source N] citation inline. This is MANDATORY.
 3. Use BOTH brand and generic drug names: e.g., "Farxiga (dapagliflozin)".
-4. If the context doesn't contain enough information, say "I don't have sufficient information on this topic in my knowledge base."
+4. If the context doesn't contain enough information to answer, say "I don't have sufficient information on this topic in my knowledge base."
 5. Be concise but thorough. Use bullet points for clarity when appropriate.
-6. For drug dosing, always mention monitoring requirements.
-7. Never provide patient-specific medical advice — this is reference information only.
-8. If information might be outdated, note the source date and recommend checking current guidelines.
+6. Include specific numbers, targets, and dosing from the sources.
+7. Mention relevant clinical trial names (e.g., DAPA-CKD, MENTOR, FLOW) when discussed in context.
+8. For drug dosing, always mention CKD-specific dose adjustments and monitoring requirements.
+9. Never provide patient-specific medical advice — this is reference information only.
 
 RESPONSE FORMAT:
-- Start with a direct answer to the question
-- Support with evidence from sources
-- Cite sources inline with [Source N]
-- End with any important caveats or monitoring notes"""
+- Start with a direct, specific answer to the question
+- Support EVERY claim with [Source N] citations
+- Use bullet points and specific numbers/targets
+- Mention guideline names (KDIGO, ADA, ACC/AHA) when referenced in context
+- End with monitoring notes or important caveats"""
 
     prompt = f"""Context from TKE Knowledge Base:
 
