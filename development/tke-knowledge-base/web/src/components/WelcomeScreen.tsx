@@ -1,4 +1,4 @@
-import { BookOpen, Shield, Pill, Stethoscope, Brain, HeartPulse } from "lucide-react";
+import { BookOpen, Shield, Pill, Stethoscope, Brain, HeartPulse, FileText } from "lucide-react";
 
 const FEATURES = [
   {
@@ -9,7 +9,7 @@ const FEATURES = [
   {
     icon: Pill,
     title: "Drug Reference",
-    desc: "66 drug mappings with brand + generic names, dosing, and monitoring",
+    desc: "68 drugs with brand + generic names, dosing, and monitoring",
   },
   {
     icon: BookOpen,
@@ -33,7 +33,11 @@ const FEATURES = [
   },
 ];
 
-export function WelcomeScreen() {
+interface WelcomeScreenProps {
+  onBrowseLibrary?: () => void;
+}
+
+export function WelcomeScreen({ onBrowseLibrary }: WelcomeScreenProps) {
   return (
     <div className="flex-1 flex items-center justify-center p-8">
       <div className="max-w-2xl text-center">
@@ -61,6 +65,16 @@ export function WelcomeScreen() {
             </div>
           ))}
         </div>
+
+        {onBrowseLibrary && (
+          <button
+            onClick={onBrowseLibrary}
+            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white border border-tke-border text-sm font-medium text-tke-text hover:bg-slate-50 hover:border-tke-blue/30 transition-all"
+          >
+            <FileText className="w-4 h-4 text-tke-blue" />
+            Browse the Library — 88 clinical articles
+          </button>
+        )}
       </div>
     </div>
   );

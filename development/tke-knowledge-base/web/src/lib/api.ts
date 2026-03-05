@@ -1,4 +1,4 @@
-import type { ChatQuery, ChatResponse, CollectionInfo, DomainInfo } from "./types";
+import type { ArticleFull, ChatQuery, ChatResponse, CollectionInfo, DomainInfo, LibraryIndexResponse } from "./types";
 
 const API_BASE = "/api";
 
@@ -33,4 +33,23 @@ export async function chat(query: ChatQuery): Promise<ChatResponse> {
     method: "POST",
     body: JSON.stringify(query),
   });
+}
+
+// --- Library ---
+
+export async function getLibrary(params?: {
+  content_type?: string;
+  domain?: string;
+  search?: string;
+}): Promise<LibraryIndexResponse> {
+  const searchParams = new URLSearchParams();
+  if (params?.content_type) searchParams.set("content_type", params.content_type);
+  if (params?.domain) searchParams.set("domain", params.domain);
+  if (params?.search) searchParams.set("search", params.search);
+  const qs = searchParams.toString();
+  return fetchJSON<LibraryIndexResponse>(`/library${qs ? `?${qs}` : ""}`);
+}
+
+export async function getArticle(articleId: string): Promise<ArticleFull> {
+  return fetchJSON<ArticleFull>(`/library/${articleId}`);
 }

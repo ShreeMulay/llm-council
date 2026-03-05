@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from ..ingestion.qdrant_client import ensure_collection, get_collection_info
+from ..library import get_article, get_library_index
 from ..models import ChatQuery, ChatResponse
 from ..retrieval.search import query
 
@@ -73,3 +74,49 @@ async def list_domains():
     from ..models import Domain
 
     return {"domains": [{"id": d.value, "name": d.value.replace("_", " ").title()} for d in Domain]}
+
+
+# --- Library endpoints ---
+
+
+@app.get("/library")
+async def library_index(
+    content_type: str | None = None,
+    domain: str | None = None,
+    search: str | None = None,
+):
+    """List all articles in the knowledge base library.
+
+    Optional query params:
+    - content_type: filter by type (protocol, drug_monograph, guideline_summary, etc.)
+    - domain: filter by clinical domain
+    - search: search article titles (case-insensitive substring)
+    """
+    index = get_library_index()
+
+    articles = index.articles
+
+    if content_type:
+        articles = [a for a in articles if a.content_type == content_type]
+    if domain:
+        articles = [a for a in articles if a.domain == domain]
+    if search:
+        search_lower = search.lower()
+        articles = [a for a in articles if search_lower in a.title.lower()]
+
+    return {
+        "total": len(articles),
+        "articles": [a.model_dump() for a in articles],
+        "content_types": index.content_types,
+        "domains": index.domains,
+    }
+
+
+@app.get("/library/{folder}/{stem}")
+async def library_article(folder: str, stem: str):
+    """Get a single article by its ID (e.g., /library/protocols/proteinuria)."""
+    article_id = f"{folder}/{stem}"
+    article = get_article(article_id)
+    if not article:
+        raise HTTPException(status_code=404, detail=f"Article '{article_id}' not found")
+    return article.model_dump()

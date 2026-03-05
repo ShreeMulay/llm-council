@@ -62,6 +62,50 @@ export interface ChatMessage {
   response?: ChatResponse;
 }
 
+/** Library article summary (from /library endpoint) */
+export interface ArticleSummary {
+  id: string;
+  title: string;
+  content_type: string;
+  domain: Domain;
+  word_count: number;
+  generated_date: string | null;
+  status: string;
+  drug_class: string | null;
+}
+
+/** Full article content (from /library/:folder/:stem endpoint) */
+export interface ArticleFull extends ArticleSummary {
+  content: string;
+  sections: string[];
+}
+
+/** Library index response */
+export interface LibraryIndexResponse {
+  total: number;
+  articles: ArticleSummary[];
+  content_types: Record<string, number>;
+  domains: Record<string, number>;
+}
+
+/** Content type labels */
+export const CONTENT_TYPE_LABELS: Record<string, string> = {
+  protocol: "Clinical Protocol",
+  drug_monograph: "Drug Monograph",
+  guideline_summary: "Guideline Summary",
+  decision_algorithm: "Decision Algorithm",
+  quick_reference: "Quick Reference",
+};
+
+/** Content type icons (lucide icon names for mapping) */
+export const CONTENT_TYPE_ICONS: Record<string, string> = {
+  protocol: "Stethoscope",
+  drug_monograph: "Pill",
+  guideline_summary: "BookOpen",
+  decision_algorithm: "GitBranch",
+  quick_reference: "Table",
+};
+
 /** Domain display names (human-friendly) */
 export const DOMAIN_LABELS: Record<Domain, string> = {
   proteinuria: "Proteinuria",
