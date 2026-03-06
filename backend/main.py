@@ -103,6 +103,13 @@ class CouncilRequest(BaseModel):
     include_details: bool = True
 
 
+class ExportRequest(BaseModel):
+    """Request to export a council result as a downloadable file."""
+
+    result: Dict[str, Any]  # Full council result payload
+    filename: Optional[str] = None  # Custom filename (without extension)
+
+
 class ConversationMetadata(BaseModel):
     """Conversation metadata for list view."""
 
@@ -155,7 +162,9 @@ async def api_info():
         "version": "1.1.0",
         "description": "Multi-model LLM deliberation with peer review",
         "endpoints": {
-            "/api/council": "Execute council deliberation (POST, sync)",
+            "/api/council": "Execute council deliberation (POST, sync). ?format=markdown|markdown-raw for export.",
+            "/api/council/export": "Export council result as downloadable file (POST). ?format=markdown|json",
+            "/api/council/stream": "Stream council deliberation as SSE (POST)",
             "/api/council/async": "Execute council with webhook callback (POST, async)",
             "/api/council/jobs": "List async jobs (GET)",
             "/api/council/jobs/{job_id}": "Get job status (GET)",
@@ -212,13 +221,19 @@ async def get_provider_models(provider: str, refresh: bool = False):
 
 
 @app.post("/api/council")
-async def council_deliberation(request: CouncilRequest):
+async def council_deliberation(request: CouncilRequest, format: Optional[str] = None):
     """
     Execute 3-stage council deliberation.
 
     This is the main endpoint for OpenCode's /council command and MCP tool.
 
-    Returns:
+    Query params:
+        format: Response format - "json" (default), "markdown", or "markdown-raw".
+                "json" returns the full structured response.
+                "markdown" returns the markdown string wrapped in {"markdown": "..."}.
+                "markdown-raw" returns plain text markdown with text/markdown content type.
+
+    Returns (default JSON):
         - markdown: Formatted markdown output for display
         - stage1: Individual model responses
         - stage2: Peer rankings (empty if final_only=True)
@@ -235,7 +250,86 @@ async def council_deliberation(request: CouncilRequest):
         include_details=request.include_details,
     )
 
+    if format == "markdown-raw":
+        from fastapi.responses import PlainTextResponse
+
+        return PlainTextResponse(
+            content=result.get("markdown", ""),
+            media_type="text/markdown",
+        )
+    elif format == "markdown":
+        return {"markdown": result.get("markdown", "")}
+
     return result
+
+
+@app.post("/api/council/export")
+async def council_export(request: ExportRequest, format: str = "markdown"):
+    """
+    Export a council deliberation result as a downloadable file.
+
+    Accepts a full council result payload (as returned by /api/council)
+    and returns it as a downloadable markdown or JSON file.
+
+    Query params:
+        format: "markdown" (default) or "json"
+
+    Request body:
+        result: The full council result object from /api/council
+        filename: Optional custom filename (without extension)
+    """
+    from fastapi.responses import Response
+    import re
+
+    result = request.result
+
+    # Extract query for filename generation and markdown regeneration
+    query = result.get("stage3", {}).get("query", "") or ""
+    if not query:
+        # Try to extract query from markdown
+        md = result.get("markdown", "")
+        match = re.search(r"\*\*Query\*\*:\s*(.+)", md)
+        query = match.group(1).strip() if match else ""
+
+    # Generate filename from query if not provided
+    if request.filename:
+        base_filename = request.filename
+    else:
+        slug = (
+            re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")[:60] if query else ""
+        )
+        base_filename = slug or "council-deliberation"
+
+    if format == "json":
+        content = json.dumps(result, indent=2, ensure_ascii=False)
+        filename = f"{base_filename}.json"
+        media_type = "application/json"
+    else:
+        # Default to markdown
+        content = result.get("markdown", "")
+        if not content:
+            # Regenerate markdown from structured data if missing
+            from .opencode_integration import format_council_markdown
+
+            content = format_council_markdown(
+                query=query if query else "Unknown query",
+                stage1_results=result.get("stage1", []),
+                stage2_results=result.get("stage2", []),
+                stage3_result=result.get("stage3", {}),
+                metadata=result.get("metadata", {}),
+                include_details=True,
+                elapsed_seconds=result.get("timing", {}).get("elapsed_seconds", 0),
+            )
+        filename = f"{base_filename}.md"
+        media_type = "text/markdown"
+
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+        },
+    )
 
 
 @app.post("/api/council/stream")

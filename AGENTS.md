@@ -38,7 +38,12 @@ Key reasoning:
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/council` | POST | Execute 3-stage council deliberation |
+| `/api/council` | POST | Execute 3-stage council deliberation. `?format=markdown\|markdown-raw` for inline export |
+| `/api/council/export` | POST | Export council result as downloadable file. `?format=markdown\|json` |
+| `/api/council/stream` | POST | Stream council deliberation as SSE |
+| `/api/council/async` | POST | Execute council with webhook callback (async) |
+| `/api/council/jobs` | GET | List async jobs |
+| `/api/council/jobs/{job_id}` | GET | Get job status |
 | `/api/models` | GET | List available models (cached) |
 | `/api/mcp/schema` | GET | MCP tool schema for registration |
 | `/health` | GET | Health check |
