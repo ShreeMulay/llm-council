@@ -154,7 +154,7 @@ async def call_openai(
     Call the OpenAI API using Codex OAuth authentication.
 
     Args:
-        model: Model identifier (e.g., "openai/gpt-5.2")
+        model: Model identifier (e.g., "openai/gpt-5.4")
         prompt: User message content
         max_tokens: Maximum tokens in response
         system_prompt: Optional system message
