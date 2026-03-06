@@ -18,7 +18,7 @@ Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing cou
 
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
-| GPT-5.2 | OpenRouter | Anchor/Reasoning | `reasoningEffort: high` |
+| GPT-5.4 | OpenRouter | Anchor/Reasoning | `reasoningEffort: high` |
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
 | GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
@@ -32,7 +32,7 @@ Key reasoning:
 - **Synthesis > Reasoning**: Chairman's job is to integrate perspectives, not be the smartest
 - **Constitutional AI**: Reduces self-preference bias vs performance-optimized models
 - **"Strong but not supreme"**: 80.9% SWE-bench means technical depth without "Tyranny of the Expert"
-- **Separation of powers**: GPT-5.2 as Visionary, Claude as Judge
+- **Separation of powers**: GPT-5.4 as Visionary, Claude as Judge
 
 ## API Endpoints
 
@@ -72,18 +72,18 @@ MCP Config:
 ## API Keys & OAuth
 
 **OAuth (loaded from `~/.local/share/opencode/auth.json`):**
-- `openai` / `codex` - For GPT-5.2 via Codex OAuth
+- `openai` / `codex` - For GPT-5.4 via Codex OAuth
 - `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.2, Gemini, Grok (+ fallback)
+- `OPENROUTER_API_KEY` - For GPT-5.4, Gemini, Grok (+ fallback)
 - `FIREWORKS_API_KEY` - For GLM-5 (primary, 3.4x faster)
 - `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
 
 ## Model Aliases
 
 Use aliases in `/council` command:
-- `gpt` -> openai/gpt-5.2
+- `gpt` -> openai/gpt-5.4
 - `opus` -> anthropic/claude-opus-4.6
 - `glm` -> fireworks/glm-5
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview

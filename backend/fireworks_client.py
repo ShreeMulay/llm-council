@@ -87,7 +87,13 @@ async def query_fireworks_model(
 
             msg = data["choices"][0]["message"]
             text = msg.get("content") or ""
-            logger.info(f"Fireworks {model_id} responded: {len(text)} chars")
+            reasoning = msg.get("reasoning_content") or ""
+            # GLM-5 puts most output in reasoning_content; combine if content is sparse
+            if reasoning and len(text) < 50:
+                text = text + "\n\n" + reasoning if text else reasoning
+            logger.info(
+                f"Fireworks {model_id} responded: {len(text)} chars (reasoning: {len(reasoning)} chars)"
+            )
             return {
                 "content": text,
                 "usage": data.get("usage", {}),

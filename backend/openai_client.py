@@ -18,7 +18,7 @@ OPENCODE_AUTH_PATHS = [
 
 # Model ID mapping: council ID -> OpenAI model ID
 OPENAI_MODEL_MAP = {
-    "openai/gpt-5.2": "gpt-5.2",
+    "openai/gpt-5.4": "gpt-5.4",
     "openai/gpt-5.1": "gpt-5.1",
     "openai/gpt-4o": "gpt-4o",
     "openai/gpt-4-turbo": "gpt-4-turbo",
@@ -30,7 +30,9 @@ DEFAULT_REASONING_EFFORT = "high"
 
 def get_openai_model_id(council_model_id: str) -> str:
     """Convert council model ID to OpenAI's model ID."""
-    return OPENAI_MODEL_MAP.get(council_model_id, council_model_id.replace("openai/", ""))
+    return OPENAI_MODEL_MAP.get(
+        council_model_id, council_model_id.replace("openai/", "")
+    )
 
 
 def load_oauth_credentials() -> Optional[dict]:
@@ -55,7 +57,9 @@ def load_oauth_credentials() -> Optional[dict]:
     return None
 
 
-def save_oauth_credentials(auth_path: Path, auth_key: str, access: str, refresh: str, expires: int):
+def save_oauth_credentials(
+    auth_path: Path, auth_key: str, access: str, refresh: str, expires: int
+):
     """Save updated OAuth credentials back to auth file."""
     try:
         data = json.loads(auth_path.read_text())
@@ -75,7 +79,7 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
     # OpenAI uses a different token endpoint
     token_url = "https://auth.openai.com/oauth/token"
     client_id = "app_EMoamEEZ73f0CkXaXp7hrann"  # OpenAI Codex CLI client ID
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
             token_url,
@@ -86,11 +90,13 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
             },
             headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
-        
+
         if not response.is_success:
-            print(f"OpenAI token refresh failed: {response.status_code} - {response.text}")
+            print(
+                f"OpenAI token refresh failed: {response.status_code} - {response.text}"
+            )
             return None
-        
+
         data = response.json()
         return {
             "access": data.get("access_token"),
@@ -101,29 +107,29 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
 
 async def get_valid_oauth_token() -> Optional[tuple[str, Path, str]]:
     """Get a valid OAuth access token, refreshing if necessary.
-    
+
     Returns:
         Tuple of (access_token, auth_path, auth_key) or None
     """
     creds = load_oauth_credentials()
     if not creds:
         return None
-    
+
     current_time = int(time.time() * 1000)
-    
+
     # Check if token is expired (with 60 second buffer)
     if creds["access"] and creds["expires"] > current_time + 60000:
         return creds["access"], creds["auth_path"], creds["auth_key"]
-    
+
     # Need to refresh
     if not creds["refresh"]:
         return None
-    
+
     print("OpenAI OAuth token expired, refreshing...")
     new_tokens = await refresh_oauth_token(creds["refresh"])
     if not new_tokens:
         return None
-    
+
     # Save new tokens
     save_oauth_credentials(
         creds["auth_path"],
@@ -132,7 +138,7 @@ async def get_valid_oauth_token() -> Optional[tuple[str, Path, str]]:
         new_tokens["refresh"],
         new_tokens["expires"],
     )
-    
+
     print("OpenAI OAuth token refreshed successfully")
     return new_tokens["access"], creds["auth_path"], creds["auth_key"]
 
@@ -146,58 +152,60 @@ async def call_openai(
 ) -> dict[str, Any]:
     """
     Call the OpenAI API using Codex OAuth authentication.
-    
+
     Args:
         model: Model identifier (e.g., "openai/gpt-5.2")
         prompt: User message content
         max_tokens: Maximum tokens in response
         system_prompt: Optional system message
         reasoning_effort: Reasoning effort level ("none", "low", "medium", "high", "xhigh")
-    
+
     Returns:
         dict with 'response', 'usage', and 'provider' keys
     """
     oauth_result = await get_valid_oauth_token()
     if not oauth_result:
-        raise ValueError("OpenAI OAuth credentials not found. Please authenticate via OpenCode.")
-    
+        raise ValueError(
+            "OpenAI OAuth credentials not found. Please authenticate via OpenCode."
+        )
+
     access_token, _, _ = oauth_result
     openai_model = get_openai_model_id(model)
-    
+
     headers = {
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json",
     }
-    
+
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
-    
+
     payload = {
         "model": openai_model,
         "max_tokens": max_tokens,
         "messages": messages,
     }
-    
+
     # Add reasoning effort for supported models (GPT-5.x)
     if "gpt-5" in openai_model and reasoning_effort != "none":
         payload["reasoning_effort"] = reasoning_effort
-    
+
     async with httpx.AsyncClient(timeout=900.0) as client:
         response = await client.post(OPENAI_API_URL, headers=headers, json=payload)
         response.raise_for_status()
         data = response.json()
-    
+
     # Extract response text
     choices = data.get("choices", [])
     response_text = ""
     if choices:
         response_text = choices[0].get("message", {}).get("content", "")
-    
+
     # Extract usage
     usage = data.get("usage", {})
-    
+
     return {
         "response": response_text,
         "usage": {

@@ -44,13 +44,13 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 # Council Models - 5 models for deliberation
 # Kimi K2.5 and DeepSeek V3.2 removed (distilled from Claude — reduces diversity)
-# 1. GPT-5.2 via OpenRouter (Anchor/Reasoning)
+# 1. GPT-5.4 via OpenRouter (Anchor/Reasoning)
 # 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder + Chairman)
 # 3. GLM-5 via Fireworks Direct (Tool Specialist) — highest output speed per Artificial Analysis
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
 # 5. Grok 4.1 Fast via OpenRouter (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
-    "openai/gpt-5.2",  # OpenRouter (Anchor)
+    "openai/gpt-5.4",  # OpenRouter (Anchor)
     "anthropic/claude-opus-4.6",  # Anthropic OAuth (Lead Coder)
     "fireworks/glm-5",  # Fireworks Direct (Tool Specialist)
     "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
@@ -111,7 +111,7 @@ OPENROUTER_FALLBACK_MAP = {
     "z-ai/glm-5": "z-ai/glm-5",
     "google/gemini-3-flash": "google/gemini-2.0-flash-001",
     "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
-    "openai/gpt-5.2": "openai/gpt-5.2",
+    "openai/gpt-5.4": "openai/gpt-5.4",
     "x-ai/grok-4": "x-ai/grok-4",
 }
 
@@ -120,7 +120,7 @@ OPENAI_MODEL_IDS = []
 
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
-    "gpt": "openai/gpt-5.2",
+    "gpt": "openai/gpt-5.4",
     "opus": "anthropic/claude-opus-4.6",
     "glm": "fireworks/glm-5",
     "gemini": "google/gemini-3.1-pro-preview",
