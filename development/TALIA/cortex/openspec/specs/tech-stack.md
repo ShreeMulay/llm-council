@@ -1,7 +1,7 @@
 # CORTEX — Technology Stack Specification
 
-> **Version**: 1.0
-> **Last Updated**: March 4, 2026
+> **Version**: 1.1
+> **Last Updated**: March 7, 2026
 > **Status**: Architecture Complete
 > **Infrastructure**: GCP under TKE's existing BAA (HIPAA-compliant)
 
@@ -709,12 +709,208 @@ git push → GitHub Actions:
 | GCS (audio + documents) | ~$5-60 (grows over time) |
 | BigQuery | ~$10-20 |
 | Firebase (push notifications) | Free tier |
-| **Phase 1 Total** | **~$2,200-2,800** |
-| **Phase 1.5 Total (with Voxtral)** | **~$1,100-1,700** |
+| Omi devices (10) + chargers | ~$1,090 one-time |
+| Omi Unlimited (10 devices, trial) | ~$160 |
+| **Phase 1 Total** | **~$2,360-2,960** |
+| **Phase 1.5 Total (with Voxtral)** | **~$1,260-1,860** |
 
 ---
 
-## 14. Technology Decision Log
+## 14. Wearable Audio Capture (Omi)
+
+### Device Specifications
+
+| Property | Value |
+|----------|-------|
+| **Device** | Omi (by Based Hardware, San Francisco) |
+| **Price** | $89/device |
+| **Form Factor** | Pendant (necklace) or wrist band; wearable under scrubs |
+| **Microphone** | High-sensitivity MEMS |
+| **Audio Codec** | Opus → PCM16 (16-bit signed, little-endian) |
+| **Sample Rate** | 16,000 Hz, mono |
+| **Connectivity** | Bluetooth Low Energy (BLE) 5.2 |
+| **Battery** | 24 hours to several days |
+| **Open Source** | Hardware, firmware, app, backend — MIT licensed |
+| **GitHub** | github.com/BasedHardware/omi (7.5k+ stars) |
+
+### Omi Compliance
+
+| Certification | Status | Date | Partner |
+|--------------|--------|------|---------|
+| **SOC 2** | Certified | October 2025 | Delve |
+| **HIPAA** | Compliant | October 2025 | Delve |
+| **GDPR** | In progress | — | — |
+| **ISO 27001** | In progress | — | — |
+
+Trust report: https://trust.delve.co/omi — Data encrypted at rest (AES-256) and in transit (TLS).
+
+### Capture Architecture
+
+CORTEX uses three audio capture sources. Omi provides two of them:
+
+| # | Source | Mode | When | Audio Route |
+|---|--------|------|------|-------------|
+| 1 | **PWA Microphone** | Manual trigger | Encounter-bound | Browser → IndexedDB/GCS → CORTEX STT |
+| 2 | **Omi Real-time Webhook** | Encounter-bound | Active encounter recording | Omi device → Omi App → Omi Backend → POST to CORTEX webhook |
+| 3 | **Omi API Pull** | Retroactive | Hallway huddles, ambient conversations | Provider selects Omi conversation segment → CORTEX pulls via Omi Dev API |
+
+```
+Capture Flow:
+
+┌─────────────┐     BLE      ┌──────────┐
+│  Omi Device │ ──────────── │ Omi App  │
+│  (pendant)  │              │ (phone)  │
+└─────────────┘              └──────┬───┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+           ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+           │ Omi Cloud    │ │ Real-time    │ │ Omi Dev API  │
+           │ (ambient     │ │ Audio Webhook│ │ (retroactive │
+           │  always-on)  │ │ (encounter-  │ │  pull)       │
+           │              │ │  bound)      │ │              │
+           └──────────────┘ └──────┬───────┘ └──────┬───────┘
+                                   │                │
+                                   ▼                ▼
+                            ┌──────────────────────────┐
+                            │ CORTEX Audio Ingest      │
+                            │ POST /api/audio/omi      │
+                            │ (Cloud Run, FastAPI)     │
+                            └──────────┬───────────────┘
+                                       │
+                          ┌────────────┼────────────┐
+                          ▼            ▼            ▼
+                   ┌──────────┐ ┌──────────┐ ┌──────────┐
+                   │ Chirp 3  │ │ Voxtral  │ │ Omi STT  │
+                   │(Phase 1) │ │(Phase1.5)│ │ (trial)  │
+                   └──────────┘ └──────────┘ └──────────┘
+```
+
+### PHI Boundary Model
+
+| Scenario | Audio Behavior |
+|----------|---------------|
+| **Encounter active** | Omi webhook streams to CORTEX. Audio tagged to encounter. Processed by CORTEX STT. |
+| **Between encounters** | Audio stays in Omi's HIPAA-compliant cloud only. Does NOT enter CORTEX. |
+| **Retroactive pull** | Provider explicitly selects an Omi conversation segment and associates it with an encounter. Manual trigger preserves intentionality. |
+| **Multi-patient hallway** | Provider chooses which Omi segment maps to which patient. CORTEX never auto-ingests ambient audio. |
+
+### Real-time Audio Webhook Endpoint
+
+Omi streams raw PCM16 audio bytes to CORTEX during active encounters:
+
+| Property | Value |
+|----------|-------|
+| **Endpoint** | `POST /api/audio/omi` |
+| **Content-Type** | `application/octet-stream` |
+| **Audio Format** | Raw PCM16 (16-bit signed, little-endian) |
+| **Sample Rate** | 16,000 Hz |
+| **Channels** | Mono (1) |
+| **Chunk Interval** | Every 10 seconds (configurable in Omi app) |
+| **Query Params** | `sample_rate`, `uid` (Omi user identifier) |
+| **Auth** | HMAC signature verification + mapped to CORTEX user |
+
+```python
+# FastAPI endpoint for Omi audio webhook
+@app.post("/api/audio/omi")
+async def receive_omi_audio(
+    request: Request,
+    uid: str = Query(...),
+    sample_rate: int = Query(default=16000),
+):
+    """Receive real-time audio chunks from Omi device."""
+    audio_bytes = await request.body()
+    
+    # Map Omi uid to CORTEX user
+    user = await get_user_by_omi_uid(uid)
+    if not user:
+        raise HTTPException(404, "Unknown Omi user")
+    
+    # Find active encounter for this user
+    encounter = await get_active_encounter(user.id)
+    if not encounter:
+        # No active encounter — discard (ambient stays in Omi cloud)
+        return {"status": "no_active_encounter", "discarded": True}
+    
+    # Buffer audio and route to STT pipeline
+    await audio_buffer.append(
+        encounter_id=encounter.id,
+        audio_bytes=audio_bytes,
+        sample_rate=sample_rate,
+        source="omi_stream",
+    )
+    return {"status": "ok"}
+```
+
+### Omi Developer API (Retroactive Pull)
+
+Used to pull ambient conversation segments for association with encounters:
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `GET /v1/dev/user/conversations` | GET | List conversations with timestamps |
+| `GET /v1/dev/user/conversations/{id}` | GET | Full transcript + audio for one conversation |
+| `GET /v1/dev/user/memories` | GET | AI-generated summaries (supplemental context) |
+
+```
+Base URL: https://api.omi.me/v1/dev
+Auth: Bearer omi_dev_{api_key}
+Rate Limits: 100 req/min, 10,000 req/day
+```
+
+### Dual-Track STT Strategy
+
+| Track | Provider | Use | Monthly Cost | Purpose |
+|-------|----------|-----|-------------|---------|
+| **CORTEX STT** (primary) | Chirp 3 → Voxtral | Production | ~$1,200 → ~$112 | Full control, GCP BAA, custom pipeline |
+| **Omi STT** (trial) | Omi Cloud | Comparison | $160 (10 Unlimited plans) | Evaluate quality, use as fallback |
+
+During the trial period, both tracks process the same audio in parallel. Transcripts are compared for quality (WER, medical term accuracy, diarization). The higher-quality track becomes the production default.
+
+### STT Abstraction Layer Update
+
+```python
+class OmiProvider(STTProvider):
+    """Use Omi cloud transcription as trial/fallback."""
+    async def transcribe_batch(self, audio: bytes, config: STTConfig) -> Transcript:
+        # Pull transcript from Omi API by conversation ID
+        ...
+    async def transcribe_stream(self, audio_stream: AsyncIterator[bytes], config: STTConfig) -> AsyncIterator[TranscriptChunk]:
+        # Not applicable — Omi handles streaming internally
+        raise NotImplementedError("Omi STT is pull-based, not stream-based")
+```
+
+### SDK Reference
+
+| SDK | Language | Install | Use Case |
+|-----|----------|---------|----------|
+| Python SDK | Python 3.10+ | `pip install omi-sdk` | Direct BLE connection from scribe laptop (future) |
+| React Native SDK | JavaScript | `npm install @omiai/omi-react-native` | Custom companion features (future) |
+| REST API | HTTP | — | Primary integration (webhook + API pull) |
+
+### Fleet Allocation (10 Devices)
+
+| Role | Qty | Rationale |
+|------|-----|-----------|
+| Providers | 3 | Worn during rounds — captures bedside + hallway conversations |
+| Scribes | 3 | Captures scribe-provider huddles, hallway discussions |
+| Spare/backup | 2 | Dead battery, forgotten, new staff |
+| Development/testing | 2 | Audio quality testing, integration debugging |
+
+### Enterprise Trial Plan
+
+| Item | Details |
+|------|---------|
+| **Contact** | cal.com/aaravgarg/enterprise |
+| **Trial** | 7-day pilot, 5-10 free devices |
+| **Deposit** | $89/device (refundable if returned, or applied to contract) |
+| **Test Goals** | Audio quality in hospital: patient rooms, hallways, nursing stations, ICU |
+| **BAA** | Request during trial setup — required before PHI exposure |
+
+---
+
+## 15. Technology Decision Log
 
 | Decision | Chosen | Rejected | Rationale |
 |----------|--------|----------|-----------|
@@ -728,3 +924,4 @@ git push → GitHub Actions:
 | Auth | IAP (Identity-Aware Proxy) | Firebase Auth, Auth0, App-level OAuth | Zero-trust, infrastructure-level, free, Context-Aware Access |
 | Hosting | Cloud Run | GKE, App Engine | Serverless, auto-scale, GPU support (for Voxtral) |
 | Vector DB | Spanner (via RAG Engine) | pgvector, Qdrant | Part of managed RAG Engine, no separate infra |
+| Omi wearable capture | Omi ($89/device, open-source) | Phone mic only, DAX, Abridge | $89 HIPAA-compliant open-source wearable; ambient + encounter-bound capture; dual-track STT trial ($160/mo); fills hallway huddle gap; 7.5k GitHub stars |

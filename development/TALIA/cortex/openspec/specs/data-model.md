@@ -1,7 +1,7 @@
 # CORTEX — Data Model Specification
 
-> **Version**: 1.0
-> **Last Updated**: March 5, 2026
+> **Version**: 1.1
+> **Last Updated**: March 7, 2026
 > **Database**: Cloud SQL (MySQL 8.4)
 > **Shared Instance**: CORTEX tables coexist with TALIA 1.0 (AppSheet) tables
 > **Database**: `cortex` (separate database from TALIA 1.0's `talia_production` database)
@@ -39,6 +39,7 @@ MySQL Instance (db-g1-small, us-central1)
 │   ├── council_outputs
 │   ├── feedback
 │   └── audit_log
+│   └── omi_devices
 │
 └── Cross-database queries (same instance) ← Cross-references (future)
     └── patient_cortex_link (maps AppSheet patient to CORTEX encounter)
@@ -130,7 +131,7 @@ CREATE TABLE encounters (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_note_type CHECK (note_type IN ('consult_hp', 'progress_note', 'critical_care', 'acp', 'procedure')),
-    CONSTRAINT valid_phase CHECK (phase IN ('hallway_huddle', 'in_room', 'post_room', 'review', 'signed'))
+    CONSTRAINT valid_phase CHECK (phase IN ('hallway_huddle', 'in_room', 'post_room', 'review', 'signed', 'deferred', 'interrupted', 'reopened', 'cross_cover', 'solo_prep'))
 );
 
 CREATE INDEX idx_encounters_provider_date ON encounters(provider_id, encounter_date);
@@ -160,13 +161,19 @@ CREATE TABLE recordings (
     sample_rate INTEGER DEFAULT 16000,
     channels INTEGER DEFAULT 1,
     
+    -- Capture source
+    capture_source VARCHAR(20) NOT NULL DEFAULT 'pwa_mic',  -- 'pwa_mic', 'omi_stream', 'omi_pull'
+    omi_device_id CHAR(36),                                  -- FK to omi_devices (NULL for PWA mic recordings)
+    omi_conversation_id VARCHAR(255),                        -- Omi conversation ID (for API pull correlation)
+    omi_memory_id VARCHAR(255),                              -- Omi memory ID (for supplemental context)
+    
     -- Storage
     gcs_bucket VARCHAR(255) NOT NULL,
     gcs_path VARCHAR(500) NOT NULL,                  -- e.g., 'recordings/2026/03/04/{encounter_id}/{recording_id}.flac'
     
     -- Processing state
     status VARCHAR(20) NOT NULL DEFAULT 'uploading', -- 'uploading', 'uploaded', 'transcribing', 'transcribed', 'failed'
-    stt_provider VARCHAR(20),                        -- 'chirp3', 'voxtral'
+    stt_provider VARCHAR(20),                        -- 'chirp3', 'voxtral', 'omi'
     
     -- Offline handling
     uploaded_from_offline BOOLEAN NOT NULL DEFAULT false,
@@ -179,11 +186,46 @@ CREATE TABLE recordings (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT valid_recording_phase CHECK (recording_phase IN ('hallway_huddle', 'in_room', 'post_room')),
-    CONSTRAINT valid_status CHECK (status IN ('uploading', 'uploaded', 'transcribing', 'transcribed', 'failed'))
+    CONSTRAINT valid_status CHECK (status IN ('uploading', 'uploaded', 'transcribing', 'transcribed', 'failed')),
+    CONSTRAINT valid_capture_source CHECK (capture_source IN ('pwa_mic', 'omi_stream', 'omi_pull'))
 );
 
 CREATE INDEX idx_recordings_encounter ON recordings(encounter_id);
 CREATE INDEX idx_recordings_status ON recordings(status);
+CREATE INDEX idx_recordings_capture_source ON recordings(capture_source);
+CREATE INDEX idx_recordings_omi_device ON recordings(omi_device_id);
+```
+
+### omi_devices
+
+Omi wearable device registry. Maps Omi devices and API credentials to CORTEX users.
+
+```sql
+-- Omi wearable device registry
+CREATE TABLE omi_devices (
+    id CHAR(36) NOT NULL DEFAULT (UUID()) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL REFERENCES users(id),
+    
+    -- Device info
+    device_name VARCHAR(100) NOT NULL,               -- e.g., "Dr. Mulay's Omi"
+    omi_device_mac VARCHAR(17),                      -- BLE MAC address (XX:XX:XX:XX:XX:XX)
+    omi_uid VARCHAR(255),                            -- Omi user identifier (maps webhook uid param)
+    firmware_version VARCHAR(50),
+    
+    -- Status
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    battery_level_pct INTEGER,
+    last_seen_at DATETIME,
+    
+    -- API credentials (hashed)
+    api_key_hash VARCHAR(255),                       -- Bcrypt hash of per-user Omi dev API key
+    
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_omi_devices_user ON omi_devices(user_id);
+CREATE INDEX idx_omi_devices_omi_uid ON omi_devices(omi_uid);
 ```
 
 ### transcripts
@@ -200,7 +242,7 @@ CREATE TABLE transcripts (
     full_text TEXT NOT NULL,
     
     -- Processing metadata
-    stt_provider VARCHAR(20) NOT NULL,               -- 'chirp3', 'voxtral'
+    stt_provider VARCHAR(20) NOT NULL,               -- 'chirp3', 'voxtral', 'omi'
     stt_model_version VARCHAR(50),
     language VARCHAR(10) DEFAULT 'en-US',
     word_count INTEGER,

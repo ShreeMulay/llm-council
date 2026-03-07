@@ -1,7 +1,7 @@
 # CORTEX — Compliance, Security & Privacy Specification
 
-> **Version**: 1.0
-> **Last Updated**: March 4, 2026
+> **Version**: 1.1
+> **Last Updated**: March 7, 2026
 > **Regulatory Framework**: HIPAA (Privacy Rule, Security Rule, Breach Notification Rule)
 > **State Law**: Tennessee medical records retention (10 years)
 > **Infrastructure**: GCP under TKE's existing BAA
@@ -26,6 +26,7 @@ All components must comply with the HIPAA Privacy Rule, Security Rule, and Breac
 |-------------|-----------------|
 | BAA with cloud provider | GCP BAA already in place for TKE |
 | BAA with AI model providers | Vertex AI models covered under GCP BAA; Claude for Healthcare has separate healthcare addendum |
+| BAA with wearable vendor | Omi (Based Hardware) — SOC 2 + HIPAA certified (Oct 2025). BAA required before PHI exposure. Trust report: https://trust.delve.co/omi |
 | Encryption at rest | AES-256 (GCP default for all services) |
 | Encryption in transit | TLS 1.3 for all connections |
 | Access controls | IAP (zero-trust) + Context-Aware Access + RBAC + row-level security |
@@ -39,6 +40,40 @@ All components must comply with the HIPAA Privacy Rule, Security Rule, and Breac
 
 - **Medical records retention**: 10 years from last encounter (Tenn. Code Ann. § 68-11-305)
 - **Audio recording consent**: Tennessee is a one-party consent state for audio recording. However, TKE policy requires explicit patient consent for transparency and trust.
+- **Wearable disclosure**: Omi wearable devices are always-on ambient recorders. While TN one-party consent technically permits this, TKE policy requires: (1) facility signage disclosing wearable use, (2) verbal per-encounter consent for recordings entering CORTEX, (3) Omi visual LED indicator active during recording.
+
+### Third-Party Data Processors
+
+#### Omi (Based Hardware, Inc.)
+
+Omi wearable devices capture ambient audio and stream it to Omi's cloud infrastructure before relay to CORTEX. Omi is a third-party processor of PHI.
+
+| Property | Value |
+|----------|-------|
+| **Company** | Based Hardware, Inc. (San Francisco, CA) |
+| **Product** | Omi AI Wearable |
+| **SOC 2** | Certified (October 2025, via Delve) |
+| **HIPAA** | Compliant (October 2025, via Delve) |
+| **Trust Report** | https://trust.delve.co/omi |
+| **Encryption at Rest** | AES-256 |
+| **Encryption in Transit** | TLS |
+| **BAA Status** | **Required — request during enterprise trial setup** |
+| **Data Residency** | US (confirm during BAA negotiation) |
+
+**Data flow through Omi:**
+1. Omi device captures audio via MEMS microphone
+2. Audio transmitted via BLE to Omi companion app (provider's phone)
+3. Omi app relays to Omi cloud (encrypted in transit)
+4. Omi cloud either:
+   a. Streams audio to CORTEX webhook (encounter-bound capture), OR
+   b. Stores for later retrieval via Omi API (ambient capture)
+5. CORTEX ingests and processes audio through its own STT pipeline
+
+**PHI exposure at Omi:**
+- Audio recordings containing patient conversations (High PHI)
+- Omi cloud may generate transcripts/summaries (if Omi STT trial active)
+- PHI retained in Omi cloud per Omi's retention settings
+- BAA must cover: audio storage, processing, transcription, API access
 
 ---
 
@@ -54,6 +89,8 @@ All components must comply with the HIPAA Privacy Rule, Security Rule, and Breac
 | Note drafts/versions | High | Cloud SQL | AES-256 at rest, TLS 1.3 in transit | 10 years |
 | EPIC data pastes | High | Cloud SQL | AES-256 at rest, TLS 1.3 in transit | 10 years |
 | EPIC screenshots | High | GCS | AES-256 at rest, TLS 1.3 in transit | 10 years |
+| Omi ambient audio (pre-association) | High | Omi Cloud | AES-256 (Omi) | Per Omi retention settings |
+| Omi conversation transcripts | High | Omi Cloud + Cloud SQL | AES-256 | 10 years (once in CORTEX) |
 | Entity extractions | High | Cloud SQL | AES-256 at rest, TLS 1.3 in transit | 10 years |
 | Consent records | High | Cloud SQL | AES-256 at rest, TLS 1.3 in transit | 10 years |
 | Audit logs | Medium | Cloud SQL + BigQuery | AES-256 | Indefinite |
@@ -88,6 +125,22 @@ All components must comply with the HIPAA Privacy Rule, Security Rule, and Breac
 │  │  Citrix VDI only. PHI never leaves US servers.            │   │
 │  │  No local storage, no screenshots, no clipboard export.   │   │
 │  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+         ▲                                                         
+         │ Webhook POST / API GET (TLS)                            
+         │                                                         
+┌────────┴────────────────────────────────────────────────────────┐
+│              OMI PHI BOUNDARY (Omi Cloud)                        │
+│              SOC 2 + HIPAA Compliant (via Delve)                 │
+│                                                                  │
+│  ┌──────────┐     BLE      ┌──────────┐     TLS    ┌────────┐ │
+│  │ Omi      │ ──────────── │ Omi App  │ ─────────▶ │ Omi    │ │
+│  │ Device   │              │ (Phone)  │            │ Cloud  │ │
+│  │ (pendant)│              │          │            │        │ │
+│  └──────────┘              └──────────┘            └────────┘ │
+│                                                                  │
+│  Audio encrypted in transit (TLS) and at rest (AES-256).        │
+│  BAA required before PHI exposure.                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -161,6 +214,24 @@ Pause/mute is for:
 - Non-clinical discussions (phone calls, side conversations)
 - Provider-to-provider discussion that shouldn't be in the note
 - Patient request mid-encounter
+
+### Ambient Capture Consent (Omi Wearable)
+
+Omi wearable devices capture audio continuously (ambient mode). This creates additional consent considerations:
+
+| Scenario | Consent Requirement |
+|----------|-------------------|
+| **In-room encounter** | Standard per-encounter verbal consent (same as PWA mic) |
+| **Hallway conversation** (provider-to-provider) | No patient consent needed — no PHI if patient not present |
+| **Hallway with patient** | Verbal consent required before associating Omi segment with encounter |
+| **Phone call with family** | Verbal consent from family member OR provider documents consent |
+| **Ambient background** (nursing station, break room) | NOT ingested by CORTEX — stays in Omi cloud only |
+
+**Key principle**: Ambient audio that is NOT associated with a CORTEX encounter never enters the CORTEX PHI boundary. The provider's explicit association action serves as the consent gate.
+
+**Patient notification**: TKE facility signage should note: "This facility uses AI-assisted wearable devices for clinical documentation. Your provider will obtain verbal consent before recording your encounter."
+
+**Omi visual indicator**: Omi device has a visible LED indicating recording status. This supports two-party notification in face-to-face encounters.
 
 ---
 

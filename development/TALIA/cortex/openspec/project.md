@@ -2,9 +2,9 @@
 
 > **"The intelligence behind the encounter."**
 >
-> **Version**: 1.0 (Planning)
-> **Last Updated**: March 4, 2026
-> **Status**: Architecture Complete, Awaiting Note Templates, UX Approved
+> **Version**: 1.1 (Planning)
+> **Last Updated**: March 7, 2026
+> **Status**: Architecture Complete, Awaiting Note Templates, UX Approved, Omi Integration Planned
 > **Phase**: Hospital Inpatient (Phase 1)
 
 ---
@@ -48,7 +48,17 @@ Both scribe and provider are equally important users. Either may be unavailable 
 ## 3. Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
+                           ┌─────────────┐
+                           │  Omi Device │  (Pendant, BLE 5.2)
+                           │  (ambient)  │
+                           └──────┬──────┘
+                                  │ BLE
+                           ┌──────▼──────┐
+                           │  Omi App    │  (Phone companion)
+                           │  + Cloud    │
+                           └──────┬──────┘
+                                  │ Webhook / API
+┌─────────────────────────────────┼───────────────────────────────┐
 │                        CORTEX PWA                                │
 │                   (React/Next.js, PWA)                           │
 │                                                                  │
@@ -76,7 +86,10 @@ Both scribe and provider are equally important users. Either may be unavailable 
 │  │ (Phase   │  │              │  │ Mistral Medium 3           ││
 │  │  1.5)    │  │              │  │                             ││
 │  └──────────┘  └──────────────┘  └────────────────────────────┘│
-│                                                                  │
+│  ┌──────────┐                                                   │
+│  │ Omi Audio│  ← Webhook (encounter-bound) + API (ambient pull)│
+│  │ Ingest   │                                                   │
+│  └──────────┘                                                   │
 │  ┌──────────────────────────────────────────────────────────────┐│
 │  │                    Vertex AI RAG Engine                       ││
 │  │              (Nephrology KB, Guidelines, Note History)        ││
@@ -125,6 +138,7 @@ Both scribe and provider are equally important users. Either may be unavailable 
 | **Ops Database** | Cloud SQL (MySQL 8.4) | Shared with TALIA 1.0 AppSheet; MySQL chosen for AppSheet connection stability |
 | **Analytics** | BigQuery | Downstream only, not for ops |
 | **Audio Storage** | GCS | 10-year retention per TN law |
+| **Wearable Capture** | Omi ($89/device, BLE 5.2, HIPAA) | Open-source ambient + encounter-bound capture; dual-track STT trial |
 | **Auth** | Identity-Aware Proxy (IAP) | Zero-trust, infrastructure-level auth, @thekidneyexperts.com, Context-Aware Access policies |
 | **Offline** | Service Worker + IndexedDB + Signed GCS URLs | Local recording, session-key encryption, pre-signed upload URLs for background sync |
 
@@ -145,7 +159,7 @@ Phase 1: HALLWAY HUDDLE          Phase 2: IN-ROOM              Phase 3: POST-ROO
 └─────────────────────┘   └─────────────────────┘   └─────────────────────┘
 ```
 
-**Manual triggers only** — no ambient always-on recording. Provider presses START when ready. This prevents cross-patient PHI bleed between encounters.
+**Manual encounter triggers** define CORTEX's PHI boundaries. Omi wearable provides ambient capture alongside encounter-bound streaming — but audio enters CORTEX only when a provider explicitly starts an encounter (real-time webhook) or retroactively associates an Omi conversation segment (API pull). Between encounters, ambient audio stays in Omi's HIPAA-compliant cloud only, preventing cross-patient PHI bleed.
 
 ---
 
@@ -286,7 +300,10 @@ Not a formal MOU. The hospital already uses DAX and other STT tools — ambient 
 | Vertex AI RAG Engine | ~$200-400 |
 | Cloud Run + Cloud SQL + GCS | ~$200-400 |
 | Audio storage (10-year retention) | ~$60 |
-| **Total** | **~$2,500-3,000** (dropping to ~$1,500-2,000 with Voxtral) |
+| Omi Unlimited (10 devices, trial) | ~$160 |
+| **Total** | **~$2,660-3,160** (dropping to ~$1,660-2,160 with Voxtral) |
+
+**One-time costs**: Omi fleet hardware: 10 devices × $89 + 10 chargers × $20 = ~$1,090.
 
 ---
 
@@ -297,6 +314,7 @@ Not a formal MOU. The hospital already uses DAX and other STT tools — ambient 
 - [ ] **Voxtral Cloud Run GPU deployment spec** — Self-hosting details for Phase 1.5
 - [ ] **EPIC field mapping** — Map Smart Copy output to specific EPIC fields
 - [ ] **User's previous Claude app prototype** — Not found; proceeding without it
+- [ ] **Omi enterprise trial** — Contact Omi sales (cal.com/aaravgarg/enterprise) for 7-day pilot with 10 devices. Test audio quality in hospital. Request BAA.
 
 ---
 
@@ -315,3 +333,4 @@ Not a formal MOU. The hospital already uses DAX and other STT tools — ambient 
 | 9 | 18 inpatient domains | Mar 2026 | Comprehensive nephrology hospital coverage |
 | 10 | Option C (shared DB) | Mar 2026 | AppSheet + CORTEX on same Cloud SQL |
 | 11 | MySQL 8.4 over PostgreSQL | Mar 2026 | AppSheet connection stability; PG process-per-connection architecture causes pool exhaustion with AppSheet sync pattern; MySQL thread-per-connection handles it natively. CORTEX AI workloads run in Vertex AI/Cloud Run, not in SQL. |
+| 12 | Omi wearable for audio capture | Mar 2026 | $89 open-source HIPAA-compliant wearable; ambient + encounter-bound capture; dual-track STT trial ($160/mo Omi cloud vs CORTEX Chirp/Voxtral); fills hallway huddle gap; SOC 2 + HIPAA certified |

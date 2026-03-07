@@ -10,13 +10,14 @@
 
 ## Key Principle
 
-3-Phase Encounter (Hallway Huddle, In-Room, Post-Room) with manual recording triggers. AI generates, provider reviews. "Review, Don't Write."
+3-Phase Encounter (Hallway Huddle, In-Room, Post-Room) with manual encounter triggers. Omi wearable provides ambient + encounter-bound audio capture; PWA mic as fallback. AI generates, provider reviews. "Review, Don't Write."
 
 ## Architecture
 
 - **PWA** (React/Next.js), desktop + mobile
 - **Cloud**: GCP under TKE's existing BAA
-- **STT**: Chirp 3 (Phase 1) → Voxtral Transcribe 2 self-hosted (Phase 1.5)
+- **Audio Capture**: Omi wearable ($89, BLE 5.2, HIPAA/SOC 2) — ambient + encounter-bound; PWA mic fallback
+- **STT**: Chirp 3 (Phase 1) → Voxtral Transcribe 2 self-hosted (Phase 1.5); Omi STT as trial/comparison ($160/mo)
 - **Entity Extraction**: Gemini Flash (post-transcription) + Gemini Flash Vision (screenshots)
 - **Note Council**: 3-model (Gemini 3.1 Pro, Claude Sonnet 4.6, Mistral Medium 3) → Chairman synthesis
 - **RAG**: Vertex AI RAG Engine (fully managed)
@@ -59,7 +60,7 @@ cortex/
 
 - All clinical content follows KDIGO 2024, AHA/ACC, ASFA guidelines
 - Domain IDs use snake_case (e.g., `aki`, `heart_failure_cardiorenal`)
-- HIPAA: All infrastructure under GCP BAA. PHI encrypted at rest + transit.
+- HIPAA: All infrastructure under GCP BAA. Omi BAA required (SOC 2 + HIPAA certified). PHI encrypted at rest + transit.
 - Billing language: "accurate code capture" never "optimization"
 - High-risk fields (labs, meds, doses, access, anticoag) must have provenance tracing
 

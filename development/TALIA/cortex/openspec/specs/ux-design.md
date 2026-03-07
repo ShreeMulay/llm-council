@@ -1,11 +1,12 @@
 # CORTEX — UX Design Specification
 
-> **Version**: 1.1
-> **Last Updated**: March 5, 2026
+> **Version**: 1.2
+> **Last Updated**: March 7, 2026
 > **Screens**: 8
 > **Form Factors**: 3 (Scribe Laptop, Provider Phone, Data Entry Chromebook)
 > **Design Language**: Unified with TKE CKD note template — same base design system, "hospital mode" adaptation
 > **Review**: Incorporates LLM Council UX Review (5-model unanimous consensus)
+> **Capture**: Omi wearable (ambient + encounter-bound) + PWA microphone
 
 ---
 
@@ -16,11 +17,12 @@
 3. **One-Tap for the Common Case** — "Accept All Green" must be achievable in a single tap.
 4. **Progressive Disclosure** — Show summary first, details on demand. No information overload.
 5. **Scribe + Provider Parity** — Both are first-class users. Either may be unavailable at any time.
-6. **Offline-First** — Record locally, sync when connected. Never lose audio.
+6. **Offline-First, Multi-Source** — Record via PWA mic or Omi wearable. Sync when connected. Omi provides its own offline buffer via cloud. Never lose audio.
 7. **EPIC Awareness** — Data flows FROM EPIC (paste/screenshot) and TO EPIC (Smart Copy). Never replace EPIC.
 8. **Transparent Auth** — No login screen. IAP (Identity-Aware Proxy) handles authentication at the infrastructure level. Users are redirected to Google Sign-In if not already signed in, then land directly on the Census screen. Personal phones and managed Chromebooks both work.
 9. **Non-Linear Workflow** — Encounters are a state machine, not a funnel. Support multiple in-progress, deferred, interrupted, and resumed encounters.
 10. **Source Provenance is Non-Negotiable** — Every data point must be traceable to its source: `[Lab 2h ago]`, `[Transcript 4:32]`, `[EPIC paste]`, `[Provider dictation]`. Inline color-coded chips.
+11. **Ambient Capture, Explicit Association** — Omi wearable captures ambient audio continuously. Audio enters CORTEX only when explicitly associated with an encounter — either via real-time webhook during active encounters, or retroactive pull from Omi API. Provider controls PHI boundaries.
 
 ---
 
@@ -128,6 +130,18 @@ Collapsed card layout. Red/flagged sections float to top. Large touch targets (m
 | **User** | Data entry team processing census for upcoming rounds |
 
 Simplified UI optimized for the paste-and-confirm workflow. Sequential navigation through census. No audio features. Giant paste area. Parsed result confirmation.
+
+### Omi Wearable Pairing
+
+Omi pairs via BLE to the provider's or scribe's phone. The Omi companion app handles the BLE connection and audio relay to Omi cloud. CORTEX receives audio via HTTP webhook or API pull — no direct Omi-to-CORTEX BLE connection required.
+
+| Property | Value |
+|----------|-------|
+| **Setup** | One-time pairing in Omi app on provider/scribe phone |
+| **CORTEX Config** | Settings → Device → Link Omi Device → enter Omi API key |
+| **Per-Session** | Automatic — Omi streams when encounter started in CORTEX |
+| **Status Indicator** | Always visible: `📡 Connected` / `📡 Disconnected` / `🔋 Low Battery` |
+| **Fallback** | If Omi disconnected, PWA mic is sole capture. No disruption to workflow. |
 
 ---
 
@@ -239,6 +253,20 @@ The core workflow screen. Three sequential phases for each patient encounter dur
 │  │ Labs ✅ | Vitals ✅ | Meds ✅ | Notes ✅                     │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │                                                                    │
+│                                                                    │
+│  🎙️ OMI AMBIENT CAPTURE                                            │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Omi Status: 📡 Connected | Battery: 78%                     │  │
+│  │                                                               │  │
+│  │ Recent Conversations (last 30 min):                          │  │
+│  │ ● 7:42 AM — 3 min — "Hallway discussion with Dr. Chen       │  │
+│  │   about Smith's potassium and HD timing"                     │  │
+│  │   [▶ Listen] [Pull into this encounter →]                    │  │
+│  │ ● 7:35 AM — 1 min — "Quick call to pharmacy re: vanc        │  │
+│  │   levels"                                                    │  │
+│  │   [▶ Listen] [Pull into this encounter →]                    │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                    │
 │  [Enter Room →]                                                    │
 └────────────────────────────────────────────────────────────────────┘
 ```
@@ -257,7 +285,7 @@ The core workflow screen. Three sequential phases for each patient encounter dur
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │ ← Huddle    Smith, John    ICU 4A-12    🔴 RECORDING  00:04:32   │
-│ Phase: IN-ROOM                                          [⏸ Pause] │
+│ Phase: IN-ROOM     📡 Omi: Streaming | 🎙️ PWA: Active  [⏸ Pause] │
 ├────────────────────────────────────────────────────────────────────┤
 │                                                                    │
 │  🎙️ LIVE TRANSCRIPTION                                            │
@@ -300,7 +328,9 @@ The core workflow screen. Three sequential phases for each patient encounter dur
 - **Live Transcription**: Streaming text with speaker diarization (Dr. Mulay / Patient / Nurse / Family).
 - **Entity Extraction**: Real-time extraction of symptoms, findings, meds mentioned, labs discussed. Feeds into note generation.
 - **Quick Exam Entry**: Tap-based physical exam finding entry. Context-aware — shows relevant exam components based on active domains (e.g., AV fistula exam for dialysis patients, fundoscopy for hypertensive emergency).
-- **Manual Trigger**: Recording starts/stops with explicit button press. NOT ambient.
+- **Manual Trigger**: Encounter start/stop with explicit button press. When active, Omi webhook streams audio to CORTEX automatically. PWA mic records in parallel.
+- **Omi Device Status**: Shows connection state (Connected/Disconnected), streaming status, battery level. If Omi disconnected, PWA mic continues as sole capture source.
+- **Dual Capture**: Both Omi (wearable MEMS mic, closer to patient) and PWA mic (phone/laptop) capture simultaneously. STT pipeline selects higher-quality source or merges.
 
 ### Phase 2C: Post-Room
 
@@ -317,6 +347,16 @@ The core workflow screen. Three sequential phases for each patient encounter dur
 │  │ [Hold to Dictate]                                             │  │
 │  │ "Add your assessment thoughts, plan changes, or anything     │  │
 │  │  not captured in-room"                                        │  │
+│  └──────────────────────────────────────────────────────────────┘  │
+│                                                                    │
+│                                                                    │
+│  🎙️ INCLUDE OMI AMBIENT CAPTURE? (Optional)                        │
+│  ┌──────────────────────────────────────────────────────────────┐  │
+│  │ Omi captured 2 conversations since last encounter:           │  │
+│  │ ☑ 9:02 AM — "Post-room dictation about plan changes" (2m)  │  │
+│  │ ☐ 8:58 AM — "Hallway chat with nurse re: I/O" (1m)         │  │
+│  │                                                               │  │
+│  │ [Include Selected] [Skip — use in-room only]                 │  │
 │  └──────────────────────────────────────────────────────────────┘  │
 │                                                                    │
 │  🤖 NOTE GENERATION                                               │
@@ -897,6 +937,9 @@ Lightweight dictation tagged to a patient encounter, captured outside the formal
 - Exam entries cached locally
 - Sync queue shows pending uploads
 - Note generation queues when online returns
+- Omi has independent offline buffer — captures to Omi cloud even if CORTEX offline
+- When CORTEX comes back online, provider can pull Omi conversations retroactively
+- Dual offline safety: PWA cache (local) + Omi cloud (remote) = belt-and-suspenders
 
 ### Consent Capture
 
@@ -907,6 +950,8 @@ Lightweight dictation tagged to a patient encounter, captured outside the formal
 │ Patient: Smith, John (MRN 12345)     │
 │                                       │
 │ ☑ Verbal consent obtained            │
+│ 🎙️ Recording via: [Omi + Phone ▾]    │
+│ (Omi Wearable | Phone Only | Both)   │
 │ ○ Patient declined recording         │
 │ ○ Patient unable to consent          │
 │   (specify: ________________)        │
@@ -947,6 +992,7 @@ Lightweight dictation tagged to a patient encounter, captured outside the formal
 | `Ctrl+D` | Quick dictate (hold) |
 | `↑ / ↓` | Navigate sections |
 | `Ctrl+P` | Print/export |
+| `Ctrl+O` | Pull Omi ambient capture for current encounter |
 
 ### Animations & Transitions
 
@@ -1014,3 +1060,4 @@ Identified during LLM Council UX review — features from existing ambient docum
 | **DeepScribe** | Smart silence detection — filters non-clinical small talk from transcript | Pre-processing filter before entity extraction. Reduces noise in council input. |
 | **Dragon Medical** | Custom nephrology vocabulary with context-aware corrections | Context biasing (already in STT spec). Add provider-specific vocabulary learning over time. |
 | **Abridge** | Copy-forward detection — flags when today's note is suspiciously similar to yesterday's | Diff view in longitudinal tracking. Alert: "Assessment unchanged for 3 days — verify." |
+| **Omi** | Always-on ambient capture — continuous recording without per-encounter trigger friction | Ambient layer runs alongside encounter-bound recording. Provider associates segments retroactively. Fills hallway huddle gap. |
