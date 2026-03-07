@@ -164,6 +164,33 @@ async def query_openai_models_parallel(
     return dict(results_list)
 
 
+async def query_xai_single(
+    model_id: str,
+    messages: List[Dict[str, str]],
+    max_tokens: int,
+    temperature: float,
+) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Query single xAI model and return (model_id, result) tuple."""
+    try:
+        result = await query_xai_model(model_id, messages, max_tokens, temperature)
+        return model_id, result
+    except Exception as e:
+        logger.error("xAI API error for %s: %s", model_id, e)
+        return model_id, None
+
+
+async def query_xai_models_parallel(
+    model_ids: List[str],
+    messages: List[Dict[str, str]],
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
+) -> Dict[str, Optional[Dict[str, Any]]]:
+    """Query multiple xAI models in parallel."""
+    tasks = [query_xai_single(m, messages, max_tokens, temperature) for m in model_ids]
+    results_list = await asyncio.gather(*tasks)
+    return dict(results_list)
+
+
 async def query_models_parallel(
     model_ids: List[str],
     messages: List[Dict[str, str]],
@@ -186,10 +213,11 @@ async def query_models_parallel(
     cerebras_ids = [m for m in model_ids if is_cerebras_model(m)]
     anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
     openai_ids = [m for m in model_ids if is_openai_model(m)]
-    # OpenRouter handles everything else (Gemini, DeepSeek, Grok, etc.)
+    xai_ids = [m for m in model_ids if is_xai_model(m)]
+    # OpenRouter handles everything else (Gemini, etc.)
     # In Cloud Run, is_anthropic_model() returns False so Anthropic models
     # land here too — translate via fallback map so OpenRouter gets correct IDs.
-    routed = set(fireworks_ids + cerebras_ids + anthropic_ids + openai_ids)
+    routed = set(fireworks_ids + cerebras_ids + anthropic_ids + openai_ids + xai_ids)
     openrouter_raw = [m for m in model_ids if m not in routed]
     # Build mapping from OpenRouter ID -> original council ID for re-keying results
     or_id_map = {(get_openrouter_fallback(m) or m): m for m in openrouter_raw}
@@ -222,6 +250,11 @@ async def query_models_parallel(
     if openai_ids:
         tasks.append(
             query_openai_models_parallel(openai_ids, messages, max_tokens, temperature)
+        )
+
+    if xai_ids:
+        tasks.append(
+            query_xai_models_parallel(xai_ids, messages, max_tokens, temperature)
         )
 
     if openrouter_ids:
@@ -729,6 +762,7 @@ async def _query_single_with_retry(
         or is_cerebras_model(model_id)
         or is_anthropic_model(model_id)
         or is_openai_model(model_id)
+        or is_xai_model(model_id)
     )
 
     async def _try_query() -> Optional[Dict[str, Any]]:

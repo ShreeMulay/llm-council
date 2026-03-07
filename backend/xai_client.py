@@ -7,11 +7,13 @@ from .secrets import GROK_API_KEY
 
 XAI_API_URL = "https://api.x.ai/v1"
 
-# Model ID mapping: council ID -> xAI model ID
+# Model ID mapping: council ID -> xAI API model ID
+# Note: xAI API uses hyphens (grok-4-1-fast-reasoning), not dots (grok-4.1-fast)
 XAI_MODEL_MAP = {
     "x-ai/grok-4": "grok-4",
     "x-ai/grok-4-fast": "grok-4-fast",
     "x-ai/grok-4.1-fast": "grok-4.1-fast",
+    "x-ai/grok-4.1-fast-reasoning": "grok-4-1-fast-reasoning",
     "grok-4": "grok-4",
 }
 
@@ -26,7 +28,7 @@ async def query_xai_model(
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-    timeout: float = 900.0
+    timeout: float = 900.0,
 ) -> Optional[Dict[str, Any]]:
     """Query an xAI Grok model directly via OpenAI-compatible API."""
     if not GROK_API_KEY:
@@ -41,14 +43,14 @@ async def query_xai_model(
                 f"{XAI_API_URL}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {GROK_API_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": xai_model,
                     "messages": messages,
                     "max_tokens": max_tokens,
                     "temperature": temperature,
-                }
+                },
             )
             response.raise_for_status()
             data = response.json()
@@ -57,10 +59,12 @@ async def query_xai_model(
                 "content": data["choices"][0]["message"]["content"],
                 "usage": data.get("usage", {}),
                 "model": model_id,
-                "provider": "xai"
+                "provider": "xai",
             }
         except httpx.HTTPStatusError as e:
-            print(f"HTTP error querying xAI {model_id}: {e.response.status_code} - {e.response.text[:200]}")
+            print(
+                f"HTTP error querying xAI {model_id}: {e.response.status_code} - {e.response.text[:200]}"
+            )
             return None
         except Exception as e:
             print(f"Error querying xAI {model_id}: {e}")

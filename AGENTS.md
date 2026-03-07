@@ -22,7 +22,7 @@ Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing cou
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
 | GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
-| Grok 4.1 Fast | OpenRouter | Real-time Intel | `reasoning: disabled` |
+| Grok 4.1 Fast Reasoning | xAI Direct | Real-time Intel | `reasoning: enabled` |
 
 ### Chairman Selection (LLM Council Decision)
 
@@ -81,8 +81,9 @@ MCP Config:
 - `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.4, Gemini, Grok (+ fallback)
+- `OPENROUTER_API_KEY` - For GPT-5.4, Gemini (+ fallback for all)
 - `FIREWORKS_API_KEY` - For GLM-5 (primary, 3.4x faster)
+- `GROK_API_KEY` - For Grok 4.1 Fast Reasoning via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
 
 ## Model Aliases
@@ -92,7 +93,7 @@ Use aliases in `/council` command:
 - `opus` -> anthropic/claude-opus-4.6
 - `glm` -> fireworks/glm-5
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `grok` -> x-ai/grok-4.1-fast
+- `grok` -> x-ai/grok-4.1-fast-reasoning
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)
 

@@ -174,9 +174,9 @@ async def handle_council_command(
 MCP_TOOL_SCHEMA = {
     "name": "llm_council",
     "description": (
-        "Consult multiple LLMs (Opus 4.6, Gemini Flash 3.0, Grok 4.1, GLM 4.7) for peer-reviewed answers. "
-        "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis. "
-        "Use for complex questions requiring multiple perspectives or when high accuracy is critical."
+        "Consult 5 LLMs (GPT-5.4, Opus 4.6, GLM-5, Gemini 3.1 Pro, Grok 4.1 Reasoning) for peer-reviewed answers. "
+        "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.6). "
+        "GLM-5 via Fireworks (3.4x faster). Use for complex questions requiring multiple perspectives."
     ),
     "inputSchema": {
         "type": "object",
@@ -204,11 +204,13 @@ MCP_TOOL_SCHEMA = {
 # Model aliases documentation for help text
 MODEL_ALIASES_HELP = """
 **Model Aliases** (for /council --models):
+- `gpt` -> openai/gpt-5.4
 - `opus` -> anthropic/claude-opus-4.6
-- `gemini` or `flash` -> google/gemini-3-flash-preview
-- `grok` -> x-ai/grok-4.1-fast
-- `glm` -> zai-glm-4.7
+- `glm` -> fireworks/glm-5
+- `gemini` or `pro` -> google/gemini-3.1-pro-preview
+- `grok` -> x-ai/grok-4.1-fast-reasoning
 - `sonnet` -> anthropic/claude-sonnet-4.5
+- `flash` -> google/gemini-3-flash-preview
 
 **Example**: `/council --models opus,gemini,glm What is quantum computing?`
 """
