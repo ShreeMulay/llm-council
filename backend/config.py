@@ -6,13 +6,8 @@ from pathlib import Path
 # Cloud Run detection — K_SERVICE is set automatically by Cloud Run
 IS_CLOUD_RUN = bool(os.getenv("K_SERVICE"))
 
-# Import secrets from bash_secrets
-from .secrets import (
-    OPENROUTER_API_KEY,
-    CEREBRAS_API_KEY,
-    ANTHROPIC_API_KEY,
-    FIREWORKS_API_KEY,
-)
+# Secrets are loaded via backend.secrets module — import only when needed by
+# specific client modules (openrouter.py, xai_client.py, etc.), not here.
 
 # Directories
 DATA_DIR = Path("data")

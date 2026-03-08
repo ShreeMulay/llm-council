@@ -14,6 +14,9 @@ RUN uv sync --frozen --no-dev --no-install-project
 # --- Runtime stage ---
 FROM python:3.12-slim
 
+# Run as non-root user for security
+RUN groupadd -r council && useradd -r -g council -d /app -s /sbin/nologin council
+
 WORKDIR /app
 
 # Copy virtual env from builder
@@ -22,8 +25,11 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code
 COPY backend/ backend/
 
-# Create data directories (storage/cache)
-RUN mkdir -p data/conversations data/cache
+# Create data directories (storage/cache) owned by non-root user
+RUN mkdir -p data/conversations data/cache && chown -R council:council /app
+
+# Switch to non-root user
+USER council
 
 # Use the virtual env's Python
 ENV PATH="/app/.venv/bin:$PATH"

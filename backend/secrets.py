@@ -68,26 +68,27 @@ def _load_from_bash_secrets() -> dict:
 
 
 def _load_secrets() -> dict:
-    """Load secrets: env vars first, then fill gaps from ~/.bash_secrets."""
+    """Load secrets: env vars first, then fill gaps from ~/.bash_secrets.
+
+    Always merges both sources — env vars take priority over bash_secrets.
+    This ensures all keys are available regardless of deployment environment.
+    """
     secrets = _load_from_env()
     env_count = len(secrets)
 
-    if env_count >= 3:
-        # Enough keys from env — likely running in Cloud Run
-        logger.info("Loaded %d API keys from environment variables", env_count)
-        return secrets
-
-    # Fill gaps from bash_secrets (local dev mode)
+    # Always try to fill gaps from bash_secrets (env vars take priority)
     bash_secrets = _load_from_bash_secrets()
+    bash_added = 0
     for key, value in bash_secrets.items():
         if key not in secrets:
             secrets[key] = value
+            bash_added += 1
 
-    if bash_secrets:
+    if bash_added > 0:
         logger.info(
             "Loaded %d keys from env, %d from ~/.bash_secrets",
             env_count,
-            len(secrets) - env_count,
+            bash_added,
         )
     elif env_count > 0:
         logger.info("Loaded %d API keys from environment variables", env_count)

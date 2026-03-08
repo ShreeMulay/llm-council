@@ -12,6 +12,7 @@ from enum import Enum
 
 class JobStatus(str, Enum):
     """Status of an async council job."""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -22,6 +23,7 @@ class JobStatus(str, Enum):
 
 class CouncilAsyncRequest(BaseModel):
     """Request for async council deliberation with webhook callback."""
+
     query: str
     webhook_url: HttpUrl
     webhook_secret: Optional[str] = None  # Optional HMAC signing secret
@@ -34,6 +36,7 @@ class CouncilAsyncRequest(BaseModel):
 
 class JobInfo(BaseModel):
     """Information about an async council job."""
+
     job_id: str
     status: JobStatus
     query: str
@@ -115,14 +118,14 @@ async def send_webhook(
 ) -> bool:
     """
     Send webhook POST request with retry logic.
-    
+
     Args:
         webhook_url: URL to POST to
         payload: JSON payload to send
         secret: Optional HMAC secret for signing (X-Webhook-Signature header)
         timeout: Request timeout in seconds
         retries: Number of retry attempts
-    
+
     Returns:
         True if webhook was delivered successfully, False otherwise
     """
@@ -130,41 +133,45 @@ async def send_webhook(
         "Content-Type": "application/json",
         "User-Agent": "LLM-Council-Webhook/1.0",
     }
-    
+
+    # Serialize payload once — sign and send the exact same bytes
+    import json as json_module
+
+    payload_bytes = json_module.dumps(
+        payload, sort_keys=True, ensure_ascii=False
+    ).encode()
+
     # Add HMAC signature if secret provided
     if secret:
         import hashlib
         import hmac
-        import json as json_module
-        payload_bytes = json_module.dumps(payload, sort_keys=True).encode()
-        signature = hmac.new(
-            secret.encode(),
-            payload_bytes,
-            hashlib.sha256
-        ).hexdigest()
+
+        signature = hmac.new(secret.encode(), payload_bytes, hashlib.sha256).hexdigest()
         headers["X-Webhook-Signature"] = f"sha256={signature}"
-    
+
     async with httpx.AsyncClient() as client:
         for attempt in range(retries):
             try:
                 response = await client.post(
                     webhook_url,
-                    json=payload,
+                    content=payload_bytes,
                     headers=headers,
                     timeout=timeout,
                 )
                 if response.status_code < 300:
                     return True
-                print(f"Webhook attempt {attempt + 1} failed: HTTP {response.status_code}")
+                print(
+                    f"Webhook attempt {attempt + 1} failed: HTTP {response.status_code}"
+                )
             except httpx.TimeoutException:
                 print(f"Webhook attempt {attempt + 1} timed out")
             except Exception as e:
                 print(f"Webhook attempt {attempt + 1} error: {e}")
-            
+
             # Exponential backoff
             if attempt < retries - 1:
-                await asyncio.sleep(2 ** attempt)
-    
+                await asyncio.sleep(2**attempt)
+
     return False
 
 
@@ -174,15 +181,17 @@ async def run_council_async(
 ):
     """
     Run council deliberation asynchronously and send webhook when complete.
-    
+
     This function is meant to be run as a background task.
     """
     job = get_job(job_id)
     if not job:
         return
-    
-    update_job(job_id, status=JobStatus.RUNNING, started_at=datetime.utcnow().isoformat() + "Z")
-    
+
+    update_job(
+        job_id, status=JobStatus.RUNNING, started_at=datetime.utcnow().isoformat() + "Z"
+    )
+
     try:
         # Run the actual council deliberation
         result = await handle_council_command(
@@ -192,7 +201,7 @@ async def run_council_async(
             chairman=job["chairman"],
             include_details=job["include_details"],
         )
-        
+
         update_job(
             job_id,
             status=JobStatus.COMPLETED,
@@ -200,7 +209,7 @@ async def run_council_async(
             result=result,
             result_summary=f"Council completed with {len(result.get('stage1', {}))} models",
         )
-        
+
         # Build webhook payload
         webhook_payload = {
             "event": "council.completed",
@@ -214,19 +223,23 @@ async def run_council_async(
                 "completed_at": _jobs[job_id]["completed_at"],
             },
         }
-        
+
         # Send webhook
         success = await send_webhook(
             job["webhook_url"],
             webhook_payload,
             secret=job.get("webhook_secret"),
         )
-        
+
         if success:
             update_job(job_id, status=JobStatus.WEBHOOK_SENT)
         else:
-            update_job(job_id, status=JobStatus.WEBHOOK_FAILED, error="Failed to deliver webhook after retries")
-            
+            update_job(
+                job_id,
+                status=JobStatus.WEBHOOK_FAILED,
+                error="Failed to deliver webhook after retries",
+            )
+
     except Exception as e:
         error_msg = str(e)
         update_job(
@@ -235,7 +248,7 @@ async def run_council_async(
             completed_at=datetime.utcnow().isoformat() + "Z",
             error=error_msg,
         )
-        
+
         # Send failure webhook
         try:
             await send_webhook(

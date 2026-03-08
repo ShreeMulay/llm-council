@@ -8,10 +8,10 @@ from .secrets import GEMINI_API_KEY
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
 GEMINI_MODEL_MAP = {
-    "google/gemini-3-flash": "gemini-2.0-flash",
-    "google/gemini-3-flash-preview": "gemini-2.0-flash",
-    "google/gemini-3-pro-preview": "gemini-2.0-flash",
-    "google/gemini-3.1-pro-preview": "gemini-2.0-flash",
+    "google/gemini-3-flash": "gemini-3.0-flash",
+    "google/gemini-3-flash-preview": "gemini-3.0-flash",
+    "google/gemini-3-pro-preview": "gemini-3.0-pro",
+    "google/gemini-3.1-pro-preview": "gemini-3.1-pro",
     "google/gemini-2.0-flash": "gemini-2.0-flash",
 }
 

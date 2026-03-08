@@ -18,8 +18,15 @@ const HEALTH_URL = `${BACKEND_URL}/health`;
 const BACKEND_CWD = path.join(__dirname, "../../");
 const PID_FILE = "/tmp/llm-council-backend.pid";
 const BACKEND_LOG = "/tmp/llm-council.log";
-const COUNCIL_API_KEY = process.env.LLM_COUNCIL_KEY || "";
-const IS_REMOTE = BACKEND_URL.startsWith("https://");
+const COUNCIL_API_KEY = process.env.COUNCIL_API_KEY || process.env.LLM_COUNCIL_KEY || "";
+const IS_REMOTE = (() => {
+  try {
+    const url = new URL(BACKEND_URL);
+    return !["localhost", "127.0.0.1", "0.0.0.0", "::1"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+})();
 
 // ============================================================================
 // BackendManager - Auto-spawns Python backend if not running
@@ -83,12 +90,26 @@ class BackendManager {
     }
   }
 
-  /** Kill the process referenced by PID file */
+  /** Kill the process referenced by PID file, with validation to avoid killing unrelated processes */
   private killStalePid(): void {
     try {
       if (!existsSync(PID_FILE)) return;
       const pid = parseInt(readFileSync(PID_FILE, "utf-8").trim(), 10);
       if (isNaN(pid) || pid <= 0) return;
+
+      // Validate the PID belongs to a Python/backend process before killing
+      try {
+        const { execSync } = require("child_process");
+        const cmdline = execSync(`cat /proc/${pid}/cmdline 2>/dev/null || ps -p ${pid} -o args= 2>/dev/null`, { encoding: "utf-8" });
+        if (!cmdline.includes("python") && !cmdline.includes("backend.main") && !cmdline.includes("uvicorn")) {
+          console.error(`[Backend] PID ${pid} is not a backend process (${cmdline.trim().slice(0, 80)}), skipping kill`);
+          this.cleanStalePidFile();
+          return;
+        }
+      } catch {
+        // Can't verify — process may be dead already, safe to proceed
+      }
+
       process.kill(pid, "SIGTERM");
       console.error(`[Backend] Sent SIGTERM to stale PID ${pid}`);
     } catch {
@@ -410,10 +431,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       signal: controller.signal,
     });
 
-    clearTimeout(timeoutId);
+    // NOTE: timeout stays active until stream is fully consumed (not just headers)
 
     if (streamResponse.ok && streamResponse.headers.get("content-type")?.includes("text/event-stream")) {
       const markdown = await consumeSSEStream(streamResponse);
+      clearTimeout(timeoutId);
       if (markdown) {
         return {
           content: [{ type: "text" as const, text: markdown }],
@@ -422,6 +444,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       // Empty markdown — fall through to sync
       console.error("[Council] Streaming returned empty result, falling back to sync");
     } else {
+      clearTimeout(timeoutId);
       console.error(`[Council] Streaming unavailable (${streamResponse.status}), using sync`);
     }
   } catch (streamError) {

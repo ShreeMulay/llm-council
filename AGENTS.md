@@ -1,6 +1,6 @@
 # LLM Council - OpenCode Project
 
-Multi-model LLM deliberation system with peer review. Queries 7 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
+Multi-model LLM deliberation system with peer review. Queries 5 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
 
 ## Quick Start
 
@@ -67,7 +67,8 @@ MCP Config:
       "command": "node",
       "args": ["/path/to/llm-council/mcp/dist/index.js"],
       "env": {
-        "LLM_COUNCIL_URL": "http://localhost:8800"
+        "LLM_COUNCIL_URL": "http://localhost:8800",
+        "COUNCIL_API_KEY": "your-api-key-here"
       }
     }
   }
@@ -77,11 +78,10 @@ MCP Config:
 ## API Keys & OAuth
 
 **OAuth (loaded from `~/.local/share/opencode/auth.json`):**
-- `openai` / `codex` - For GPT-5.4 via Codex OAuth
-- `anthropic` - For Claude Opus 4.6 via Anthropic OAuth
+- `anthropic` - For Claude Opus 4.6 via Anthropic OAuth (local dev only)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.4, Gemini (+ fallback for all)
+- `OPENROUTER_API_KEY` - For GPT-5.4 (with reasoning_effort: high), Gemini (+ fallback for all)
 - `FIREWORKS_API_KEY` - For GLM-5 (primary, 3.4x faster)
 - `GROK_API_KEY` - For Grok 4.1 Fast Reasoning via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)

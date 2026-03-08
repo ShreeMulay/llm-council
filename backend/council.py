@@ -1031,9 +1031,9 @@ Title:"""
 
     messages = [{"role": "user", "content": title_prompt}]
 
-    # Use a fast model for title generation
+    # Use a fast, cheap model for title generation (must be in config routing)
     response = await query_single_model(
-        "google/gemini-2.0-flash-exp", messages, max_tokens=50
+        "google/gemini-3.1-pro-preview", messages, max_tokens=50
     )
 
     if response is None:

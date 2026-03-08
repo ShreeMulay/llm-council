@@ -2,7 +2,7 @@
 
 ## Overview
 
-The LLM Council is a groundbreaking multi-agent AI system that transforms how you interact with artificial intelligence. Instead of relying on a single model's perspective, we bring together **six specialized AI models** in a structured deliberation process, delivering solutions that are more accurate, nuanced, and actionable than any individual AI could provide alone.
+The LLM Council is a groundbreaking multi-agent AI system that transforms how you interact with artificial intelligence. Instead of relying on a single model's perspective, we bring together **five specialized AI models** in a structured deliberation process, delivering solutions that are more accurate, nuanced, and actionable than any individual AI could provide alone.
 
 Think of us as your personal AI advisory board – a collective intelligence system where diverse models debate, critique, and synthesize their expertise to tackle your most challenging problems. Integrated seamlessly as an **MCP (Model Context Protocol) server for OpenCode**, we auto-spawn our backend infrastructure on demand and deliberate for up to 10 minutes on complex queries.
 

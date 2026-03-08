@@ -59,18 +59,19 @@ from .webhooks import (
 app = FastAPI(
     title="LLM Council API",
     description="Multi-model LLM deliberation system for OpenCode integration",
-    version="1.0.0",
+    version="1.2.0",
 )
 
 # API key auth — protects /api/* routes, skips /health and /
 # Disabled when COUNCIL_API_KEY env var is not set (local dev)
 app.add_middleware(ApiKeyMiddleware)
 
-# Enable CORS for local development and any origin (for MCP access)
+# Enable CORS for local development and MCP access
+# Note: wildcard origin with credentials is invalid per spec — use explicit origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -139,7 +140,7 @@ async def root():
     return {
         "status": "ok",
         "service": "LLM Council API",
-        "version": "1.0.0",
+        "version": "1.2.0",
         "port": BACKEND_PORT,
     }
 
@@ -159,7 +160,7 @@ async def api_info():
     """API information and help."""
     return {
         "name": "LLM Council API",
-        "version": "1.1.0",
+        "version": "1.2.0",
         "description": "Multi-model LLM deliberation with peer review",
         "endpoints": {
             "/api/council": "Execute council deliberation (POST, sync). ?format=markdown|markdown-raw for export.",
@@ -293,7 +294,14 @@ async def council_export(request: ExportRequest, format: str = "markdown"):
 
     # Generate filename from query if not provided
     if request.filename:
-        base_filename = request.filename
+        # Sanitize user-provided filename to prevent header injection
+        import re as _re
+
+        base_filename = _re.sub(r"[^a-zA-Z0-9._-]", "-", request.filename).strip("-")[
+            :80
+        ]
+        if not base_filename:
+            base_filename = "council-deliberation"
     else:
         slug = (
             re.sub(r"[^a-z0-9]+", "-", query.lower()).strip("-")[:60] if query else ""

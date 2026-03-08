@@ -5,6 +5,7 @@ Skips auth for /health, /, and when COUNCIL_API_KEY is not set (local dev).
 """
 
 import logging
+import secrets
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response
@@ -42,7 +43,7 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
                 content={"detail": "Missing X-Council-Key header"},
             )
 
-        if provided_key != COUNCIL_API_KEY:
+        if not secrets.compare_digest(provided_key, COUNCIL_API_KEY):
             logger.warning(
                 "Invalid API key from %s %s",
                 request.method,
