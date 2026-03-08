@@ -18,7 +18,7 @@ Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing cou
 
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
-| GPT-5.4 | OpenRouter | Anchor/Reasoning | `reasoningEffort: high` |
+| GPT-5.4 (Thinking) | OpenRouter | Anchor/Reasoning | `reasoning_effort: high` |
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
 | GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |

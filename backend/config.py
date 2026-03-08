@@ -44,7 +44,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
 # Council Models - 5 models for deliberation
 # Kimi K2.5 and DeepSeek V3.2 removed (distilled from Claude — reduces diversity)
-# 1. GPT-5.4 via OpenRouter (Anchor/Reasoning)
+# 1. GPT-5.4 via OpenRouter (Anchor/Reasoning, reasoning_effort: high)
 # 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder + Chairman)
 # 3. GLM-5 via Fireworks Direct (Tool Specialist) — highest output speed per Artificial Analysis
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
@@ -165,6 +165,19 @@ def get_openrouter_fallback(model_id: str) -> str | None:
 def is_openai_model(model_id: str) -> bool:
     """Check if a model ID should be routed to OpenAI directly."""
     return model_id in OPENAI_MODEL_IDS
+
+
+# Per-model reasoning effort for OpenRouter requests.
+# GPT-5.4 defaults to reasoning: none — we override to "high" for Thinking mode.
+# Models not listed use provider default (no reasoning_effort sent).
+MODEL_REASONING_EFFORT = {
+    "openai/gpt-5.4": "high",
+}
+
+
+def get_model_reasoning_effort(model_id: str) -> str | None:
+    """Get the reasoning effort for a model, or None to use provider default."""
+    return MODEL_REASONING_EFFORT.get(model_id)
 
 
 def resolve_model_alias(alias: str) -> str:

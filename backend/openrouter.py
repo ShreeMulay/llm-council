@@ -5,7 +5,11 @@ import asyncio
 from typing import List, Dict, Any, Optional
 
 from .secrets import OPENROUTER_API_KEY
-from .config import OPENROUTER_API_URL, OPENROUTER_MODELS_URL
+from .config import (
+    OPENROUTER_API_URL,
+    OPENROUTER_MODELS_URL,
+    get_model_reasoning_effort,
+)
 
 
 async def query_model(
@@ -13,7 +17,7 @@ async def query_model(
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-    timeout: float = 900.0
+    timeout: float = 900.0,
 ) -> Optional[Dict[str, Any]]:
     """
     Query a single model via OpenRouter API.
@@ -36,7 +40,7 @@ async def query_model(
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
         "HTTP-Referer": "http://localhost:8800",
-        "X-Title": "LLM Council"
+        "X-Title": "LLM Council",
     }
 
     payload = {
@@ -46,28 +50,33 @@ async def query_model(
         "temperature": temperature,
     }
 
+    # Add reasoning_effort if configured for this model (e.g., GPT-5.4 Thinking)
+    reasoning_effort = get_model_reasoning_effort(model)
+    if reasoning_effort:
+        payload["reasoning_effort"] = reasoning_effort
+
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             response = await client.post(
-                OPENROUTER_API_URL,
-                headers=headers,
-                json=payload
+                OPENROUTER_API_URL, headers=headers, json=payload
             )
             response.raise_for_status()
 
             data = response.json()
-            message = data['choices'][0]['message']
+            message = data["choices"][0]["message"]
 
             return {
-                'content': message.get('content', ''),
-                'reasoning_details': message.get('reasoning_details'),
-                'usage': data.get('usage', {}),
-                'model': model,
-                'provider': 'openrouter'
+                "content": message.get("content", ""),
+                "reasoning_details": message.get("reasoning_details"),
+                "usage": data.get("usage", {}),
+                "model": model,
+                "provider": "openrouter",
             }
 
     except httpx.HTTPStatusError as e:
-        print(f"HTTP error querying OpenRouter {model}: {e.response.status_code} - {e.response.text}")
+        print(
+            f"HTTP error querying OpenRouter {model}: {e.response.status_code} - {e.response.text}"
+        )
         return None
     except httpx.RequestError as e:
         print(f"Request error querying OpenRouter {model}: {e}")
@@ -81,7 +90,7 @@ async def query_models_parallel(
     models: List[str],
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
-    temperature: float = 0.7
+    temperature: float = 0.7,
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """
     Query multiple models in parallel via OpenRouter.
@@ -95,6 +104,7 @@ async def query_models_parallel(
     Returns:
         Dict mapping model identifier to response dict (or None if failed)
     """
+
     async def query_single(model: str) -> tuple[str, Optional[Dict[str, Any]]]:
         result = await query_model(model, messages, max_tokens, temperature)
         return model, result
@@ -123,10 +133,7 @@ async def list_openrouter_models() -> List[Dict[str, Any]]:
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(
-                OPENROUTER_MODELS_URL,
-                headers=headers
-            )
+            response = await client.get(OPENROUTER_MODELS_URL, headers=headers)
             response.raise_for_status()
             data = response.json()
             return data.get("data", [])
