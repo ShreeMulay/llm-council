@@ -13,10 +13,12 @@ IS_CLOUD_RUN = bool(os.getenv("K_SERVICE"))
 DATA_DIR = Path("data")
 CONVERSATIONS_DIR = DATA_DIR / "conversations"
 CACHE_DIR = DATA_DIR / "cache"
+JOBS_DIR = DATA_DIR / "jobs"
 
 # Create directories if they don't exist
 CONVERSATIONS_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
+JOBS_DIR.mkdir(parents=True, exist_ok=True)
 
 # Caching settings
 CACHE_TTL_SECONDS = 86400  # 24 hours

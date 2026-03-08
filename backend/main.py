@@ -583,12 +583,12 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     is_first_message = len(conversation["messages"]) == 0
 
     # Add user message
-    storage.add_user_message(conversation_id, request.content)
+    await storage.add_user_message(conversation_id, request.content)
 
     # If this is the first message, generate a title
     if is_first_message:
         title = await generate_conversation_title(request.content)
-        storage.update_conversation_title(conversation_id, title)
+        await storage.update_conversation_title(conversation_id, title)
 
     # Run the 3-stage council process
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
@@ -596,7 +596,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     )
 
     # Add assistant message with all stages
-    storage.add_assistant_message(
+    await storage.add_assistant_message(
         conversation_id, stage1_results, stage2_results, stage3_result
     )
 
@@ -626,7 +626,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
     async def event_generator():
         try:
             # Add user message
-            storage.add_user_message(conversation_id, request.content)
+            await storage.add_user_message(conversation_id, request.content)
 
             # Start title generation in parallel (don't await yet)
             title_task = None
@@ -660,11 +660,11 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             # Wait for title generation if it was started
             if title_task:
                 title = await title_task
-                storage.update_conversation_title(conversation_id, title)
+                await storage.update_conversation_title(conversation_id, title)
                 yield f"data: {json.dumps({'type': 'title_complete', 'data': {'title': title}})}\n\n"
 
             # Save complete assistant message
-            storage.add_assistant_message(
+            await storage.add_assistant_message(
                 conversation_id, stage1_results, stage2_results, stage3_result
             )
 

@@ -1,8 +1,10 @@
-"""JSON-based storage for conversations."""
+"""JSON-based storage for conversations with per-conversation locking."""
 
+import asyncio
 import json
 import os
 import re
+import tempfile
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 from pathlib import Path
@@ -12,6 +14,17 @@ from .config import CONVERSATIONS_DIR
 _VALID_ID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
 )
+
+# Per-conversation locks to prevent read-modify-write races.
+# Safe because uvicorn runs a single event loop per worker.
+_conversation_locks: Dict[str, asyncio.Lock] = {}
+
+
+def _get_lock(conversation_id: str) -> asyncio.Lock:
+    """Get or create an asyncio lock for a conversation."""
+    if conversation_id not in _conversation_locks:
+        _conversation_locks[conversation_id] = asyncio.Lock()
+    return _conversation_locks[conversation_id]
 
 
 def _validate_conversation_id(conversation_id: str) -> None:
@@ -85,7 +98,7 @@ def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
 
 def save_conversation(conversation: Dict[str, Any]):
     """
-    Save a conversation to storage.
+    Save a conversation to storage using atomic write (temp + rename).
 
     Args:
         conversation: Conversation dict to save
@@ -93,8 +106,20 @@ def save_conversation(conversation: Dict[str, Any]):
     ensure_data_dir()
 
     path = get_conversation_path(conversation["id"])
-    with open(path, "w") as f:
-        json.dump(conversation, f, indent=2)
+    # Atomic write: write to temp file in same directory, then rename
+    dir_path = os.path.dirname(path)
+    fd, tmp_path = tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(conversation, f, indent=2)
+        os.replace(tmp_path, path)  # Atomic on POSIX
+    except BaseException:
+        # Clean up temp file on any failure
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
 
 def list_conversations() -> List[Dict[str, Any]]:
@@ -128,31 +153,31 @@ def list_conversations() -> List[Dict[str, Any]]:
     return conversations
 
 
-def add_user_message(conversation_id: str, content: str):
+async def add_user_message(conversation_id: str, content: str):
     """
-    Add a user message to a conversation.
+    Add a user message to a conversation (async, with locking).
 
     Args:
         conversation_id: Conversation identifier
         content: User message content
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
+    async with _get_lock(conversation_id):
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["messages"].append({"role": "user", "content": content})
+        conversation["messages"].append({"role": "user", "content": content})
+        save_conversation(conversation)
 
-    save_conversation(conversation)
 
-
-def add_assistant_message(
+async def add_assistant_message(
     conversation_id: str,
     stage1: List[Dict[str, Any]],
     stage2: List[Dict[str, Any]],
     stage3: Dict[str, Any],
 ):
     """
-    Add an assistant message with all 3 stages to a conversation.
+    Add an assistant message with all 3 stages to a conversation (async, with locking).
 
     Args:
         conversation_id: Conversation identifier
@@ -160,31 +185,32 @@ def add_assistant_message(
         stage2: List of model rankings
         stage3: Final synthesized response
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
+    async with _get_lock(conversation_id):
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["messages"].append(
-        {"role": "assistant", "stage1": stage1, "stage2": stage2, "stage3": stage3}
-    )
+        conversation["messages"].append(
+            {"role": "assistant", "stage1": stage1, "stage2": stage2, "stage3": stage3}
+        )
+        save_conversation(conversation)
 
-    save_conversation(conversation)
 
-
-def update_conversation_title(conversation_id: str, title: str):
+async def update_conversation_title(conversation_id: str, title: str):
     """
-    Update the title of a conversation.
+    Update the title of a conversation (async, with locking).
 
     Args:
         conversation_id: Conversation identifier
         title: New title for the conversation
     """
-    conversation = get_conversation(conversation_id)
-    if conversation is None:
-        raise ValueError(f"Conversation {conversation_id} not found")
+    async with _get_lock(conversation_id):
+        conversation = get_conversation(conversation_id)
+        if conversation is None:
+            raise ValueError(f"Conversation {conversation_id} not found")
 
-    conversation["title"] = title
-    save_conversation(conversation)
+        conversation["title"] = title
+        save_conversation(conversation)
 
 
 def delete_conversation(conversation_id: str) -> bool:

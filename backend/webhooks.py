@@ -2,12 +2,18 @@
 
 import asyncio
 import httpx
+import ipaddress
+import logging
+import socket
 import uuid
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional, List
+from urllib.parse import urlparse
 from pydantic import BaseModel, HttpUrl
 from enum import Enum
+
+logger = logging.getLogger("llm-council.webhooks")
 
 
 class JobStatus(str, Enum):
@@ -48,14 +54,118 @@ class JobInfo(BaseModel):
     result_summary: Optional[str] = None
 
 
-# In-memory job store (consider Redis/DB for production)
+def _validate_webhook_url(url: str) -> None:
+    """Validate webhook URL is safe (not targeting private/internal networks).
+
+    Raises ValueError if the URL resolves to a private, loopback, or
+    link-local IP address (SSRF prevention).
+    """
+    parsed = urlparse(url)
+    hostname = parsed.hostname
+    if not hostname:
+        raise ValueError(f"Invalid webhook URL: no hostname in {url!r}")
+
+    # Block common internal hostnames
+    blocked_hostnames = {"localhost", "metadata.google.internal", "169.254.169.254"}
+    if hostname.lower() in blocked_hostnames:
+        raise ValueError(f"Webhook URL blocked: {hostname!r} is an internal hostname")
+
+    # Resolve hostname and check all IPs
+    try:
+        addrs = socket.getaddrinfo(
+            hostname, parsed.port or 443, proto=socket.IPPROTO_TCP
+        )
+    except socket.gaierror as e:
+        raise ValueError(f"Cannot resolve webhook hostname {hostname!r}: {e}")
+
+    for family, _, _, _, sockaddr in addrs:
+        ip = ipaddress.ip_address(sockaddr[0])
+        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+            raise ValueError(
+                f"Webhook URL blocked: {hostname!r} resolves to private/internal IP {ip}"
+            )
+
+
+# ============================================================================
+# Disk-persistent job store — survives process restarts and Cloud Run cold starts.
+# In-memory cache (_jobs) is a write-through cache; disk is source of truth.
+# ============================================================================
+
+import json as _json
+import os as _os
+import re as _re
+import tempfile as _tempfile
+from .config import JOBS_DIR
+
+# Valid job ID: UUID format only
+_VALID_JOB_ID_RE = _re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", _re.IGNORECASE
+)
+
+# In-memory write-through cache
 _jobs: Dict[str, Dict[str, Any]] = {}
 
 
+def _job_path(job_id: str) -> str:
+    """Get the file path for a job. Validates ID format."""
+    if not _VALID_JOB_ID_RE.match(job_id):
+        raise ValueError(f"Invalid job ID format: {job_id!r}")
+    return str(JOBS_DIR / f"{job_id}.json")
+
+
+def _save_job(job: Dict[str, Any]) -> None:
+    """Persist a job to disk (atomic write)."""
+    path = _job_path(job["job_id"])
+    dir_path = _os.path.dirname(path)
+    # Exclude large 'result' from disk to save space — it's in the webhook payload
+    persist = {k: v for k, v in job.items() if k != "result"}
+    fd, tmp = _tempfile.mkstemp(dir=dir_path, suffix=".tmp")
+    try:
+        with _os.fdopen(fd, "w") as f:
+            _json.dump(persist, f, indent=2, default=str)
+        _os.replace(tmp, path)
+    except BaseException:
+        try:
+            _os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def _load_job(job_id: str) -> Optional[Dict[str, Any]]:
+    """Load a job from disk."""
+    path = _job_path(job_id)
+    if not _os.path.exists(path):
+        return None
+    with open(path, "r") as f:
+        return _json.load(f)
+
+
+def _load_all_jobs() -> Dict[str, Dict[str, Any]]:
+    """Load all jobs from disk into memory (called once at startup)."""
+    jobs = {}
+    JOBS_DIR.mkdir(parents=True, exist_ok=True)
+    for filename in _os.listdir(JOBS_DIR):
+        if filename.endswith(".json"):
+            path = str(JOBS_DIR / filename)
+            try:
+                with open(path, "r") as f:
+                    job = _json.load(f)
+                    jobs[job["job_id"]] = job
+            except Exception as e:
+                logger.warning("Failed to load job %s: %s", filename, e)
+    return jobs
+
+
+# Load existing jobs from disk on module import
+_jobs = _load_all_jobs()
+logger.info("Loaded %d persisted jobs from disk", len(_jobs))
+
+
 def create_job(request: CouncilAsyncRequest) -> str:
-    """Create a new async job and return its ID."""
+    """Create a new async job and return its ID. Persisted to disk."""
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {
+    job = {
         "job_id": job_id,
         "status": JobStatus.PENDING,
         "query": request.query,
@@ -72,12 +182,20 @@ def create_job(request: CouncilAsyncRequest) -> str:
         "error": None,
         "result": None,
     }
+    _jobs[job_id] = job
+    _save_job(job)
     return job_id
 
 
 def get_job(job_id: str) -> Optional[Dict[str, Any]]:
-    """Get job information by ID."""
-    return _jobs.get(job_id)
+    """Get job information by ID (from memory cache, falls back to disk)."""
+    job = _jobs.get(job_id)
+    if job is None:
+        # Try disk (may have been loaded by another instance)
+        job = _load_job(job_id)
+        if job:
+            _jobs[job_id] = job
+    return job
 
 
 def list_jobs(limit: int = 50, status: Optional[JobStatus] = None) -> List[JobInfo]:
@@ -104,9 +222,10 @@ def list_jobs(limit: int = 50, status: Optional[JobStatus] = None) -> List[JobIn
 
 
 def update_job(job_id: str, **updates):
-    """Update job fields."""
+    """Update job fields (writes through to disk)."""
     if job_id in _jobs:
         _jobs[job_id].update(updates)
+        _save_job(_jobs[job_id])
 
 
 async def send_webhook(
@@ -128,7 +247,13 @@ async def send_webhook(
 
     Returns:
         True if webhook was delivered successfully, False otherwise
+
+    Raises:
+        ValueError: If webhook_url targets a private/internal IP (SSRF protection)
     """
+    # SSRF protection: block private/internal IPs
+    _validate_webhook_url(webhook_url)
+
     headers = {
         "Content-Type": "application/json",
         "User-Agent": "LLM-Council-Webhook/1.0",
@@ -267,7 +392,7 @@ async def run_council_async(
 
 
 def cleanup_old_jobs(max_age_hours: int = 24):
-    """Remove jobs older than max_age_hours."""
+    """Remove jobs older than max_age_hours (from memory and disk)."""
     cutoff = time.time() - (max_age_hours * 3600)
     to_remove = []
     for job_id, job in _jobs.items():
@@ -276,4 +401,11 @@ def cleanup_old_jobs(max_age_hours: int = 24):
             to_remove.append(job_id)
     for job_id in to_remove:
         del _jobs[job_id]
+        # Remove from disk too
+        try:
+            path = _job_path(job_id)
+            if _os.path.exists(path):
+                _os.remove(path)
+        except Exception:
+            pass  # Best effort
     return len(to_remove)

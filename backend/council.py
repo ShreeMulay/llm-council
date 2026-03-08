@@ -8,6 +8,22 @@ from collections import defaultdict
 
 logger = logging.getLogger("llm-council.council")
 
+# Maximum characters per model response when building Stage 2/3 prompts.
+# Prevents context window explosion when individual models produce very long outputs.
+# 12,000 chars ~ 3,000 tokens. With 5 models that's ~15K tokens of context,
+# leaving plenty of room for the ranking/synthesis prompt and response.
+MAX_RESPONSE_CHARS_FOR_PROMPT = 12_000
+
+
+def _truncate_for_prompt(
+    text: str, max_chars: int = MAX_RESPONSE_CHARS_FOR_PROMPT
+) -> str:
+    """Truncate text for inclusion in a prompt, adding a truncation notice if needed."""
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n\n[... response truncated for context budget ...]"
+
+
 from .config import (
     COUNCIL_MODELS,
     CHAIRMAN_MODEL,
@@ -452,10 +468,10 @@ async def stage2_collect_rankings(
         for label, result in zip(labels, stage1_results)
     }
 
-    # Build the ranking prompt
+    # Build the ranking prompt (truncate long responses to prevent context explosion)
     responses_text = "\n\n".join(
         [
-            f"Response {label}:\n{result['response']}"
+            f"Response {label}:\n{_truncate_for_prompt(result['response'])}"
             for label, result in zip(labels, stage1_results)
         ]
     )
@@ -537,20 +553,20 @@ async def stage3_synthesize_final(
     """
     chairman = chairman_model or CHAIRMAN_MODEL
 
-    # Build comprehensive context for chairman
+    # Build comprehensive context for chairman (truncate long responses to prevent context explosion)
     stage1_text = "\n\n".join(
         [
-            f"Model: {result['model']}\nResponse: {result['response']}"
+            f"Model: {result['model']}\nResponse: {_truncate_for_prompt(result['response'])}"
             for result in stage1_results
         ]
     )
 
-    # Only include stage2 text if we have rankings
+    # Only include stage2 text if we have rankings (rankings are shorter, but truncate for safety)
     stage2_text = ""
     if stage2_results:
         stage2_text = "\n\nSTAGE 2 - Peer Rankings:\n" + "\n\n".join(
             [
-                f"Model: {result['model']}\nRanking: {result['ranking']}"
+                f"Model: {result['model']}\nRanking: {_truncate_for_prompt(result['ranking'])}"
                 for result in stage2_results
             ]
         )
