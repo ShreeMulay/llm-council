@@ -374,8 +374,52 @@ async function consumeSSEStream(
 }
 
 // ============================================================================
-// Tool Handler — uses streaming with sync fallback
+// Tool Handler — uses streaming with retry logic and sync fallback
 // ============================================================================
+
+const MAX_FETCH_RETRIES = 3;
+const RETRY_DELAY_MS = 2000; // 2 seconds between retries
+
+/** Warm the connection to remote backend (TLS handshake, DNS) before the real request */
+async function warmConnection(): Promise<void> {
+  if (!IS_REMOTE) return;
+  try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 5000);
+    await fetch(HEALTH_URL, { signal: controller.signal });
+    clearTimeout(tid);
+  } catch {
+    // Best effort — the real request will retry if this fails
+  }
+}
+
+/** Fetch with retry for transient connection failures (DNS, TLS, TCP) */
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit,
+  retries: number = MAX_FETCH_RETRIES,
+): Promise<Response> {
+  let lastError: Error | undefined;
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      return await fetch(url, init);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      // Don't retry on abort (timeout) — that's intentional
+      if (lastError.name === "AbortError") throw lastError;
+      const cause = lastError.cause ? ` (cause: ${lastError.cause})` : "";
+      console.error(
+        `[Council] fetch attempt ${attempt}/${retries} failed: ${lastError.message}${cause}`
+      );
+      if (attempt < retries) {
+        // Warm the connection before retrying
+        await warmConnection();
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS * attempt));
+      }
+    }
+  }
+  throw lastError!;
+}
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
@@ -387,6 +431,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   // Ensure backend is running (local mode only — remote Cloud Run is always up)
   if (!IS_REMOTE) {
     await backendManager.ensureRunning();
+  } else {
+    // Warm the TLS/TCP connection to Cloud Run before the real request
+    await warmConnection();
   }
 
   const query = args?.query as string;
@@ -419,17 +466,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 
   try {
-    // Try streaming endpoint first
+    // Try streaming endpoint first (with retries for transient failures)
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
 
-    console.error(`[Council] Starting streaming deliberation...`);
-    const streamResponse = await fetch(`${BACKEND_URL}/api/council/stream`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    });
+    console.error(`[Council] Starting streaming deliberation (query: ${query.length} chars)...`);
+    const streamResponse = await fetchWithRetry(
+      `${BACKEND_URL}/api/council/stream`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      },
+    );
 
     // NOTE: timeout stays active until stream is fully consumed (not just headers)
 
@@ -449,6 +499,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
   } catch (streamError) {
     const msg = streamError instanceof Error ? streamError.message : "unknown";
+    const cause = streamError instanceof Error && streamError.cause
+      ? ` | cause: ${streamError.cause}`
+      : "";
     if (streamError instanceof Error && streamError.name === "AbortError") {
       return {
         content: [
@@ -460,20 +513,24 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         isError: true,
       };
     }
-    console.error(`[Council] Streaming failed (${msg}), falling back to sync`);
+    console.error(`[Council] Streaming failed after ${MAX_FETCH_RETRIES} attempts (${msg}${cause}), falling back to sync`);
   }
 
-  // Fallback: sync endpoint
+  // Fallback: sync endpoint (also with retries)
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), COUNCIL_TIMEOUT_MS);
 
-    const response = await fetch(`${BACKEND_URL}/api/council`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(requestBody),
-      signal: controller.signal,
-    });
+    console.error("[Council] Trying sync endpoint...");
+    const response = await fetchWithRetry(
+      `${BACKEND_URL}/api/council`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+      },
+    );
 
     clearTimeout(timeoutId);
 
@@ -494,6 +551,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   } catch (error) {
     let errorMessage = error instanceof Error ? error.message : "Unknown error";
+    const cause = error instanceof Error && error.cause
+      ? ` (underlying: ${error.cause})`
+      : "";
     
     if (error instanceof Error && error.name === "AbortError") {
       errorMessage = `Council deliberation timed out after ${COUNCIL_TIMEOUT_MS / 1000}s. Try using final_only: true for faster results.`;
@@ -503,7 +563,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       content: [
         {
           type: "text" as const,
-          text: `Error consulting LLM Council: ${errorMessage}`,
+          text: `Error consulting LLM Council: ${errorMessage}${cause}`,
         },
       ],
       isError: true,
