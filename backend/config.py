@@ -45,13 +45,13 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder + Chairman)
 # 3. GLM-5 via Fireworks Direct (Tool Specialist) — highest output speed per Artificial Analysis
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
-# 5. Grok 4.1 Fast Reasoning via xAI Direct (Real-time Intel)
+# 5. Grok 4.20 Reasoning via xAI Direct (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.4",  # OpenRouter (Anchor)
     "anthropic/claude-opus-4.6",  # Anthropic OAuth (Lead Coder)
     "fireworks/glm-5",  # Fireworks Direct (Tool Specialist)
     "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
-    "x-ai/grok-4.1-fast-reasoning",  # xAI Direct (Real-time Intel)
+    "x-ai/grok-4.20-0309-reasoning",  # xAI Direct (Real-time Intel)
 ]
 
 # Chairman Model - synthesizes final response
@@ -90,6 +90,9 @@ XAI_MODEL_IDS = [
     "x-ai/grok-4-fast",
     "x-ai/grok-4.1-fast",
     "x-ai/grok-4.1-fast-reasoning",
+    "x-ai/grok-4.20-0309-reasoning",
+    "x-ai/grok-4.20-0309-non-reasoning",
+    "x-ai/grok-4.20-multi-agent-0309",
 ]
 
 GEMINI_DIRECT_MODEL_IDS = [
@@ -123,7 +126,7 @@ MODEL_ALIASES = {
     "glm": "fireworks/glm-5",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
-    "grok": "x-ai/grok-4.1-fast-reasoning",
+    "grok": "x-ai/grok-4.20-0309-reasoning",
     "sonnet": "anthropic/claude-sonnet-4.5",
     "flash": "google/gemini-3-flash-preview",
 }
