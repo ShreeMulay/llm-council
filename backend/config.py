@@ -114,6 +114,7 @@ OPENROUTER_FALLBACK_MAP = {
     "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
     "openai/gpt-5.4": "openai/gpt-5.4",
     "x-ai/grok-4": "x-ai/grok-4",
+    "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
 }
 
 # OpenAI models (disabled - Codex OAuth uses Responses API, not Chat Completions)

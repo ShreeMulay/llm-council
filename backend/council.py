@@ -14,6 +14,11 @@ logger = logging.getLogger("llm-council.council")
 # leaving plenty of room for the ranking/synthesis prompt and response.
 MAX_RESPONSE_CHARS_FOR_PROMPT = 12_000
 
+# Per-model timeout for individual provider calls.
+# Prevents a single dead/slow provider from blocking the entire council.
+# Individual models that exceed this are skipped (others continue).
+PER_MODEL_TIMEOUT_SECONDS = 180  # 3 minutes per model
+
 
 def _truncate_for_prompt(
     text: str, max_chars: int = MAX_RESPONSE_CHARS_FOR_PROMPT
@@ -212,86 +217,40 @@ async def query_models_parallel(
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
+    per_model_timeout: float = PER_MODEL_TIMEOUT_SECONDS,
 ) -> Dict[str, Optional[Dict[str, Any]]]:
     """
     Query multiple models via their respective providers in parallel.
 
-    Args:
-        model_ids: List of model IDs
-        messages: Messages to send
-        max_tokens: Maximum output tokens
-        temperature: Sampling temperature
-
-    Returns:
-        Dict mapping model_id to response (or None on error)
+    Each model has an individual timeout (per_model_timeout). If a model
+    exceeds the timeout, it returns None and other models continue.
+    This prevents a single dead provider from blocking the entire council.
     """
-    fireworks_ids = [m for m in model_ids if is_fireworks_model(m)]
-    cerebras_ids = [m for m in model_ids if is_cerebras_model(m)]
-    anthropic_ids = [m for m in model_ids if is_anthropic_model(m)]
-    openai_ids = [m for m in model_ids if is_openai_model(m)]
-    xai_ids = [m for m in model_ids if is_xai_model(m)]
-    # OpenRouter handles everything else (Gemini, etc.)
-    # In Cloud Run, is_anthropic_model() returns False so Anthropic models
-    # land here too — translate via fallback map so OpenRouter gets correct IDs.
-    routed = set(fireworks_ids + cerebras_ids + anthropic_ids + openai_ids + xai_ids)
-    openrouter_raw = [m for m in model_ids if m not in routed]
-    # Build mapping from OpenRouter ID -> original council ID for re-keying results
-    or_id_map = {(get_openrouter_fallback(m) or m): m for m in openrouter_raw}
-    openrouter_ids = list(or_id_map.keys())
 
-    results = {}
-    tasks = []
-
-    if fireworks_ids:
-        tasks.append(
-            query_fireworks_models_parallel(
-                fireworks_ids, messages, max_tokens, temperature
+    async def _query_with_timeout(
+        model_id: str,
+    ) -> Tuple[str, Optional[Dict[str, Any]]]:
+        """Query a single model with a per-model timeout guard."""
+        try:
+            result = await asyncio.wait_for(
+                query_single_model(model_id, messages, max_tokens, temperature),
+                timeout=per_model_timeout,
             )
-        )
-
-    if cerebras_ids:
-        tasks.append(
-            query_cerebras_models_parallel(
-                cerebras_ids, messages, max_tokens, temperature
+            return model_id, result
+        except asyncio.TimeoutError:
+            logger.error(
+                "Model %s timed out after %.0fs — skipping", model_id, per_model_timeout
             )
-        )
+            return model_id, None
+        except Exception as e:
+            logger.error("Model %s failed: %s", model_id, e)
+            return model_id, None
 
-    if anthropic_ids:
-        tasks.append(
-            query_anthropic_models_parallel(
-                anthropic_ids, messages, max_tokens, temperature
-            )
-        )
+    # Query all models in parallel with individual timeouts
+    tasks = [_query_with_timeout(m) for m in model_ids]
+    task_results = await asyncio.gather(*tasks)
 
-    if openai_ids:
-        tasks.append(
-            query_openai_models_parallel(openai_ids, messages, max_tokens, temperature)
-        )
-
-    if xai_ids:
-        tasks.append(
-            query_xai_models_parallel(xai_ids, messages, max_tokens, temperature)
-        )
-
-    if openrouter_ids:
-        tasks.append(
-            query_openrouter_models_parallel(
-                openrouter_ids, messages, max_tokens, temperature
-            )
-        )
-
-    if tasks:
-        provider_results = await asyncio.gather(*tasks)
-        for pr in provider_results:
-            results.update(pr)
-
-    # Re-key OpenRouter results from translated IDs back to council IDs.
-    # e.g. "anthropic/claude-opus-4-6" -> "anthropic/claude-opus-4.6"
-    for or_id, council_id in or_id_map.items():
-        if or_id != council_id and or_id in results:
-            results[council_id] = results.pop(or_id)
-
-    return results
+    return dict(task_results)
 
 
 async def query_models_with_retries(

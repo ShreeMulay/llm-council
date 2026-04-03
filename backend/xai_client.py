@@ -1,20 +1,26 @@
 """xAI API client for direct queries to Grok models."""
 
 import httpx
+import logging
 from typing import List, Dict, Any, Optional
 
 from .secrets import GROK_API_KEY
+
+logger = logging.getLogger("llm-council.xai")
 
 XAI_API_URL = "https://api.x.ai/v1"
 
 # Model ID mapping: council ID -> xAI API model ID
 # Note: xAI API uses hyphens (grok-4-1-fast-reasoning), not dots (grok-4.1-fast)
 XAI_MODEL_MAP = {
-    "x-ai/grok-4": "grok-4",
-    "x-ai/grok-4-fast": "grok-4-fast",
-    "x-ai/grok-4.1-fast": "grok-4.1-fast",
+    "x-ai/grok-4": "grok-4-0709",
+    "x-ai/grok-4-fast": "grok-4-fast-reasoning",
+    "x-ai/grok-4.1-fast": "grok-4-1-fast-non-reasoning",
     "x-ai/grok-4.1-fast-reasoning": "grok-4-1-fast-reasoning",
-    "grok-4": "grok-4",
+    "x-ai/grok-4.20-0309-reasoning": "grok-4.20-0309-reasoning",
+    "x-ai/grok-4.20-0309-non-reasoning": "grok-4.20-0309-non-reasoning",
+    "x-ai/grok-4.20-multi-agent-0309": "grok-4.20-multi-agent-0309",
+    "grok-4": "grok-4-0709",
 }
 
 
@@ -28,11 +34,16 @@ async def query_xai_model(
     messages: List[Dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-    timeout: float = 900.0,
+    timeout: float = 300.0,
 ) -> Optional[Dict[str, Any]]:
-    """Query an xAI Grok model directly via OpenAI-compatible API."""
+    """Query an xAI Grok model directly via OpenAI-compatible API.
+
+    Prompt caching is automatic on xAI — repeated prefixes in messages
+    are cached at $0.20/M (10% of standard input rate). No special
+    parameters needed.
+    """
     if not GROK_API_KEY:
-        print("Error: GROK_API_KEY not configured")
+        logger.error("GROK_API_KEY not configured")
         return None
 
     xai_model = get_xai_model_id(model_id)
@@ -62,10 +73,13 @@ async def query_xai_model(
                 "provider": "xai",
             }
         except httpx.HTTPStatusError as e:
-            print(
-                f"HTTP error querying xAI {model_id}: {e.response.status_code} - {e.response.text[:200]}"
+            logger.error(
+                "HTTP error querying xAI %s: %s - %s",
+                model_id,
+                e.response.status_code,
+                e.response.text[:200],
             )
             return None
         except Exception as e:
-            print(f"Error querying xAI {model_id}: {e}")
+            logger.error("Error querying xAI %s: %s", model_id, e)
             return None

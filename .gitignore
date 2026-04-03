@@ -22,4 +22,4 @@ frontend/.vite/
 
 # MCP server
 mcp/node_modules/
-mcp/dist/
+mcp/dist/inngest/

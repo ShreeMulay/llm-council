@@ -44,7 +44,7 @@ Claude Opus 4.6, serving as Chairman, reviews all ranked responses and critiques
 | **GPT-5.4 (Thinking)** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
 | **GLM-5** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. Ensures solutions actually work in practice. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
-| **Grok 4.1 Fast Reasoning** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks with extended reasoning. Keeps solutions relevant and timely. |
+| **Grok 4.20 Reasoning** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks with extended reasoning. #1 in factual honesty (78% non-hallucination record) and instruction following. 2M context window. |
 
 ## Use Cases
 

@@ -171,11 +171,19 @@ async def call_anthropic_oauth(
     if system_prompt:
         final_system = f"{CLAUDE_CODE_SYSTEM_PREFIX}\n\n{system_prompt}"
 
+    # Use structured system with cache_control for Anthropic prompt caching.
+    # Caches the system prompt prefix across requests (saves ~90% on cached tokens).
     payload = {
         "model": anthropic_model,
         "max_tokens": max_tokens,
         "messages": messages,
-        "system": final_system,
+        "system": [
+            {
+                "type": "text",
+                "text": final_system,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ],
     }
 
     async with httpx.AsyncClient(timeout=900.0) as client:
@@ -242,7 +250,14 @@ async def call_anthropic_api_key(
     }
 
     if system_prompt:
-        payload["system"] = system_prompt
+        # Use structured system with cache_control for prompt caching
+        payload["system"] = [
+            {
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }
+        ]
 
     async with httpx.AsyncClient(timeout=900.0) as client:
         response = await client.post(ANTHROPIC_API_URL, headers=headers, json=payload)
