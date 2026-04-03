@@ -194,7 +194,7 @@ process.on("SIGTERM", async () => {
   await backendManager.shutdown();
   process.exit(0);
 });
-const COUNCIL_TIMEOUT_MS = parseInt(process.env.LLM_COUNCIL_TIMEOUT || "900000", 10);
+const COUNCIL_TIMEOUT_MS = parseInt(process.env.LLM_COUNCIL_TIMEOUT || "1500000", 10);
 
 interface CouncilRequest {
   query: string;

@@ -30,7 +30,7 @@ gcloud run deploy "${SERVICE}" \
   --region="${REGION}" \
   --image="${REGISTRY}:${TAG}" \
   --port=8800 \
-  --timeout=900 \
+  --timeout=1800 \
   --memory=512Mi \
   --cpu=1 \
   --min-instances=1 \

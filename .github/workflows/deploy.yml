@@ -51,7 +51,7 @@ jobs:
             --image=${{ env.REGISTRY }}:${{ github.sha }} \
             --region=${{ env.REGION }} \
             --port=8800 \
-            --timeout=900 \
+            --timeout=1800 \
             --memory=512Mi \
             --cpu=1 \
             --min-instances=1 \
