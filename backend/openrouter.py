@@ -48,11 +48,8 @@ async def query_model(
         "messages": messages,
         "max_tokens": max_tokens,
         "temperature": temperature,
-        # Enable provider prompt caching where available (Anthropic, OpenAI, Google).
-        # OpenRouter passes this through to the upstream provider's caching layer.
         "provider": {
-            "allow_fallback": True,
-            "require_parameters": False,
+            "allow_fallbacks": True,
         },
     }
 
