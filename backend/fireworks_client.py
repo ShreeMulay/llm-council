@@ -1,10 +1,10 @@
 """Fireworks AI client for high-throughput inference of open-source models.
 
 Fireworks provides OpenAI-compatible API with optimized inference (up to 200 tok/s
-on GLM-5, 3.4x faster than OpenRouter for long-form responses).
+on GLM-5.1, 3.4x faster than OpenRouter for long-form responses).
 
-Used as primary provider for: GLM-5
-Fallback: OpenRouter
+Used as primary provider for: GLM-5.1 (upgraded from GLM-5 Apr 2026)
+Fallback: OpenRouter (z-ai/glm-5.1)
 """
 
 import asyncio
@@ -17,9 +17,12 @@ FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1"
 
 # Model ID mapping: council ID -> Fireworks model ID
 # Fireworks uses accounts/fireworks/models/<name> format
+# GLM-5.1 uses "glm-5p1" slug on Fireworks (not "glm-5.1")
 FIREWORKS_MODEL_MAP = {
+    "fireworks/glm-5.1": "accounts/fireworks/models/glm-5p1",
     "fireworks/glm-5": "accounts/fireworks/models/glm-5",
     # Allow direct Fireworks IDs to pass through
+    "accounts/fireworks/models/glm-5p1": "accounts/fireworks/models/glm-5p1",
     "accounts/fireworks/models/glm-5": "accounts/fireworks/models/glm-5",
 }
 
@@ -88,7 +91,8 @@ async def query_fireworks_model(
             msg = data["choices"][0]["message"]
             text = msg.get("content") or ""
             reasoning = msg.get("reasoning_content") or ""
-            # GLM-5 puts most output in reasoning_content; combine if content is sparse
+            # GLM-5/5.1 puts most output in reasoning_content; combine if content is sparse.
+            # GLM-5.1 has thinking mode ON by default, so this merging is critical.
             if reasoning and len(text) < 50:
                 text = text + "\n\n" + reasoning if text else reasoning
             logger.info(

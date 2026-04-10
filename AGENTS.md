@@ -20,7 +20,7 @@ Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing cou
 |-------|----------|------|------------------|
 | GPT-5.4 (Thinking) | OpenRouter | Anchor/Reasoning | `reasoning_effort: high` |
 | Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
-| GLM-5 | Fireworks Direct | Tool Specialist | Highest output speed (AA) |
+| GLM-5.1 | Fireworks Direct | Tool Specialist | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
 | Grok 4.20 Reasoning | xAI Direct | Real-time Intel | `reasoning: enabled` |
 
@@ -82,7 +82,7 @@ MCP Config:
 
 **API Keys (loaded from `~/.bash_secrets`):**
 - `OPENROUTER_API_KEY` - For GPT-5.4 (with reasoning_effort: high), Gemini (+ fallback for all)
-- `FIREWORKS_API_KEY` - For GLM-5 (primary, 3.4x faster)
+- `FIREWORKS_API_KEY` - For GLM-5.1 (primary, 3.4x faster)
 - `GROK_API_KEY` - For Grok 4.20 Reasoning via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
 
@@ -91,7 +91,7 @@ MCP Config:
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.4
 - `opus` -> anthropic/claude-opus-4.6
-- `glm` -> fireworks/glm-5
+- `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.20-0309-reasoning
 - `sonnet` -> anthropic/claude-sonnet-4.5

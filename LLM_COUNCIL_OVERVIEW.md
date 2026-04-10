@@ -42,7 +42,7 @@ Claude Opus 4.6, serving as Chairman, reviews all ranked responses and critiques
 |--------|------|-----------|
 | **Claude Opus 4.6** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Ensures outputs are clean, practical, and well-structured. |
 | **GPT-5.4 (Thinking)** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
-| **GLM-5** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. Ensures solutions actually work in practice. |
+| **GLM-5.1** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. #1 open-weights model (Intelligence Index 51). SWE-Bench Pro SOTA (58.4). Ensures solutions actually work in practice. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
 | **Grok 4.20 Reasoning** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks with extended reasoning. #1 in factual honesty (78% non-hallucination record) and instruction following. 2M context window. |
 
