@@ -177,9 +177,14 @@ def is_openai_model(model_id: str) -> bool:
 
 # Per-model reasoning effort for OpenRouter requests.
 # GPT-5.4 defaults to reasoning: none — we override to "high" for Thinking mode.
+# Opus 4.7 supports new "xhigh" effort level (between high and max) introduced
+# Apr 16 2026. Anthropic's own Claude Code defaults to xhigh for coding/agentic use.
+# Tested via OpenRouter: both top-level and nested syntax accepted; xhigh produces
+# ~15% more completion tokens and ~39% more content than high (confirmed Apr 17 2026).
 # Models not listed use provider default (no reasoning_effort sent).
 MODEL_REASONING_EFFORT = {
     "openai/gpt-5.4": "high",
+    "anthropic/claude-opus-4.7": "xhigh",
 }
 
 

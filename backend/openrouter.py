@@ -53,10 +53,22 @@ async def query_model(
         },
     }
 
-    # Add reasoning_effort if configured for this model (e.g., GPT-5.4 Thinking)
+    # Add reasoning_effort if configured for this model (e.g., GPT-5.4 Thinking,
+    # Opus 4.7 xhigh).
     reasoning_effort = get_model_reasoning_effort(model)
     if reasoning_effort:
         payload["reasoning_effort"] = reasoning_effort
+        # When reasoning effort matters, prefer the native provider. Some
+        # providers (e.g., Amazon Bedrock for Anthropic models) silently drop
+        # the reasoning_effort parameter, which defeats the purpose.
+        # Tested Apr 17 2026: Bedrock returned ~1000 tokens for all efforts,
+        # while Anthropic native honored xhigh (1320 vs 1145 for high).
+        # allow_fallbacks remains true so we still degrade gracefully if the
+        # native provider is unavailable.
+        if model.startswith("anthropic/"):
+            payload["provider"]["order"] = ["anthropic"]
+        elif model.startswith("openai/"):
+            payload["provider"]["order"] = ["openai"]
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
