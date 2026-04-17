@@ -30,7 +30,7 @@ Council members review and rank each other's responses based on:
 This internal quality control surfaces the best ideas while identifying weaknesses and edge cases.
 
 ### Stage 3: Chairman Synthesis (~1-2 minutes)
-Claude Opus 4.6, serving as Chairman, reviews all ranked responses and critiques to produce a final, unified solution that:
+Claude Opus 4.7, serving as Chairman, reviews all ranked responses and critiques to produce a final, unified solution that:
 - Integrates the strongest elements from each perspective
 - Resolves contradictions between approaches
 - Delivers a polished, implementation-ready answer
@@ -40,7 +40,7 @@ Claude Opus 4.6, serving as Chairman, reviews all ranked responses and critiques
 
 | Member | Role | Specialty |
 |--------|------|-----------|
-| **Claude Opus 4.6** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Ensures outputs are clean, practical, and well-structured. |
+| **Claude Opus 4.7** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Upgraded from 4.6 on Apr 16 2026 — notable improvement in advanced software engineering. Ensures outputs are clean, practical, and well-structured. |
 | **GPT-5.4 (Thinking)** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
 | **GLM-5.1** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. #1 open-weights model (Intelligence Index 51). SWE-Bench Pro SOTA (58.4). Ensures solutions actually work in practice. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |

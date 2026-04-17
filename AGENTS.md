@@ -19,14 +19,15 @@ Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing cou
 | Model | Provider | Role | Special Settings |
 |-------|----------|------|------------------|
 | GPT-5.4 (Thinking) | OpenRouter | Anchor/Reasoning | `reasoning_effort: high` |
-| Claude Opus 4.6 | Anthropic OAuth | Lead Coder + **Chairman** | - |
+| Claude Opus 4.7 | Anthropic OAuth | Lead Coder + **Chairman** | Upgraded from 4.6 Apr 16 2026 |
 | GLM-5.1 | Fireworks Direct | Tool Specialist | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
 | Grok 4.20 Reasoning | xAI Direct | Real-time Intel | `reasoning: enabled` |
 
 ### Chairman Selection (LLM Council Decision)
 
-**Claude Opus 4.6** was selected as chairman by unanimous council vote (4-0).
+**Claude Opus 4.7** serves as chairman (upgraded from 4.6 on Apr 16 2026 release).
+Originally selected as Opus 4.6 by unanimous council vote (4-0).
 
 Key reasoning:
 - **Synthesis > Reasoning**: Chairman's job is to integrate perspectives, not be the smartest
@@ -78,7 +79,7 @@ MCP Config:
 ## API Keys & OAuth
 
 **OAuth (loaded from `~/.local/share/opencode/auth.json`):**
-- `anthropic` - For Claude Opus 4.6 via Anthropic OAuth (local dev only)
+- `anthropic` - For Claude Opus 4.7 via Anthropic OAuth (local dev only)
 
 **API Keys (loaded from `~/.bash_secrets`):**
 - `OPENROUTER_API_KEY` - For GPT-5.4 (with reasoning_effort: high), Gemini (+ fallback for all)
@@ -90,7 +91,7 @@ MCP Config:
 
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.4
-- `opus` -> anthropic/claude-opus-4.6
+- `opus` -> anthropic/claude-opus-4.7
 - `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.20-0309-reasoning

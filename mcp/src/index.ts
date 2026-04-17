@@ -232,9 +232,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult 5 LLMs (GPT-5.4, Opus 4.6, GLM-5, Gemini 3.1 Pro, Grok 4.20) for peer-reviewed answers. " +
-          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.6). " +
-          "GLM-5 via Fireworks (3.4x faster). Use for complex questions requiring multiple perspectives.",
+          "Consult 5 LLMs (GPT-5.4, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.20) for peer-reviewed answers. " +
+          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.7). " +
+          "GLM-5.1 via Fireworks (3.4x faster). Use for complex questions requiring multiple perspectives.",
         inputSchema: {
           type: "object" as const,
           properties: {

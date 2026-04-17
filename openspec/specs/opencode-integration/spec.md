@@ -55,7 +55,7 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 
 | Alias | Full Model ID |
 |-------|---------------|
-| `opus` | anthropic/claude-opus-4.6 |
+| `opus` | anthropic/claude-opus-4.7 |
 | `gemini`, `flash` | google/gemini-3-flash-preview |
 | `grok` | x-ai/grok-4.1-fast |
 | `glm` | zai-glm-4.7 |

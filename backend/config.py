@@ -42,22 +42,24 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # Council Models - 5 models for deliberation
 # Kimi K2.5 and DeepSeek V3.2 removed (distilled from Claude — reduces diversity)
 # 1. GPT-5.4 via OpenRouter (Anchor/Reasoning, reasoning_effort: high)
-# 2. Claude Opus 4.6 via Anthropic OAuth (Lead Coder + Chairman)
+# 2. Claude Opus 4.7 via Anthropic OAuth (Lead Coder + Chairman)
+#    Upgraded from Opus 4.6 Apr 16 2026. Notable SWE improvement, new xhigh effort level,
+#    same $5/$25 pricing, API ID claude-opus-4-7.
 # 3. GLM-5.1 via Fireworks Direct (Tool Specialist) — #1 open-weights model (AA Intelligence 51)
 #    Upgraded from GLM-5 Apr 2026. SWE-Bench Pro SOTA (58.4), major long-horizon agentic gains.
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
 # 5. Grok 4.20 Reasoning via xAI Direct (Real-time Intel)
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.4",  # OpenRouter (Anchor)
-    "anthropic/claude-opus-4.6",  # Anthropic OAuth (Lead Coder)
+    "anthropic/claude-opus-4.7",  # Anthropic OAuth (Lead Coder) — upgraded from 4.6 Apr 16 2026
     "fireworks/glm-5.1",  # Fireworks Direct (Tool Specialist)
     "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
     "x-ai/grok-4.20-0309-reasoning",  # xAI Direct (Real-time Intel)
 ]
 
 # Chairman Model - synthesizes final response
-# Claude Opus 4.6 for best synthesis capability (council unanimous decision)
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.6"
+# Claude Opus 4.7 for best synthesis capability (upgrade from Opus 4.6)
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.7"
 
 # Override via environment
 COUNCIL_MODELS = (
@@ -108,6 +110,7 @@ GEMINI_DIRECT_MODEL_IDS = [
 
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
+    "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
     "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
     "fireworks/glm-5.1": "z-ai/glm-5.1",
     "fireworks/glm-5": "z-ai/glm-5",
@@ -127,7 +130,7 @@ OPENAI_MODEL_IDS = []
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
     "gpt": "openai/gpt-5.4",
-    "opus": "anthropic/claude-opus-4.6",
+    "opus": "anthropic/claude-opus-4.7",
     "glm": "fireworks/glm-5.1",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",

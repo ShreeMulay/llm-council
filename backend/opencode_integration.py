@@ -205,10 +205,10 @@ MCP_TOOL_SCHEMA = {
 MODEL_ALIASES_HELP = """
 **Model Aliases** (for /council --models):
 - `gpt` -> openai/gpt-5.4
-- `opus` -> anthropic/claude-opus-4.6
-- `glm` -> fireworks/glm-5
+- `opus` -> anthropic/claude-opus-4.7
+- `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `grok` -> x-ai/grok-4.1-fast-reasoning
+- `grok` -> x-ai/grok-4.20-0309-reasoning
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview
 
