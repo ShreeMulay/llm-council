@@ -99,12 +99,16 @@ XAI_MODEL_IDS = [
     "x-ai/grok-4.20-multi-agent-0309",
 ]
 
+# Gemini models routed to Google's Gemini Direct API.
+# NOTE: google/gemini-3.1-pro-preview removed Apr 17 2026 — routing via OpenRouter
+# instead because the GEMINI_API_KEY env var was not configured (literal placeholder),
+# causing HTTP 400 failures. OpenRouter has the exact same model ID available and
+# works out of the box with the existing OPENROUTER_API_KEY.
 GEMINI_DIRECT_MODEL_IDS = [
     "google/gemini-3-flash",
     "google/gemini-3-flash-preview",
     "google/gemini-3-pro",
     "google/gemini-3-pro-preview",
-    "google/gemini-3.1-pro-preview",
     "google/gemini-2.0-flash",
 ]
 
@@ -119,6 +123,7 @@ OPENROUTER_FALLBACK_MAP = {
     "z-ai/glm-5": "z-ai/glm-5",
     "google/gemini-3-flash": "google/gemini-2.0-flash-001",
     "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
+    "google/gemini-3.1-pro-preview": "google/gemini-3.1-pro-preview",
     "openai/gpt-5.4": "openai/gpt-5.4",
     "x-ai/grok-4": "x-ai/grok-4",
     "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
