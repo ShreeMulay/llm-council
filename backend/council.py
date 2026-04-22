@@ -43,7 +43,6 @@ from .config import (
 from .openrouter import query_model as query_openrouter_model
 from .openrouter import query_models_parallel as query_openrouter_models_parallel
 from .cerebras import query_cerebras_model, query_cerebras_models_parallel
-from .anthropic_client import call_anthropic, is_anthropic_model
 from .openai_client import call_openai
 from .moonshot_client import query_moonshot_model
 from .xai_client import query_xai_model
@@ -62,14 +61,6 @@ async def _query_primary(
         return await query_fireworks_model(model_id, messages, max_tokens, temperature)
     elif is_cerebras_model(model_id):
         return await query_cerebras_model(model_id, messages, max_tokens, temperature)
-    elif is_anthropic_model(model_id):
-        prompt = messages[-1].get("content", "") if messages else ""
-        result = await call_anthropic(model_id, prompt, max_tokens)
-        return {
-            "content": result.get("response", ""),
-            "usage": result.get("usage", {}),
-            "provider": "anthropic",
-        }
     elif is_moonshot_model(model_id):
         return await query_moonshot_model(model_id, messages, max_tokens, temperature)
     elif is_xai_model(model_id):
@@ -122,94 +113,6 @@ async def query_single_model(
             return None
 
     return None
-
-
-async def query_anthropic_single(
-    model_id: str, messages: List[Dict[str, str]], max_tokens: int
-) -> Tuple[str, Optional[Dict[str, Any]]]:
-    """Query single Anthropic model and return (model_id, result) tuple."""
-    try:
-        prompt = messages[-1].get("content", "") if messages else ""
-        result = await call_anthropic(model_id, prompt, max_tokens)
-        return model_id, {
-            "content": result.get("response", ""),
-            "usage": result.get("usage", {}),
-            "provider": "anthropic",
-        }
-    except Exception as e:
-        logger.error("Anthropic API error for %s: %s", model_id, e)
-        return model_id, None
-
-
-async def query_anthropic_models_parallel(
-    model_ids: List[str],
-    messages: List[Dict[str, str]],
-    max_tokens: int = 32768,
-    temperature: float = 0.7,
-) -> Dict[str, Optional[Dict[str, Any]]]:
-    """Query multiple Anthropic models in parallel."""
-    tasks = [query_anthropic_single(m, messages, max_tokens) for m in model_ids]
-    results_list = await asyncio.gather(*tasks)
-    return dict(results_list)
-
-
-async def query_openai_single(
-    model_id: str, messages: List[Dict[str, str]], max_tokens: int
-) -> Tuple[str, Optional[Dict[str, Any]]]:
-    """Query single OpenAI model and return (model_id, result) tuple."""
-    try:
-        prompt = messages[-1].get("content", "") if messages else ""
-        # Use 'high' reasoning effort for council deliberation
-        result = await call_openai(
-            model_id, prompt, max_tokens, reasoning_effort="high"
-        )
-        return model_id, {
-            "content": result.get("response", ""),
-            "usage": result.get("usage", {}),
-            "provider": "openai",
-        }
-    except Exception as e:
-        logger.error("OpenAI API error for %s: %s", model_id, e)
-        return model_id, None
-
-
-async def query_openai_models_parallel(
-    model_ids: List[str],
-    messages: List[Dict[str, str]],
-    max_tokens: int = 32768,
-    temperature: float = 0.7,
-) -> Dict[str, Optional[Dict[str, Any]]]:
-    """Query multiple OpenAI models in parallel."""
-    tasks = [query_openai_single(m, messages, max_tokens) for m in model_ids]
-    results_list = await asyncio.gather(*tasks)
-    return dict(results_list)
-
-
-async def query_xai_single(
-    model_id: str,
-    messages: List[Dict[str, str]],
-    max_tokens: int,
-    temperature: float,
-) -> Tuple[str, Optional[Dict[str, Any]]]:
-    """Query single xAI model and return (model_id, result) tuple."""
-    try:
-        result = await query_xai_model(model_id, messages, max_tokens, temperature)
-        return model_id, result
-    except Exception as e:
-        logger.error("xAI API error for %s: %s", model_id, e)
-        return model_id, None
-
-
-async def query_xai_models_parallel(
-    model_ids: List[str],
-    messages: List[Dict[str, str]],
-    max_tokens: int = 32768,
-    temperature: float = 0.7,
-) -> Dict[str, Optional[Dict[str, Any]]]:
-    """Query multiple xAI models in parallel."""
-    tasks = [query_xai_single(m, messages, max_tokens, temperature) for m in model_ids]
-    results_list = await asyncio.gather(*tasks)
-    return dict(results_list)
 
 
 async def query_models_parallel(
@@ -735,7 +638,6 @@ async def _query_single_with_retry(
     has_direct_provider = (
         is_fireworks_model(model_id)
         or is_cerebras_model(model_id)
-        or is_anthropic_model(model_id)
         or is_openai_model(model_id)
         or is_xai_model(model_id)
     )
