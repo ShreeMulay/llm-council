@@ -1,6 +1,6 @@
 # LLM Council - OpenCode Project
 
-Multi-model LLM deliberation system with peer review. Queries 5 models in parallel, has them rank each other's responses anonymously, and synthesizes a final answer via chairman model.
+Multi-model LLM deliberation system with peer review. Queries 9 models in parallel (or 5 in compact mode), has a subset of evaluators rank responses anonymously with self-exclusion and randomized order, and synthesizes a final answer via chairman model from curated top responses.
 
 ## Quick Start
 
@@ -12,28 +12,38 @@ uv run python -m backend.main
 ./start.sh
 ```
 
-## Council Models (5-Member Configuration)
+## Council Models (9-Member Configuration)
 
-Kimi K2.5 and DeepSeek V3.2 removed — both distilled from Claude, reducing council diversity.
+| # | Model | Provider | Role | Tier | Special Settings |
+|---|-------|----------|------|------|------------------|
+| 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
+| 2 | Claude Opus 4.7 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
+| 3 | GLM-5.1 | Fireworks Direct | Tool Specialist | Medium | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
+| 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
+| 5 | Grok 4.20 Reasoning | xAI Direct | Real-time Intel | Medium | `reasoning: enabled` |
+| 6 | Kimi K2.6 | Fireworks Direct | Long-context Generalist | Medium | 3.4x faster via Fireworks |
+| 7 | DeepSeek V4 Pro | OpenRouter | Code/Math Specialist | Strong | Evaluator priority #2 |
+| 8 | Llama 4 Maverick | OpenRouter | Open-weight Generalist | Weak | - |
+| 9 | Qwen 3.5 122B | OpenRouter | Multilingual Specialist | Weak | - |
 
-| Model | Provider | Role | Special Settings |
-|-------|----------|------|------------------|
-| GPT-5.4 (Thinking) | OpenRouter | Anchor/Reasoning | `reasoning_effort: high` |
-| Claude Opus 4.7 | Anthropic OAuth | Lead Coder + **Chairman** | Upgraded from 4.6 Apr 16 2026 |
-| GLM-5.1 | Fireworks Direct | Tool Specialist | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
-| Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | - |
-| Grok 4.20 Reasoning | xAI Direct | Real-time Intel | `reasoning: enabled` |
+### Compact Mode (5 Models)
 
-### Chairman Selection (LLM Council Decision)
+Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.20.
 
-**Claude Opus 4.7** serves as chairman (upgraded from 4.6 on Apr 16 2026 release).
-Originally selected as Opus 4.6 by unanimous council vote (4-0).
+### Deliberation Architecture
 
-Key reasoning:
-- **Synthesis > Reasoning**: Chairman's job is to integrate perspectives, not be the smartest
-- **Constitutional AI**: Reduces self-preference bias vs performance-optimized models
-- **"Strong but not supreme"**: 80.9% SWE-bench means technical depth without "Tyranny of the Expert"
-- **Separation of powers**: GPT-5.4 as Visionary, Claude as Judge
+**Stage 1** — All 9 models respond in parallel (cached for 1 hour by model+prompt hash)
+**Stage 2** — Top 3 evaluators rank responses (Opus 4.7, DeepSeek V4 Pro, GPT-5.5-high):
+- Self-exclusion: evaluators don't rank their own response
+- Randomized order: different label-to-model mapping per evaluator
+- Dynamic truncation: strong models 8K, medium 10K, weak 12K (inverse allocation)
+**Stage 3** — Chairman synthesizes from curated top 5 responses:
+- Top 3 by consensus + 1 wildcard (high disagreement) + 1 diversity pick
+
+### Chairman Selection
+
+**Claude Opus 4.7** serves as chairman.
+Key reasoning: Synthesis > Reasoning, Constitutional AI reduces self-preference bias, "Strong but not supreme" separation of powers.
 
 ## API Endpoints
 
@@ -79,22 +89,26 @@ MCP Config:
 ## API Keys & OAuth
 
 **OAuth (loaded from `~/.local/share/opencode/auth.json`):**
-- `anthropic` - For Claude Opus 4.7 via Anthropic OAuth (local dev only)
+- `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.4 (with reasoning_effort: high), Gemini (+ fallback for all)
-- `FIREWORKS_API_KEY` - For GLM-5.1 (primary, 3.4x faster)
+- `OPENROUTER_API_KEY` - For GPT-5.5, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5, Claude Opus 4.7 (fallback for all)
+- `FIREWORKS_API_KEY` - For GLM-5.1 (primary, 3.4x faster) and Kimi K2.6
 - `GROK_API_KEY` - For Grok 4.20 Reasoning via xAI Direct
-- `CEREBRAS_API_KEY` - Legacy (GLM 4.7 if needed)
+- `CEREBRAS_API_KEY` - Legacy
 
 ## Model Aliases
 
 Use aliases in `/council` command:
-- `gpt` -> openai/gpt-5.4
+- `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.7
 - `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.20-0309-reasoning
+- `kimi` -> fireworks/kimi-k2.6
+- `deepseek` -> deepseek/deepseek-v4-pro
+- `llama` -> meta-llama/llama-4-maverick
+- `qwen` -> qwen/qwen3.5-122b-a10b
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)
 

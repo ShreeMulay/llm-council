@@ -18,6 +18,7 @@ async def query_model(
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0,
+    reasoning_effort: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """
     Query a single model via OpenRouter API.
@@ -28,6 +29,8 @@ async def query_model(
         max_tokens: Maximum output tokens
         temperature: Sampling temperature
         timeout: Request timeout in seconds
+        reasoning_effort: Override reasoning effort (e.g., "high", "medium", "xhigh").
+                         If None, uses config default for the model.
 
     Returns:
         Response dict with 'content', 'usage', 'model', 'provider' or None if failed
@@ -53,11 +56,11 @@ async def query_model(
         },
     }
 
-    # Add reasoning_effort if configured for this model (e.g., GPT-5.4 Thinking,
-    # Opus 4.7 xhigh).
-    reasoning_effort = get_model_reasoning_effort(model)
-    if reasoning_effort:
-        payload["reasoning_effort"] = reasoning_effort
+    # Add reasoning_effort if configured for this model (e.g., GPT-5.5 Thinking,
+    # Opus 4.7 xhigh). Supports per-call override for dual-mode models.
+    effective_reasoning = reasoning_effort or get_model_reasoning_effort(model)
+    if effective_reasoning:
+        payload["reasoning_effort"] = effective_reasoning
         # When reasoning effort matters, prefer the native provider. Some
         # providers (e.g., Amazon Bedrock for Anthropic models) silently drop
         # the reasoning_effort parameter, which defeats the purpose.

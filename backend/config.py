@@ -39,26 +39,40 @@ MOONSHOT_API_URL = "https://api.moonshot.ai/v1/chat/completions"
 XAI_API_URL = "https://api.x.ai/v1/chat/completions"
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
-# Council Models - 5 models for deliberation
-# Kimi K2.5 and DeepSeek V3.2 removed (distilled from Claude — reduces diversity)
-# 1. GPT-5.4 via OpenRouter (Anchor/Reasoning, reasoning_effort: high)
-# 2. Claude Opus 4.7 via Anthropic OAuth (Lead Coder + Chairman)
-#    Upgraded from Opus 4.6 Apr 16 2026. Notable SWE improvement, new xhigh effort level,
-#    same $5/$25 pricing, API ID claude-opus-4-7.
-# 3. GLM-5.1 via Fireworks Direct (Tool Specialist) — #1 open-weights model (AA Intelligence 51)
-#    Upgraded from GLM-5 Apr 2026. SWE-Bench Pro SOTA (58.4), major long-horizon agentic gains.
-# 4. Gemini 3.1 Pro Preview via OpenRouter (Generalist)
+# Council Models - 9 models for deliberation
+# Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
+# 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
+# 2. Claude Opus 4.7 via OpenRouter (Lead Coder + Chairman, reasoning: xhigh)
+# 3. GLM-5.1 via Fireworks Direct (Tool Specialist)
+# 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
 # 5. Grok 4.20 Reasoning via xAI Direct (Real-time Intel)
+# 6. Kimi K2.6 via Fireworks Direct (Long-Context Specialist)
+# 7. DeepSeek V4 Pro via OpenRouter (Deep Reasoner)
+# 8. Llama 4 Maverick via OpenRouter (Open-Weights Leader)
+# 9. Qwen 3.5 122B A10B via OpenRouter (Agentic/Tools Expert)
 DEFAULT_COUNCIL_MODELS = [
-    "openai/gpt-5.4",  # OpenRouter (Anchor)
-    "anthropic/claude-opus-4.7",  # Anthropic OAuth (Lead Coder) — upgraded from 4.6 Apr 16 2026
+    "openai/gpt-5.5",  # OpenRouter (Anchor)
+    "anthropic/claude-opus-4.7",  # OpenRouter (Lead Coder + Chairman)
     "fireworks/glm-5.1",  # Fireworks Direct (Tool Specialist)
     "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
     "x-ai/grok-4.20-0309-reasoning",  # xAI Direct (Real-time Intel)
+    "fireworks/kimi-k2.6",  # Fireworks Direct (Long-Context Specialist)
+    "deepseek/deepseek-v4-pro",  # OpenRouter (Deep Reasoner)
+    "meta-llama/llama-4-maverick",  # OpenRouter (Open-Weights Leader)
+    "qwen/qwen3.5-122b-a10b",  # OpenRouter (Agentic/Tools Expert)
+]
+
+# Core 5 models for compact mode (faster/cheaper)
+COMPACT_COUNCIL_MODELS = [
+    "openai/gpt-5.5",
+    "anthropic/claude-opus-4.7",
+    "fireworks/glm-5.1",
+    "google/gemini-3.1-pro-preview",
+    "x-ai/grok-4.20-0309-reasoning",
 ]
 
 # Chairman Model - synthesizes final response
-# Claude Opus 4.7 for best synthesis capability (upgrade from Opus 4.6)
+# Claude Opus 4.7 for best synthesis capability
 DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.7"
 
 # Override via environment
@@ -82,6 +96,7 @@ CEREBRAS_MODEL_IDS = [
 FIREWORKS_MODEL_IDS = [
     "fireworks/glm-5.1",
     "fireworks/glm-5",
+    "fireworks/kimi-k2.6",
 ]
 
 MOONSHOT_MODEL_IDS = [
@@ -114,6 +129,7 @@ GEMINI_DIRECT_MODEL_IDS = [
 
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
+    "openai/gpt-5.5": "openai/gpt-5.5",
     "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
     "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
     "fireworks/glm-5.1": "z-ai/glm-5.1",
@@ -127,6 +143,10 @@ OPENROUTER_FALLBACK_MAP = {
     "openai/gpt-5.4": "openai/gpt-5.4",
     "x-ai/grok-4": "x-ai/grok-4",
     "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
+    "fireworks/kimi-k2.6": "moonshotai/kimi-k2.6",
+    "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro",
+    "meta-llama/llama-4-maverick": "meta-llama/llama-4-maverick",
+    "qwen/qwen3.5-122b-a10b": "qwen/qwen3.5-122b-a10b",
 }
 
 # OpenAI models (disabled - Codex OAuth uses Responses API, not Chat Completions)
@@ -134,15 +154,56 @@ OPENAI_MODEL_IDS = []
 
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
-    "gpt": "openai/gpt-5.4",
+    "gpt": "openai/gpt-5.5",
     "opus": "anthropic/claude-opus-4.7",
     "glm": "fireworks/glm-5.1",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
     "grok": "x-ai/grok-4.20-0309-reasoning",
+    "kimi": "fireworks/kimi-k2.6",
+    "deepseek": "deepseek/deepseek-v4-pro",
+    "llama": "meta-llama/llama-4-maverick",
+    "qwen": "qwen/qwen3.5-122b-a10b",
     "sonnet": "anthropic/claude-sonnet-4.5",
     "flash": "google/gemini-3-flash-preview",
 }
+
+# Evaluator priority list — models best at critical evaluation
+# Stage 2 uses top 3 from this list that are present in the active council
+EVALUATOR_PRIORITY = [
+    "anthropic/claude-opus-4.7",
+    "deepseek/deepseek-v4-pro",
+    "openai/gpt-5.5",
+]
+
+# Tiered truncation allocation — inverse allocation: weaker models get MORE space
+# Strong models are concise; weaker models need more tokens for same quality
+TIERED_TRUNCATION = {
+    "strong": [
+        "anthropic/claude-opus-4.7",
+        "openai/gpt-5.5",
+        "deepseek/deepseek-v4-pro",
+    ],
+    "medium": [
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.20-0309-reasoning",
+        "fireworks/kimi-k2.6",
+    ],
+    "weak": [
+        "fireworks/glm-5.1",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.5-122b-a10b",
+    ],
+}
+
+TRUNCATION_LIMITS = {
+    "strong": 8000,
+    "medium": 10000,
+    "weak": 12000,
+}
+
+# Default truncation limit when model tier is unknown
+DEFAULT_TRUNCATION_LIMIT = 12000
 
 
 def is_cerebras_model(model_id: str) -> bool:
@@ -180,21 +241,49 @@ def is_openai_model(model_id: str) -> bool:
     return model_id in OPENAI_MODEL_IDS
 
 
+def get_model_tier(model_id: str) -> str:
+    """Get the truncation tier for a model (strong/medium/weak)."""
+    for tier, models in TIERED_TRUNCATION.items():
+        if model_id in models:
+            return tier
+    return "weak"  # Default to most generous for unknown models
+
+
+def calculate_max_response_chars(model_id: str, num_models: int) -> int:
+    """Calculate max response chars for a model based on tier and council size.
+    
+    With compact mode (5 models), all models get maximum space.
+    With full council (9 models), allocation is tiered:
+    - Strong models (concise): 8K
+    - Medium models: 10K
+    - Weak models (verbose): 12K
+    """
+    if num_models <= 5:
+        # Compact mode: everyone gets max space
+        return DEFAULT_TRUNCATION_LIMIT
+    
+    tier = get_model_tier(model_id)
+    return TRUNCATION_LIMITS.get(tier, DEFAULT_TRUNCATION_LIMIT)
+
+
 # Per-model reasoning effort for OpenRouter requests.
-# GPT-5.4 defaults to reasoning: none — we override to "high" for Thinking mode.
-# Opus 4.7 supports new "xhigh" effort level (between high and max) introduced
-# Apr 16 2026. Anthropic's own Claude Code defaults to xhigh for coding/agentic use.
-# Tested via OpenRouter: both top-level and nested syntax accepted; xhigh produces
-# ~15% more completion tokens and ~39% more content than high (confirmed Apr 17 2026).
+# GPT-5.5 dual-mode: medium for Stage 1 (responder), high for Stage 2 (evaluator)
+# Opus 4.7 supports xhigh effort level (between high and max) introduced Apr 16 2026.
 # Models not listed use provider default (no reasoning_effort sent).
 MODEL_REASONING_EFFORT = {
-    "openai/gpt-5.4": "high",
+    "openai/gpt-5.5": "medium",
+    "openai/gpt-5.5-evaluator": "high",
     "anthropic/claude-opus-4.7": "xhigh",
 }
 
 
 def get_model_reasoning_effort(model_id: str) -> str | None:
-    """Get the reasoning effort for a model, or None to use provider default."""
+    """Get the reasoning effort for a model, or None to use provider default.
+    
+    Supports dual-mode for GPT-5.5:
+    - "openai/gpt-5.5" -> medium (Stage 1 responder)
+    - "openai/gpt-5.5-evaluator" -> high (Stage 2 evaluator)
+    """
     return MODEL_REASONING_EFFORT.get(model_id)
 
 

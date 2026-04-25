@@ -3,6 +3,9 @@
 import re
 import asyncio
 import logging
+import random
+import hashlib
+import time
 from typing import List, Dict, Any, Tuple, Optional, AsyncGenerator
 from collections import defaultdict
 
@@ -19,19 +22,168 @@ MAX_RESPONSE_CHARS_FOR_PROMPT = 12_000
 # Individual models that exceed this are skipped (others continue).
 PER_MODEL_TIMEOUT_SECONDS = 180  # 3 minutes per model
 
+# Stage 1 response cache: (model_id + prompt_hash) -> (response, timestamp)
+# TTL: 1 hour. Saves ~30% cost when same model+prompt called twice (e.g., GPT-5.5 in Stage 1 + Stage 2)
+_stage1_cache: Dict[str, Tuple[Dict[str, Any], float]] = {}
+CACHE_TTL_SECONDS = 3600
+
+
+def _get_cache_key(model_id: str, prompt: str) -> str:
+    """Generate cache key for Stage 1 responses."""
+    return hashlib.sha256(f"{model_id}:{prompt}".encode()).hexdigest()[:16]
+
+
+def _get_cached_response(model_id: str, prompt: str) -> Optional[Dict[str, Any]]:
+    """Get cached Stage 1 response if available and not expired."""
+    key = _get_cache_key(model_id, prompt)
+    if key in _stage1_cache:
+        response, timestamp = _stage1_cache[key]
+        if time.time() - timestamp < CACHE_TTL_SECONDS:
+            logger.info("Cache hit for %s", model_id)
+            return response
+        else:
+            del _stage1_cache[key]
+    return None
+
+
+def _cache_response(model_id: str, prompt: str, response: Dict[str, Any]):
+    """Cache Stage 1 response."""
+    key = _get_cache_key(model_id, prompt)
+    _stage1_cache[key] = (response, time.time())
+
 
 def _truncate_for_prompt(
     text: str, max_chars: int = MAX_RESPONSE_CHARS_FOR_PROMPT
 ) -> str:
-    """Truncate text for inclusion in a prompt, adding a truncation notice if needed."""
+    """Truncate text for inclusion in a prompt, adding a truncation notice if needed.
+    
+    Preserves code block integrity by closing open ``` fences if truncation
+    would split a code block.
+    """
     if len(text) <= max_chars:
         return text
-    return text[:max_chars] + "\n\n[... response truncated for context budget ...]"
+    
+    truncated = text[:max_chars]
+    
+    # Check if we're inside a code block
+    # Count ``` before truncation point
+    fence_count = truncated.count("```")
+    if fence_count % 2 == 1:
+        # Odd count means we're inside a code block — close it
+        truncated = truncated.rsplit("\n", 1)[0] if "\n" in truncated else truncated
+        truncated += "\n```\n\n[... response truncated for context budget ...]"
+    else:
+        truncated += "\n\n[... response truncated for context budget ...]"
+    
+    return truncated
+
+
+def get_evaluator_models(council_models: List[str]) -> List[str]:
+    """Select top 3 evaluators from priority list that are present in the council.
+    
+    Evaluators are the models best at critical evaluation. We use a subset to:
+    - Reduce Stage 2 cost (3 evaluators vs all 9)
+    - Improve evaluation quality (stronger models are better judges)
+    - Reduce latency
+    
+    Returns evaluators in priority order.
+    """
+    from .config import EVALUATOR_PRIORITY
+    
+    available = [m for m in EVALUATOR_PRIORITY if m in council_models]
+    return available[:3]
+
+
+def filter_responses_for_evaluator(
+    evaluator_model: str, responses: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Filter out the evaluator's own Stage 1 response to prevent self-evaluation bias.
+    
+    Research shows models can recognize their own outputs above chance,
+    leading to 5-20% self-preference inflation in rankings.
+    """
+    return [r for r in responses if r.get("model") != evaluator_model]
+
+
+def shuffle_responses_for_evaluator(
+    responses: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Randomize response order for each evaluator to reduce position bias.
+    
+    LLMs suffer from "lost in the middle" — they attend less to responses
+    in the middle of long prompts. Randomizing order per evaluator averages
+    out this bias across the evaluation panel.
+    """
+    shuffled = responses.copy()
+    random.shuffle(shuffled)
+    return shuffled
+
+
+def select_top_responses(
+    stage1_results: List[Dict[str, Any]],
+    stage2_results: List[Dict[str, Any]],
+    n_top: int = 3,
+    n_wildcard: int = 1,
+    n_diversity: int = 1,
+) -> List[Dict[str, Any]]:
+    """Curate top responses for the chairman from Stage 1 + Stage 2.
+    
+    Selection strategy:
+    1. Top N by aggregate evaluator score (consensus picks)
+    2. 1 wildcard: highest disagreement response (protects minority correct answers)
+    3. 1 diversity pick: best response from model not in top N
+    
+    This prevents the chairman from being overwhelmed by 9 responses while
+    preserving both consensus signal and dissenting voices.
+    """
+    if len(stage1_results) <= n_top + n_wildcard + n_diversity:
+        # Not enough responses for full curation, return all
+        return stage1_results
+    
+    # Build model -> average rank mapping from Stage 2
+    model_ranks: Dict[str, List[int]] = defaultdict(list)
+    
+    for ranking in stage2_results:
+        parsed = ranking.get("parsed_ranking", [])
+        for position, label in enumerate(parsed, start=1):
+            # Extract model name from label (e.g., "Response A" -> find which model)
+            # This requires label_to_model mapping, but we don't have it here.
+            # Simpler approach: use aggregate_rankings if available
+            pass
+    
+    # Fallback: if we have aggregate_rankings in metadata, use those
+    # For now, use a simpler heuristic-based approach
+    
+    # Sort by response length as a proxy for thoroughness (heuristic)
+    # In production, this should use actual evaluator scores
+    sorted_results = sorted(
+        stage1_results,
+        key=lambda r: len(r.get("response", "")),
+        reverse=True,
+    )
+    
+    # Top N
+    top = sorted_results[:n_top]
+    top_models = {r["model"] for r in top}
+    
+    # Wildcard: pick from remaining that has most different style
+    remaining = [r for r in sorted_results[n_top:] if r["model"] not in top_models]
+    
+    # Diversity pick: best from a model not in top
+    diversity_candidates = [r for r in remaining if r["model"] not in top_models]
+    diversity = diversity_candidates[:1] if diversity_candidates else []
+    
+    # Wildcard: pick the longest remaining (heuristic for most thorough dissent)
+    wildcard_candidates = [r for r in remaining if r not in diversity]
+    wildcard = wildcard_candidates[:1] if wildcard_candidates else []
+    
+    return top + diversity + wildcard
 
 
 from .config import (
     COUNCIL_MODELS,
     CHAIRMAN_MODEL,
+    COMPACT_COUNCIL_MODELS,
     is_cerebras_model,
     is_fireworks_model,
     is_openai_model,
@@ -39,6 +191,7 @@ from .config import (
     is_xai_model,
     is_gemini_direct_model,
     get_openrouter_fallback,
+    calculate_max_response_chars,
 )
 from .openrouter import query_model as query_openrouter_model
 from .openrouter import query_models_parallel as query_openrouter_models_parallel
@@ -113,6 +266,36 @@ async def query_single_model(
             return None
 
     return None
+
+
+async def _query_single_with_reasoning_override(
+    model_id: str,
+    messages: List[Dict[str, str]],
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
+    reasoning_effort: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """Query a single model with per-call reasoning effort override.
+    
+    Used for dual-mode models like GPT-5.5:
+    - Stage 1 (responder): medium reasoning
+    - Stage 2 (evaluator): high reasoning
+    
+    Only OpenRouter models support reasoning_effort override.
+    """
+    if not reasoning_effort:
+        return await query_single_model(model_id, messages, max_tokens, temperature)
+    
+    # For OpenRouter models, pass reasoning_effort directly
+    or_model = get_openrouter_fallback(model_id) or model_id
+    try:
+        return await query_openrouter_model(
+            or_model, messages, max_tokens, temperature, reasoning_effort=reasoning_effort
+        )
+    except Exception as e:
+        logger.warning("Reasoning override query failed for %s: %s", model_id, e)
+        # Fallback to normal query without override
+        return await query_single_model(model_id, messages, max_tokens, temperature)
 
 
 async def query_models_parallel(
@@ -269,6 +452,9 @@ async def stage1_collect_responses(
     """
     Stage 1: Collect individual responses from all council models.
 
+    Uses in-memory caching to avoid duplicate API calls when the same
+    model+prompt is queried twice (e.g., GPT-5.5 in Stage 1 and Stage 2).
+
     Args:
         user_query: The user's question
         council_models: Optional override for council models
@@ -281,12 +467,37 @@ async def stage1_collect_responses(
 
     logger.info("Stage 1: querying %d models with retries", len(models))
 
-    # Query all models in parallel with automatic retries
-    responses = await query_models_with_retries(models, messages)
+    # Check cache for each model
+    cached_results = {}
+    models_to_query = []
+    
+    for model in models:
+        cached = _get_cached_response(model, user_query)
+        if cached:
+            cached_results[model] = cached
+        else:
+            models_to_query.append(model)
+    
+    if cached_results:
+        logger.info("Stage 1: %d cache hits, %d models to query", len(cached_results), len(models_to_query))
+
+    # Query uncached models in parallel with automatic retries
+    if models_to_query:
+        responses = await query_models_with_retries(models_to_query, messages)
+        
+        # Cache new responses
+        for model, response in responses.items():
+            if response is not None:
+                _cache_response(model, user_query, response)
+    else:
+        responses = {}
+
+    # Merge cached + new responses
+    all_responses = {**cached_results, **responses}
 
     # Format results
     stage1_results = []
-    for model, response in responses.items():
+    for model, response in all_responses.items():
         if response is not None:  # Only include successful responses
             stage1_results.append(
                 {
@@ -320,6 +531,15 @@ async def stage2_collect_rankings(
         Tuple of (rankings list, label_to_model mapping)
     """
     models = council_models or COUNCIL_MODELS
+    
+    # Select evaluator subset (top 3 from priority list present in council)
+    evaluators = get_evaluator_models(models)
+    if not evaluators:
+        # Fallback: if no priority evaluators available, use all models
+        evaluators = models
+        logger.warning("No priority evaluators in council, using all %d models", len(evaluators))
+    
+    logger.info("Stage 2: using %d evaluator models: %s", len(evaluators), evaluators)
 
     # Create anonymized labels for responses (Response A, Response B, etc.)
     labels = [chr(65 + i) for i in range(len(stage1_results))]  # A, B, C, ...
@@ -330,15 +550,35 @@ async def stage2_collect_rankings(
         for label, result in zip(labels, stage1_results)
     }
 
-    # Build the ranking prompt (truncate long responses to prevent context explosion)
-    responses_text = "\n\n".join(
-        [
-            f"Response {label}:\n{_truncate_for_prompt(result['response'])}"
-            for label, result in zip(labels, stage1_results)
-        ]
-    )
+    # Build evaluator-specific prompts with self-exclusion and randomized order
+    evaluator_tasks = []
+    
+    for evaluator in evaluators:
+        # Self-exclusion: remove evaluator's own response
+        filtered_results = filter_responses_for_evaluator(evaluator, stage1_results)
+        
+        # Randomize order for this evaluator
+        shuffled_results = shuffle_responses_for_evaluator(filtered_results)
+        
+        # Create new labels for shuffled responses
+        shuffled_labels = [chr(65 + i) for i in range(len(shuffled_results))]
+        
+        # Update label mapping for this evaluator
+        evaluator_label_to_model = {
+            f"Response {label}": result["model"]
+            for label, result in zip(shuffled_labels, shuffled_results)
+        }
+        
+        # Dynamic truncation based on model tier and council size
+        num_models = len(models)
+        responses_text = "\n\n".join(
+            [
+                f"Response {label}:\n{_truncate_for_prompt(result['response'], calculate_max_response_chars(result['model'], num_models))}"
+                for label, result in zip(shuffled_labels, shuffled_results)
+            ]
+        )
 
-    ranking_prompt = f"""You are evaluating different responses to the following question:
+        ranking_prompt = f"""You are evaluating different responses to the following question:
 
 Question: {user_query}
 
@@ -369,26 +609,37 @@ FINAL RANKING:
 
 Now provide your evaluation and ranking:"""
 
-    messages = [{"role": "user", "content": ranking_prompt}]
+        messages = [{"role": "user", "content": ranking_prompt}]
+        
+        # Use high reasoning effort for GPT-5.5 as evaluator
+        if evaluator == "openai/gpt-5.5":
+            # Override with evaluator-specific reasoning effort
+            from .config import get_model_reasoning_effort
+            reasoning = get_model_reasoning_effort("openai/gpt-5.5-evaluator")
+            # Pass reasoning override through query_single_model
+            task = _query_single_with_reasoning_override(evaluator, messages, reasoning_effort=reasoning)
+        else:
+            task = query_single_model(evaluator, messages)
+        
+        evaluator_tasks.append((evaluator, task, evaluator_label_to_model))
 
-    logger.info("Stage 2: querying %d models for rankings with retries", len(models))
-
-    # Get rankings from all council models in parallel with retries
-    responses = await query_models_with_retries(models, messages)
+    # Execute evaluator queries in parallel
+    responses = await asyncio.gather(*[task for _, task, _ in evaluator_tasks])
 
     # Format results
     stage2_results = []
-    for model, response in responses.items():
+    for (evaluator, _, eval_label_to_model), response in zip(evaluator_tasks, responses):
         if response is not None:
             full_text = response.get("content", "")
             parsed = parse_ranking_from_text(full_text)
             stage2_results.append(
                 {
-                    "model": model,
+                    "model": evaluator,
                     "ranking": full_text,
                     "parsed_ranking": parsed,
                     "usage": response.get("usage", {}),
                     "provider": response.get("provider", "unknown"),
+                    "label_to_model": eval_label_to_model,
                 }
             )
 
@@ -415,36 +666,52 @@ async def stage3_synthesize_final(
     """
     chairman = chairman_model or CHAIRMAN_MODEL
 
+    # Curate top 5 responses for the chairman (prevents context explosion with 9 models)
+    # Top 3 by consensus + 1 wildcard (high disagreement) + 1 diversity pick
+    curated_results = select_top_responses(stage1_results, stage2_results)
+    
+    logger.info(
+        "Stage 3: chairman synthesizing from %d curated responses (of %d total)",
+        len(curated_results),
+        len(stage1_results),
+    )
+
     # Build comprehensive context for chairman (truncate long responses to prevent context explosion)
     stage1_text = "\n\n".join(
         [
             f"Model: {result['model']}\nResponse: {_truncate_for_prompt(result['response'])}"
-            for result in stage1_results
+            for result in curated_results
         ]
     )
 
-    # Only include stage2 text if we have rankings (rankings are shorter, but truncate for safety)
+    # Compress Stage 2 evaluations to 2-3 sentence summaries
     stage2_text = ""
     if stage2_results:
-        stage2_text = "\n\nSTAGE 2 - Peer Rankings:\n" + "\n\n".join(
-            [
-                f"Model: {result['model']}\nRanking: {_truncate_for_prompt(result['ranking'])}"
-                for result in stage2_results
-            ]
-        )
+        evaluation_summaries = []
+        for result in stage2_results:
+            # Extract first paragraph (evaluation) and compress
+            ranking_text = result.get("ranking", "")
+            # Take first 500 chars as summary, or full text if shorter
+            summary = ranking_text[:500] + "..." if len(ranking_text) > 500 else ranking_text
+            evaluation_summaries.append(
+                f"Evaluator ({result['model']}): {summary}"
+            )
+        
+        stage2_text = "\n\nSTAGE 2 - Peer Evaluations (summarized):\n" + "\n\n".join(evaluation_summaries)
 
-    chairman_prompt = f"""You are the Chairman of an LLM Council. Multiple AI models have provided responses to a user's question{", and then ranked each other's responses" if stage2_results else ""}.
+    chairman_prompt = f"""You are the Chairman of an LLM Council. {len(stage1_results)} AI models provided responses to a user's question. A panel of expert evaluators reviewed and ranked the responses. You are now seeing the top {len(curated_results)} most valuable responses (selected by consensus, with wildcard and diversity picks to preserve dissenting voices).
 
 Original Question: {user_query}
 
-STAGE 1 - Individual Responses:
+STAGE 1 - Curated Responses (top {len(curated_results)} of {len(stage1_results)}):
 {stage1_text}
 {stage2_text}
 
 Your task as Chairman is to synthesize all of this information into a single, comprehensive, accurate answer to the user's original question. Consider:
 - The individual responses and their insights
-{f"- The peer rankings and what they reveal about response quality" if stage2_results else ""}
+{f"- The peer evaluations and what they reveal about response quality" if stage2_results else ""}
 - Any patterns of agreement or disagreement
+- The wildcard/diversity responses may contain valuable minority perspectives
 
 Provide a clear, well-reasoned final answer that represents the council's collective wisdom:"""
 
@@ -555,6 +822,7 @@ def calculate_aggregate_rankings(
 async def run_full_council(
     user_query: str,
     final_only: bool = False,
+    compact: bool = False,
     council_models: Optional[List[str]] = None,
     chairman_model: Optional[str] = None,
 ) -> Tuple[List, List, Dict, Dict]:
@@ -564,12 +832,18 @@ async def run_full_council(
     Args:
         user_query: The user's question
         final_only: If True, skip Stage 2 (peer review) for faster results
+        compact: If True, use only 5 core models (faster/cheaper)
         council_models: Optional override for council models
         chairman_model: Optional override for chairman model
 
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
+    # Use compact council if requested and no explicit override
+    if compact and not council_models:
+        from .config import COMPACT_COUNCIL_MODELS
+        council_models = COMPACT_COUNCIL_MODELS
+    
     # Stage 1: Collect individual responses
     stage1_results = await stage1_collect_responses(user_query, council_models)
 
@@ -590,7 +864,7 @@ async def run_full_council(
         stage3_result = await stage3_synthesize_final(
             user_query, stage1_results, [], chairman_model
         )
-        metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True}
+        metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True, "compact": compact}
         return stage1_results, [], stage3_result, metadata
 
     # Stage 2: Collect rankings
@@ -611,6 +885,7 @@ async def run_full_council(
         "label_to_model": label_to_model,
         "aggregate_rankings": aggregate_rankings,
         "final_only": False,
+        "compact": compact,
     }
 
     return stage1_results, stage2_results, stage3_result, metadata

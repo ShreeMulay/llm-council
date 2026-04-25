@@ -99,6 +99,7 @@ class CouncilRequest(BaseModel):
 
     query: str
     final_only: bool = False
+    compact: bool = False  # Use core 5 models only (faster/cheaper)
     models: Optional[List[str]] = None
     chairman: Optional[str] = None
     include_details: bool = True
@@ -246,6 +247,7 @@ async def council_deliberation(request: CouncilRequest, format: Optional[str] = 
     result = await handle_council_command(
         query=request.query,
         final_only=request.final_only,
+        compact=request.compact,
         models=request.models,
         chairman=request.chairman,
         include_details=request.include_details,

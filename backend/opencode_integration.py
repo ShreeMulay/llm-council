@@ -106,6 +106,7 @@ def format_council_markdown(
 async def handle_council_command(
     query: str,
     final_only: bool = False,
+    compact: bool = False,
     models: Optional[List[str]] = None,
     chairman: Optional[str] = None,
     include_details: bool = True,
@@ -116,6 +117,7 @@ async def handle_council_command(
     Args:
         query: User query
         final_only: Skip Stage 2 (peer review) for faster results
+        compact: Use only 5 core models (faster/cheaper)
         models: Override council models (optional, can use aliases)
         chairman: Override chairman model (optional, can use alias)
         include_details: Show full details vs summary
@@ -138,6 +140,7 @@ async def handle_council_command(
     stage1, stage2, stage3, metadata = await run_full_council(
         query,
         final_only=final_only,
+        compact=compact,
         council_models=council_models,
         chairman_model=chairman_model,
     )
@@ -204,11 +207,15 @@ MCP_TOOL_SCHEMA = {
 # Model aliases documentation for help text
 MODEL_ALIASES_HELP = """
 **Model Aliases** (for /council --models):
-- `gpt` -> openai/gpt-5.4
+- `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.7
 - `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.20-0309-reasoning
+- `kimi` -> fireworks/kimi-k2.6
+- `deepseek` -> deepseek/deepseek-v4-pro
+- `llama` -> meta-llama/llama-4-maverick
+- `qwen` -> qwen/qwen3.5-122b-a10b
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview
 
