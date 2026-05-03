@@ -20,6 +20,7 @@ XAI_MODEL_MAP = {
     "x-ai/grok-4.20-0309-reasoning": "grok-4.20-0309-reasoning",
     "x-ai/grok-4.20-0309-non-reasoning": "grok-4.20-0309-non-reasoning",
     "x-ai/grok-4.20-multi-agent-0309": "grok-4.20-multi-agent-0309",
+    "x-ai/grok-4.3": "grok-4.3",
     "grok-4": "grok-4-0709",
 }
 

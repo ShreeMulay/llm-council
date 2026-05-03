@@ -13,7 +13,7 @@ MOCK_RESPONSES = {
     "anthropic/claude-opus-4.7": "Opus 4.7 response: Quantum computing leverages superposition and entanglement.",
     "fireworks/glm-5.1": "GLM-5.1 response: Quantum computing is a paradigm shift in computation.",
     "google/gemini-3.1-pro-preview": "Gemini 3.1 response: Quantum computing enables exponential speedup for certain problems.",
-    "x-ai/grok-4.20-0309-reasoning": "Grok 4.20 response: Quantum computing is the future of AI.",
+    "x-ai/grok-4.3": "Grok 4.3 response: Quantum computing is the future of AI.",
     "fireworks/kimi-k2.6": "Kimi K2.6 response: Quantum computing requires cryogenic temperatures.",
     "deepseek/deepseek-v4-pro": "DeepSeek V4 response: Quantum computing uses quantum gates.",
     "meta-llama/llama-4-maverick": "Llama 4 response: Quantum computing is still experimental.",

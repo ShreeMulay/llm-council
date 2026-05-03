@@ -104,7 +104,7 @@ Use aliases in `/council` command:
 - `opus` -> anthropic/claude-opus-4.7
 - `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `grok` -> x-ai/grok-4.20-0309-reasoning
+- `grok` -> x-ai/grok-4.3
 - `kimi` -> fireworks/kimi-k2.6
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick

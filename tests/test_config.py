@@ -33,7 +33,7 @@ class TestResolveModelAlias:
         assert resolve_model_alias("pro") == "google/gemini-3.1-pro-preview"
 
     def test_grok_alias(self):
-        assert resolve_model_alias("grok") == "x-ai/grok-4.20-0309-reasoning"
+        assert resolve_model_alias("grok") == "x-ai/grok-4.3"
 
     def test_kimi_alias(self):
         assert resolve_model_alias("kimi") == "fireworks/kimi-k2.6"
@@ -124,7 +124,7 @@ class TestDefaultCouncilModels:
         assert "google/gemini-3.1-pro-preview" in DEFAULT_COUNCIL_MODELS
 
     def test_includes_grok_4_20(self):
-        assert "x-ai/grok-4.20-0309-reasoning" in DEFAULT_COUNCIL_MODELS
+        assert "x-ai/grok-4.3" in DEFAULT_COUNCIL_MODELS
 
     def test_includes_kimi_k2_6(self):
         assert "fireworks/kimi-k2.6" in DEFAULT_COUNCIL_MODELS
@@ -170,7 +170,7 @@ class TestTieredTruncation:
         """Medium models get moderate space."""
         from backend.config import calculate_max_response_chars
         assert calculate_max_response_chars("google/gemini-3.1-pro-preview", 9) == 10000
-        assert calculate_max_response_chars("x-ai/grok-4.20-0309-reasoning", 9) == 10000
+        assert calculate_max_response_chars("x-ai/grok-4.3", 9) == 10000
         assert calculate_max_response_chars("fireworks/kimi-k2.6", 9) == 10000
 
     def test_weak_models_get_12k(self):

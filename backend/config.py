@@ -55,7 +55,7 @@ DEFAULT_COUNCIL_MODELS = [
     "anthropic/claude-opus-4.7",  # OpenRouter (Lead Coder + Chairman)
     "fireworks/glm-5.1",  # Fireworks Direct (Tool Specialist)
     "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
-    "x-ai/grok-4.20-0309-reasoning",  # xAI Direct (Real-time Intel)
+    "x-ai/grok-4.3",  # xAI Direct (Real-time Intel)
     "fireworks/kimi-k2.6",  # Fireworks Direct (Long-Context Specialist)
     "deepseek/deepseek-v4-pro",  # OpenRouter (Deep Reasoner)
     "meta-llama/llama-4-maverick",  # OpenRouter (Open-Weights Leader)
@@ -68,7 +68,7 @@ COMPACT_COUNCIL_MODELS = [
     "anthropic/claude-opus-4.7",
     "fireworks/glm-5.1",
     "google/gemini-3.1-pro-preview",
-    "x-ai/grok-4.20-0309-reasoning",
+    "x-ai/grok-4.3",
 ]
 
 # Chairman Model - synthesizes final response
@@ -112,6 +112,7 @@ XAI_MODEL_IDS = [
     "x-ai/grok-4.20-0309-reasoning",
     "x-ai/grok-4.20-0309-non-reasoning",
     "x-ai/grok-4.20-multi-agent-0309",
+    "x-ai/grok-4.3",
 ]
 
 # Gemini models routed to Google's Gemini Direct API.
@@ -143,6 +144,7 @@ OPENROUTER_FALLBACK_MAP = {
     "openai/gpt-5.4": "openai/gpt-5.4",
     "x-ai/grok-4": "x-ai/grok-4",
     "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
+    "x-ai/grok-4.3": "x-ai/grok-4.3",
     "fireworks/kimi-k2.6": "moonshotai/kimi-k2.6",
     "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro",
     "meta-llama/llama-4-maverick": "meta-llama/llama-4-maverick",
@@ -159,7 +161,7 @@ MODEL_ALIASES = {
     "glm": "fireworks/glm-5.1",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
-    "grok": "x-ai/grok-4.20-0309-reasoning",
+    "grok": "x-ai/grok-4.3",
     "kimi": "fireworks/kimi-k2.6",
     "deepseek": "deepseek/deepseek-v4-pro",
     "llama": "meta-llama/llama-4-maverick",
@@ -186,7 +188,7 @@ TIERED_TRUNCATION = {
     ],
     "medium": [
         "google/gemini-3.1-pro-preview",
-        "x-ai/grok-4.20-0309-reasoning",
+        "x-ai/grok-4.3",
         "fireworks/kimi-k2.6",
     ],
     "weak": [
