@@ -1,10 +1,11 @@
 """Direct OpenAI API client for GPT models with Codex OAuth support."""
 
-import httpx
 import json
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
+import httpx
 
 # OpenAI API endpoint
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
@@ -35,7 +36,7 @@ def get_openai_model_id(council_model_id: str) -> str:
     )
 
 
-def load_oauth_credentials() -> Optional[dict]:
+def load_oauth_credentials() -> dict | None:
     """Load OAuth credentials from OpenCode's auth file (tries 'codex' then 'openai')."""
     for auth_path in OPENCODE_AUTH_PATHS:
         if auth_path.exists():
@@ -74,7 +75,7 @@ def save_oauth_credentials(
         print(f"Warning: Could not save OpenAI OAuth credentials: {e}")
 
 
-async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
+async def refresh_oauth_token(refresh_token: str) -> dict | None:
     """Refresh the OAuth access token using the refresh token."""
     # OpenAI uses a different token endpoint
     token_url = "https://auth.openai.com/oauth/token"
@@ -105,7 +106,7 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
         }
 
 
-async def get_valid_oauth_token() -> Optional[tuple[str, Path, str]]:
+async def get_valid_oauth_token() -> tuple[str, Path, str] | None:
     """Get a valid OAuth access token, refreshing if necessary.
 
     Returns:
@@ -147,7 +148,7 @@ async def call_openai(
     model: str,
     prompt: str,
     max_tokens: int = 32768,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
     reasoning_effort: str = DEFAULT_REASONING_EFFORT,
 ) -> dict[str, Any]:
     """

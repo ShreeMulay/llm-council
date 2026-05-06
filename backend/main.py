@@ -1,5 +1,6 @@
 """FastAPI backend for LLM Council with OpenCode integration."""
 
+import contextlib
 import logging
 import os
 
@@ -7,10 +8,8 @@ import os
 _handlers: list[logging.Handler] = [logging.StreamHandler()]
 if not os.environ.get("K_SERVICE"):
     # Not in Cloud Run — also log to file for local debugging
-    try:
+    with contextlib.suppress(OSError):
         _handlers.append(logging.FileHandler("/tmp/llm-council.log"))
-    except OSError:
-        pass  # /tmp not writable (shouldn't happen locally)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -18,42 +17,42 @@ logging.basicConfig(
     handlers=_handlers,
 )
 
+import asyncio
+import json
+import uuid
+from typing import Any
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import List, Dict, Any, Optional
-import uuid
-import json
-import asyncio
 
 from . import storage
 from .auth import ApiKeyMiddleware
-from .config import BACKEND_PORT, BACKEND_HOST, COUNCIL_MODELS, CHAIRMAN_MODEL
+from .config import BACKEND_HOST, BACKEND_PORT, CHAIRMAN_MODEL, COUNCIL_MODELS
 from .council import (
-    run_full_council,
-    stream_council,
+    calculate_aggregate_rankings,
     generate_conversation_title,
+    run_full_council,
     stage1_collect_responses,
     stage2_collect_rankings,
     stage3_synthesize_final,
-    calculate_aggregate_rankings,
+    stream_council,
 )
 from .model_discovery import get_model_discovery
 from .opencode_integration import (
-    handle_council_command,
     MCP_TOOL_SCHEMA,
     MODEL_ALIASES_HELP,
+    handle_council_command,
 )
 from .webhooks import (
     CouncilAsyncRequest,
-    JobInfo,
     JobStatus,
+    cleanup_old_jobs,
     create_job,
     get_job,
     list_jobs,
     run_council_async,
-    cleanup_old_jobs,
 )
 
 app = FastAPI(
@@ -100,16 +99,16 @@ class CouncilRequest(BaseModel):
     query: str
     final_only: bool = False
     compact: bool = False  # Use core 5 models only (faster/cheaper)
-    models: Optional[List[str]] = None
-    chairman: Optional[str] = None
+    models: list[str] | None = None
+    chairman: str | None = None
     include_details: bool = True
 
 
 class ExportRequest(BaseModel):
     """Request to export a council result as a downloadable file."""
 
-    result: Dict[str, Any]  # Full council result payload
-    filename: Optional[str] = None  # Custom filename (without extension)
+    result: dict[str, Any]  # Full council result payload
+    filename: str | None = None  # Custom filename (without extension)
 
 
 class ConversationMetadata(BaseModel):
@@ -127,7 +126,7 @@ class Conversation(BaseModel):
     id: str
     created_at: str
     title: str
-    messages: List[Dict[str, Any]]
+    messages: list[dict[str, Any]]
 
 
 # ============================================================================
@@ -187,7 +186,7 @@ async def api_info():
 
 
 @app.get("/api/models")
-async def get_models(provider: Optional[str] = None, refresh: bool = False):
+async def get_models(provider: str | None = None, refresh: bool = False):
     """
     Get available models from all providers.
 
@@ -223,7 +222,7 @@ async def get_provider_models(provider: str, refresh: bool = False):
 
 
 @app.post("/api/council")
-async def council_deliberation(request: CouncilRequest, format: Optional[str] = None):
+async def council_deliberation(request: CouncilRequest, format: str | None = None):
     """
     Execute 3-stage council deliberation.
 
@@ -281,8 +280,9 @@ async def council_export(request: ExportRequest, format: str = "markdown"):
         result: The full council result object from /api/council
         filename: Optional custom filename (without extension)
     """
-    from fastapi.responses import Response
     import re
+
+    from fastapi.responses import Response
 
     result = request.result
 
@@ -470,7 +470,7 @@ async def council_async(request: CouncilAsyncRequest):
 @app.get("/api/council/jobs")
 async def list_council_jobs(
     limit: int = 50,
-    status: Optional[str] = None,
+    status: str | None = None,
 ):
     """
     List recent async council jobs.
@@ -487,7 +487,7 @@ async def list_council_jobs(
             raise HTTPException(
                 status_code=400,
                 detail=f"Invalid status: {status}. Valid values: {[s.value for s in JobStatus]}",
-            )
+            ) from None
 
     jobs = list_jobs(limit=limit, status=status_enum)
     return {
@@ -538,7 +538,7 @@ async def cleanup_jobs(max_age_hours: int = 24):
 # ============================================================================
 
 
-@app.get("/api/conversations", response_model=List[ConversationMetadata])
+@app.get("/api/conversations", response_model=list[ConversationMetadata])
 async def list_conversations():
     """List all conversations (metadata only)."""
     return storage.list_conversations()

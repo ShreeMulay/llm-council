@@ -17,7 +17,33 @@ env:
   REGISTRY: us-central1-docker.pkg.dev/tke-phi-privacy-engine/llm-council/llm-council
 
 jobs:
+  ci:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --all-groups
+
+      - name: Lint with ruff
+        run: uv run ruff check backend/ tests/
+
+      - name: Test
+        run: uv run pytest -m "not slow and not e2e"
+
+      - name: Build Docker image (verification)
+        run: docker build -t ${{ env.REGISTRY }}:ci .
+
   deploy:
+    name: Deploy
+    needs: ci
     runs-on: ubuntu-latest
     permissions:
       contents: read

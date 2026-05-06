@@ -1,10 +1,11 @@
 """Direct Anthropic API client for Claude models with OAuth support."""
 
-import httpx
 import json
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
+import httpx
 
 from .secrets import ANTHROPIC_API_KEY
 
@@ -43,7 +44,7 @@ def get_anthropic_model_id(council_model_id: str) -> str:
     return ANTHROPIC_MODEL_MAP.get(council_model_id, council_model_id)
 
 
-def load_oauth_credentials() -> Optional[dict]:
+def load_oauth_credentials() -> dict | None:
     """Load OAuth credentials from OpenCode's auth file."""
     for auth_path in OPENCODE_AUTH_PATHS:
         if auth_path.exists():
@@ -77,7 +78,7 @@ def save_oauth_credentials(auth_path: Path, access: str, refresh: str, expires: 
         print(f"Warning: Could not save OAuth credentials: {e}")
 
 
-async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
+async def refresh_oauth_token(refresh_token: str) -> dict | None:
     """Refresh the OAuth access token using the refresh token."""
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
@@ -102,7 +103,7 @@ async def refresh_oauth_token(refresh_token: str) -> Optional[dict]:
         }
 
 
-async def get_valid_oauth_token() -> Optional[tuple[str, Path]]:
+async def get_valid_oauth_token() -> tuple[str, Path] | None:
     """Get a valid OAuth access token, refreshing if necessary."""
     creds = load_oauth_credentials()
     if not creds:
@@ -150,7 +151,7 @@ async def call_anthropic_oauth(
     prompt: str,
     access_token: str,
     max_tokens: int = 32768,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 ) -> dict[str, Any]:
     """
     Call the Anthropic API using OAuth authentication (Max plan).
@@ -220,7 +221,7 @@ async def call_anthropic_api_key(
     model: str,
     prompt: str,
     max_tokens: int = 32768,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 ) -> dict[str, Any]:
     """
     Call the Anthropic API using API key authentication.
@@ -291,7 +292,7 @@ async def call_anthropic(
     model: str,
     prompt: str,
     max_tokens: int = 32768,
-    system_prompt: Optional[str] = None,
+    system_prompt: str | None = None,
 ) -> dict[str, Any]:
     """Call Anthropic API - tries OAuth (Max plan) first, falls back to API key.
 

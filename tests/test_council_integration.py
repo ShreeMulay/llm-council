@@ -1,11 +1,11 @@
 """Integration tests for full 3-stage council deliberation with mocked providers."""
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, AsyncMock
 
+from backend.config import COMPACT_COUNCIL_MODELS
 from backend.council import run_full_council
-from backend.config import DEFAULT_COUNCIL_MODELS, COMPACT_COUNCIL_MODELS
-
 
 # Mock responses for each model
 MOCK_RESPONSES = {
@@ -155,7 +155,7 @@ class TestFullCouncilFlow:
 
         # Check that evaluator rankings don't reference their own model
         for ranking in stage2:
-            evaluator = ranking["model"]
+            ranking["model"]
             # The ranking text should not contain the evaluator's own response
             # (This is a weak check since rankings are anonymized, but verifies flow)
             assert "parsed_ranking" in ranking
@@ -163,7 +163,7 @@ class TestFullCouncilFlow:
     @pytest.mark.asyncio
     async def test_caching_avoids_duplicate_calls(self, mock_all_providers):
         """Same model+prompt should use cache on second Stage 1 call."""
-        from backend.council import stage1_collect_responses, _stage1_cache
+        from backend.council import _stage1_cache, stage1_collect_responses
 
         # Clear cache first
         _stage1_cache.clear()

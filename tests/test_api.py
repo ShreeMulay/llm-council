@@ -1,8 +1,9 @@
 """Integration tests for FastAPI endpoints."""
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, AsyncMock
 
 from backend.main import app
 
@@ -98,13 +99,13 @@ class TestCouncilEndpoint:
     def test_council_basic_query(self, mock_handle, mock_council_result):
         """Basic council query returns markdown and structured data."""
         mock_handle.return_value = mock_council_result
-        
+
         response = client.post(
             "/api/council",
             json={"query": "What is 2+2?"},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "markdown" in data
@@ -118,13 +119,13 @@ class TestCouncilEndpoint:
         # Update mock to return compact=True
         compact_result = {**mock_council_result, "config": {**mock_council_result["config"], "compact": True}}
         mock_handle.return_value = compact_result
-        
+
         response = client.post(
             "/api/council",
             json={"query": "What is 2+2?", "compact": True},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["config"]["compact"] is True
@@ -138,13 +139,13 @@ class TestCouncilEndpoint:
         # Update mock to return final_only=True
         final_result = {**mock_council_result, "metadata": {**mock_council_result["metadata"], "final_only": True}}
         mock_handle.return_value = final_result
-        
+
         response = client.post(
             "/api/council",
             json={"query": "What is 2+2?", "final_only": True},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["metadata"]["final_only"] is True
@@ -153,13 +154,13 @@ class TestCouncilEndpoint:
     def test_council_markdown_format(self, mock_handle, mock_council_result):
         """Markdown format returns wrapped markdown."""
         mock_handle.return_value = mock_council_result
-        
+
         response = client.post(
             "/api/council?format=markdown",
             json={"query": "What is 2+2?"},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert "markdown" in data
@@ -169,13 +170,13 @@ class TestCouncilEndpoint:
     def test_council_markdown_raw_format(self, mock_handle, mock_council_result):
         """Markdown-raw format returns plain text."""
         mock_handle.return_value = mock_council_result
-        
+
         response = client.post(
             "/api/council?format=markdown-raw",
             json={"query": "What is 2+2?"},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         assert response.headers["content-type"] == "text/markdown; charset=utf-8"
 
@@ -186,7 +187,7 @@ class TestCouncilEndpoint:
             json={},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 422
 
     def test_council_invalid_compact_type(self):
@@ -196,7 +197,7 @@ class TestCouncilEndpoint:
             json={"query": "test", "compact": "invalid"},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 422
 
 
@@ -212,13 +213,13 @@ class TestCouncilEndpointWithRealDeliberation:
             {"model": "C", "response": "Synthesis"},
             {"aggregate_rankings": []},
         )
-        
+
         response = client.post(
             "/api/council",
             json={"query": "Test"},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert len(data["stage1"]) == 1
@@ -234,13 +235,13 @@ class TestCouncilEndpointWithRealDeliberation:
             {"model": "C", "response": "Synthesis"},
             {"aggregate_rankings": [], "final_only": True},
         )
-        
+
         response = client.post(
             "/api/council",
             json={"query": "Test", "final_only": True},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["stage2"] == []
@@ -255,13 +256,13 @@ class TestCouncilEndpointWithRealDeliberation:
             {"model": "C", "response": "Synthesis"},
             {},
         )
-        
+
         response = client.post(
             "/api/council",
             json={"query": "Test", "compact": True},
             headers={"X-Council-Key": "test-key"},
         )
-        
+
         assert response.status_code == 200
         # Verify run_full_council was called with compact=True
         # When compact=True and no explicit models, council_models is None

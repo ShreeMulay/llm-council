@@ -6,6 +6,7 @@ Skips auth for /health, /, and when COUNCIL_API_KEY is not set (local dev).
 
 import logging
 import secrets
+
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse, Response

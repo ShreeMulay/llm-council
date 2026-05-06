@@ -11,7 +11,6 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger("llm-council.secrets")
 
@@ -102,22 +101,22 @@ def _load_secrets() -> dict:
 _secrets: dict = _load_secrets()
 
 
-def get_secret(key: str) -> Optional[str]:
+def get_secret(key: str) -> str | None:
     """Get a secret by key name."""
     return _secrets.get(key)
 
 
 # Export API keys as module-level constants for backward compatibility
-OPENROUTER_API_KEY: Optional[str] = _secrets.get("OPENROUTER_API_KEY")
-CEREBRAS_API_KEY: Optional[str] = _secrets.get("CEREBRAS_API_KEY")
-ANTHROPIC_API_KEY: Optional[str] = _secrets.get("ANTHROPIC_API_KEY")
-MOONSHOT_API_KEY: Optional[str] = _secrets.get("MOONSHOT_API_KEY")
-GROK_API_KEY: Optional[str] = _secrets.get("GROK_API_KEY")
-GEMINI_API_KEY: Optional[str] = _secrets.get("GEMINI_API_KEY") or _secrets.get(
+OPENROUTER_API_KEY: str | None = _secrets.get("OPENROUTER_API_KEY")
+CEREBRAS_API_KEY: str | None = _secrets.get("CEREBRAS_API_KEY")
+ANTHROPIC_API_KEY: str | None = _secrets.get("ANTHROPIC_API_KEY")
+MOONSHOT_API_KEY: str | None = _secrets.get("MOONSHOT_API_KEY")
+GROK_API_KEY: str | None = _secrets.get("GROK_API_KEY")
+GEMINI_API_KEY: str | None = _secrets.get("GEMINI_API_KEY") or _secrets.get(
     "GOOGLE_AI_API_KEY"
 )
-FIREWORKS_API_KEY: Optional[str] = _secrets.get("FIREWORKS_API_KEY")
-COUNCIL_API_KEY: Optional[str] = _secrets.get("COUNCIL_API_KEY")
+FIREWORKS_API_KEY: str | None = _secrets.get("FIREWORKS_API_KEY")
+COUNCIL_API_KEY: str | None = _secrets.get("COUNCIL_API_KEY")
 
 
 def validate_required_keys() -> None:

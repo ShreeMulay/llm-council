@@ -1,16 +1,14 @@
 """Unit tests for backend.config module."""
 
-import pytest
-from hypothesis import given, strategies as st
 
 from backend.config import (
-    resolve_model_alias,
-    get_model_reasoning_effort,
-    is_fireworks_model,
     DEFAULT_COUNCIL_MODELS,
+    EVALUATOR_PRIORITY,
     FIREWORKS_MODEL_IDS,
     MODEL_ALIASES,
-    EVALUATOR_PRIORITY,
+    get_model_reasoning_effort,
+    is_fireworks_model,
+    resolve_model_alias,
 )
 
 

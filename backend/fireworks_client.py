@@ -8,8 +8,9 @@ Fallback: OpenRouter (z-ai/glm-5.1)
 """
 
 import asyncio
+from typing import Any
+
 import httpx
-from typing import List, Dict, Any, Optional, Tuple
 
 from .secrets import FIREWORKS_API_KEY
 
@@ -36,11 +37,11 @@ def get_fireworks_model_id(council_model_id: str) -> str:
 
 async def query_fireworks_model(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Query a model via Fireworks AI's OpenAI-compatible API.
 
@@ -119,21 +120,21 @@ async def query_fireworks_model(
 
 async def query_fireworks_single(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int,
     temperature: float = 0.7,
-) -> Tuple[str, Optional[Dict[str, Any]]]:
+) -> tuple[str, dict[str, Any] | None]:
     """Query single Fireworks model and return (model_id, result) tuple."""
     result = await query_fireworks_model(model_id, messages, max_tokens, temperature)
     return model_id, result
 
 
 async def query_fireworks_models_parallel(
-    model_ids: List[str],
-    messages: List[Dict[str, str]],
+    model_ids: list[str],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-) -> Dict[str, Optional[Dict[str, Any]]]:
+) -> dict[str, dict[str, Any] | None]:
     """Query multiple Fireworks models in parallel."""
     tasks = [
         query_fireworks_single(m, messages, max_tokens, temperature) for m in model_ids

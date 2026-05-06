@@ -1,7 +1,8 @@
 """Google Gemini API client for direct queries."""
 
+from typing import Any
+
 import httpx
-from typing import List, Dict, Any, Optional
 
 from .secrets import GEMINI_API_KEY
 
@@ -22,7 +23,7 @@ def get_gemini_model_id(council_model_id: str) -> str:
     )
 
 
-def convert_messages_to_gemini(messages: List[Dict[str, str]]) -> List[Dict[str, Any]]:
+def convert_messages_to_gemini(messages: list[dict[str, str]]) -> list[dict[str, Any]]:
     contents = []
     for msg in messages:
         role = msg.get("role", "user")
@@ -36,11 +37,11 @@ def convert_messages_to_gemini(messages: List[Dict[str, str]]) -> List[Dict[str,
 
 async def query_gemini_model(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     if not GEMINI_API_KEY:
         print("Error: GEMINI_API_KEY not configured")
         return None
@@ -54,7 +55,7 @@ async def query_gemini_model(
             system_text = msg.get("content", "")
             break
 
-    payload: Dict[str, Any] = {
+    payload: dict[str, Any] = {
         "contents": contents,
         "generationConfig": {"maxOutputTokens": max_tokens, "temperature": temperature},
     }

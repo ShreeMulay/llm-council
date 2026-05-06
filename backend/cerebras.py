@@ -1,8 +1,9 @@
 """Cerebras API client for direct queries to Cerebras inference."""
 
-import httpx
-from typing import List, Dict, Any, Optional
 import asyncio
+from typing import Any
+
+import httpx
 
 from .secrets import CEREBRAS_API_KEY
 
@@ -12,28 +13,28 @@ CEREBRAS_API_URL = "https://api.cerebras.ai/v1"
 
 async def query_cerebras_model(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Query a Cerebras model directly.
-    
+
     Args:
         model_id: Cerebras model ID (e.g., "zai-glm-4.7")
         messages: OpenAI-style message list
         max_tokens: Maximum output tokens
         temperature: Sampling temperature
         timeout: Request timeout in seconds
-    
+
     Returns:
         Response dict with content, usage, model or None on error
     """
     if not CEREBRAS_API_KEY:
         print("Error: CEREBRAS_API_KEY not configured")
         return None
-    
+
     async with httpx.AsyncClient(timeout=timeout) as client:
         try:
             response = await client.post(
@@ -51,7 +52,7 @@ async def query_cerebras_model(
             )
             response.raise_for_status()
             data = response.json()
-            
+
             msg = data["choices"][0]["message"]
             # GLM 4.7 may return 'reasoning' instead of 'content' for short outputs
             text = msg.get("content") or msg.get("reasoning") or ""
@@ -73,46 +74,46 @@ async def query_cerebras_model(
 
 
 async def query_cerebras_models_parallel(
-    model_ids: List[str],
-    messages: List[Dict[str, str]],
+    model_ids: list[str],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7
-) -> Dict[str, Optional[Dict[str, Any]]]:
+) -> dict[str, dict[str, Any] | None]:
     """
     Query multiple Cerebras models in parallel.
-    
+
     Args:
         model_ids: List of Cerebras model IDs
         messages: Messages to send to all models
         max_tokens: Maximum output tokens
         temperature: Sampling temperature
-    
+
     Returns:
         Dict mapping model_id to response (or None on error)
     """
-    async def query_single(model_id: str) -> tuple[str, Optional[Dict[str, Any]]]:
+    async def query_single(model_id: str) -> tuple[str, dict[str, Any] | None]:
         result = await query_cerebras_model(
             model_id, messages, max_tokens, temperature
         )
         return model_id, result
-    
+
     tasks = [query_single(model_id) for model_id in model_ids]
     results = await asyncio.gather(*tasks)
-    
-    return {model_id: result for model_id, result in results}
+
+    return dict(results)
 
 
-async def list_cerebras_models() -> List[Dict[str, Any]]:
+async def list_cerebras_models() -> list[dict[str, Any]]:
     """
     List available models from Cerebras API.
-    
+
     Returns:
         List of model objects with id, owned_by, etc.
     """
     if not CEREBRAS_API_KEY:
         print("Error: CEREBRAS_API_KEY not configured")
         return []
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         try:
             response = await client.get(

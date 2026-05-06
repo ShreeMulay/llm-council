@@ -1,18 +1,18 @@
 """OpenCode integration: /council command formatter and MCP tool support."""
 
 import time
-from typing import List, Dict, Any, Optional
+from typing import Any
 
+from .config import CHAIRMAN_MODEL, COUNCIL_MODELS, resolve_model_alias
 from .council import run_full_council
-from .config import MODEL_ALIASES, COUNCIL_MODELS, CHAIRMAN_MODEL, resolve_model_alias
 
 
 def format_council_markdown(
     query: str,
-    stage1_results: List[Dict[str, Any]],
-    stage2_results: List[Dict[str, Any]],
-    stage3_result: Dict[str, Any],
-    metadata: Dict[str, Any],
+    stage1_results: list[dict[str, Any]],
+    stage2_results: list[dict[str, Any]],
+    stage3_result: dict[str, Any],
+    metadata: dict[str, Any],
     include_details: bool = True,
     elapsed_seconds: float = 0.0,
 ) -> str:
@@ -47,12 +47,12 @@ def format_council_markdown(
             tokens = usage.get("total_tokens", "N/A")
             provider = result.get("provider", "unknown")
 
-            lines.append(f"<details>")
+            lines.append("<details>")
             lines.append(
                 f"<summary><strong>{model}</strong> ({provider}, {tokens} tokens)</summary>\n"
             )
             lines.append(f"{content}\n")
-            lines.append(f"</details>\n")
+            lines.append("</details>\n")
 
     # Stage 2: Peer Rankings
     if stage2_results and include_details:
@@ -107,10 +107,10 @@ async def handle_council_command(
     query: str,
     final_only: bool = False,
     compact: bool = False,
-    models: Optional[List[str]] = None,
-    chairman: Optional[str] = None,
+    models: list[str] | None = None,
+    chairman: str | None = None,
     include_details: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Handle /council command invocation.
 

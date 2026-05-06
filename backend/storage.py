@@ -1,13 +1,14 @@
 """JSON-based storage for conversations with per-conversation locking."""
 
 import asyncio
+import contextlib
 import json
 import os
 import re
 import tempfile
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import Any
+
 from .config import CONVERSATIONS_DIR
 
 # Valid conversation ID: UUID format only (prevents path traversal)
@@ -17,7 +18,7 @@ _VALID_ID_RE = re.compile(
 
 # Per-conversation locks to prevent read-modify-write races.
 # Safe because uvicorn runs a single event loop per worker.
-_conversation_locks: Dict[str, asyncio.Lock] = {}
+_conversation_locks: dict[str, asyncio.Lock] = {}
 
 
 def _get_lock(conversation_id: str) -> asyncio.Lock:
@@ -50,7 +51,7 @@ def get_conversation_path(conversation_id: str) -> str:
     return str(path)
 
 
-def create_conversation(conversation_id: str) -> Dict[str, Any]:
+def create_conversation(conversation_id: str) -> dict[str, Any]:
     """
     Create a new conversation.
 
@@ -77,7 +78,7 @@ def create_conversation(conversation_id: str) -> Dict[str, Any]:
     return conversation
 
 
-def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
+def get_conversation(conversation_id: str) -> dict[str, Any] | None:
     """
     Load a conversation from storage.
 
@@ -92,11 +93,11 @@ def get_conversation(conversation_id: str) -> Optional[Dict[str, Any]]:
     if not os.path.exists(path):
         return None
 
-    with open(path, "r") as f:
+    with open(path) as f:
         return json.load(f)
 
 
-def save_conversation(conversation: Dict[str, Any]):
+def save_conversation(conversation: dict[str, Any]):
     """
     Save a conversation to storage using atomic write (temp + rename).
 
@@ -115,14 +116,12 @@ def save_conversation(conversation: Dict[str, Any]):
         os.replace(tmp_path, path)  # Atomic on POSIX
     except BaseException:
         # Clean up temp file on any failure
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(tmp_path)
-        except OSError:
-            pass
         raise
 
 
-def list_conversations() -> List[Dict[str, Any]]:
+def list_conversations() -> list[dict[str, Any]]:
     """
     List all conversations (metadata only).
 
@@ -135,7 +134,7 @@ def list_conversations() -> List[Dict[str, Any]]:
     for filename in os.listdir(CONVERSATIONS_DIR):
         if filename.endswith(".json"):
             path = str(CONVERSATIONS_DIR / filename)
-            with open(path, "r") as f:
+            with open(path) as f:
                 data = json.load(f)
                 # Return metadata only
                 conversations.append(
@@ -172,9 +171,9 @@ async def add_user_message(conversation_id: str, content: str):
 
 async def add_assistant_message(
     conversation_id: str,
-    stage1: List[Dict[str, Any]],
-    stage2: List[Dict[str, Any]],
-    stage3: Dict[str, Any],
+    stage1: list[dict[str, Any]],
+    stage2: list[dict[str, Any]],
+    stage3: dict[str, Any],
 ):
     """
     Add an assistant message with all 3 stages to a conversation (async, with locking).

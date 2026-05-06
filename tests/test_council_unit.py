@@ -1,14 +1,11 @@
 """Unit tests for backend.council module — evaluator selection, curation, truncation."""
 
-import pytest
-import random
-from hypothesis import given, strategies as st, settings
-from typing import List, Dict, Any
+from hypothesis import given, settings
+from hypothesis import strategies as st
 
 from backend.council import (
-    parse_ranking_from_text,
     _truncate_for_prompt,
-    MAX_RESPONSE_CHARS_FOR_PROMPT,
+    parse_ranking_from_text,
 )
 
 
@@ -18,7 +15,7 @@ class TestGetEvaluatorModels:
     def test_selects_top_3_from_priority(self):
         """Given all 3 priority evaluators in council, return all 3."""
         from backend.council import get_evaluator_models
-        
+
         council = [
             "openai/gpt-5.5",
             "anthropic/claude-opus-4.7",
@@ -26,7 +23,7 @@ class TestGetEvaluatorModels:
             "fireworks/glm-5.1",
         ]
         evaluators = get_evaluator_models(council)
-        
+
         assert len(evaluators) == 3
         assert evaluators[0] == "anthropic/claude-opus-4.7"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
@@ -35,37 +32,37 @@ class TestGetEvaluatorModels:
     def test_excludes_missing_evaluators(self):
         """If an evaluator is not in the council, skip it."""
         from backend.council import get_evaluator_models
-        
+
         council = [
             "anthropic/claude-opus-4.7",
             "deepseek/deepseek-v4-pro",
             "fireworks/glm-5.1",
         ]
         evaluators = get_evaluator_models(council)
-        
+
         assert len(evaluators) == 2
         assert "openai/gpt-5.5" not in evaluators
 
     def test_returns_empty_if_none_available(self):
         """If no priority evaluators are in council, return empty list."""
         from backend.council import get_evaluator_models
-        
+
         council = ["fireworks/glm-5.1", "meta-llama/llama-4-maverick"]
         evaluators = get_evaluator_models(council)
-        
+
         assert len(evaluators) == 0
 
     def test_preserves_priority_order(self):
         """Evaluators are returned in priority order, not council order."""
         from backend.council import get_evaluator_models
-        
+
         council = [
             "openai/gpt-5.5",  # priority 3
             "deepseek/deepseek-v4-pro",  # priority 2
             "anthropic/claude-opus-4.7",  # priority 1
         ]
         evaluators = get_evaluator_models(council)
-        
+
         assert evaluators[0] == "anthropic/claude-opus-4.7"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
         assert evaluators[2] == "openai/gpt-5.5"
@@ -77,30 +74,30 @@ class TestSelfExclusion:
     def test_excludes_own_response(self):
         """GPT-5.5 evaluator should not see its own Stage 1 response."""
         from backend.council import filter_responses_for_evaluator
-        
+
         responses = [
             {"model": "openai/gpt-5.5", "response": "GPT's answer"},
             {"model": "anthropic/claude-opus-4.7", "response": "Claude's answer"},
             {"model": "deepseek/deepseek-v4-pro", "response": "DeepSeek's answer"},
         ]
-        
+
         filtered = filter_responses_for_evaluator("openai/gpt-5.5", responses)
         models = [r["model"] for r in filtered]
-        
+
         assert "openai/gpt-5.5" not in models
         assert len(filtered) == 2
 
     def test_no_exclusion_for_non_evaluator(self):
         """If evaluator is not in responses, no exclusion needed."""
         from backend.council import filter_responses_for_evaluator
-        
+
         responses = [
             {"model": "anthropic/claude-opus-4.7", "response": "Claude's answer"},
             {"model": "deepseek/deepseek-v4-pro", "response": "DeepSeek's answer"},
         ]
-        
+
         filtered = filter_responses_for_evaluator("openai/gpt-5.5", responses)
-        
+
         assert len(filtered) == 2
 
 
@@ -110,7 +107,7 @@ class TestRandomizedOrder:
     def test_different_order_per_evaluator(self):
         """Two evaluators should see responses in different orders."""
         from backend.council import shuffle_responses_for_evaluator
-        
+
         responses = [
             {"model": "A", "response": "A's answer"},
             {"model": "B", "response": "B's answer"},
@@ -118,7 +115,7 @@ class TestRandomizedOrder:
             {"model": "D", "response": "D's answer"},
             {"model": "E", "response": "E's answer"},
         ]
-        
+
         # Run multiple times to account for random chance of same order
         orders_match_count = 0
         for _ in range(20):
@@ -126,7 +123,7 @@ class TestRandomizedOrder:
             order2 = [r["model"] for r in shuffle_responses_for_evaluator(responses)]
             if order1 == order2:
                 orders_match_count += 1
-        
+
         # With 5! = 120 possible orders, probability of match is ~0.8%
         # Over 20 runs, expected matches ~0.16. Allow up to 2 for randomness.
         assert orders_match_count <= 2, "Orders should be randomized, not identical"
@@ -134,15 +131,15 @@ class TestRandomizedOrder:
     def test_all_responses_present(self):
         """Shuffling should not drop any responses."""
         from backend.council import shuffle_responses_for_evaluator
-        
+
         responses = [
             {"model": "A", "response": "A's answer"},
             {"model": "B", "response": "B's answer"},
         ]
-        
+
         shuffled = shuffle_responses_for_evaluator(responses)
         models = [r["model"] for r in shuffled]
-        
+
         assert "A" in models
         assert "B" in models
         assert len(shuffled) == 2
@@ -154,7 +151,7 @@ class TestSelectTopResponses:
     def test_selects_top_3_by_score(self):
         """Top 3 responses by aggregate evaluator score should be selected."""
         from backend.council import select_top_responses
-        
+
         stage1 = [
             {"model": "A", "response": "A"},
             {"model": "B", "response": "B"},
@@ -162,7 +159,7 @@ class TestSelectTopResponses:
             {"model": "D", "response": "D"},
             {"model": "E", "response": "E"},
         ]
-        
+
         # Mock stage2 results with scores
         stage2 = [
             {
@@ -174,10 +171,10 @@ class TestSelectTopResponses:
                 "parsed_ranking": ["Response A", "Response C", "Response B", "Response D", "Response E"],
             },
         ]
-        
+
         selected = select_top_responses(stage1, stage2)
         models = [r["model"] for r in selected]
-        
+
         assert len(selected) == 5  # top 3 + wildcard + diversity
         assert "A" in models  # A ranked first by both evaluators
         assert "B" in models  # B ranked second/third
@@ -186,13 +183,13 @@ class TestSelectTopResponses:
     def test_includes_wildcard_for_disagreement(self):
         """If evaluators disagree, include a wildcard response."""
         from backend.council import select_top_responses
-        
+
         stage1 = [
             {"model": "A", "response": "A"},
             {"model": "B", "response": "B"},
             {"model": "C", "response": "C"},
         ]
-        
+
         # High disagreement: evaluators rank completely differently
         stage2 = [
             {
@@ -204,10 +201,10 @@ class TestSelectTopResponses:
                 "parsed_ranking": ["Response C", "Response B", "Response A"],
             },
         ]
-        
+
         selected = select_top_responses(stage1, stage2)
         models = [r["model"] for r in selected]
-        
+
         # All 3 should be included (top 3 + wildcard + diversity, but only 3 exist)
         assert len(selected) == 3
         assert "A" in models
@@ -217,7 +214,7 @@ class TestSelectTopResponses:
     def test_diversity_pick_from_different_model(self):
         """Diversity pick should come from a model not in top 3."""
         from backend.council import select_top_responses
-        
+
         stage1 = [
             {"model": "A", "response": "A"},
             {"model": "B", "response": "B"},
@@ -225,7 +222,7 @@ class TestSelectTopResponses:
             {"model": "D", "response": "D"},
             {"model": "E", "response": "E"},
         ]
-        
+
         # All evaluators agree: A, B, C are top 3
         stage2 = [
             {
@@ -233,35 +230,35 @@ class TestSelectTopResponses:
                 "parsed_ranking": ["Response A", "Response B", "Response C", "Response D", "Response E"],
             },
         ]
-        
+
         selected = select_top_responses(stage1, stage2)
         top3_models = ["A", "B", "C"]
-        
+
         # Check that diversity pick is D or E (not in top 3)
         selected_models = [r["model"] for r in selected]
         diversity_models = [m for m in selected_models if m not in top3_models]
-        
+
         assert len(diversity_models) >= 1
         assert all(m in ["D", "E"] for m in diversity_models)
 
     def test_handles_fewer_than_5_responses(self):
         """If fewer than 5 responses, return all of them."""
         from backend.council import select_top_responses
-        
+
         stage1 = [
             {"model": "A", "response": "A"},
             {"model": "B", "response": "B"},
         ]
-        
+
         stage2 = [
             {
                 "model": "eval1",
                 "parsed_ranking": ["Response A", "Response B"],
             },
         ]
-        
+
         selected = select_top_responses(stage1, stage2)
-        
+
         assert len(selected) == 2
 
 

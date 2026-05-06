@@ -253,7 +253,7 @@ def get_model_tier(model_id: str) -> str:
 
 def calculate_max_response_chars(model_id: str, num_models: int) -> int:
     """Calculate max response chars for a model based on tier and council size.
-    
+
     With compact mode (5 models), all models get maximum space.
     With full council (9 models), allocation is tiered:
     - Strong models (concise): 8K
@@ -263,7 +263,7 @@ def calculate_max_response_chars(model_id: str, num_models: int) -> int:
     if num_models <= 5:
         # Compact mode: everyone gets max space
         return DEFAULT_TRUNCATION_LIMIT
-    
+
     tier = get_model_tier(model_id)
     return TRUNCATION_LIMITS.get(tier, DEFAULT_TRUNCATION_LIMIT)
 
@@ -281,7 +281,7 @@ MODEL_REASONING_EFFORT = {
 
 def get_model_reasoning_effort(model_id: str) -> str | None:
     """Get the reasoning effort for a model, or None to use provider default.
-    
+
     Supports dual-mode for GPT-5.5:
     - "openai/gpt-5.5" -> medium (Stage 1 responder)
     - "openai/gpt-5.5-evaluator" -> high (Stage 2 evaluator)

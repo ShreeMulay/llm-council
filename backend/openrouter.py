@@ -1,25 +1,26 @@
 """OpenRouter API client for making LLM requests."""
 
-import httpx
 import asyncio
-from typing import List, Dict, Any, Optional
+from typing import Any
 
-from .secrets import OPENROUTER_API_KEY
+import httpx
+
 from .config import (
     OPENROUTER_API_URL,
     OPENROUTER_MODELS_URL,
     get_model_reasoning_effort,
 )
+from .secrets import OPENROUTER_API_KEY
 
 
 async def query_model(
     model: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0,
-    reasoning_effort: Optional[str] = None,
-) -> Optional[Dict[str, Any]]:
+    reasoning_effort: str | None = None,
+) -> dict[str, Any] | None:
     """
     Query a single model via OpenRouter API.
 
@@ -105,11 +106,11 @@ async def query_model(
 
 
 async def query_models_parallel(
-    models: List[str],
-    messages: List[Dict[str, str]],
+    models: list[str],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
-) -> Dict[str, Optional[Dict[str, Any]]]:
+) -> dict[str, dict[str, Any] | None]:
     """
     Query multiple models in parallel via OpenRouter.
 
@@ -123,17 +124,17 @@ async def query_models_parallel(
         Dict mapping model identifier to response dict (or None if failed)
     """
 
-    async def query_single(model: str) -> tuple[str, Optional[Dict[str, Any]]]:
+    async def query_single(model: str) -> tuple[str, dict[str, Any] | None]:
         result = await query_model(model, messages, max_tokens, temperature)
         return model, result
 
     tasks = [query_single(model) for model in models]
     results = await asyncio.gather(*tasks)
 
-    return {model: response for model, response in results}
+    return dict(results)
 
 
-async def list_openrouter_models() -> List[Dict[str, Any]]:
+async def list_openrouter_models() -> list[dict[str, Any]]:
     """
     List available models from OpenRouter API.
 

@@ -1,7 +1,8 @@
 """Moonshot API client for direct queries to Kimi models."""
 
+from typing import Any
+
 import httpx
-from typing import List, Dict, Any, Optional
 
 from .secrets import MOONSHOT_API_KEY
 
@@ -21,11 +22,11 @@ def get_moonshot_model_id(council_model_id: str) -> str:
 
 async def query_moonshot_model(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 900.0
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Query a Moonshot model directly via OpenAI-compatible API."""
     if not MOONSHOT_API_KEY:
         print("Error: MOONSHOT_API_KEY not configured")

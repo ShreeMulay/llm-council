@@ -1,17 +1,18 @@
 """Webhook callback support for async council deliberations."""
 
 import asyncio
-import httpx
 import ipaddress
 import logging
 import socket
-import uuid
 import time
+import uuid
 from datetime import datetime
-from typing import Dict, Any, Optional, List
-from urllib.parse import urlparse
-from pydantic import BaseModel, HttpUrl
 from enum import Enum
+from typing import Any
+from urllib.parse import urlparse
+
+import httpx
+from pydantic import BaseModel, HttpUrl
 
 logger = logging.getLogger("llm-council.webhooks")
 
@@ -32,12 +33,12 @@ class CouncilAsyncRequest(BaseModel):
 
     query: str
     webhook_url: HttpUrl
-    webhook_secret: Optional[str] = None  # Optional HMAC signing secret
+    webhook_secret: str | None = None  # Optional HMAC signing secret
     final_only: bool = False
-    models: Optional[List[str]] = None
-    chairman: Optional[str] = None
+    models: list[str] | None = None
+    chairman: str | None = None
     include_details: bool = True
-    metadata: Optional[Dict[str, Any]] = None  # Pass-through metadata for webhook
+    metadata: dict[str, Any] | None = None  # Pass-through metadata for webhook
 
 
 class JobInfo(BaseModel):
@@ -48,10 +49,10 @@ class JobInfo(BaseModel):
     query: str
     webhook_url: str
     created_at: str
-    started_at: Optional[str] = None
-    completed_at: Optional[str] = None
-    error: Optional[str] = None
-    result_summary: Optional[str] = None
+    started_at: str | None = None
+    completed_at: str | None = None
+    error: str | None = None
+    result_summary: str | None = None
 
 
 def _validate_webhook_url(url: str) -> None:
@@ -76,9 +77,9 @@ def _validate_webhook_url(url: str) -> None:
             hostname, parsed.port or 443, proto=socket.IPPROTO_TCP
         )
     except socket.gaierror as e:
-        raise ValueError(f"Cannot resolve webhook hostname {hostname!r}: {e}")
+        raise ValueError(f"Cannot resolve webhook hostname {hostname!r}: {e}") from e
 
-    for family, _, _, _, sockaddr in addrs:
+    for _family, _, _, _, sockaddr in addrs:
         ip = ipaddress.ip_address(sockaddr[0])
         if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
             raise ValueError(
@@ -91,10 +92,12 @@ def _validate_webhook_url(url: str) -> None:
 # In-memory cache (_jobs) is a write-through cache; disk is source of truth.
 # ============================================================================
 
+import contextlib
 import json as _json
 import os as _os
 import re as _re
 import tempfile as _tempfile
+
 from .config import JOBS_DIR
 
 # Valid job ID: UUID format only
@@ -103,7 +106,7 @@ _VALID_JOB_ID_RE = _re.compile(
 )
 
 # In-memory write-through cache
-_jobs: Dict[str, Dict[str, Any]] = {}
+_jobs: dict[str, dict[str, Any]] = {}
 
 
 def _job_path(job_id: str) -> str:
@@ -113,7 +116,7 @@ def _job_path(job_id: str) -> str:
     return str(JOBS_DIR / f"{job_id}.json")
 
 
-def _save_job(job: Dict[str, Any]) -> None:
+def _save_job(job: dict[str, Any]) -> None:
     """Persist a job to disk (atomic write)."""
     path = _job_path(job["job_id"])
     dir_path = _os.path.dirname(path)
@@ -125,23 +128,21 @@ def _save_job(job: Dict[str, Any]) -> None:
             _json.dump(persist, f, indent=2, default=str)
         _os.replace(tmp, path)
     except BaseException:
-        try:
+        with contextlib.suppress(OSError):
             _os.unlink(tmp)
-        except OSError:
-            pass
         raise
 
 
-def _load_job(job_id: str) -> Optional[Dict[str, Any]]:
+def _load_job(job_id: str) -> dict[str, Any] | None:
     """Load a job from disk."""
     path = _job_path(job_id)
     if not _os.path.exists(path):
         return None
-    with open(path, "r") as f:
+    with open(path) as f:
         return _json.load(f)
 
 
-def _load_all_jobs() -> Dict[str, Dict[str, Any]]:
+def _load_all_jobs() -> dict[str, dict[str, Any]]:
     """Load all jobs from disk into memory (called once at startup)."""
     jobs = {}
     JOBS_DIR.mkdir(parents=True, exist_ok=True)
@@ -149,7 +150,7 @@ def _load_all_jobs() -> Dict[str, Dict[str, Any]]:
         if filename.endswith(".json"):
             path = str(JOBS_DIR / filename)
             try:
-                with open(path, "r") as f:
+                with open(path) as f:
                     job = _json.load(f)
                     jobs[job["job_id"]] = job
             except Exception as e:
@@ -187,7 +188,7 @@ def create_job(request: CouncilAsyncRequest) -> str:
     return job_id
 
 
-def get_job(job_id: str) -> Optional[Dict[str, Any]]:
+def get_job(job_id: str) -> dict[str, Any] | None:
     """Get job information by ID (from memory cache, falls back to disk)."""
     job = _jobs.get(job_id)
     if job is None:
@@ -198,7 +199,7 @@ def get_job(job_id: str) -> Optional[Dict[str, Any]]:
     return job
 
 
-def list_jobs(limit: int = 50, status: Optional[JobStatus] = None) -> List[JobInfo]:
+def list_jobs(limit: int = 50, status: JobStatus | None = None) -> list[JobInfo]:
     """List recent jobs, optionally filtered by status."""
     jobs = list(_jobs.values())
     if status:
@@ -230,8 +231,8 @@ def update_job(job_id: str, **updates):
 
 async def send_webhook(
     webhook_url: str,
-    payload: Dict[str, Any],
-    secret: Optional[str] = None,
+    payload: dict[str, Any],
+    secret: str | None = None,
     timeout: float = 30.0,
     retries: int = 3,
 ) -> bool:
@@ -374,8 +375,8 @@ async def run_council_async(
             error=error_msg,
         )
 
-        # Send failure webhook
-        try:
+        # Send failure webhook (best effort)
+        with contextlib.suppress(Exception):
             await send_webhook(
                 job["webhook_url"],
                 {
@@ -387,8 +388,6 @@ async def run_council_async(
                 },
                 secret=job.get("webhook_secret"),
             )
-        except Exception:
-            pass  # Best effort
 
 
 def cleanup_old_jobs(max_age_hours: int = 24):

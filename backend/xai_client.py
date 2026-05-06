@@ -1,8 +1,9 @@
 """xAI API client for direct queries to Grok models."""
 
-import httpx
 import logging
-from typing import List, Dict, Any, Optional
+from typing import Any
+
+import httpx
 
 from .secrets import GROK_API_KEY
 
@@ -32,11 +33,11 @@ def get_xai_model_id(council_model_id: str) -> str:
 
 async def query_xai_model(
     model_id: str,
-    messages: List[Dict[str, str]],
+    messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
     timeout: float = 300.0,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Query an xAI Grok model directly via OpenAI-compatible API.
 
     Prompt caching is automatic on xAI — repeated prefixes in messages
