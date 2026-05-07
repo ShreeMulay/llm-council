@@ -29,6 +29,14 @@ jobs:
         with:
           version: "latest"
 
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-uv-
+
       - name: Install dependencies
         run: uv sync --all-groups
 
@@ -38,6 +46,7 @@ jobs:
       - name: Test
         run: uv run pytest -m "not slow and not e2e"
 
+      # Verify Dockerfile builds before attempting deploy (catches broken deps early)
       - name: Build Docker image (verification)
         run: docker build -t ${{ env.REGISTRY }}:ci .
 
