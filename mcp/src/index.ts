@@ -199,6 +199,7 @@ const COUNCIL_TIMEOUT_MS = parseInt(process.env.LLM_COUNCIL_TIMEOUT || "1500000"
 interface CouncilRequest {
   query: string;
   final_only?: boolean;
+  compact?: boolean;
   include_details?: boolean;
   models?: string[];
   chairman?: string;
@@ -232,9 +233,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult 5 LLMs (GPT-5.4, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.20) for peer-reviewed answers. " +
-          "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.7). " +
-          "GLM-5.1 via Fireworks (3.4x faster). Use for complex questions requiring multiple perspectives.",
+          "Consult 9 LLMs (GPT-5.5, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.3, Kimi K2.6, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5) for peer-reviewed answers. " +
+          "3-stage deliberation: 9 individual responses -> 3 evaluators rank with self-exclusion -> chairman synthesizes from curated top-5 (Opus 4.7). " +
+          "Use for complex questions requiring multiple perspectives. Compact mode (5 models) for faster results.",
         inputSchema: {
           type: "object" as const,
           properties: {
@@ -246,6 +247,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "boolean",
               description:
                 "Skip peer review, return only individual + synthesized answer (faster, cheaper)",
+              default: false,
+            },
+            compact: {
+              type: "boolean",
+              description:
+                "Use only 5 core models (GPT-5.5, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.3) for faster/cheaper deliberation",
               default: false,
             },
             include_details: {
@@ -438,6 +445,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   const query = args?.query as string;
   const finalOnly = (args?.final_only as boolean) ?? false;
+  const compact = (args?.compact as boolean) ?? false;
   const includeDetails = (args?.include_details as boolean) ?? true;
 
   if (!query) {
@@ -455,6 +463,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const requestBody: CouncilRequest = {
     query,
     final_only: finalOnly,
+    compact,
     include_details: includeDetails,
   };
 
