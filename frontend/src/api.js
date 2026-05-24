@@ -5,7 +5,7 @@
 const API_BASE = 'http://100.106.122.86:8800';
 
 // API key from Vite env (prefixed with VITE_)
-const API_KEY = import.meta.env.VITE_COUNCIL_API_KEY || '';
+const API_KEY = import.meta.env?.VITE_COUNCIL_API_KEY || '';
 
 // Default headers for all requests
 const defaultHeaders = {
@@ -208,6 +208,24 @@ export function toFrontendModelIds(backendIds) {
   return backendIds.map(id => backendToFrontend[id] || id);
 }
 
+/**
+ * Parse a complete Server-Sent Event block.
+ * Handles multi-line data fields and CRLF line endings.
+ */
+export function parseSseEventBlock(block) {
+  const dataLines = block
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .filter((line) => line.startsWith('data: '))
+    .map((line) => line.slice(6));
+
+  if (dataLines.length === 0) {
+    return null;
+  }
+
+  return JSON.parse(dataLines.join('\n'));
+}
+
 export const api = {
   /**
    * List all conversations.
@@ -307,24 +325,39 @@ export const api = {
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
+    let buffer = '';
+
+    const processEventBlock = (block) => {
+      if (!block.trim()) return;
+      try {
+        const event = parseSseEventBlock(block);
+        if (event) {
+          onEvent(event.type, event);
+        }
+      } catch (e) {
+        console.error('Failed to parse SSE event:', e, block.slice(0, 500));
+      }
+    };
 
     while (true) {
       const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const data = line.slice(6);
-          try {
-            const event = JSON.parse(data);
-            onEvent(event.type, event);
-          } catch (e) {
-            console.error('Failed to parse SSE event:', e);
-          }
+      if (done) {
+        buffer += decoder.decode();
+        if (buffer.trim()) {
+          processEventBlock(buffer);
         }
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      buffer = buffer.replace(/\r\n/g, '\n');
+
+      let eventEndIndex = buffer.indexOf('\n\n');
+      while (eventEndIndex !== -1) {
+        const block = buffer.slice(0, eventEndIndex);
+        buffer = buffer.slice(eventEndIndex + 2);
+        processEventBlock(block);
+        eventEndIndex = buffer.indexOf('\n\n');
       }
     }
   },

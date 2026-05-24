@@ -60,6 +60,15 @@ function App() {
     }
   };
 
+  const refreshConversation = async (conversationId) => {
+    try {
+      const conv = await api.getConversation(conversationId);
+      setCurrentConversation(normalizeConversation(conv));
+    } catch (error) {
+      console.error('Failed to refresh conversation:', error);
+    }
+  };
+
   // Load conversations on mount
   useEffect(() => {
     let cancelled = false;
@@ -232,8 +241,12 @@ function App() {
             break;
 
           case 'complete':
-            // Stream complete, reload conversations list
+            // Stream complete, reload both list and current conversation.
+            // This replaces the optimistic streaming placeholder with the
+            // persisted assistant message, recovering cleanly even if a large
+            // SSE payload was missed or the tab/network stalled mid-stream.
             loadConversations();
+            refreshConversation(currentConversationId);
             setIsLoading(false);
             break;
 
