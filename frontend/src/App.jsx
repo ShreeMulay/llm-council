@@ -9,6 +9,18 @@ function App() {
   const [currentConversationId, setCurrentConversationId] = useState(null);
   const [currentConversation, setCurrentConversation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [compact, setCompact] = useState(() => {
+    return localStorage.getItem('llm_council_compact') === 'true';
+  });
+
+  const handleToggleCompact = () => {
+    setCompact((prev) => {
+      const next = !prev;
+      localStorage.setItem('llm_council_compact', String(next));
+      return next;
+    });
+  };
 
   // Load conversations on mount
   useEffect(() => {
@@ -169,7 +181,7 @@ function App() {
           default:
             console.log('Unknown event type:', eventType);
         }
-      });
+      }, compact);
     } catch (error) {
       console.error('Failed to send message:', error);
       // Remove optimistic messages on error
@@ -188,11 +200,17 @@ function App() {
         currentConversationId={currentConversationId}
         onSelectConversation={handleSelectConversation}
         onNewConversation={handleNewConversation}
+        compact={compact}
+        onToggleCompact={handleToggleCompact}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
       <ChatInterface
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
+        compact={compact}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
     </div>
   );

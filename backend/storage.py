@@ -174,6 +174,7 @@ async def add_assistant_message(
     stage1: list[dict[str, Any]],
     stage2: list[dict[str, Any]],
     stage3: dict[str, Any],
+    metadata: dict[str, Any] | None = None,
 ):
     """
     Add an assistant message with all 3 stages to a conversation (async, with locking).
@@ -183,6 +184,7 @@ async def add_assistant_message(
         stage1: List of individual model responses
         stage2: List of model rankings
         stage3: Final synthesized response
+        metadata: Optional metadata for the message (e.g. label_to_model, aggregate_rankings)
     """
     async with _get_lock(conversation_id):
         conversation = get_conversation(conversation_id)
@@ -190,7 +192,13 @@ async def add_assistant_message(
             raise ValueError(f"Conversation {conversation_id} not found")
 
         conversation["messages"].append(
-            {"role": "assistant", "stage1": stage1, "stage2": stage2, "stage3": stage3}
+            {
+                "role": "assistant",
+                "stage1": stage1,
+                "stage2": stage2,
+                "stage3": stage3,
+                "metadata": metadata,
+            }
         )
         save_conversation(conversation)
 
