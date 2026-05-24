@@ -2,11 +2,23 @@
  * API client for the LLM Council backend.
  */
 
-const API_BASE = 'http://localhost:8800';
+const API_BASE = 'http://100.106.122.86:8800';
+
+// API key from Vite env (prefixed with VITE_)
+const API_KEY = import.meta.env.VITE_COUNCIL_API_KEY || '';
+
+// Default headers for all requests
+const defaultHeaders = {
+  'Content-Type': 'application/json',
+};
+if (API_KEY) {
+  defaultHeaders['X-Council-Key'] = API_KEY;
+}
 
 export const MODEL_INFO = {
   'gpt-5.5': {
     id: 'gpt-5.5',
+    modelId: 'openai/gpt-5.5',
     name: 'GPT-5.5',
     provider: 'OpenAI',
     color: '#10b981',
@@ -16,6 +28,7 @@ export const MODEL_INFO = {
   },
   'opus': {
     id: 'opus',
+    modelId: 'anthropic/claude-opus-4.7',
     name: 'Claude Opus 4.7',
     provider: 'Anthropic',
     color: '#f97316',
@@ -25,6 +38,7 @@ export const MODEL_INFO = {
   },
   'glm': {
     id: 'glm',
+    modelId: 'fireworks/glm-5.1',
     name: 'GLM-5.1',
     provider: 'Fireworks',
     color: '#3b82f6',
@@ -34,6 +48,7 @@ export const MODEL_INFO = {
   },
   'gemini': {
     id: 'gemini',
+    modelId: 'google/gemini-3.1-pro-preview',
     name: 'Gemini 3.1 Pro',
     provider: 'Google',
     color: '#a855f7',
@@ -43,6 +58,7 @@ export const MODEL_INFO = {
   },
   'grok': {
     id: 'grok',
+    modelId: 'x-ai/grok-4.3',
     name: 'Grok 4.3',
     provider: 'xAI',
     color: '#ef4444',
@@ -52,6 +68,7 @@ export const MODEL_INFO = {
   },
   'kimi': {
     id: 'kimi',
+    modelId: 'fireworks/kimi-k2.6',
     name: 'Kimi K2.6',
     provider: 'Moonshot',
     color: '#ec4899',
@@ -61,6 +78,7 @@ export const MODEL_INFO = {
   },
   'deepseek': {
     id: 'deepseek',
+    modelId: 'deepseek/deepseek-v4-pro',
     name: 'DeepSeek V4 Pro',
     provider: 'DeepSeek',
     color: '#14b8a6',
@@ -70,6 +88,7 @@ export const MODEL_INFO = {
   },
   'llama': {
     id: 'llama',
+    modelId: 'meta-llama/llama-4-maverick',
     name: 'Llama 4 Maverick',
     provider: 'Meta',
     color: '#64748b',
@@ -79,6 +98,7 @@ export const MODEL_INFO = {
   },
   'qwen': {
     id: 'qwen',
+    modelId: 'qwen/qwen3.5-122b-a10b',
     name: 'Qwen 3.5 122B',
     provider: 'Alibaba',
     color: '#6366f1',
@@ -88,10 +108,41 @@ export const MODEL_INFO = {
   }
 };
 
+// All model IDs in order
+export const ALL_MODEL_IDS = Object.keys(MODEL_INFO);
+
+// Default active models (all 9)
+export const DEFAULT_ACTIVE_MODELS = ALL_MODEL_IDS;
+
+// Preset configurations
+export const MODEL_PRESETS = {
+  full: {
+    name: 'Full Council',
+    icon: '🏛️',
+    models: ALL_MODEL_IDS,
+  },
+  compact: {
+    name: 'Compact',
+    icon: '⚡',
+    models: ['gpt-5.5', 'opus', 'glm', 'gemini', 'grok'],
+  },
+  speed: {
+    name: 'Speed',
+    icon: '🚀',
+    models: ['gpt-5.5', 'opus', 'gemini'],
+  },
+  minimal: {
+    name: 'Minimal',
+    icon: '🎯',
+    models: ['gpt-5.5', 'opus'],
+  },
+};
+
 export function getModelInfo(modelId) {
   if (!modelId) {
     return {
       id: 'unknown',
+      modelId: 'unknown',
       name: 'Unknown Model',
       provider: 'Unknown',
       color: '#64748b',
@@ -121,6 +172,7 @@ export function getModelInfo(modelId) {
   const shortName = modelId.split('/')[1] || modelId;
   return {
     id: shortName.toLowerCase(),
+    modelId: modelId,
     name: shortName,
     provider: modelId.split('/')[0] || 'Unknown',
     color: '#6366f1',
@@ -130,12 +182,40 @@ export function getModelInfo(modelId) {
   };
 }
 
+/**
+ * Get backend model ID from frontend model ID
+ */
+export function getBackendModelId(frontendId) {
+  const info = MODEL_INFO[frontendId];
+  return info ? info.modelId : frontendId;
+}
+
+/**
+ * Convert array of frontend model IDs to backend model IDs
+ */
+export function toBackendModelIds(frontendIds) {
+  return frontendIds.map(getBackendModelId);
+}
+
+/**
+ * Convert array of backend model IDs to frontend model IDs
+ */
+export function toFrontendModelIds(backendIds) {
+  const backendToFrontend = {};
+  Object.values(MODEL_INFO).forEach(info => {
+    backendToFrontend[info.modelId] = info.id;
+  });
+  return backendIds.map(id => backendToFrontend[id] || id);
+}
+
 export const api = {
   /**
    * List all conversations.
    */
   async listConversations() {
-    const response = await fetch(`${API_BASE}/api/conversations`);
+    const response = await fetch(`${API_BASE}/api/conversations`, {
+      headers: { ...defaultHeaders },
+    });
     if (!response.ok) {
       throw new Error('Failed to list conversations');
     }
@@ -144,14 +224,17 @@ export const api = {
 
   /**
    * Create a new conversation.
+   * @param {string[]} activeModels - Optional array of frontend model IDs to use
    */
-  async createConversation() {
+  async createConversation(activeModels = null) {
+    const body = {};
+    if (activeModels && activeModels.length > 0) {
+      body.active_models = toBackendModelIds(activeModels);
+    }
     const response = await fetch(`${API_BASE}/api/conversations`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
+      headers: { ...defaultHeaders },
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       throw new Error('Failed to create conversation');
@@ -164,7 +247,8 @@ export const api = {
    */
   async getConversation(conversationId) {
     const response = await fetch(
-      `${API_BASE}/api/conversations/${conversationId}`
+      `${API_BASE}/api/conversations/${conversationId}`,
+      { headers: { ...defaultHeaders } }
     );
     if (!response.ok) {
       throw new Error('Failed to get conversation');
@@ -175,15 +259,17 @@ export const api = {
   /**
    * Send a message in a conversation.
    */
-  async sendMessage(conversationId, content, compact = false) {
+  async sendMessage(conversationId, content, compact = false, models = null) {
+    const body = { content, compact };
+    if (models && models.length > 0) {
+      body.models = toBackendModelIds(models);
+    }
     const response = await fetch(
       `${API_BASE}/api/conversations/${conversationId}/message`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, compact }),
+        headers: { ...defaultHeaders },
+        body: JSON.stringify(body),
       }
     );
     if (!response.ok) {
@@ -198,17 +284,20 @@ export const api = {
    * @param {string} content - The message content
    * @param {function} onEvent - Callback function for each event: (eventType, data) => void
    * @param {boolean} compact - Use core 5 models only
+   * @param {string[]} models - Optional array of frontend model IDs to override
    * @returns {Promise<void>}
    */
-  async sendMessageStream(conversationId, content, onEvent, compact = false) {
+  async sendMessageStream(conversationId, content, onEvent, compact = false, models = null) {
+    const body = { content, compact };
+    if (models && models.length > 0) {
+      body.models = toBackendModelIds(models);
+    }
     const response = await fetch(
       `${API_BASE}/api/conversations/${conversationId}/message/stream`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content, compact }),
+        headers: { ...defaultHeaders },
+        body: JSON.stringify(body),
       }
     );
 

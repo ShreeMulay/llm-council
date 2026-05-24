@@ -84,7 +84,7 @@ app.add_middleware(
 class CreateConversationRequest(BaseModel):
     """Request to create a new conversation."""
 
-    pass
+    active_models: list[str] | None = None
 
 
 class SendMessageRequest(BaseModel):
@@ -92,6 +92,7 @@ class SendMessageRequest(BaseModel):
 
     content: str
     compact: bool = False
+    models: list[str] | None = None
 
 
 class CouncilRequest(BaseModel):
@@ -119,6 +120,7 @@ class ConversationMetadata(BaseModel):
     created_at: str
     title: str
     message_count: int
+    active_models: list[str] | None = None
 
 
 class Conversation(BaseModel):
@@ -127,6 +129,7 @@ class Conversation(BaseModel):
     id: str
     created_at: str
     title: str
+    active_models: list[str] | None = None
     messages: list[dict[str, Any]]
 
 
@@ -549,7 +552,7 @@ async def list_conversations():
 async def create_conversation(request: CreateConversationRequest):
     """Create a new conversation."""
     conversation_id = str(uuid.uuid4())
-    conversation = storage.create_conversation(conversation_id)
+    conversation = storage.create_conversation(conversation_id, active_models=request.active_models)
     return conversation
 
 
@@ -593,10 +596,24 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         title = await generate_conversation_title(request.content)
         await storage.update_conversation_title(conversation_id, title)
 
+    # Determine council models: request.models > conversation.active_models > compact > default
+    council_models = None
+    if request.models:
+        council_models = request.models
+    elif conversation.get("active_models"):
+        council_models = conversation["active_models"]
+    elif request.compact:
+        from backend.config import COMPACT_COUNCIL_MODELS
+        council_models = COMPACT_COUNCIL_MODELS
+
     # Run the 3-stage council process
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content, compact=request.compact
+        request.content, compact=request.compact, council_models=council_models
     )
+    metadata = {
+        **metadata,
+        "models": council_models or COUNCIL_MODELS,
+    }
 
     # Add assistant message with all stages
     await storage.add_assistant_message(
@@ -638,9 +655,13 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                     generate_conversation_title(request.content)
                 )
 
-            # Determine council models for compact mode
+            # Determine council models: request.models > conversation.active_models > compact > default
             council_models = None
-            if request.compact:
+            if request.models:
+                council_models = request.models
+            elif conversation.get("active_models"):
+                council_models = conversation["active_models"]
+            elif request.compact:
                 from backend.config import COMPACT_COUNCIL_MODELS
                 council_models = COMPACT_COUNCIL_MODELS
 
@@ -661,6 +682,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 "label_to_model": label_to_model,
                 "aggregate_rankings": aggregate_rankings,
                 "compact": request.compact,
+                "models": council_models or COUNCIL_MODELS,
             }
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': metadata})}\n\n"
 

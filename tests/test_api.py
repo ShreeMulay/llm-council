@@ -5,6 +5,7 @@ from unittest.mock import patch
 import pytest
 from fastapi.testclient import TestClient
 
+from backend.auth import _is_tailscale_ip
 from backend.main import app
 
 
@@ -55,6 +56,33 @@ class TestApiInfoEndpoint:
         # model_aliases is a help string, not a dict
         assert "kimi" in aliases
         assert "deepseek" in aliases
+
+
+class TestApiAuth:
+    """Test API key auth and Tailscale bypass."""
+
+    def test_tailscale_ip_helper_accepts_ipv4(self):
+        assert _is_tailscale_ip("100.106.122.86") is True
+        assert _is_tailscale_ip("100.106.122.86:5173") is True
+
+    def test_tailscale_ip_helper_accepts_ipv6(self):
+        assert _is_tailscale_ip("fd7a:115c:a1e0::1") is True
+        assert _is_tailscale_ip("[fd7a:115c:a1e0::1]:5173") is True
+
+    def test_tailscale_ip_helper_rejects_public_ip(self):
+        assert _is_tailscale_ip("8.8.8.8") is False
+
+    def test_tailscale_request_bypasses_api_key(self):
+        with patch("backend.auth.COUNCIL_API_KEY", "test-key"):
+            response = client.get("/api/info", headers={"X-Forwarded-For": "100.106.122.86"})
+
+        assert response.status_code == 200
+
+    def test_non_tailscale_request_requires_api_key(self):
+        with patch("backend.auth.COUNCIL_API_KEY", "test-key"):
+            response = client.get("/api/info", headers={"X-Forwarded-For": "8.8.8.8"})
+
+        assert response.status_code == 401
 
 
 class TestCouncilEndpoint:
@@ -270,3 +298,87 @@ class TestCouncilEndpointWithRealDeliberation:
         call_kwargs = mock_run.call_args.kwargs
         assert call_kwargs.get("compact") is True
         assert call_kwargs.get("council_models") is None
+
+
+class TestConversationModelSelection:
+    """Test conversation-level and message-level model selection."""
+
+    def test_create_conversation_stores_active_models(self, tmp_path):
+        with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
+            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+
+            response = client.post(
+                "/api/conversations",
+                json={"active_models": active_models},
+                headers={"X-Council-Key": "test-key"},
+            )
+
+            assert response.status_code == 200
+            data = response.json()
+            assert data["active_models"] == active_models
+
+            list_response = client.get(
+                "/api/conversations",
+                headers={"X-Council-Key": "test-key"},
+            )
+            assert list_response.status_code == 200
+            conversations = list_response.json()
+            assert conversations[0]["active_models"] == active_models
+
+    @patch("backend.main.generate_conversation_title")
+    @patch("backend.main.run_full_council")
+    def test_send_message_uses_request_model_override(self, mock_run, mock_title, tmp_path):
+        with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
+            mock_title.return_value = "Test Title"
+            mock_run.return_value = (
+                [{"model": "A", "response": "A"}],
+                [{"model": "B", "ranking": "FINAL RANKING:\n1. Response A"}],
+                {"model": "C", "response": "Synthesis"},
+                {"aggregate_rankings": []},
+            )
+
+            conversation = client.post(
+                "/api/conversations",
+                json={"active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]},
+                headers={"X-Council-Key": "test-key"},
+            ).json()
+
+            override_models = ["google/gemini-3.1-pro-preview", "x-ai/grok-4.3"]
+            response = client.post(
+                f"/api/conversations/{conversation['id']}/message",
+                json={"content": "Test", "models": override_models},
+                headers={"X-Council-Key": "test-key"},
+            )
+
+            assert response.status_code == 200
+            call_kwargs = mock_run.call_args.kwargs
+            assert call_kwargs["council_models"] == override_models
+
+    @patch("backend.main.generate_conversation_title")
+    @patch("backend.main.run_full_council")
+    def test_send_message_falls_back_to_conversation_models(self, mock_run, mock_title, tmp_path):
+        with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
+            mock_title.return_value = "Test Title"
+            mock_run.return_value = (
+                [{"model": "A", "response": "A"}],
+                [],
+                {"model": "C", "response": "Synthesis"},
+                {},
+            )
+
+            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+            conversation = client.post(
+                "/api/conversations",
+                json={"active_models": active_models},
+                headers={"X-Council-Key": "test-key"},
+            ).json()
+
+            response = client.post(
+                f"/api/conversations/{conversation['id']}/message",
+                json={"content": "Test"},
+                headers={"X-Council-Key": "test-key"},
+            )
+
+            assert response.status_code == 200
+            call_kwargs = mock_run.call_args.kwargs
+            assert call_kwargs["council_models"] == active_models

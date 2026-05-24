@@ -9,9 +9,12 @@
   --primary-hover: #2563eb;
   --primary-light: #eff6ff;
   --primary-border: #bfdbfe;
+  --accent-primary: #6366f1;
+  --accent-bg-subtle: #eef2ff;
   
   --bg-app: #f8fafc;
   --bg-card: #ffffff;
+  --bg-input: #ffffff;
   --bg-sidebar: #0f172a; /* Premium dark sidebar */
   
   --text-main: #0f172a;

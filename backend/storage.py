@@ -51,12 +51,13 @@ def get_conversation_path(conversation_id: str) -> str:
     return str(path)
 
 
-def create_conversation(conversation_id: str) -> dict[str, Any]:
+def create_conversation(conversation_id: str, active_models: list[str] | None = None) -> dict[str, Any]:
     """
     Create a new conversation.
 
     Args:
         conversation_id: Unique identifier for the conversation
+        active_models: Optional list of model IDs to use for this conversation
 
     Returns:
         New conversation dict
@@ -67,6 +68,7 @@ def create_conversation(conversation_id: str) -> dict[str, Any]:
         "id": conversation_id,
         "created_at": datetime.utcnow().isoformat(),
         "title": "New Conversation",
+        "active_models": active_models,
         "messages": [],
     }
 
@@ -143,6 +145,7 @@ def list_conversations() -> list[dict[str, Any]]:
                         "created_at": data["created_at"],
                         "title": data.get("title", "New Conversation"),
                         "message_count": len(data["messages"]),
+                        "active_models": data.get("active_models"),
                     }
                 )
 

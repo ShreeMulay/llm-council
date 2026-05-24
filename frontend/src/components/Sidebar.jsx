@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import ModelPicker from './ModelPicker';
+import { MODEL_INFO } from '../api';
 import './Sidebar.css';
 
 export default function Sidebar({
@@ -8,9 +10,13 @@ export default function Sidebar({
   onNewConversation,
   compact,
   onToggleCompact,
+  globalModelConfig,
+  onUpdateGlobalModelConfig,
   isOpen,
   onClose,
 }) {
+  const [showModelConfig, setShowModelConfig] = useState(false);
+
   const handleSelect = (id) => {
     onSelectConversation(id);
     if (onClose) {
@@ -23,6 +29,29 @@ export default function Sidebar({
     if (onClose) {
       onClose(); // Close sidebar on mobile after creating new
     }
+  };
+
+  const getActiveModelsPreview = (conv) => {
+    const models = conv.active_models || globalModelConfig;
+    if (!models || models.length === 0) return null;
+    return (
+      <div className="conv-model-preview">
+        {models.slice(0, 3).map((modelId) => {
+          const info = MODEL_INFO[modelId];
+          return info ? (
+            <span
+              key={modelId}
+              className="conv-model-dot"
+              style={{ background: info.color }}
+              title={info.name}
+            />
+          ) : null;
+        })}
+        {models.length > 3 && (
+          <span className="conv-model-more">+{models.length - 3}</span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -64,8 +93,11 @@ export default function Sidebar({
               >
                 <div className="conversation-marker" />
                 <div className="conversation-content">
-                  <div className="conversation-title">
-                    {conv.title || 'New Conversation'}
+                  <div className="conversation-title-row">
+                    <div className="conversation-title">
+                      {conv.title || 'New Conversation'}
+                    </div>
+                    {getActiveModelsPreview(conv)}
                   </div>
                   <div className="conversation-meta">
                     <span className="meta-badge">
@@ -84,56 +116,59 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Settings Panel at the Bottom */}
+        {/* Council Configuration Panel at the Bottom */}
         <div className="sidebar-settings">
-          <div className="settings-header">
+          <div
+            className="settings-header clickable"
+            onClick={() => setShowModelConfig(!showModelConfig)}
+          >
             <span className="settings-icon">⚙️</span>
-            <span>Settings</span>
+            <span>Council Configuration</span>
+            <span className={`settings-chevron ${showModelConfig ? 'open' : ''}`}>▼</span>
           </div>
-          
-          <div className="settings-card">
-            <div className="settings-row">
-              <div className="settings-label-group">
-                <span className="settings-label">Compact Mode</span>
-                <span className="settings-desc">Use core 5 models instead of 9</span>
-              </div>
-              <label className="switch">
-                <input
-                  type="checkbox"
-                  checked={compact}
-                  onChange={onToggleCompact}
-                />
-                <span className="slider round"></span>
-              </label>
-            </div>
 
-            <div className="active-models-preview">
-              <span className="preview-title">Active Models ({compact ? '5' : '9'}):</span>
-              <div className="preview-badges">
-                {compact ? (
-                  <>
-                    <span className="preview-badge openai">GPT-5.5</span>
-                    <span className="preview-badge anthropic">Opus 4.7</span>
-                    <span className="preview-badge fireworks">GLM-5.1</span>
-                    <span className="preview-badge google">Gemini 3.1</span>
-                    <span className="preview-badge xai">Grok 4.3</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="preview-badge openai">GPT-5.5</span>
-                    <span className="preview-badge anthropic">Opus 4.7</span>
-                    <span className="preview-badge fireworks">GLM-5.1</span>
-                    <span className="preview-badge google">Gemini 3.1</span>
-                    <span className="preview-badge xai">Grok 4.3</span>
-                    <span className="preview-badge moonshot">Kimi K2.6</span>
-                    <span className="preview-badge deepseek">DeepSeek V4</span>
-                    <span className="preview-badge meta">Llama 4</span>
-                    <span className="preview-badge alibaba">Qwen 3.5</span>
-                  </>
-                )}
+          {showModelConfig && (
+            <div className="settings-card">
+              <div className="settings-row">
+                <div className="settings-label-group">
+                  <span className="settings-label">Compact Mode</span>
+                  <span className="settings-desc">Use core 5 models instead of 9</span>
+                </div>
+                <label className="switch">
+                  <input
+                    type="checkbox"
+                    checked={compact}
+                    onChange={onToggleCompact}
+                  />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
+              <div className="model-config-section">
+                <div className="model-config-label">
+                  Default Models for New Conversations
+                </div>
+                <ModelPicker
+                  selectedModels={globalModelConfig}
+                  onChange={onUpdateGlobalModelConfig}
+                  showPresets={true}
+                  showSaveDefault={false}
+                  compact={true}
+                />
               </div>
             </div>
-          </div>
+          )}
+
+          {!showModelConfig && (
+            <div className="settings-summary">
+              <span className="summary-badge">
+                {globalModelConfig.length} models
+              </span>
+              <span className="summary-text">
+                {compact ? 'Compact mode' : 'Full council'}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </>

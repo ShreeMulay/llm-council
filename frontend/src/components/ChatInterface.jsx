@@ -3,19 +3,22 @@ import ReactMarkdown from 'react-markdown';
 import Stage1 from './Stage1';
 import Stage2 from './Stage2';
 import Stage3 from './Stage3';
-import { getModelInfo } from '../api';
+import ModelPicker from './ModelPicker';
 import './ChatInterface.css';
 
 export default function ChatInterface({
   conversation,
   onSendMessage,
   isLoading,
-  compact,
+  globalModelConfig,
   onToggleSidebar,
 }) {
   const [input, setInput] = useState('');
+  const [showModelOverride, setShowModelOverride] = useState(false);
+  const [overrideModels, setOverrideModels] = useState(null);
   const messagesEndRef = useRef(null);
   const containerRef = useRef(null);
+  const modelPickerRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -25,11 +28,28 @@ export default function ChatInterface({
     scrollToBottom();
   }, [conversation?.messages?.length, isLoading]);
 
+  // Close model picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (modelPickerRef.current && !modelPickerRef.current.contains(event.target)) {
+        setShowModelOverride(false);
+      }
+    };
+    if (showModelOverride) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showModelOverride]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (input.trim() && !isLoading) {
-      onSendMessage(input);
+      // Send with override models if set, otherwise null (will use conversation/global default)
+      onSendMessage(input, overrideModels);
       setInput('');
+      // Clear override after sending
+      setOverrideModels(null);
+      setShowModelOverride(false);
     }
   };
 
@@ -43,8 +63,26 @@ export default function ChatInterface({
 
   const handlePromptCardClick = (promptText) => {
     if (!isLoading) {
-      onSendMessage(promptText);
+      onSendMessage(promptText, overrideModels);
+      // Clear override after sending
+      setOverrideModels(null);
+      setShowModelOverride(false);
     }
+  };
+
+  const getActiveModels = () => {
+    if (overrideModels) return overrideModels;
+    if (conversation?.active_models) return conversation.active_models;
+    return globalModelConfig;
+  };
+
+  const getModelSummary = () => {
+    const models = getActiveModels();
+    if (models.length === 9) return 'Full Council (9)';
+    if (models.length === 5) return 'Compact (5)';
+    if (models.length === 3) return 'Speed (3)';
+    if (models.length === 2) return 'Minimal (2)';
+    return `Custom (${models.length})`;
   };
 
   if (!conversation) {
@@ -120,8 +158,9 @@ export default function ChatInterface({
     );
   }
 
-  // Active models list based on compact mode
-  const activeModelsCount = compact ? 5 : 9;
+  const activeModels = getActiveModels();
+  const activeModelsCount = activeModels.length;
+  const hasOverride = overrideModels !== null;
 
   return (
     <div className="chat-interface" ref={containerRef}>
@@ -135,8 +174,11 @@ export default function ChatInterface({
           <div className="header-meta">
             <span className="status-dot pulsing"></span>
             <span className="status-text">
-              {compact ? 'Compact Mode' : 'Full Council'} ({activeModelsCount} Models Active)
+              {getModelSummary()} • {activeModelsCount} Model{activeModelsCount !== 1 ? 's' : ''} Active
             </span>
+            {hasOverride && (
+              <span className="override-badge">Override</span>
+            )}
           </div>
         </div>
       </header>
@@ -306,18 +348,63 @@ export default function ChatInterface({
             disabled={isLoading}
             rows={1}
           />
-          <button
-            type="submit"
-            className="send-button"
-            disabled={!input.trim() || isLoading}
-            aria-label="Send Message"
-          >
-            {isLoading ? (
-              <span className="btn-spinner"></span>
-            ) : (
-              <span className="send-icon">▲</span>
-            )}
-          </button>
+          <div className="input-actions">
+            {/* Model Override Button */}
+            <div className="model-override-wrapper" ref={modelPickerRef}>
+              <button
+                type="button"
+                className={`model-override-btn ${hasOverride ? 'active' : ''}`}
+                onClick={() => setShowModelOverride(!showModelOverride)}
+                disabled={isLoading}
+                title={hasOverride ? `Override: ${getModelSummary()}` : 'Configure models for this message'}
+                aria-label="Model Override"
+              >
+                <span className="override-icon">⚙️</span>
+                <span className="override-label">{getModelSummary()}</span>
+              </button>
+              
+              {showModelOverride && (
+                <div className="model-override-dropdown">
+                  <div className="override-dropdown-header">
+                    <h4>Models for This Message</h4>
+                    <p>Override the default model selection</p>
+                  </div>
+                  <ModelPicker
+                    selectedModels={overrideModels || activeModels}
+                    onChange={setOverrideModels}
+                    showPresets={true}
+                    showSaveDefault={false}
+                    compact={true}
+                  />
+                  <div className="override-dropdown-footer">
+                    <button
+                      type="button"
+                      className="reset-override-btn"
+                      onClick={() => {
+                        setOverrideModels(null);
+                        setShowModelOverride(false);
+                      }}
+                    >
+                      Reset to Default
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="send-button"
+              disabled={!input.trim() || isLoading}
+              aria-label="Send Message"
+            >
+              {isLoading ? (
+                <span className="btn-spinner"></span>
+              ) : (
+                <span className="send-icon">▲</span>
+              )}
+            </button>
+          </div>
         </form>
         <div className="input-footer">
           LLM Council Deliberation Engine • Multi-Model Peer Review & Synthesis

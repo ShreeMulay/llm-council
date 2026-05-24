@@ -172,7 +172,7 @@ export default function Stage2({ rankings, labelToModel, aggregateRankings }) {
                 <div className="report-body markdown-content">
                   <ReactMarkdown 
                     components={{
-                      strong: ({ node, children, ...props }) => {
+                      strong: ({ children, ...props }) => {
                         // Allow HTML-like tags rendered during de-anonymization
                         return <strong {...props}>{children}</strong>;
                       }

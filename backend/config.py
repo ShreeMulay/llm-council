@@ -50,17 +50,19 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # 7. DeepSeek V4 Pro via OpenRouter (Deep Reasoner)
 # 8. Llama 4 Maverick via OpenRouter (Open-Weights Leader)
 # 9. Qwen 3.5 122B A10B via OpenRouter (Agentic/Tools Expert)
-DEFAULT_COUNCIL_MODELS = [
-    "openai/gpt-5.5",  # OpenRouter (Anchor)
-    "anthropic/claude-opus-4.7",  # OpenRouter (Lead Coder + Chairman)
-    "fireworks/glm-5.1",  # Fireworks Direct (Tool Specialist)
-    "google/gemini-3.1-pro-preview",  # OpenRouter (Generalist)
-    "x-ai/grok-4.3",  # xAI Direct (Real-time Intel)
-    "fireworks/kimi-k2.6",  # Fireworks Direct (Long-Context Specialist)
-    "deepseek/deepseek-v4-pro",  # OpenRouter (Deep Reasoner)
-    "meta-llama/llama-4-maverick",  # OpenRouter (Open-Weights Leader)
-    "qwen/qwen3.5-122b-a10b",  # OpenRouter (Agentic/Tools Expert)
+ALL_MODEL_IDS = [
+    "openai/gpt-5.5",
+    "anthropic/claude-opus-4.7",
+    "fireworks/glm-5.1",
+    "google/gemini-3.1-pro-preview",
+    "x-ai/grok-4.3",
+    "fireworks/kimi-k2.6",
+    "deepseek/deepseek-v4-pro",
+    "meta-llama/llama-4-maverick",
+    "qwen/qwen3.5-122b-a10b",
 ]
+
+DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
 
 # Core 5 models for compact mode (faster/cheaper)
 COMPACT_COUNCIL_MODELS = [

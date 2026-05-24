@@ -11,6 +11,8 @@ wheels/
 
 # Keys and secrets
 .env
+.env.local
+frontend/.env.local
 
 # Data files
 data/

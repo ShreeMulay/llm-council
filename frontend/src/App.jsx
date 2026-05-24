@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
-import { api } from './api';
+import { api, DEFAULT_ACTIVE_MODELS, toFrontendModelIds } from './api';
 import './App.css';
 
 function App() {
@@ -14,6 +14,23 @@ function App() {
     return localStorage.getItem('llm_council_compact') === 'true';
   });
 
+  // Global model configuration (default for new conversations)
+  const [globalModelConfig, setGlobalModelConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('llm_council_models');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Validate: must be array with at least 2 items
+        if (Array.isArray(parsed) && parsed.length >= 2) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load model config from localStorage:', e);
+    }
+    return DEFAULT_ACTIVE_MODELS;
+  });
+
   const handleToggleCompact = () => {
     setCompact((prev) => {
       const next = !prev;
@@ -22,41 +39,83 @@ function App() {
     });
   };
 
-  // Load conversations on mount
-  useEffect(() => {
-    loadConversations();
-  }, []);
+  const handleUpdateGlobalModelConfig = (models) => {
+    setGlobalModelConfig(models);
+    localStorage.setItem('llm_council_models', JSON.stringify(models));
+  };
 
-  // Load conversation details when selected
-  useEffect(() => {
-    if (currentConversationId) {
-      loadConversation(currentConversationId);
-    }
-  }, [currentConversationId]);
+  const normalizeConversation = (conv) => ({
+    ...conv,
+    active_models: conv.active_models ? toFrontendModelIds(conv.active_models) : null,
+  });
 
   const loadConversations = async () => {
     try {
       const convs = await api.listConversations();
-      setConversations(convs);
+      // Convert backend model IDs to frontend IDs for any conversations with active_models
+      const normalizedConvs = convs.map(normalizeConversation);
+      setConversations(normalizedConvs);
     } catch (error) {
       console.error('Failed to load conversations:', error);
     }
   };
 
-  const loadConversation = async (id) => {
-    try {
-      const conv = await api.getConversation(id);
-      setCurrentConversation(conv);
-    } catch (error) {
-      console.error('Failed to load conversation:', error);
-    }
-  };
+  // Load conversations on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchConversations = async () => {
+      try {
+        const convs = await api.listConversations();
+        if (!cancelled) {
+          setConversations(convs.map(normalizeConversation));
+        }
+      } catch (error) {
+        console.error('Failed to load conversations:', error);
+      }
+    };
+
+    fetchConversations();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load conversation details when selected
+  useEffect(() => {
+    if (!currentConversationId) return;
+
+    let cancelled = false;
+
+    const fetchConversation = async () => {
+      try {
+        const conv = await api.getConversation(currentConversationId);
+        if (!cancelled) {
+          setCurrentConversation(normalizeConversation(conv));
+        }
+      } catch (error) {
+        console.error('Failed to load conversation:', error);
+      }
+    };
+
+    fetchConversation();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentConversationId]);
 
   const handleNewConversation = async () => {
     try {
-      const newConv = await api.createConversation();
+      const newConv = await api.createConversation(globalModelConfig);
       setConversations([
-        { id: newConv.id, created_at: newConv.created_at, message_count: 0 },
+        {
+          id: newConv.id,
+          created_at: newConv.created_at,
+          message_count: 0,
+          active_models: globalModelConfig,
+        },
         ...conversations,
       ]);
       setCurrentConversationId(newConv.id);
@@ -69,11 +128,16 @@ function App() {
     setCurrentConversationId(id);
   };
 
-  const handleSendMessage = async (content) => {
+  const handleSendMessage = async (content, overrideModels = null) => {
     if (!currentConversationId) return;
 
     setIsLoading(true);
     try {
+      // Determine which models to use: override > conversation active_models > global default
+      const models = overrideModels
+        || (currentConversation?.active_models)
+        || globalModelConfig;
+
       // Optimistically add user message to UI
       const userMessage = { role: 'user', content };
       setCurrentConversation((prev) => ({
@@ -181,7 +245,7 @@ function App() {
           default:
             console.log('Unknown event type:', eventType);
         }
-      }, compact);
+      }, compact, models);
     } catch (error) {
       console.error('Failed to send message:', error);
       // Remove optimistic messages on error
@@ -202,6 +266,8 @@ function App() {
         onNewConversation={handleNewConversation}
         compact={compact}
         onToggleCompact={handleToggleCompact}
+        globalModelConfig={globalModelConfig}
+        onUpdateGlobalModelConfig={handleUpdateGlobalModelConfig}
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
       />
@@ -209,7 +275,7 @@ function App() {
         conversation={currentConversation}
         onSendMessage={handleSendMessage}
         isLoading={isLoading}
-        compact={compact}
+        globalModelConfig={globalModelConfig}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
     </div>
