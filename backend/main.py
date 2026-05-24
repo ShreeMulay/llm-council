@@ -45,6 +45,7 @@ from .opencode_integration import (
     MODEL_ALIASES_HELP,
     handle_council_command,
 )
+from .tool_context import augment_query_with_tool_context
 from .webhooks import (
     CouncilAsyncRequest,
     JobStatus,
@@ -93,6 +94,7 @@ class SendMessageRequest(BaseModel):
     content: str
     compact: bool = False
     models: list[str] | None = None
+    tool_context: bool = True
 
 
 class CouncilRequest(BaseModel):
@@ -104,6 +106,7 @@ class CouncilRequest(BaseModel):
     models: list[str] | None = None
     chairman: str | None = None
     include_details: bool = True
+    tool_context: bool = True
 
 
 class ExportRequest(BaseModel):
@@ -254,6 +257,7 @@ async def council_deliberation(request: CouncilRequest, format: str | None = Non
         models=request.models,
         chairman=request.chairman,
         include_details=request.include_details,
+        tool_context=request.tool_context,
     )
 
     if format == "markdown-raw":
@@ -365,6 +369,10 @@ async def council_stream(request: CouncilRequest):
     import time
 
     start_time = time.time()
+    augmented_query, tool_context_metadata = await augment_query_with_tool_context(
+        request.query,
+        enabled=request.tool_context,
+    )
 
     # Resolve model aliases
     council_models = None
@@ -372,6 +380,10 @@ async def council_stream(request: CouncilRequest):
         from .config import resolve_model_alias
 
         council_models = [resolve_model_alias(m) for m in request.models]
+    elif request.compact:
+        from .config import COMPACT_COUNCIL_MODELS
+
+        council_models = COMPACT_COUNCIL_MODELS
 
     chairman_model = None
     if request.chairman:
@@ -382,7 +394,7 @@ async def council_stream(request: CouncilRequest):
     async def event_generator():
         try:
             async for event in stream_council(
-                user_query=request.query,
+                user_query=augmented_query,
                 final_only=request.final_only,
                 council_models=council_models,
                 chairman_model=chairman_model,
@@ -395,6 +407,12 @@ async def council_stream(request: CouncilRequest):
                         "council_models": council_models or COUNCIL_MODELS,
                         "chairman_model": chairman_model or CHAIRMAN_MODEL,
                         "final_only": request.final_only,
+                        "compact": request.compact,
+                        "tool_context": request.tool_context,
+                    }
+                    event["metadata"] = {
+                        **event.get("metadata", {}),
+                        "tool_context": tool_context_metadata,
                     }
                     # Generate markdown for the final result
                     from .opencode_integration import format_council_markdown
@@ -591,6 +609,11 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Add user message
     await storage.add_user_message(conversation_id, request.content)
 
+    augmented_content, tool_context_metadata = await augment_query_with_tool_context(
+        request.content,
+        enabled=request.tool_context,
+    )
+
     # If this is the first message, generate a title
     if is_first_message:
         title = await generate_conversation_title(request.content)
@@ -608,11 +631,12 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
 
     # Run the 3-stage council process
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        request.content, compact=request.compact, council_models=council_models
+        augmented_content, compact=request.compact, council_models=council_models
     )
     metadata = {
         **metadata,
         "models": council_models or COUNCIL_MODELS,
+        "tool_context": tool_context_metadata,
     }
 
     # Add assistant message with all stages
@@ -648,6 +672,13 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             # Add user message
             await storage.add_user_message(conversation_id, request.content)
 
+            yield f"data: {json.dumps({'type': 'tool_context_start'})}\n\n"
+            augmented_content, tool_context_metadata = await augment_query_with_tool_context(
+                request.content,
+                enabled=request.tool_context,
+            )
+            yield f"data: {json.dumps({'type': 'tool_context_complete', 'metadata': tool_context_metadata})}\n\n"
+
             # Start title generation in parallel (don't await yet)
             title_task = None
             if is_first_message:
@@ -667,13 +698,13 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
 
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(request.content, council_models)
+            stage1_results = await stage1_collect_responses(augmented_content, council_models)
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
             stage2_results, label_to_model = await stage2_collect_rankings(
-                request.content, stage1_results, council_models
+                augmented_content, stage1_results, council_models
             )
             aggregate_rankings = calculate_aggregate_rankings(
                 stage2_results, label_to_model
@@ -683,13 +714,14 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 "aggregate_rankings": aggregate_rankings,
                 "compact": request.compact,
                 "models": council_models or COUNCIL_MODELS,
+                "tool_context": tool_context_metadata,
             }
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': metadata})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
             stage3_result = await stage3_synthesize_final(
-                request.content, stage1_results, stage2_results
+                augmented_content, stage1_results, stage2_results
             )
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 

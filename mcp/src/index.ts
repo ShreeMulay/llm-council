@@ -203,6 +203,7 @@ interface CouncilRequest {
   include_details?: boolean;
   models?: string[];
   chairman?: string;
+  tool_context?: boolean;
 }
 
 interface CouncilResponse {
@@ -261,6 +262,22 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "Include intermediate responses and evaluations in output",
               default: true,
             },
+            models: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Optional model aliases/IDs to use instead of the default council (e.g. ['opus','gemini','glm'])",
+            },
+            chairman: {
+              type: "string",
+              description: "Optional chairman model alias/ID for final synthesis",
+            },
+            tool_context: {
+              type: "boolean",
+              description:
+                "Fetch and inject explicit URL context before deliberation (default true)",
+              default: true,
+            },
           },
           required: ["query"],
         },
@@ -305,75 +322,82 @@ async function consumeSSEStream(
   let buffer = "";
   let markdown = "";
 
+  const processBlock = (block: string): void => {
+    if (!block.trim()) return;
+    const dataLines = block
+      .replace(/\r\n/g, "\n")
+      .split("\n")
+      .filter((line) => line.startsWith("data: "))
+      .map((line) => line.slice(6));
+    if (dataLines.length === 0) return;
+
+    const evt: SSEEvent = JSON.parse(dataLines.join("\n"));
+
+    switch (evt.event) {
+      case "stage_start":
+        if (evt.stage === 1) {
+          console.error(`[Council] Stage 1: querying ${evt.models?.length ?? "?"} models...`);
+        } else if (evt.stage === 2) {
+          console.error(`[Council] Stage 2: peer rankings...`);
+        } else if (evt.stage === 3) {
+          console.error(`[Council] Stage 3: chairman ${evt.chairman ?? ""} synthesizing...`);
+        }
+        break;
+
+      case "model_response":
+        if (evt.stage === 1) {
+          const preview = (evt.response ?? "").slice(0, 80);
+          console.error(`[Council] ${evt.progress} ${evt.model} (${evt.provider}): ${preview}...`);
+        } else if (evt.stage === 2) {
+          console.error(`[Council] ${evt.progress} ${evt.model} ranked`);
+        }
+        break;
+
+      case "model_failed":
+        console.error(`[Council] ${evt.progress} ${evt.model} FAILED`);
+        break;
+
+      case "synthesis":
+        console.error(`[Council] Chairman ${evt.model} responded (${(evt.response ?? "").length} chars)`);
+        break;
+
+      case "stage_complete":
+        console.error(`[Council] Stage ${evt.stage} complete: ${evt.count}`);
+        break;
+
+      case "error":
+        throw new Error(evt.message ?? "Unknown streaming error");
+
+      case "complete":
+        if (evt.markdown) {
+          markdown = evt.markdown;
+        }
+        if (evt.timing) {
+          console.error(`[Council] Done in ${evt.timing.elapsed_seconds}s`);
+        }
+        break;
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        processBlock(buffer);
+      }
+      break;
+    }
 
     buffer += decoder.decode(value, { stream: true });
+    buffer = buffer.replace(/\r\n/g, "\n");
 
-    // Process complete SSE lines
-    const lines = buffer.split("\n");
-    buffer = lines.pop() || ""; // Keep incomplete line in buffer
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const jsonStr = line.slice(6).trim();
-      if (!jsonStr) continue;
-
-      try {
-        const evt: SSEEvent = JSON.parse(jsonStr);
-
-        switch (evt.event) {
-          case "stage_start":
-            if (evt.stage === 1) {
-              console.error(`[Council] Stage 1: querying ${evt.models?.length ?? "?"} models...`);
-            } else if (evt.stage === 2) {
-              console.error(`[Council] Stage 2: peer rankings...`);
-            } else if (evt.stage === 3) {
-              console.error(`[Council] Stage 3: chairman ${evt.chairman ?? ""} synthesizing...`);
-            }
-            break;
-
-          case "model_response":
-            if (evt.stage === 1) {
-              const preview = (evt.response ?? "").slice(0, 80);
-              console.error(`[Council] ${evt.progress} ${evt.model} (${evt.provider}): ${preview}...`);
-            } else if (evt.stage === 2) {
-              console.error(`[Council] ${evt.progress} ${evt.model} ranked`);
-            }
-            break;
-
-          case "model_failed":
-            console.error(`[Council] ${evt.progress} ${evt.model} FAILED`);
-            break;
-
-          case "synthesis":
-            console.error(`[Council] Chairman ${evt.model} responded (${(evt.response ?? "").length} chars)`);
-            break;
-
-          case "stage_complete":
-            console.error(`[Council] Stage ${evt.stage} complete: ${evt.count}`);
-            break;
-
-          case "error":
-            throw new Error(evt.message ?? "Unknown streaming error");
-
-          case "complete":
-            if (evt.markdown) {
-              markdown = evt.markdown;
-            }
-            if (evt.timing) {
-              console.error(`[Council] Done in ${evt.timing.elapsed_seconds}s`);
-            }
-            break;
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message !== "Unknown streaming error" && !e.message.startsWith("All models")) {
-          // JSON parse error — skip malformed line
-          continue;
-        }
-        throw e;
-      }
+    let eventEndIndex = buffer.indexOf("\n\n");
+    while (eventEndIndex !== -1) {
+      const block = buffer.slice(0, eventEndIndex);
+      buffer = buffer.slice(eventEndIndex + 2);
+      processBlock(block);
+      eventEndIndex = buffer.indexOf("\n\n");
     }
   }
 
@@ -447,6 +471,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const finalOnly = (args?.final_only as boolean) ?? false;
   const compact = (args?.compact as boolean) ?? false;
   const includeDetails = (args?.include_details as boolean) ?? true;
+  const toolContext = (args?.tool_context as boolean) ?? true;
+  const models = args?.models as string[] | undefined;
+  const chairman = args?.chairman as string | undefined;
 
   if (!query) {
     return {
@@ -465,6 +492,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     final_only: finalOnly,
     compact,
     include_details: includeDetails,
+    tool_context: toolContext,
+    models,
+    chairman,
   };
 
   const headers: Record<string, string> = {

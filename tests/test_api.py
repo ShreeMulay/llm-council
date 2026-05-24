@@ -326,10 +326,15 @@ class TestConversationModelSelection:
             assert conversations[0]["active_models"] == active_models
 
     @patch("backend.main.generate_conversation_title")
+    @patch("backend.main.augment_query_with_tool_context")
     @patch("backend.main.run_full_council")
-    def test_send_message_uses_request_model_override(self, mock_run, mock_title, tmp_path):
+    def test_send_message_uses_request_model_override(self, mock_run, mock_augment, mock_title, tmp_path):
         with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
             mock_title.return_value = "Test Title"
+            mock_augment.return_value = (
+                "AUGMENTED QUERY",
+                {"enabled": True, "urls": ["https://example.com/t.txt"], "sources": []},
+            )
             mock_run.return_value = (
                 [{"model": "A", "response": "A"}],
                 [{"model": "B", "ranking": "FINAL RANKING:\n1. Response A"}],
@@ -353,12 +358,19 @@ class TestConversationModelSelection:
             assert response.status_code == 200
             call_kwargs = mock_run.call_args.kwargs
             assert call_kwargs["council_models"] == override_models
+            assert mock_run.call_args.args[0] == "AUGMENTED QUERY"
+            assert response.json()["metadata"]["tool_context"]["enabled"] is True
 
     @patch("backend.main.generate_conversation_title")
+    @patch("backend.main.augment_query_with_tool_context")
     @patch("backend.main.run_full_council")
-    def test_send_message_falls_back_to_conversation_models(self, mock_run, mock_title, tmp_path):
+    def test_send_message_falls_back_to_conversation_models(self, mock_run, mock_augment, mock_title, tmp_path):
         with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
             mock_title.return_value = "Test Title"
+            mock_augment.return_value = (
+                "AUGMENTED QUERY",
+                {"enabled": True, "urls": [], "sources": []},
+            )
             mock_run.return_value = (
                 [{"model": "A", "response": "A"}],
                 [],
