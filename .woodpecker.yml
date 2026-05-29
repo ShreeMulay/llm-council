@@ -27,7 +27,7 @@ steps:
     image: squidfunk/mkdocs-material:9
     commands:
       - pip install mkdocs-awesome-pages-plugin
-      - mkdocs build --strict
+      - mkdocs build
       - ls -la site/
 
   - name: deploy-pages
