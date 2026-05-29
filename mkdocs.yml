@@ -1,0 +1,64 @@
+site_name: "llm-council Documentation"
+site_description: "Project specifications and change proposals"
+site_url: "https://pages.git.thekidneyexperts.com/thekidneyexperts/llm-council/"
+
+# Use openspec/ as the docs source
+docs_dir: openspec
+
+# Output directory (CI copies this to pages branch)
+site_dir: site
+
+# Theme: Material Design for MkDocs
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+# Plugins
+plugins:
+  - search
+  - awesome-pages:
+      filename: .pages
+
+# Extensions for better markdown
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+# Extra settings
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://git.thekidneyexperts.com/thekidneyexperts/llm-council
+  version:
+    provider: mike
+
+# Copyright
+copyright: "The Kidney Experts — Built with OpenSpec"
