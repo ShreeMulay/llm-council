@@ -113,7 +113,7 @@ export default function ChatInterface({
               </div>
               <div className="roster-item anthropic">
                 <span className="roster-icon">🏺</span>
-                <span className="roster-name">Claude Opus 4.7</span>
+                <span className="roster-name">Claude Opus 4.8</span>
                 <span className="roster-role">Chairman & Coder</span>
               </div>
               <div className="roster-item fireworks">

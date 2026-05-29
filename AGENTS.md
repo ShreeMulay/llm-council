@@ -17,7 +17,7 @@ uv run python -m backend.main
 | # | Model | Provider | Role | Tier | Special Settings |
 |---|-------|----------|------|------|------------------|
 | 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
-| 2 | Claude Opus 4.7 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
+| 2 | Claude Opus 4.8 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
 | 3 | GLM-5.1 | Fireworks Direct | Tool Specialist | Medium | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
 | 5 | Grok 4.20 Reasoning | xAI Direct | Real-time Intel | Medium | `reasoning: enabled` |
@@ -28,12 +28,12 @@ uv run python -m backend.main
 
 ### Compact Mode (5 Models)
 
-Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.7, GLM-5.1, Gemini 3.1 Pro, Grok 4.20.
+Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.8, GLM-5.1, Gemini 3.1 Pro, Grok 4.20.
 
 ### Deliberation Architecture
 
 **Stage 1** — All 9 models respond in parallel (cached for 1 hour by model+prompt hash)
-**Stage 2** — Top 3 evaluators rank responses (Opus 4.7, DeepSeek V4 Pro, GPT-5.5-high):
+**Stage 2** — Top 3 evaluators rank responses (Opus 4.8, DeepSeek V4 Pro, GPT-5.5-high):
 - Self-exclusion: evaluators don't rank their own response
 - Randomized order: different label-to-model mapping per evaluator
 - Dynamic truncation: strong models 8K, medium 10K, weak 12K (inverse allocation)
@@ -42,7 +42,7 @@ Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5,
 
 ### Chairman Selection
 
-**Claude Opus 4.7** serves as chairman.
+**Claude Opus 4.8** serves as chairman.
 Key reasoning: Synthesis > Reasoning, Constitutional AI reduces self-preference bias, "Strong but not supreme" separation of powers.
 
 ## API Endpoints
@@ -92,7 +92,7 @@ MCP Config:
 - `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5, Claude Opus 4.7 (fallback for all)
+- `OPENROUTER_API_KEY` - For GPT-5.5, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5, Claude Opus 4.8 (fallback for all)
 - `FIREWORKS_API_KEY` - For GLM-5.1 (primary, 3.4x faster) and Kimi K2.6
 - `GROK_API_KEY` - For Grok 4.20 Reasoning via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
@@ -101,7 +101,7 @@ MCP Config:
 
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.5
-- `opus` -> anthropic/claude-opus-4.7
+- `opus` -> anthropic/claude-opus-4.8
 - `glm` -> fireworks/glm-5.1
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3

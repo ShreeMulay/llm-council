@@ -95,13 +95,13 @@ class TestCouncilEndpoint:
             "markdown": "## Test Result\n\nTest synthesis",
             "stage1": [
                 {"model": "openai/gpt-5.5", "response": "GPT response", "usage": {}, "provider": "openrouter"},
-                {"model": "anthropic/claude-opus-4.7", "response": "Claude response", "usage": {}, "provider": "openrouter"},
+                {"model": "anthropic/claude-opus-4.8", "response": "Claude response", "usage": {}, "provider": "openrouter"},
             ],
             "stage2": [
-                {"model": "anthropic/claude-opus-4.7", "ranking": "FINAL RANKING:\n1. Response A", "parsed_ranking": ["Response A"], "usage": {}},
+                {"model": "anthropic/claude-opus-4.8", "ranking": "FINAL RANKING:\n1. Response A", "parsed_ranking": ["Response A"], "usage": {}},
             ],
             "stage3": {
-                "model": "anthropic/claude-opus-4.7",
+                "model": "anthropic/claude-opus-4.8",
                 "response": "Synthesized answer",
                 "usage": {},
                 "provider": "openrouter",
@@ -111,13 +111,13 @@ class TestCouncilEndpoint:
                 "aggregate_rankings": [],
                 "final_only": False,
                 "compact": False,
-                "evaluators": ["anthropic/claude-opus-4.7", "deepseek/deepseek-v4-pro", "openai/gpt-5.5"],
-                "curated_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"],
+                "evaluators": ["anthropic/claude-opus-4.8", "deepseek/deepseek-v4-pro", "openai/gpt-5.5"],
+                "curated_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"],
             },
             "timing": {"elapsed_seconds": 15.0},
             "config": {
-                "council_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"],
-                "chairman_model": "anthropic/claude-opus-4.7",
+                "council_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"],
+                "chairman_model": "anthropic/claude-opus-4.8",
                 "final_only": False,
                 "compact": False,
             },
@@ -305,7 +305,7 @@ class TestConversationModelSelection:
 
     def test_create_conversation_stores_active_models(self, tmp_path):
         with patch("backend.storage.CONVERSATIONS_DIR", tmp_path):
-            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]
 
             response = client.post(
                 "/api/conversations",
@@ -344,7 +344,7 @@ class TestConversationModelSelection:
 
             conversation = client.post(
                 "/api/conversations",
-                json={"active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]},
+                json={"active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]},
                 headers={"X-Council-Key": "test-key"},
             ).json()
 
@@ -378,7 +378,7 @@ class TestConversationModelSelection:
                 {},
             )
 
-            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+            active_models = ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]
             conversation = client.post(
                 "/api/conversations",
                 json={"active_models": active_models},

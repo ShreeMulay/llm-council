@@ -42,7 +42,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # Council Models - 9 models for deliberation
 # Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
 # 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
-# 2. Claude Opus 4.7 via OpenRouter (Lead Coder + Chairman, reasoning: xhigh)
+# 2. Claude Opus 4.8 via OpenRouter (Lead Coder + Chairman, reasoning: xhigh)
 # 3. GLM-5.1 via Fireworks Direct (Tool Specialist)
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
 # 5. Grok 4.20 Reasoning via xAI Direct (Real-time Intel)
@@ -52,7 +52,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # 9. Qwen 3.5 122B A10B via OpenRouter (Agentic/Tools Expert)
 ALL_MODEL_IDS = [
     "openai/gpt-5.5",
-    "anthropic/claude-opus-4.7",
+    "anthropic/claude-opus-4.8",
     "fireworks/glm-5.1",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
@@ -67,15 +67,15 @@ DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
 # Core 5 models for compact mode (faster/cheaper)
 COMPACT_COUNCIL_MODELS = [
     "openai/gpt-5.5",
-    "anthropic/claude-opus-4.7",
+    "anthropic/claude-opus-4.8",
     "fireworks/glm-5.1",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
 ]
 
 # Chairman Model - synthesizes final response
-# Claude Opus 4.7 for best synthesis capability
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.7"
+# Claude Opus 4.8 for best synthesis capability
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.8"
 
 # Override via environment
 COUNCIL_MODELS = (
@@ -133,6 +133,7 @@ GEMINI_DIRECT_MODEL_IDS = [
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
     "openai/gpt-5.5": "openai/gpt-5.5",
+    "anthropic/claude-opus-4.8": "anthropic/claude-opus-4.8",
     "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
     "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
     "fireworks/glm-5.1": "z-ai/glm-5.1",
@@ -159,7 +160,7 @@ OPENAI_MODEL_IDS = []
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
     "gpt": "openai/gpt-5.5",
-    "opus": "anthropic/claude-opus-4.7",
+    "opus": "anthropic/claude-opus-4.8",
     "glm": "fireworks/glm-5.1",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
@@ -175,7 +176,7 @@ MODEL_ALIASES = {
 # Evaluator priority list — models best at critical evaluation
 # Stage 2 uses top 3 from this list that are present in the active council
 EVALUATOR_PRIORITY = [
-    "anthropic/claude-opus-4.7",
+    "anthropic/claude-opus-4.8",
     "deepseek/deepseek-v4-pro",
     "openai/gpt-5.5",
 ]
@@ -184,7 +185,7 @@ EVALUATOR_PRIORITY = [
 # Strong models are concise; weaker models need more tokens for same quality
 TIERED_TRUNCATION = {
     "strong": [
-        "anthropic/claude-opus-4.7",
+        "anthropic/claude-opus-4.8",
         "openai/gpt-5.5",
         "deepseek/deepseek-v4-pro",
     ],
@@ -272,12 +273,15 @@ def calculate_max_response_chars(model_id: str, num_models: int) -> int:
 
 # Per-model reasoning effort for OpenRouter requests.
 # GPT-5.5 dual-mode: medium for Stage 1 (responder), high for Stage 2 (evaluator)
-# Opus 4.7 supports xhigh effort level (between high and max) introduced Apr 16 2026.
+# Opus 4.8 supports xhigh effort level (low < medium < high < xhigh < max).
+# Validated 2026-05-29: reasoning_effort=xhigh is honored by Opus 4.8 via
+# OpenRouter native Anthropic provider (enables thinking, no API error).
 # Models not listed use provider default (no reasoning_effort sent).
 MODEL_REASONING_EFFORT = {
     "openai/gpt-5.5": "medium",
     "openai/gpt-5.5-evaluator": "high",
-    "anthropic/claude-opus-4.7": "xhigh",
+    "anthropic/claude-opus-4.8": "xhigh",
+    "anthropic/claude-opus-4.7": "xhigh",  # backward compat for stored configs
 }
 
 

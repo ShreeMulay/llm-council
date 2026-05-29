@@ -19,7 +19,7 @@ class TestResolveModelAlias:
         assert resolve_model_alias("gpt") == "openai/gpt-5.5"
 
     def test_opus_alias(self):
-        assert resolve_model_alias("opus") == "anthropic/claude-opus-4.7"
+        assert resolve_model_alias("opus") == "anthropic/claude-opus-4.8"
 
     def test_glm_alias(self):
         assert resolve_model_alias("glm") == "fireworks/glm-5.1"
@@ -56,7 +56,7 @@ class TestResolveModelAlias:
 
     def test_case_insensitive(self):
         assert resolve_model_alias("GPT") == "openai/gpt-5.5"
-        assert resolve_model_alias("OpUs") == "anthropic/claude-opus-4.7"
+        assert resolve_model_alias("OpUs") == "anthropic/claude-opus-4.8"
 
     def test_whitespace_stripped(self):
         assert resolve_model_alias("  gpt  ") == "openai/gpt-5.5"
@@ -74,7 +74,7 @@ class TestGetModelReasoningEffort:
         assert get_model_reasoning_effort("openai/gpt-5.5-evaluator") == "high"
 
     def test_opus_xhigh(self):
-        assert get_model_reasoning_effort("anthropic/claude-opus-4.7") == "xhigh"
+        assert get_model_reasoning_effort("anthropic/claude-opus-4.8") == "xhigh"
 
     def test_unknown_model_returns_none(self):
         assert get_model_reasoning_effort("unknown/model") is None
@@ -100,7 +100,7 @@ class TestIsFireworksModel:
 
     def test_non_fireworks(self):
         assert is_fireworks_model("openai/gpt-5.5") is False
-        assert is_fireworks_model("anthropic/claude-opus-4.7") is False
+        assert is_fireworks_model("anthropic/claude-opus-4.8") is False
 
 
 class TestDefaultCouncilModels:
@@ -112,8 +112,8 @@ class TestDefaultCouncilModels:
     def test_includes_gpt_5_5(self):
         assert "openai/gpt-5.5" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_opus_4_7(self):
-        assert "anthropic/claude-opus-4.7" in DEFAULT_COUNCIL_MODELS
+    def test_includes_opus_4_8(self):
+        assert "anthropic/claude-opus-4.8" in DEFAULT_COUNCIL_MODELS
 
     def test_includes_glm_5_1(self):
         assert "fireworks/glm-5.1" in DEFAULT_COUNCIL_MODELS
@@ -144,7 +144,7 @@ class TestEvaluatorPriority:
         assert len(EVALUATOR_PRIORITY) == 3
 
     def test_opus_first(self):
-        assert EVALUATOR_PRIORITY[0] == "anthropic/claude-opus-4.7"
+        assert EVALUATOR_PRIORITY[0] == "anthropic/claude-opus-4.8"
 
     def test_deepseek_second(self):
         assert EVALUATOR_PRIORITY[1] == "deepseek/deepseek-v4-pro"
@@ -160,7 +160,7 @@ class TestTieredTruncation:
         """Strong models (concise) get less space."""
         # These functions don't exist yet — they will be added to config.py
         from backend.config import calculate_max_response_chars
-        assert calculate_max_response_chars("anthropic/claude-opus-4.7", 9) == 8000
+        assert calculate_max_response_chars("anthropic/claude-opus-4.8", 9) == 8000
         assert calculate_max_response_chars("openai/gpt-5.5", 9) == 8000
         assert calculate_max_response_chars("deepseek/deepseek-v4-pro", 9) == 8000
 
@@ -181,7 +181,7 @@ class TestTieredTruncation:
     def test_compact_mode_all_get_12k(self):
         """With 5 models (compact), all get maximum space."""
         from backend.config import calculate_max_response_chars
-        assert calculate_max_response_chars("anthropic/claude-opus-4.7", 5) == 12000
+        assert calculate_max_response_chars("anthropic/claude-opus-4.8", 5) == 12000
         assert calculate_max_response_chars("fireworks/glm-5.1", 5) == 12000
 
     def test_unknown_model_defaults_to_12k(self):

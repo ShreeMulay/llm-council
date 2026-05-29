@@ -69,7 +69,7 @@ Three levels of model configuration:
 ### Request: POST /api/conversations
 ```json
 {
-  "active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+  "active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]
 }
 ```
 
@@ -78,7 +78,7 @@ Three levels of model configuration:
 {
   "content": "What is quantum computing?",
   "compact": false,
-  "models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+  "models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]
 }
 ```
 
@@ -90,7 +90,7 @@ Three levels of model configuration:
     "created_at": "...",
     "title": "...",
     "message_count": 2,
-    "active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.7"]
+    "active_models": ["openai/gpt-5.5", "anthropic/claude-opus-4.8"]
   }
 ]
 ```

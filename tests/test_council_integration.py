@@ -10,7 +10,7 @@ from backend.council import run_full_council
 # Mock responses for each model
 MOCK_RESPONSES = {
     "openai/gpt-5.5": "GPT-5.5 response: Quantum computing uses qubits.",
-    "anthropic/claude-opus-4.7": "Opus 4.7 response: Quantum computing leverages superposition and entanglement.",
+    "anthropic/claude-opus-4.8": "Opus 4.8 response: Quantum computing leverages superposition and entanglement.",
     "fireworks/glm-5.1": "GLM-5.1 response: Quantum computing is a paradigm shift in computation.",
     "google/gemini-3.1-pro-preview": "Gemini 3.1 response: Quantum computing enables exponential speedup for certain problems.",
     "x-ai/grok-4.3": "Grok 4.3 response: Quantum computing is the future of AI.",
@@ -73,13 +73,13 @@ class TestFullCouncilFlow:
 
         # Stage 2: evaluators ranked responses
         assert len(stage2) > 0
-        # Evaluators are Opus 4.7, DeepSeek V4 Pro, GPT-5.5 (top 3 from priority)
+        # Evaluators are Opus 4.8, DeepSeek V4 Pro, GPT-5.5 (top 3 from priority)
         evaluator_models = {r["model"] for r in stage2}
-        assert "anthropic/claude-opus-4.7" in evaluator_models
+        assert "anthropic/claude-opus-4.8" in evaluator_models
 
         # Stage 3: chairman synthesized
         assert stage3["response"]
-        assert stage3["model"] == "anthropic/claude-opus-4.7"
+        assert stage3["model"] == "anthropic/claude-opus-4.8"
 
         # Metadata
         assert "label_to_model" in metadata
