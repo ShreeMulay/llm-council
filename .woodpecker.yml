@@ -26,7 +26,6 @@ steps:
   - name: build-docs
     image: squidfunk/mkdocs-material:9
     commands:
-      - pip install mkdocs-awesome-pages-plugin
       - mkdocs build
       - ls -la site/
 
@@ -68,5 +67,7 @@ steps:
       - status: failure
 
 when:
+  # Run on pushes to the repo's DEFAULT branch (main/master/trunk — any),
+  # plus manual triggers. Using evaluate avoids hardcoding the branch name.
   - evaluate: 'CI_PIPELINE_EVENT == "push" && CI_COMMIT_BRANCH == CI_REPO_DEFAULT_BRANCH'
   - event: manual

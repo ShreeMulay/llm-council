@@ -38,9 +38,6 @@ theme:
 # Plugins
 plugins:
   - search
-  - awesome-pages:
-      filename: .pages
-
 # Extensions for better markdown
 markdown_extensions:
   - admonition

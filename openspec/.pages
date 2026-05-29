@@ -1,6 +1,0 @@
-nav:
-  - Home: index.md
-  - Specs:
-    - specs/*.md
-  - Changes:
-    - changes/*.md
