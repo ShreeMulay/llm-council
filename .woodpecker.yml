@@ -1,0 +1,73 @@
+# OpenSpec → Forgejo Pages Pipeline (Secure)
+#
+# Builds openspec/ markdown into a static site via MkDocs and deploys
+# it to the 'pages' branch for Forgejo Pages hosting.
+#
+# Secrets (managed in Woodpecker, NEVER hardcoded):
+#   - SSH_DEPLOY_KEY          : ed25519 private key, matching repo deploy key
+#   - GOOGLE_CHAT_WEBHOOK_URL : Google Chat incoming webhook (org-level secret)
+#
+# Setup per repo:
+#   1. ssh-keygen -t ed25519 -C "woodpecker-ci-REPO" -f deploy-key -N ""
+#   2. Add deploy-key.pub to Forgejo repo → Settings → Deploy Keys (writable)
+#   3. Store deploy-key (private) as Woodpecker secret SSH_DEPLOY_KEY (repo scope)
+#   4. GOOGLE_CHAT_WEBHOOK_URL is provided org-wide; no per-repo action needed
+#   5. Copy this file + mkdocs.yml + openspec/ to the repo, push to main
+
+# Keep clone shallow & skip submodules (prevents broken .gitmodules failures)
+clone:
+  git:
+    image: woodpeckerci/plugin-git:2
+    settings:
+      recursive: false
+      submodule_update: false
+
+steps:
+  - name: build-docs
+    image: squidfunk/mkdocs-material:9
+    commands:
+      - pip install mkdocs-awesome-pages-plugin
+      - mkdocs build --strict
+      - ls -la site/
+
+  - name: deploy-pages
+    image: alpine/git
+    environment:
+      SSH_DEPLOY_KEY:
+        from_secret: SSH_DEPLOY_KEY
+    commands:
+      - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+      - printf '%s\n' "$SSH_DEPLOY_KEY" > ~/.ssh/id_ed25519
+      - chmod 600 ~/.ssh/id_ed25519
+      - echo "Host git.thekidneyexperts.com" >> ~/.ssh/config
+      - echo "  StrictHostKeyChecking no" >> ~/.ssh/config
+      - echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
+      - git config --global user.email "woodpecker@thekidneyexperts.com"
+      - git config --global user.name "Woodpecker CI"
+      - git remote add pages-origin ssh://git@git.thekidneyexperts.com:2222/${CI_REPO_OWNER}/${CI_REPO_NAME}.git || true
+      - git fetch pages-origin pages 2>/dev/null || true
+      - git checkout -B pages pages-origin/pages 2>/dev/null || git checkout --orphan pages
+      - rm -rf *.html *.css *.js assets search 2>/dev/null || true
+      - cp -r site/* .
+      - git add -A
+      - git commit -m "Deploy pages from ${CI_COMMIT_SHA:0:8}" || true
+      - git push pages-origin pages --force
+
+  - name: notify-failure
+    image: curlimages/curl:8.8.0
+    environment:
+      WEBHOOK_URL:
+        from_secret: GOOGLE_CHAT_WEBHOOK_URL
+    commands:
+      - >
+        curl -X POST -H "Content-Type: application/json"
+        -d "{\"text\":\"🚨 Pipeline FAILED: ${CI_REPO_OWNER}/${CI_REPO_NAME} #${CI_PIPELINE_NUMBER}\"}"
+        "$WEBHOOK_URL"
+        || true
+    when:
+      - status: failure
+
+when:
+  - event: push
+    branch: main
+  - event: manual
