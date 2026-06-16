@@ -6,6 +6,7 @@
 - [x] Update project docs and OpenSpec delta.
 - [x] Rebuild MCP output.
 - [x] Run quality gates.
-- [ ] Deploy Cloud Run and smoke test.
+- [x] Deploy Cloud Run and smoke test.
 - [ ] Open Forgejo PR, pass CI, merge, mirror to GitHub.
-- [ ] Close Beads issue and store memory.
+- [x] Close Beads issue.
+- [ ] Store memory after merge/mirror.
