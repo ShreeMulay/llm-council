@@ -118,7 +118,7 @@ export default function ChatInterface({
               </div>
               <div className="roster-item fireworks">
                 <span className="roster-icon">🎆</span>
-                <span className="roster-name">GLM-5.1</span>
+                <span className="roster-name">GLM-5.2</span>
                 <span className="roster-role">Tool Specialist</span>
               </div>
               <div className="roster-item google">
@@ -148,7 +148,7 @@ export default function ChatInterface({
               </div>
               <div className="roster-item alibaba">
                 <span className="roster-icon">👑</span>
-                <span className="roster-name">Qwen 3.5 122B</span>
+                <span className="roster-name">Qwen 3.7 Max</span>
                 <span className="roster-role">Multilingual Specialist</span>
               </div>
             </div>

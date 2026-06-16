@@ -1,10 +1,9 @@
 """Fireworks AI client for high-throughput inference of open-source models.
 
-Fireworks provides OpenAI-compatible API with optimized inference (up to 200 tok/s
-on GLM-5.1, 3.4x faster than OpenRouter for long-form responses).
+Fireworks provides an OpenAI-compatible API for selected direct-provider models.
 
-Used as primary provider for: GLM-5.1 (upgraded from GLM-5 Apr 2026)
-Fallback: OpenRouter (z-ai/glm-5.1)
+Used as primary provider for: Kimi K2.6. Legacy explicit Fireworks GLM IDs remain
+available, with OpenRouter fallback to their Z.ai equivalents.
 """
 
 import asyncio

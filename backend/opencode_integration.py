@@ -190,7 +190,7 @@ async def handle_council_command(
 MCP_TOOL_SCHEMA = {
     "name": "llm_council",
     "description": (
-        "Consult 9 LLMs (GPT-5.5, Opus 4.8, GLM-5.1, Gemini 3.1 Pro, Grok 4.3, Kimi K2.6, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5) for peer-reviewed answers. "
+        "Consult 9 LLMs (GPT-5.5, Opus 4.8, GLM-5.2, Gemini 3.1 Pro, Grok 4.3, Kimi K2.6, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. "
         "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Opus 4.8). "
         "Explicit URL context is fetched and injected before deliberation by default. Use for complex questions requiring multiple perspectives."
     ),
@@ -241,13 +241,14 @@ MODEL_ALIASES_HELP = """
 **Model Aliases** (for /council --models):
 - `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.8
-- `glm` -> fireworks/glm-5.1
+- `glm` -> z-ai/glm-5.2
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3
 - `kimi` -> fireworks/kimi-k2.6
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick
-- `qwen` -> qwen/qwen3.5-122b-a10b
+- `qwen` -> qwen/qwen3.7-max
+- `fable` -> anthropic/claude-fable-5 (explicit challenger only)
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview
 

@@ -18,17 +18,17 @@ uv run python -m backend.main
 |---|-------|----------|------|------|------------------|
 | 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
 | 2 | Claude Opus 4.8 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
-| 3 | GLM-5.1 | Fireworks Direct | Tool Specialist | Medium | AA Intelligence 51, SWE-Bench Pro SOTA (58.4) |
+| 3 | GLM-5.2 | OpenRouter / Z.ai | Tool Specialist | Medium | Refreshed production GLM slot; legacy Fireworks GLM IDs remain explicit-only |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
-| 5 | Grok 4.20 Reasoning | xAI Direct | Real-time Intel | Medium | `reasoning: enabled` |
+| 5 | Grok 4.3 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
 | 6 | Kimi K2.6 | Fireworks Direct | Long-context Generalist | Medium | 3.4x faster via Fireworks |
 | 7 | DeepSeek V4 Pro | OpenRouter | Code/Math Specialist | Strong | Evaluator priority #2 |
 | 8 | Llama 4 Maverick | OpenRouter | Open-weight Generalist | Weak | - |
-| 9 | Qwen 3.5 122B | OpenRouter | Multilingual Specialist | Weak | - |
+| 9 | Qwen 3.7 Max | OpenRouter | Multilingual Specialist | Medium | Refreshed production Qwen slot |
 
 ### Compact Mode (5 Models)
 
-Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.8, GLM-5.1, Gemini 3.1 Pro, Grok 4.20.
+Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.8, GLM-5.2, Gemini 3.1 Pro, Grok 4.3.
 
 ### Deliberation Architecture
 
@@ -92,9 +92,9 @@ MCP Config:
 - `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5, Claude Opus 4.8 (fallback for all)
-- `FIREWORKS_API_KEY` - For GLM-5.1 (primary, 3.4x faster) and Kimi K2.6
-- `GROK_API_KEY` - For Grok 4.20 Reasoning via xAI Direct
+- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Opus 4.8, GLM-5.2, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, Claude Fable 5 challenger, and fallbacks
+- `FIREWORKS_API_KEY` - For Kimi K2.6 primary routing and legacy explicit Fireworks GLM IDs
+- `GROK_API_KEY` - For Grok 4.3 via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
 
 ## Model Aliases
@@ -102,13 +102,14 @@ MCP Config:
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.8
-- `glm` -> fireworks/glm-5.1
+- `glm` -> z-ai/glm-5.2
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3
 - `kimi` -> fireworks/kimi-k2.6
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick
-- `qwen` -> qwen/qwen3.5-122b-a10b
+- `qwen` -> qwen/qwen3.7-max
+- `fable` -> anthropic/claude-fable-5 (explicit challenger only; not default chairman)
 - `sonnet` -> anthropic/claude-sonnet-4.5
 - `flash` -> google/gemini-3-flash-preview (backward compat)
 

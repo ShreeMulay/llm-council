@@ -20,7 +20,7 @@ class TestGetEvaluatorModels:
             "openai/gpt-5.5",
             "anthropic/claude-opus-4.8",
             "deepseek/deepseek-v4-pro",
-            "fireworks/glm-5.1",
+            "z-ai/glm-5.2",
         ]
         evaluators = get_evaluator_models(council)
 
@@ -36,7 +36,7 @@ class TestGetEvaluatorModels:
         council = [
             "anthropic/claude-opus-4.8",
             "deepseek/deepseek-v4-pro",
-            "fireworks/glm-5.1",
+            "z-ai/glm-5.2",
         ]
         evaluators = get_evaluator_models(council)
 
@@ -47,7 +47,7 @@ class TestGetEvaluatorModels:
         """If no priority evaluators are in council, return empty list."""
         from backend.council import get_evaluator_models
 
-        council = ["fireworks/glm-5.1", "meta-llama/llama-4-maverick"]
+        council = ["z-ai/glm-5.2", "meta-llama/llama-4-maverick"]
         evaluators = get_evaluator_models(council)
 
         assert len(evaluators) == 0

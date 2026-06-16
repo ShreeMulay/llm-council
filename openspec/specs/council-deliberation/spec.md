@@ -88,10 +88,23 @@ The system SHALL route queries to appropriate API providers.
 
 ### Scenario: Route to OpenRouter
 
-- **GIVEN** model ID does not match Cerebras models
+- **GIVEN** model ID does not match a direct-provider model or has an OpenRouter fallback mapping
 - **WHEN** querying model
 - **THEN** it uses OpenRouter API endpoint
 - **AND** uses OPENROUTER_API_KEY for authentication
+
+### Scenario: Route Kimi to Fireworks Direct
+
+- **GIVEN** model ID is "fireworks/kimi-k2.6"
+- **WHEN** querying model
+- **THEN** it uses the Fireworks API endpoint
+- **AND** uses FIREWORKS_API_KEY for authentication
+
+### Scenario: Route GLM 5.2 to OpenRouter
+
+- **GIVEN** model ID is "z-ai/glm-5.2"
+- **WHEN** querying model
+- **THEN** it uses OpenRouter rather than Fireworks Direct
 
 ## Technical Implementation
 
@@ -99,14 +112,21 @@ The system SHALL route queries to appropriate API providers.
 
 ```python
 DEFAULT_COUNCIL_MODELS = [
-    "anthropic/claude-opus-4.8",      # OpenRouter
-    "google/gemini-3-flash-preview",  # OpenRouter
-    "x-ai/grok-4.1-fast",             # OpenRouter
-    "zai-glm-4.7",                    # Cerebras
+    "openai/gpt-5.5",                 # OpenRouter
+    "anthropic/claude-opus-4.8",      # OpenRouter + chairman
+    "z-ai/glm-5.2",                   # OpenRouter/Z.ai
+    "google/gemini-3.1-pro-preview",  # OpenRouter
+    "x-ai/grok-4.3",                  # xAI direct
+    "fireworks/kimi-k2.6",            # Fireworks direct
+    "deepseek/deepseek-v4-pro",       # OpenRouter
+    "meta-llama/llama-4-maverick",    # OpenRouter
+    "qwen/qwen3.7-max",               # OpenRouter
 ]
 
 DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.8"
 ```
+
+Legacy explicit IDs such as `fireworks/glm-5.1` and `qwen/qwen3.5-122b-a10b` MAY remain routed through fallback maps for backward compatibility, but MUST NOT be default production roster members.
 
 ### Cerebras Model IDs
 
