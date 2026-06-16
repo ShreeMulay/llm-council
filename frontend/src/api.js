@@ -38,9 +38,9 @@ export const MODEL_INFO = {
   },
   'glm': {
     id: 'glm',
-    modelId: 'fireworks/glm-5.1',
-    name: 'GLM-5.1',
-    provider: 'Fireworks',
+    modelId: 'z-ai/glm-5.2',
+    name: 'GLM-5.2',
+    provider: 'Z.ai / OpenRouter',
     color: '#3b82f6',
     bg: '#eff6ff',
     border: '#bfdbfe',
@@ -98,8 +98,8 @@ export const MODEL_INFO = {
   },
   'qwen': {
     id: 'qwen',
-    modelId: 'qwen/qwen3.5-122b-a10b',
-    name: 'Qwen 3.5 122B',
+    modelId: 'qwen/qwen3.7-max',
+    name: 'Qwen 3.7 Max',
     provider: 'Alibaba',
     color: '#6366f1',
     bg: '#eef2ff',

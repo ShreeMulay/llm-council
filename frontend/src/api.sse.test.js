@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { parseSseEventBlock } from './api.js';
+import { MODEL_INFO, parseSseEventBlock } from './api.js';
 
 function testSingleDataLine() {
   const event = parseSseEventBlock('data: {"type":"stage1_start"}');
@@ -30,8 +30,16 @@ function testLargePayloadCanBeParsedAfterChunkReassembly() {
   assert.equal(event.data[0].response.length, 10_000);
 }
 
+function testModelMetadataUsesRefreshedRoster() {
+  assert.equal(MODEL_INFO.glm.modelId, 'z-ai/glm-5.2');
+  assert.equal(MODEL_INFO.glm.name, 'GLM-5.2');
+  assert.equal(MODEL_INFO.qwen.modelId, 'qwen/qwen3.7-max');
+  assert.equal(MODEL_INFO.qwen.name, 'Qwen 3.7 Max');
+}
+
 testSingleDataLine();
 testCrLfLineEndings();
 testLargePayloadCanBeParsedAfterChunkReassembly();
+testModelMetadataUsesRefreshedRoster();
 
 console.log('SSE parser tests passed');

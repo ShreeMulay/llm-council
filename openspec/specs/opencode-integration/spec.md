@@ -55,11 +55,18 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 
 | Alias | Full Model ID |
 |-------|---------------|
+| `gpt` | openai/gpt-5.5 |
 | `opus` | anthropic/claude-opus-4.8 |
-| `gemini`, `flash` | google/gemini-3-flash-preview |
-| `grok` | x-ai/grok-4.1-fast |
-| `glm` | zai-glm-4.7 |
+| `glm` | z-ai/glm-5.2 |
+| `gemini`, `pro` | google/gemini-3.1-pro-preview |
+| `grok` | x-ai/grok-4.3 |
+| `kimi` | fireworks/kimi-k2.6 |
+| `deepseek` | deepseek/deepseek-v4-pro |
+| `llama` | meta-llama/llama-4-maverick |
+| `qwen` | qwen/qwen3.7-max |
 | `sonnet` | anthropic/claude-sonnet-4.5 |
+| `fable` | anthropic/claude-fable-5 (explicit challenger only) |
+| `flash` | google/gemini-3-flash-preview |
 
 ### API Endpoint
 

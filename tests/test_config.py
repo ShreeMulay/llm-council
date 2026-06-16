@@ -2,11 +2,13 @@
 
 
 from backend.config import (
+    COMPACT_COUNCIL_MODELS,
     DEFAULT_COUNCIL_MODELS,
     EVALUATOR_PRIORITY,
     FIREWORKS_MODEL_IDS,
     MODEL_ALIASES,
     get_model_reasoning_effort,
+    get_openrouter_fallback,
     is_fireworks_model,
     resolve_model_alias,
 )
@@ -22,7 +24,7 @@ class TestResolveModelAlias:
         assert resolve_model_alias("opus") == "anthropic/claude-opus-4.8"
 
     def test_glm_alias(self):
-        assert resolve_model_alias("glm") == "fireworks/glm-5.1"
+        assert resolve_model_alias("glm") == "z-ai/glm-5.2"
 
     def test_gemini_alias(self):
         assert resolve_model_alias("gemini") == "google/gemini-3.1-pro-preview"
@@ -43,7 +45,10 @@ class TestResolveModelAlias:
         assert resolve_model_alias("llama") == "meta-llama/llama-4-maverick"
 
     def test_qwen_alias(self):
-        assert resolve_model_alias("qwen") == "qwen/qwen3.5-122b-a10b"
+        assert resolve_model_alias("qwen") == "qwen/qwen3.7-max"
+
+    def test_fable_alias_available_as_challenger(self):
+        assert resolve_model_alias("fable") == "anthropic/claude-fable-5"
 
     def test_sonnet_alias(self):
         assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-4.5"
@@ -115,8 +120,11 @@ class TestDefaultCouncilModels:
     def test_includes_opus_4_8(self):
         assert "anthropic/claude-opus-4.8" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_glm_5_1(self):
-        assert "fireworks/glm-5.1" in DEFAULT_COUNCIL_MODELS
+    def test_includes_glm_5_2(self):
+        assert "z-ai/glm-5.2" in DEFAULT_COUNCIL_MODELS
+
+    def test_default_excludes_legacy_glm_5_1(self):
+        assert "fireworks/glm-5.1" not in DEFAULT_COUNCIL_MODELS
 
     def test_includes_gemini_3_1(self):
         assert "google/gemini-3.1-pro-preview" in DEFAULT_COUNCIL_MODELS
@@ -133,8 +141,24 @@ class TestDefaultCouncilModels:
     def test_includes_llama_4(self):
         assert "meta-llama/llama-4-maverick" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_qwen_3_5(self):
-        assert "qwen/qwen3.5-122b-a10b" in DEFAULT_COUNCIL_MODELS
+    def test_includes_qwen_3_7_max(self):
+        assert "qwen/qwen3.7-max" in DEFAULT_COUNCIL_MODELS
+
+    def test_default_excludes_legacy_qwen_3_5(self):
+        assert "qwen/qwen3.5-122b-a10b" not in DEFAULT_COUNCIL_MODELS
+
+
+class TestCompactCouncilModels:
+    """Test compact council uses refreshed core roster."""
+
+    def test_has_5_models(self):
+        assert len(COMPACT_COUNCIL_MODELS) == 5
+
+    def test_includes_glm_5_2(self):
+        assert "z-ai/glm-5.2" in COMPACT_COUNCIL_MODELS
+
+    def test_excludes_legacy_glm_5_1(self):
+        assert "fireworks/glm-5.1" not in COMPACT_COUNCIL_MODELS
 
 
 class TestEvaluatorPriority:
@@ -174,15 +198,15 @@ class TestTieredTruncation:
     def test_weak_models_get_12k(self):
         """Weaker models (verbose) get more space."""
         from backend.config import calculate_max_response_chars
-        assert calculate_max_response_chars("fireworks/glm-5.1", 9) == 12000
+        assert calculate_max_response_chars("z-ai/glm-5.2", 9) == 10000
         assert calculate_max_response_chars("meta-llama/llama-4-maverick", 9) == 12000
-        assert calculate_max_response_chars("qwen/qwen3.5-122b-a10b", 9) == 12000
+        assert calculate_max_response_chars("qwen/qwen3.7-max", 9) == 10000
 
     def test_compact_mode_all_get_12k(self):
         """With 5 models (compact), all get maximum space."""
         from backend.config import calculate_max_response_chars
         assert calculate_max_response_chars("anthropic/claude-opus-4.8", 5) == 12000
-        assert calculate_max_response_chars("fireworks/glm-5.1", 5) == 12000
+        assert calculate_max_response_chars("z-ai/glm-5.2", 5) == 12000
 
     def test_unknown_model_defaults_to_12k(self):
         """Unknown models get default maximum."""
@@ -201,6 +225,25 @@ class TestFireworksModelIds:
 
     def test_includes_glm_5(self):
         assert "fireworks/glm-5" in FIREWORKS_MODEL_IDS
+
+
+class TestOpenRouterFallbackMap:
+    """Test current and legacy model fallback metadata."""
+
+    def test_glm_5_2_routes_to_openrouter_zai_id(self):
+        assert get_openrouter_fallback("z-ai/glm-5.2") == "z-ai/glm-5.2"
+
+    def test_legacy_glm_5_1_keeps_explicit_fallback(self):
+        assert get_openrouter_fallback("fireworks/glm-5.1") == "z-ai/glm-5.1"
+
+    def test_qwen_3_7_max_routes_to_openrouter_id(self):
+        assert get_openrouter_fallback("qwen/qwen3.7-max") == "qwen/qwen3.7-max"
+
+    def test_legacy_qwen_3_5_keeps_explicit_fallback(self):
+        assert get_openrouter_fallback("qwen/qwen3.5-122b-a10b") == "qwen/qwen3.5-122b-a10b"
+
+    def test_fable_challenger_routes_to_openrouter_id(self):
+        assert get_openrouter_fallback("anthropic/claude-fable-5") == "anthropic/claude-fable-5"
 
 
 class TestModelAliasesCompleteness:

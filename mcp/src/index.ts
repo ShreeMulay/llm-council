@@ -234,7 +234,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult 9 LLMs (GPT-5.5, Opus 4.8, GLM-5.1, Gemini 3.1 Pro, Grok 4.3, Kimi K2.6, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.5) for peer-reviewed answers. " +
+          "Consult 9 LLMs (GPT-5.5, Opus 4.8, GLM-5.2, Gemini 3.1 Pro, Grok 4.3, Kimi K2.6, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. " +
           "3-stage deliberation: 9 individual responses -> 3 evaluators rank with self-exclusion -> chairman synthesizes from curated top-5 (Opus 4.8). " +
           "Use for complex questions requiring multiple perspectives. Compact mode (5 models) for faster results.",
         inputSchema: {
@@ -253,7 +253,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             compact: {
               type: "boolean",
               description:
-                "Use only 5 core models (GPT-5.5, Opus 4.8, GLM-5.1, Gemini 3.1 Pro, Grok 4.3) for faster/cheaper deliberation",
+                "Use only 5 core models (GPT-5.5, Opus 4.8, GLM-5.2, Gemini 3.1 Pro, Grok 4.3) for faster/cheaper deliberation",
               default: false,
             },
             include_details: {

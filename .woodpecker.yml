@@ -23,11 +23,50 @@ clone:
       submodule_update: false
 
 steps:
+  - name: backend-quality
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm
+    commands:
+      - uv sync --extra test --dev
+      - uv run ruff check .
+      - uv run pytest -q
+    when:
+      - event: push
+      - event: pull_request
+      - event: manual
+
+  - name: frontend-quality
+    image: node:22-bookworm
+    commands:
+      - cd frontend
+      - npm ci
+      - npm test -- --runInBand
+      - npm run build
+    when:
+      - event: push
+      - event: pull_request
+      - event: manual
+
+  - name: mcp-quality
+    image: node:22-bookworm
+    commands:
+      - cd mcp
+      - npm ci
+      - npm run typecheck
+      - npm run build
+    when:
+      - event: push
+      - event: pull_request
+      - event: manual
+
   - name: build-docs
     image: squidfunk/mkdocs-material:9
     commands:
       - mkdocs build
       - ls -la site/
+    when:
+      - event: push
+      - event: pull_request
+      - event: manual
 
   - name: deploy-pages
     image: alpine/git
@@ -51,6 +90,9 @@ steps:
       - git add -A
       - git commit -m "Deploy pages from ${CI_COMMIT_SHA:0:8}" || true
       - git push pages-origin pages --force
+    when:
+      - evaluate: 'CI_PIPELINE_EVENT == "push" && CI_COMMIT_BRANCH == CI_REPO_DEFAULT_BRANCH'
+      - event: manual
 
   - name: notify-failure
     image: curlimages/curl:8.8.0
@@ -65,9 +107,3 @@ steps:
         || true
     when:
       - status: failure
-
-when:
-  # Run on pushes to the repo's DEFAULT branch (main/master/trunk — any),
-  # plus manual triggers. Using evaluate avoids hardcoding the branch name.
-  - evaluate: 'CI_PIPELINE_EVENT == "push" && CI_COMMIT_BRANCH == CI_REPO_DEFAULT_BRANCH'
-  - event: manual

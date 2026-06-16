@@ -2,13 +2,13 @@
 
 ## Overview
 
-The LLM Council is a groundbreaking multi-agent AI system that transforms how you interact with artificial intelligence. Instead of relying on a single model's perspective, we bring together **five specialized AI models** in a structured deliberation process, delivering solutions that are more accurate, nuanced, and actionable than any individual AI could provide alone.
+The LLM Council is a groundbreaking multi-agent AI system that transforms how you interact with artificial intelligence. Instead of relying on a single model's perspective, we bring together **nine specialized AI models** in a structured deliberation process, delivering solutions that are more accurate, nuanced, and actionable than any individual AI could provide alone.
 
 Think of us as your personal AI advisory board – a collective intelligence system where diverse models debate, critique, and synthesize their expertise to tackle your most challenging problems. Integrated seamlessly as an **MCP (Model Context Protocol) server for OpenCode**, we auto-spawn our backend infrastructure on demand and deliberate for up to 10 minutes on complex queries.
 
 **Why Choose the Council?**
 - **Reduced Hallucinations**: Peer review catches errors that single models miss
-- **Diverse Perspectives**: Six different approaches to every problem
+- **Diverse Perspectives**: Nine different approaches to every problem
 - **Battle-Tested Solutions**: Ideas survive rigorous critique before reaching you
 - **Seamless Integration**: Works directly within your OpenCode environment
 
@@ -17,7 +17,7 @@ Think of us as your personal AI advisory board – a collective intelligence sys
 Our three-stage deliberation process ensures rigorous, multi-perspective analysis:
 
 ### Stage 1: Independent Analysis (~2-4 minutes)
-Each Council member receives your query simultaneously and generates an independent response without seeing others' work. This preserves diverse thinking and prevents groupthink, ensuring you get six genuinely different approaches to your problem.
+Each Council member receives your query simultaneously and generates an independent response without seeing others' work. This preserves diverse thinking and prevents groupthink, ensuring you get nine genuinely different approaches to your problem.
 
 ### Stage 2: Peer Review & Ranking (~3-4 minutes)
 Council members review and rank each other's responses based on:
@@ -41,10 +41,14 @@ Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques
 | Member | Role | Specialty |
 |--------|------|-----------|
 | **Claude Opus 4.8** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Upgraded to 4.8 on May 29 2026 — improved reasoning and software engineering. Ensures outputs are clean, practical, and well-structured. |
-| **GPT-5.4 (Thinking)** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
-| **GLM-5.1** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation. #1 open-weights model (Intelligence Index 51). SWE-Bench Pro SOTA (58.4). Ensures solutions actually work in practice. |
+| **GPT-5.5** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
+| **GLM-5.2** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation via OpenRouter/Z.ai. Ensures solutions actually work in practice. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
-| **Grok 4.20 Reasoning** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks with extended reasoning. #1 in factual honesty (78% non-hallucination record) and instruction following. 2M context window. |
+| **Grok 4.3** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks. |
+| **Kimi K2.6** | **Long-context Generalist** | Long-context review and synthesis through Fireworks direct routing. |
+| **DeepSeek V4 Pro** | **Code & Math Specialist** | Rigorous code, math, and structured reasoning; priority evaluator. |
+| **Llama 4 Maverick** | **Open-weight Generalist** | Open-weight perspective for diversity and practical critique. |
+| **Qwen 3.7 Max** | **Multilingual Specialist** | Multilingual and agentic/tool-use perspective via OpenRouter. |
 
 ## Use Cases
 
@@ -52,7 +56,7 @@ The Council excels at problems requiring depth, nuance, and multiple perspective
 
 ### Software Engineering
 - **Architecture Design**: "Design a microservices architecture for a high-frequency trading platform"
-- **Complex Debugging**: Hunt down elusive bugs with six different debugging strategies
+- **Complex Debugging**: Hunt down elusive bugs with nine different debugging strategies
 - **Code Reviews**: Security audits and performance optimization with multi-angle analysis
 - **Legacy Refactoring**: Modernization strategies balancing new features with stability
 
