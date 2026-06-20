@@ -28,8 +28,23 @@ async def test_query_model_normalizes_null_content_to_empty_string(monkeypatch):
 
         def json(self):
             return {
-                "choices": [{"message": {"content": None}}],
-                "usage": {"prompt_tokens": 1, "completion_tokens": 0, "total_tokens": 1},
+                "choices": [
+                    {
+                        "finish_reason": "length",
+                        "native_finish_reason": "max_output_tokens",
+                        "message": {
+                            "content": None,
+                            "reasoning": "hidden reasoning",
+                            "reasoning_details": [{"type": "summary", "text": "detail"}],
+                        },
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 1,
+                    "completion_tokens": 0,
+                    "total_tokens": 1,
+                    "completion_tokens_details": {"reasoning_tokens": 16},
+                },
             }
 
     class FakeAsyncClient:
@@ -59,3 +74,7 @@ async def test_query_model_normalizes_null_content_to_empty_string(monkeypatch):
 
     assert result is not None
     assert result["content"] == ""
+    assert result["finish_reason"] == "length"
+    assert result["native_finish_reason"] == "max_output_tokens"
+    assert result["reasoning"] == "hidden reasoning"
+    assert result["reasoning_details"] == [{"type": "summary", "text": "detail"}]

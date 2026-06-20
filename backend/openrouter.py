@@ -66,10 +66,14 @@ async def query_model(
             response.raise_for_status()
 
             data = response.json()
-            message = data["choices"][0]["message"]
+            choice = data["choices"][0]
+            message = choice["message"]
 
             return {
                 "content": message.get("content") or "",
+                "finish_reason": choice.get("finish_reason"),
+                "native_finish_reason": choice.get("native_finish_reason"),
+                "reasoning": message.get("reasoning") or "",
                 "reasoning_details": message.get("reasoning_details"),
                 "usage": data.get("usage", {}),
                 "model": model,

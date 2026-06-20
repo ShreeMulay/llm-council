@@ -158,6 +158,8 @@ async def _run_single(
     usage = provider_response.get("usage", {})
     cost = compute_cost(usage, variant.pricing)
     throughput = output_tokens_per_second(cost.completion_tokens, latency_seconds)
+    reasoning = provider_response.get("reasoning") or ""
+    reasoning_details = provider_response.get("reasoning_details")
 
     return {
         "run_id": config.run_id,
@@ -182,8 +184,21 @@ async def _run_single(
         "pricing_captured_at": cost.pricing_captured_at,
         "fallback_used": False,
         "error_status": error_status,
+        "finish_reason": provider_response.get("finish_reason"),
+        "native_finish_reason": provider_response.get("native_finish_reason"),
+        "reasoning_tokens": _reasoning_tokens(usage),
+        "reasoning_chars": len(reasoning),
+        "reasoning_details_count": len(reasoning_details) if isinstance(reasoning_details, list) else 0,
         "output": output,
     }
+
+
+def _reasoning_tokens(usage: dict[str, Any]) -> int | None:
+    completion_details = usage.get("completion_tokens_details")
+    if not isinstance(completion_details, dict):
+        return None
+    reasoning_tokens = completion_details.get("reasoning_tokens")
+    return int(reasoning_tokens) if reasoning_tokens is not None else None
 
 
 def _mock_provider_response(
