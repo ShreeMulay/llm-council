@@ -89,6 +89,11 @@ def write_artifacts(
         "estimated_total_cost_usd",
         "error_status",
         "fallback_used",
+        "finish_reason",
+        "native_finish_reason",
+        "reasoning_tokens",
+        "reasoning_chars",
+        "reasoning_details_count",
     ]
     write_text_guarded(run_dir / "metrics.csv", _csv_content(metrics_fields, results))
 

@@ -142,6 +142,10 @@ def test_deterministic_mock_run_writes_expected_artifacts(tmp_path: Path):
     assert "candidate_variant_id" in judge_rows[0]
     assert "correctness" in judge_rows[0]
     assert "deterministic mock blind score" in judge_rows[1]
+    metrics_header = (first.run_dir / "metrics.csv").read_text().splitlines()[0]
+    assert "reasoning_tokens" in metrics_header
+    assert "reasoning_chars" in metrics_header
+    assert "reasoning_details_count" in metrics_header
 
 
 def test_budget_cap_stops_additional_calls(tmp_path: Path):
@@ -365,7 +369,16 @@ async def test_live_result_empty_content_sets_error_and_blank_side_by_side(monke
     async def fake_live_provider_response(config, variant, prompt):
         return {
             "content": None,
-            "usage": {"prompt_tokens": 5, "completion_tokens": 0, "total_tokens": 5},
+            "finish_reason": "length",
+            "native_finish_reason": "max_output_tokens",
+            "reasoning": "hidden reasoning trace",
+            "reasoning_details": [{"type": "summary", "text": "detail"}],
+            "usage": {
+                "prompt_tokens": 5,
+                "completion_tokens": 0,
+                "total_tokens": 5,
+                "completion_tokens_details": {"reasoning_tokens": 4096},
+            },
             "latency_seconds": 0.2,
         }
 
@@ -390,6 +403,11 @@ async def test_live_result_empty_content_sets_error_and_blank_side_by_side(monke
 
     assert result["output"] == ""
     assert result["error_status"] == "empty_content"
+    assert result["finish_reason"] == "length"
+    assert result["native_finish_reason"] == "max_output_tokens"
+    assert result["reasoning_tokens"] == 4096
+    assert result["reasoning_chars"] == len("hidden reasoning trace")
+    assert result["reasoning_details_count"] == 1
     assert "Error status: empty_content" in markdown
     assert "None" not in markdown
     assert "```text\n\n```" in markdown
