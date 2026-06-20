@@ -1,0 +1,67 @@
+{
+  "suite_id": "internal_suite_v1",
+  "version": 1,
+  "description": "PHI-free internal benchmark prompts across coding, reasoning, operations, culture, and structured-output tasks.",
+  "prompts": [
+    {
+      "id": "coding-refactor-001",
+      "kind": "coding",
+      "title": "Refactor a cache helper",
+      "prompt": "Refactor this Python function for readability and edge-case safety without changing behavior:\n\n```python\ndef get_cached(cache, key, loader):\n    if key in cache:\n        return cache[key]\n    value = loader(key)\n    cache[key] = value\n    return value\n```\n\nExplain the tradeoffs briefly."
+    },
+    {
+      "id": "debugging-async-001",
+      "kind": "debugging",
+      "title": "Diagnose async timeout behavior",
+      "prompt": "A Python async worker processes queue items with `asyncio.gather`. Under load, one slow external request causes the batch to complete late and retry duplicate work. Diagnose likely causes and propose a robust fix with timeout, cancellation, and idempotency considerations."
+    },
+    {
+      "id": "architecture-001",
+      "kind": "architecture",
+      "title": "Design a benchmark artifact pipeline",
+      "prompt": "Design a small internal pipeline that runs deterministic mock evaluations, writes Markdown and CSV artifacts, and prevents secrets from being committed. Include module boundaries and failure modes."
+    },
+    {
+      "id": "tke-operations-001",
+      "kind": "tke_operations",
+      "title": "Reduce scheduling friction",
+      "prompt": "Create an operations improvement memo for a nephrology clinic where appointment reminder calls are inconsistent. Use the principles People First, Work Smart Not Long, and Data Over Opinion. Do not mention any real patient details."
+    },
+    {
+      "id": "clinical-education-001",
+      "kind": "clinical_adjacent_education",
+      "title": "Explain kidney-friendly education boundaries",
+      "prompt": "Write a general patient-education explanation of why blood pressure control matters for kidney health. Keep it non-diagnostic, avoid individualized medical advice, and include a reminder to talk with their care team."
+    },
+    {
+      "id": "culture-comms-001",
+      "kind": "culture_comms",
+      "title": "Direct is Kind feedback note",
+      "prompt": "Draft a concise internal feedback message using Direct is Kind and Shared Fate. Situation: a teammate's handoff notes are often missing next actions, causing rework. Make it clear, blameless, and action-oriented."
+    },
+    {
+      "id": "structured-json-001",
+      "kind": "structured_json",
+      "title": "Produce strict triage JSON",
+      "prompt": "Return only valid JSON for three fictional support tickets. Schema: {\"tickets\":[{\"id\":string,\"priority\":\"low\"|\"medium\"|\"high\",\"next_action\":string,\"owner_role\":string}]}. Use IDs T-001 through T-003."
+    },
+    {
+      "id": "long-context-synthesis-001",
+      "kind": "long_context_synthesis",
+      "title": "Synthesize meeting notes",
+      "prompt": "Synthesize these fictional planning notes into decisions, risks, and next actions:\n- Team wants a benchmark harness that never sends sensitive data.\n- Finance needs estimated cost before live runs.\n- Engineering wants mock mode for CI.\n- Operators prefer Markdown summaries for review.\n- Security requires API keys never appear in artifacts.\n- Leadership wants a clear recommendation, not a raw dump."
+    },
+    {
+      "id": "ambiguous-judgment-001",
+      "kind": "ambiguous_judgment",
+      "title": "Choose between imperfect options",
+      "prompt": "You can ship a feature this week with mock-only tests and strong artifact validation, or wait two weeks to add live provider probes. Decide what to do for an internal-only tool and justify the choice with explicit assumptions."
+    },
+    {
+      "id": "short-answer-speed-001",
+      "kind": "short_answer_speed",
+      "title": "Fast baseline answer",
+      "prompt": "In three bullets or fewer, explain the difference between latency, throughput, and reliability in model benchmarking."
+    }
+  ]
+}
