@@ -1,0 +1,135 @@
+{
+  "blocked_variants": [
+    {
+      "display_name": "Claude Opus 4.8 max via OpenRouter",
+      "model_id": "anthropic/claude-opus-4.8",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 25.0,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "probe_key": "openrouter:claude-opus-4.8:max",
+      "provider": "openrouter",
+      "reason": "support probe did not validate this reasoning effort",
+      "reasoning_effort": "max",
+      "variant_id": "openrouter-opus-4.8-max"
+    }
+  ],
+  "budget": {
+    "cap_usd": 25.0,
+    "observed_spend_usd": 1.5913281999999997,
+    "stop_reason": null,
+    "stopped": false
+  },
+  "created_at": "2026-06-20T14:10:00-05:00",
+  "mode": "live",
+  "probe_gated_variants": true,
+  "probe_results": [
+    {
+      "key": "openrouter:gpt-5.5:xhigh",
+      "model_id": "openai/gpt-5.5",
+      "provider": "openrouter",
+      "reason": "probe call succeeded",
+      "reasoning_effort": "xhigh",
+      "supported": true
+    },
+    {
+      "key": "openrouter:claude-opus-4.8:max",
+      "model_id": "anthropic/claude-opus-4.8",
+      "provider": "openrouter",
+      "reason": "probe returned no response",
+      "reasoning_effort": "max",
+      "supported": false
+    }
+  ],
+  "probe_support": {
+    "openrouter:claude-opus-4.8:max": false,
+    "openrouter:gpt-5.5:xhigh": true
+  },
+  "prompt_suite": {
+    "path": "benchmarks/prompts/internal_suite_v1.json",
+    "suite_id": "internal_suite_v1",
+    "version": 1
+  },
+  "run_id": "2026-06-20-glm52-gpt55-opus48-live",
+  "seed": 1,
+  "settings": {
+    "allow_fallbacks": false,
+    "max_tokens": 4096,
+    "temperature": 0.2,
+    "trials": 1
+  },
+  "variants": [
+    {
+      "allow_fallbacks": false,
+      "display_name": "Fireworks GLM-5.2 default",
+      "model_id": "fireworks/glm-5.2",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 1.4,
+        "output_per_million_usd": 4.4,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "provider": "fireworks",
+      "reasoning_effort": null,
+      "variant_id": "fireworks-glm-5.2-default"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "GPT-5.5 medium via OpenRouter",
+      "model_id": "openai/gpt-5.5",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 30.0,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "medium",
+      "variant_id": "openrouter-gpt-5.5-medium"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "GPT-5.5 high via OpenRouter",
+      "model_id": "openai/gpt-5.5",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 30.0,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "high",
+      "variant_id": "openrouter-gpt-5.5-high"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "GPT-5.5 xhigh via OpenRouter",
+      "model_id": "openai/gpt-5.5",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 30.0,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "xhigh",
+      "variant_id": "openrouter-gpt-5.5-xhigh"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "Claude Opus 4.8 xhigh via OpenRouter",
+      "model_id": "anthropic/claude-opus-4.8",
+      "pricing": {
+        "captured_at": "2026-06-20T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 25.0,
+        "source": "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "xhigh",
+      "variant_id": "openrouter-opus-4.8-xhigh"
+    }
+  ]
+}

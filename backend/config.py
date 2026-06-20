@@ -96,6 +96,7 @@ CEREBRAS_MODEL_IDS = [
 ]
 
 FIREWORKS_MODEL_IDS = [
+    "fireworks/glm-5.2",
     "fireworks/glm-5.1",
     "fireworks/glm-5",
     "fireworks/kimi-k2.6",

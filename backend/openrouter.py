@@ -20,6 +20,7 @@ async def query_model(
     temperature: float = 0.7,
     timeout: float = 900.0,
     reasoning_effort: str | None = None,
+    allow_fallbacks: bool = True,
 ) -> dict[str, Any] | None:
     """
     Query a single model via OpenRouter API.
@@ -32,6 +33,7 @@ async def query_model(
         timeout: Request timeout in seconds
         reasoning_effort: Override reasoning effort (e.g., "high", "medium", "xhigh").
                          If None, uses config default for the model.
+        allow_fallbacks: Whether OpenRouter may silently route to fallback providers.
 
     Returns:
         Response dict with 'content', 'usage', 'model', 'provider' or None if failed
@@ -47,32 +49,14 @@ async def query_model(
         "X-Title": "LLM Council",
     }
 
-    payload = {
-        "model": model,
-        "messages": messages,
-        "max_tokens": max_tokens,
-        "temperature": temperature,
-        "provider": {
-            "allow_fallbacks": True,
-        },
-    }
-
-    # Add reasoning_effort if configured for this model (e.g., GPT-5.5 Thinking,
-    # Opus 4.8 xhigh). Supports per-call override for dual-mode models.
-    effective_reasoning = reasoning_effort or get_model_reasoning_effort(model)
-    if effective_reasoning:
-        payload["reasoning_effort"] = effective_reasoning
-        # When reasoning effort matters, prefer the native provider. Some
-        # providers (e.g., Amazon Bedrock for Anthropic models) silently drop
-        # the reasoning_effort parameter, which defeats the purpose.
-        # Tested Apr 17 2026: Bedrock returned ~1000 tokens for all efforts,
-        # while Anthropic native honored xhigh (1320 vs 1145 for high).
-        # allow_fallbacks remains true so we still degrade gracefully if the
-        # native provider is unavailable.
-        if model.startswith("anthropic/"):
-            payload["provider"]["order"] = ["anthropic"]
-        elif model.startswith("openai/"):
-            payload["provider"]["order"] = ["openai"]
+    payload = build_chat_payload(
+        model=model,
+        messages=messages,
+        max_tokens=max_tokens,
+        temperature=temperature,
+        reasoning_effort=reasoning_effort,
+        allow_fallbacks=allow_fallbacks,
+    )
 
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -85,7 +69,7 @@ async def query_model(
             message = data["choices"][0]["message"]
 
             return {
-                "content": message.get("content", ""),
+                "content": message.get("content") or "",
                 "reasoning_details": message.get("reasoning_details"),
                 "usage": data.get("usage", {}),
                 "model": model,
@@ -103,6 +87,45 @@ async def query_model(
     except Exception as e:
         print(f"Error querying model {model}: {e}")
         return None
+
+
+def build_chat_payload(
+    model: str,
+    messages: list[dict[str, str]],
+    max_tokens: int = 32768,
+    temperature: float = 0.7,
+    reasoning_effort: str | None = None,
+    allow_fallbacks: bool = True,
+) -> dict[str, Any]:
+    """Build an OpenRouter chat payload with explicit fallback control."""
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": temperature,
+        "provider": {
+            "allow_fallbacks": allow_fallbacks,
+        },
+    }
+
+    # Add reasoning_effort if configured for this model (e.g., GPT-5.5 Thinking,
+    # Opus 4.8 xhigh). Supports per-call override for dual-mode models.
+    effective_reasoning = reasoning_effort or get_model_reasoning_effort(model)
+    if effective_reasoning:
+        payload["reasoning_effort"] = effective_reasoning
+        # When reasoning effort matters, prefer the native provider. Some
+        # providers (e.g., Amazon Bedrock for Anthropic models) silently drop
+        # the reasoning_effort parameter, which defeats the purpose.
+        # Tested Apr 17 2026: Bedrock returned ~1000 tokens for all efforts,
+        # while Anthropic native honored xhigh (1320 vs 1145 for high).
+        # allow_fallbacks defaults to true for production council calls but can
+        # be disabled by benchmark mode so unsupported efforts are not hidden.
+        if model.startswith("anthropic/"):
+            payload["provider"]["order"] = ["anthropic"]
+        elif model.startswith("openai/"):
+            payload["provider"]["order"] = ["openai"]
+
+    return payload
 
 
 async def query_models_parallel(

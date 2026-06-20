@@ -19,10 +19,12 @@ FIREWORKS_API_URL = "https://api.fireworks.ai/inference/v1"
 # Fireworks uses accounts/fireworks/models/<name> format
 # GLM-5.1 uses "glm-5p1" slug on Fireworks (not "glm-5.1")
 FIREWORKS_MODEL_MAP = {
+    "fireworks/glm-5.2": "accounts/fireworks/models/glm-5p2",
     "fireworks/glm-5.1": "accounts/fireworks/models/glm-5p1",
     "fireworks/glm-5": "accounts/fireworks/models/glm-5",
     "fireworks/kimi-k2.6": "accounts/fireworks/models/kimi-k2p6",
     # Allow direct Fireworks IDs to pass through
+    "accounts/fireworks/models/glm-5p2": "accounts/fireworks/models/glm-5p2",
     "accounts/fireworks/models/glm-5p1": "accounts/fireworks/models/glm-5p1",
     "accounts/fireworks/models/glm-5": "accounts/fireworks/models/glm-5",
     "accounts/fireworks/models/kimi-k2p6": "accounts/fireworks/models/kimi-k2p6",
