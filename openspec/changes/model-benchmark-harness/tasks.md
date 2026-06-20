@@ -10,7 +10,7 @@
 - [x] Add Fireworks GLM-5.2 explicit routing/probe support without changing production council defaults.
 - [x] Run quality gates.
 - [x] Run live probe/full pilot if credentials and provider settings permit; otherwise file blocker issue.
-- [ ] Push branch to Forgejo and open PR.
-- [ ] Verify Woodpecker CI.
-- [ ] Merge PR and mirror to GitHub.
-- [ ] Close Beads issue and store memory.
+- [x] Push branch to Forgejo and open PR.
+- [x] Verify Woodpecker CI.
+- [x] Merge PR and mirror to GitHub.
+- [x] Close Beads issue and store memory.
