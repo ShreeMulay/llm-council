@@ -1,6 +1,6 @@
 # Add Fireworks GLM 5.2 xHigh Challenger
 
-Status: APPROVED
+Status: ARCHIVED
 
 ## Summary
 

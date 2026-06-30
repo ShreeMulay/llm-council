@@ -12,5 +12,5 @@
 - [x] Run full local quality gates.
 - [x] Run PHI-free A/B smoke/benchmark for `z-ai/glm-5.2` vs `fireworks/glm-5.2` if credentials allow.
 - [x] Deploy Cloud Run if available and verify `/health` plus smoke.
-- [ ] Open Forgejo PR, wait for CI, merge, mirror GitHub.
-- [ ] Archive OpenSpec/change status, close Beads, store memory.
+- [x] Open Forgejo PR, wait for CI, merge, mirror GitHub.
+- [x] Archive OpenSpec/change status, close Beads, store memory.
