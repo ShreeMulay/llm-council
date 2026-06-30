@@ -12,9 +12,18 @@ from backend.benchmarking.artifacts import (
 )
 from backend.benchmarking.costs import compute_cost
 from backend.benchmarking.judge import build_blind_judge_payload
-from backend.benchmarking.models import PricingSnapshot, resolve_default_variants
+from backend.benchmarking.models import (
+    BenchmarkVariant,
+    PricingSnapshot,
+    resolve_default_variants,
+)
 from backend.benchmarking.probes import PROBE_TARGETS, ProbeResult, probe_target
-from backend.benchmarking.runner import BenchmarkRunConfig, _run_single, run_benchmark
+from backend.benchmarking.runner import (
+    BenchmarkRunConfig,
+    _live_provider_response,
+    _run_single,
+    run_benchmark,
+)
 from backend.main import app
 
 
@@ -30,6 +39,7 @@ def test_default_variant_expansion_probe_gates_unsupported_efforts():
     blocked_ids = {variant.variant_id for variant in resolution.blocked}
 
     assert "fireworks-glm-5.2-default" in variant_ids
+    assert "fireworks-glm-5.2-xhigh" in variant_ids
     assert "openrouter-gpt-5.5-medium" in variant_ids
     assert "openrouter-gpt-5.5-high" in variant_ids
     assert "openrouter-gpt-5.5-xhigh" in blocked_ids
@@ -52,9 +62,16 @@ def test_default_variant_expansion_probe_gates_unsupported_efforts():
     assert glm.model_id == "fireworks/glm-5.2"
     assert glm.reasoning_effort is None
 
+    glm_xhigh = next(variant for variant in resolution.variants if variant.variant_id == "fireworks-glm-5.2-xhigh")
+    assert glm_xhigh.provider == "fireworks"
+    assert glm_xhigh.model_id == "fireworks/glm-5.2"
+    assert glm_xhigh.reasoning_effort == "xhigh"
+
     prices = {variant.variant_id: variant.pricing for variant in resolution.variants + resolution.blocked}
     assert prices["fireworks-glm-5.2-default"].input_per_million_usd == 1.40
     assert prices["fireworks-glm-5.2-default"].output_per_million_usd == 4.40
+    assert prices["fireworks-glm-5.2-xhigh"].input_per_million_usd == 1.40
+    assert prices["fireworks-glm-5.2-xhigh"].output_per_million_usd == 4.40
     assert prices["openrouter-gpt-5.5-medium"].input_per_million_usd == 5.00
     assert prices["openrouter-gpt-5.5-medium"].output_per_million_usd == 30.00
     assert prices["openrouter-gpt-5.5-high"].input_per_million_usd == 5.00
@@ -361,7 +378,50 @@ def test_live_probe_gated_variants_are_included_when_mocked_probe_supports(
         "openrouter:claude-opus-4.8:max": True,
     }
     assert {result["reason"] for result in config_json["probe_results"]} == {"mocked supported"}
-    assert run.result_count == 6
+    assert run.result_count == len(config_json["variants"])
+
+
+@pytest.mark.asyncio
+async def test_live_fireworks_variant_passes_reasoning_effort(monkeypatch):
+    calls = []
+
+    async def fake_query_fireworks_model(model_id, messages, *args, **kwargs):
+        calls.append(
+            {
+                "model_id": model_id,
+                "messages": messages,
+                "args": args,
+                "kwargs": kwargs,
+            }
+        )
+        return {"content": "ok", "usage": {}, "provider": "fireworks"}
+
+    monkeypatch.setattr("backend.fireworks_client.query_fireworks_model", fake_query_fireworks_model)
+
+    pricing = PricingSnapshot(
+        input_per_million_usd=1.40,
+        output_per_million_usd=4.40,
+        source="test-price-card",
+        captured_at="2026-06-20T00:00:00Z",
+    )
+    variant = BenchmarkVariant(
+        variant_id="fireworks-glm-5.2-xhigh",
+        provider="fireworks",
+        model_id="fireworks/glm-5.2",
+        display_name="Fireworks GLM-5.2 xHigh",
+        reasoning_effort="xhigh",
+        pricing=pricing,
+    )
+
+    response = await _live_provider_response(
+        BenchmarkRunConfig(mode="live", max_tokens=32768, temperature=0.2),
+        variant,
+        {"id": "p1", "prompt": "Test prompt"},
+    )
+
+    assert response["content"] == "ok"
+    assert calls[0]["model_id"] == "fireworks/glm-5.2"
+    assert calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
 
 
 @pytest.mark.asyncio

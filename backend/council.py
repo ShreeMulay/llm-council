@@ -186,6 +186,7 @@ from .config import (
     CHAIRMAN_MODEL,
     COUNCIL_MODELS,
     calculate_max_response_chars,
+    get_model_reasoning_effort,
     get_openrouter_fallback,
     is_cerebras_model,
     is_fireworks_model,
@@ -210,7 +211,13 @@ async def _query_primary(
 ) -> dict[str, Any] | None:
     """Query a model via its primary (direct) provider. Returns None on failure."""
     if is_fireworks_model(model_id):
-        return await query_fireworks_model(model_id, messages, max_tokens, temperature)
+        return await query_fireworks_model(
+            model_id,
+            messages,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            reasoning_effort=get_model_reasoning_effort(model_id),
+        )
     elif is_cerebras_model(model_id):
         return await query_cerebras_model(model_id, messages, max_tokens, temperature)
     elif is_moonshot_model(model_id):
@@ -258,7 +265,11 @@ async def query_single_model(
         logger.info("Falling back to OpenRouter for %s -> %s", model_id, or_model)
         try:
             return await query_openrouter_model(
-                or_model, messages, max_tokens, temperature
+                or_model,
+                messages,
+                max_tokens,
+                temperature,
+                reasoning_effort=get_model_reasoning_effort(model_id),
             )
         except Exception as e:
             logger.error("OpenRouter fallback also failed for %s: %s", model_id, e)
@@ -280,12 +291,26 @@ async def _query_single_with_reasoning_override(
     - Stage 1 (responder): medium reasoning
     - Stage 2 (evaluator): high reasoning
 
-    Only OpenRouter models support reasoning_effort override.
+    OpenRouter and Fireworks models support reasoning_effort override.
     """
     if not reasoning_effort:
         return await query_single_model(model_id, messages, max_tokens, temperature)
 
-    # For OpenRouter models, pass reasoning_effort directly
+    if is_fireworks_model(model_id):
+        try:
+            result = await query_fireworks_model(
+                model_id,
+                messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                reasoning_effort=reasoning_effort,
+            )
+            if result and result.get("content"):
+                return result
+        except Exception as e:
+            logger.warning("Fireworks reasoning override failed for %s: %s", model_id, e)
+
+    # For OpenRouter models and fallbacks, pass reasoning_effort directly
     or_model = get_openrouter_fallback(model_id) or model_id
     try:
         return await query_openrouter_model(
@@ -411,7 +436,11 @@ async def query_models_with_retries(
                 return model, None
             try:
                 result = await query_openrouter_model(
-                    or_model, messages, max_tokens, temperature
+                    or_model,
+                    messages,
+                    max_tokens,
+                    temperature,
+                    reasoning_effort=get_model_reasoning_effort(model),
                 )
                 if result is not None:
                     result["provider"] = (

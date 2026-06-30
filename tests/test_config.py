@@ -10,6 +10,7 @@ from backend.config import (
     get_model_reasoning_effort,
     get_openrouter_fallback,
     is_fireworks_model,
+    is_gemini_direct_model,
     resolve_model_alias,
 )
 
@@ -25,6 +26,9 @@ class TestResolveModelAlias:
 
     def test_glm_alias(self):
         assert resolve_model_alias("glm") == "z-ai/glm-5.2"
+
+    def test_glm_fireworks_alias(self):
+        assert resolve_model_alias("glm-fw") == "fireworks/glm-5.2"
 
     def test_gemini_alias(self):
         assert resolve_model_alias("gemini") == "google/gemini-3.1-pro-preview"
@@ -51,10 +55,10 @@ class TestResolveModelAlias:
         assert resolve_model_alias("fable") == "anthropic/claude-fable-5"
 
     def test_sonnet_alias(self):
-        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-4.5"
+        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-4.6"
 
     def test_flash_alias(self):
-        assert resolve_model_alias("flash") == "google/gemini-3-flash-preview"
+        assert resolve_model_alias("flash") == "google/gemini-3.5-flash"
 
     def test_unknown_alias_returns_input(self):
         assert resolve_model_alias("unknown-model") == "unknown-model"
@@ -80,6 +84,9 @@ class TestGetModelReasoningEffort:
 
     def test_opus_xhigh(self):
         assert get_model_reasoning_effort("anthropic/claude-opus-4.8") == "xhigh"
+
+    def test_fireworks_glm_5_2_xhigh(self):
+        assert get_model_reasoning_effort("fireworks/glm-5.2") == "xhigh"
 
     def test_unknown_model_returns_none(self):
         assert get_model_reasoning_effort("unknown/model") is None
@@ -194,6 +201,7 @@ class TestTieredTruncation:
         assert calculate_max_response_chars("google/gemini-3.1-pro-preview", 9) == 10000
         assert calculate_max_response_chars("x-ai/grok-4.3", 9) == 10000
         assert calculate_max_response_chars("fireworks/kimi-k2.6", 9) == 10000
+        assert calculate_max_response_chars("fireworks/glm-5.2", 9) == 10000
 
     def test_weak_models_get_12k(self):
         """Weaker models (verbose) get more space."""
@@ -220,6 +228,9 @@ class TestFireworksModelIds:
     def test_includes_kimi_k2_6(self):
         assert "fireworks/kimi-k2.6" in FIREWORKS_MODEL_IDS
 
+    def test_includes_glm_5_2(self):
+        assert "fireworks/glm-5.2" in FIREWORKS_MODEL_IDS
+
     def test_includes_glm_5_1(self):
         assert "fireworks/glm-5.1" in FIREWORKS_MODEL_IDS
 
@@ -232,6 +243,13 @@ class TestOpenRouterFallbackMap:
 
     def test_glm_5_2_routes_to_openrouter_zai_id(self):
         assert get_openrouter_fallback("z-ai/glm-5.2") == "z-ai/glm-5.2"
+
+    def test_fireworks_glm_5_2_falls_back_to_openrouter_zai_id(self):
+        assert get_openrouter_fallback("fireworks/glm-5.2") == "z-ai/glm-5.2"
+
+    def test_gemini_3_5_flash_stays_on_openrouter(self):
+        assert get_openrouter_fallback("google/gemini-3.5-flash") == "google/gemini-3.5-flash"
+        assert is_gemini_direct_model("google/gemini-3.5-flash") is False
 
     def test_legacy_glm_5_1_keeps_explicit_fallback(self):
         assert get_openrouter_fallback("fireworks/glm-5.1") == "z-ai/glm-5.1"

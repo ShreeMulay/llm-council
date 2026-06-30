@@ -96,6 +96,16 @@ DEFAULT_VARIANT_SPECS: tuple[VariantSpec, ...] = (
     ),
     VariantSpec(
         BenchmarkVariant(
+            variant_id="fireworks-glm-5.2-xhigh",
+            provider="fireworks",
+            model_id="fireworks/glm-5.2",
+            display_name="Fireworks GLM-5.2 xHigh challenger",
+            reasoning_effort="xhigh",
+            pricing=_pricing(1.40, 4.40),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
             variant_id="openrouter-gpt-5.5-medium",
             provider="openrouter",
             model_id="openai/gpt-5.5",

@@ -249,6 +249,7 @@ async def _live_provider_response(
             messages,
             max_tokens=config.max_tokens,
             temperature=config.temperature,
+            reasoning_effort=variant.reasoning_effort,
         )
     else:
         response = {"content": "", "usage": {}, "error": f"unsupported provider {variant.provider}"}

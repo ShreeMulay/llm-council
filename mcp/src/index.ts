@@ -266,7 +266,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "array",
               items: { type: "string" },
               description:
-                "Optional model aliases/IDs to use instead of the default council (e.g. ['opus','gemini','glm'])",
+                "Optional model aliases/IDs to use instead of the default council (e.g. ['opus','gemini','glm'] or challenger ['glm-fw'])",
             },
             chairman: {
               type: "string",
