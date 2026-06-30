@@ -46,6 +46,17 @@ export const MODEL_INFO = {
     border: '#bfdbfe',
     icon: '🎆',
   },
+  'glm-fw': {
+    id: 'glm-fw',
+    modelId: 'fireworks/glm-5.2',
+    name: 'GLM-5.2 xHigh',
+    provider: 'Fireworks challenger',
+    challenger: true,
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    icon: '🎇',
+  },
   'gemini': {
     id: 'gemini',
     modelId: 'google/gemini-3.1-pro-preview',
@@ -108,8 +119,11 @@ export const MODEL_INFO = {
   }
 };
 
-// All model IDs in order
-export const ALL_MODEL_IDS = Object.keys(MODEL_INFO);
+// Production model IDs in order. Challenger-only models stay opt-in and are
+// excluded from default/full council rosters.
+export const ALL_MODEL_IDS = Object.values(MODEL_INFO)
+  .filter((info) => !info.challenger)
+  .map((info) => info.id);
 
 // Default active models (all 9)
 export const DEFAULT_ACTIVE_MODELS = ALL_MODEL_IDS;
@@ -152,9 +166,10 @@ export function getModelInfo(modelId) {
     };
   }
   const lower = modelId.toLowerCase();
+  if (lower === 'glm-fw' || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm-fw'];
   if (lower.includes('gpt') || lower.includes('openai')) return MODEL_INFO['gpt-5.5'];
   if (lower.includes('opus') || lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['opus'];
-  if (lower.includes('glm') || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
+  if (lower.includes('glm')) return MODEL_INFO['glm'];
   if (lower.includes('gemini') || lower.includes('google') || lower.includes('pro')) return MODEL_INFO['gemini'];
   if (lower.includes('grok') || lower.includes('x-ai') || lower.includes('xai')) return MODEL_INFO['grok'];
   if (lower.includes('kimi') || lower.includes('moonshot')) return MODEL_INFO['kimi'];

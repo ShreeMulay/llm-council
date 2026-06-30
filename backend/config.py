@@ -139,12 +139,14 @@ OPENROUTER_FALLBACK_MAP = {
     "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
     "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
     "z-ai/glm-5.2": "z-ai/glm-5.2",
+    "fireworks/glm-5.2": "z-ai/glm-5.2",
     "fireworks/glm-5.1": "z-ai/glm-5.1",
     "fireworks/glm-5": "z-ai/glm-5",
     "zai-glm-4.7": "z-ai/glm-4.7",
     "z-ai/glm-5.1": "z-ai/glm-5.1",
     "z-ai/glm-5": "z-ai/glm-5",
     "google/gemini-3-flash": "google/gemini-2.0-flash-001",
+    "google/gemini-3.5-flash": "google/gemini-3.5-flash",
     "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
     "google/gemini-3.1-pro-preview": "google/gemini-3.1-pro-preview",
     "openai/gpt-5.4": "openai/gpt-5.4",
@@ -166,6 +168,7 @@ MODEL_ALIASES = {
     "gpt": "openai/gpt-5.5",
     "opus": "anthropic/claude-opus-4.8",
     "glm": "z-ai/glm-5.2",
+    "glm-fw": "fireworks/glm-5.2",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
     "grok": "x-ai/grok-4.3",
@@ -174,8 +177,8 @@ MODEL_ALIASES = {
     "llama": "meta-llama/llama-4-maverick",
     "qwen": "qwen/qwen3.7-max",
     "fable": "anthropic/claude-fable-5",
-    "sonnet": "anthropic/claude-sonnet-4.5",
-    "flash": "google/gemini-3-flash-preview",
+    "sonnet": "anthropic/claude-sonnet-4.6",
+    "flash": "google/gemini-3.5-flash",
 }
 
 # Evaluator priority list — models best at critical evaluation
@@ -197,6 +200,7 @@ TIERED_TRUNCATION = {
     "medium": [
         "google/gemini-3.1-pro-preview",
         "z-ai/glm-5.2",
+        "fireworks/glm-5.2",
         "x-ai/grok-4.3",
         "fireworks/kimi-k2.6",
         "qwen/qwen3.7-max",
@@ -289,6 +293,7 @@ MODEL_REASONING_EFFORT = {
     "openai/gpt-5.5-evaluator": "high",
     "anthropic/claude-opus-4.8": "xhigh",
     "anthropic/claude-opus-4.7": "xhigh",  # backward compat for stored configs
+    "fireworks/glm-5.2": "xhigh",
 }
 
 

@@ -9,6 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# Slim/worktree scratch state
+.slim/
+
 # Keys and secrets
 .env
 .env.local

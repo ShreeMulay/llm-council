@@ -50,6 +50,12 @@ Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques
 | **Llama 4 Maverick** | **Open-weight Generalist** | Open-weight perspective for diversity and practical critique. |
 | **Qwen 3.7 Max** | **Multilingual Specialist** | Multilingual and agentic/tool-use perspective via OpenRouter. |
 
+### Explicit Challengers
+
+| Alias | Model | Notes |
+|-------|-------|-------|
+| `glm-fw` | `fireworks/glm-5.2` | Fireworks GLM-5.2 xHigh challenger only, pending benchmark promotion; default `glm` and production rosters remain on `z-ai/glm-5.2`. |
+
 ## Use Cases
 
 The Council excels at problems requiring depth, nuance, and multiple perspectives:

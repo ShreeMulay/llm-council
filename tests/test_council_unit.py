@@ -1,12 +1,80 @@
 """Unit tests for backend.council module — evaluator selection, curation, truncation."""
 
+import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from backend.council import (
+    _query_primary,
     _truncate_for_prompt,
     parse_ranking_from_text,
+    query_single_model,
 )
+
+
+@pytest.mark.asyncio
+async def test_fireworks_glm_5_2_primary_passes_xhigh_reasoning_effort(monkeypatch):
+    calls = []
+
+    async def fake_query_fireworks_model(model_id, messages, *args, **kwargs):
+        calls.append(
+            {
+                "model_id": model_id,
+                "messages": messages,
+                "args": args,
+                "kwargs": kwargs,
+            }
+        )
+        return {"content": "ok", "usage": {}, "provider": "fireworks"}
+
+    monkeypatch.setattr("backend.council.query_fireworks_model", fake_query_fireworks_model)
+
+    messages = [{"role": "user", "content": "test"}]
+    result = await _query_primary(
+        "fireworks/glm-5.2",
+        messages,
+        max_tokens=32768,
+        temperature=0.2,
+    )
+
+    assert result is not None
+    assert calls[0]["model_id"] == "fireworks/glm-5.2"
+    assert calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
+
+
+@pytest.mark.asyncio
+async def test_fireworks_glm_5_2_fallback_preserves_xhigh_reasoning_effort(monkeypatch):
+    openrouter_calls = []
+
+    async def fake_query_fireworks_model(*args, **kwargs):
+        return None
+
+    async def fake_query_openrouter_model(model_id, messages, *args, **kwargs):
+        openrouter_calls.append(
+            {
+                "model_id": model_id,
+                "messages": messages,
+                "args": args,
+                "kwargs": kwargs,
+            }
+        )
+        return {"content": "fallback ok", "usage": {}, "provider": "openrouter"}
+
+    monkeypatch.setattr("backend.council.query_fireworks_model", fake_query_fireworks_model)
+    monkeypatch.setattr("backend.council.query_openrouter_model", fake_query_openrouter_model)
+
+    messages = [{"role": "user", "content": "test"}]
+    result = await query_single_model(
+        "fireworks/glm-5.2",
+        messages,
+        max_tokens=32768,
+        temperature=0.2,
+    )
+
+    assert result is not None
+    assert result["content"] == "fallback ok"
+    assert openrouter_calls[0]["model_id"] == "z-ai/glm-5.2"
+    assert openrouter_calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
 
 
 class TestGetEvaluatorModels:

@@ -103,6 +103,7 @@ Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.8
 - `glm` -> z-ai/glm-5.2
+- `glm-fw` -> fireworks/glm-5.2 (xHigh challenger only; pending benchmark promotion, not in default roster)
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3
 - `kimi` -> fireworks/kimi-k2.6
@@ -110,8 +111,8 @@ Use aliases in `/council` command:
 - `llama` -> meta-llama/llama-4-maverick
 - `qwen` -> qwen/qwen3.7-max
 - `fable` -> anthropic/claude-fable-5 (explicit challenger only; not default chairman)
-- `sonnet` -> anthropic/claude-sonnet-4.5
-- `flash` -> google/gemini-3-flash-preview (backward compat)
+- `sonnet` -> anthropic/claude-sonnet-4.6
+- `flash` -> google/gemini-3.5-flash
 
 ## Tech Stack
 
