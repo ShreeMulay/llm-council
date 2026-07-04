@@ -171,6 +171,7 @@ async def health():
             "council_models": COUNCIL_MODELS,
             "chairman_model": CHAIRMAN_MODEL,
             "vertex_anthropic_models": VERTEX_ANTHROPIC_MODEL_IDS,
+            "vertex_project_id": VERTEX_PROJECT_ID,
             "vertex_location": VERTEX_LOCATION,
             "vertex_project_configured": bool(VERTEX_PROJECT_ID),
             "require_vertex_anthropic": REQUIRE_VERTEX_ANTHROPIC,

@@ -17,9 +17,9 @@
 
 ## Lane 3 — Deploy/CI hardening
 
-- [ ] Add deploy verification script or equivalent testable check for strict Vertex health.
-- [ ] Wire script into `scripts/deploy.sh` / Cloud Build path.
-- [ ] Align CI/deploy docs and gates.
+- [x] Add deploy verification script or equivalent testable check for strict Vertex health.
+- [x] Wire script into `scripts/deploy.sh` / Cloud Build path.
+- [x] Align CI/deploy docs and gates.
 - [ ] PR, CI, merge.
 
 ## Lane 2 — Deliberation correctness
