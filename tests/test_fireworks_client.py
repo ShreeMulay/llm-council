@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from backend.fireworks_client import query_fireworks_model
+from backend.fireworks_client import get_fireworks_model_id, query_fireworks_model
 
 
 class FakeResponse:
@@ -16,6 +16,12 @@ class FakeResponse:
 
     def json(self):
         return self.payload
+
+
+def test_kimi_k2_7_code_maps_to_fireworks_account_slug():
+    assert get_fireworks_model_id("fireworks/kimi-k2.7-code") == (
+        "accounts/fireworks/models/kimi-k2p7-code"
+    )
 
 
 @pytest.mark.asyncio

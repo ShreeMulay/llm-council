@@ -25,11 +25,13 @@ FIREWORKS_MODEL_MAP = {
     "fireworks/glm-5.1": "accounts/fireworks/models/glm-5p1",
     "fireworks/glm-5": "accounts/fireworks/models/glm-5",
     "fireworks/kimi-k2.6": "accounts/fireworks/models/kimi-k2p6",
+    "fireworks/kimi-k2.7-code": "accounts/fireworks/models/kimi-k2p7-code",
     # Allow direct Fireworks IDs to pass through
     "accounts/fireworks/models/glm-5p2": "accounts/fireworks/models/glm-5p2",
     "accounts/fireworks/models/glm-5p1": "accounts/fireworks/models/glm-5p1",
     "accounts/fireworks/models/glm-5": "accounts/fireworks/models/glm-5",
     "accounts/fireworks/models/kimi-k2p6": "accounts/fireworks/models/kimi-k2p6",
+    "accounts/fireworks/models/kimi-k2p7-code": "accounts/fireworks/models/kimi-k2p7-code",
 }
 
 

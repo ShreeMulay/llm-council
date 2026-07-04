@@ -3,6 +3,7 @@
 
 from backend.config import (
     COMPACT_COUNCIL_MODELS,
+    DEFAULT_CHAIRMAN_MODEL,
     DEFAULT_COUNCIL_MODELS,
     EVALUATOR_PRIORITY,
     FIREWORKS_MODEL_IDS,
@@ -55,7 +56,11 @@ class TestResolveModelAlias:
         assert resolve_model_alias("fable") == "anthropic/claude-fable-5"
 
     def test_sonnet_alias(self):
-        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-4.6"
+        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-5"
+        assert MODEL_ALIASES["sonnet"] == "anthropic/claude-sonnet-5"
+
+    def test_minimax_alias_available_as_candidate(self):
+        assert resolve_model_alias("minimax") == "minimax/minimax-m3"
 
     def test_flash_alias(self):
         assert resolve_model_alias("flash") == "google/gemini-3.5-flash"
@@ -153,6 +158,16 @@ class TestDefaultCouncilModels:
 
     def test_default_excludes_legacy_qwen_3_5(self):
         assert "qwen/qwen3.5-122b-a10b" not in DEFAULT_COUNCIL_MODELS
+
+    def test_july_anthropic_challengers_are_not_default_roster(self):
+        excluded = {"anthropic/claude-sonnet-5", "anthropic/claude-fable-5"}
+
+        assert excluded.isdisjoint(DEFAULT_COUNCIL_MODELS)
+        assert excluded.isdisjoint(COMPACT_COUNCIL_MODELS)
+        assert excluded.isdisjoint(EVALUATOR_PRIORITY)
+
+    def test_default_chairman_remains_opus_4_8(self):
+        assert DEFAULT_CHAIRMAN_MODEL == "anthropic/claude-opus-4.8"
 
 
 class TestCompactCouncilModels:

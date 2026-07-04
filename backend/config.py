@@ -100,6 +100,7 @@ FIREWORKS_MODEL_IDS = [
     "fireworks/glm-5.1",
     "fireworks/glm-5",
     "fireworks/kimi-k2.6",
+    "fireworks/kimi-k2.7-code",
 ]
 
 MOONSHOT_MODEL_IDS = [
@@ -136,6 +137,7 @@ OPENROUTER_FALLBACK_MAP = {
     "openai/gpt-5.5": "openai/gpt-5.5",
     "anthropic/claude-opus-4.8": "anthropic/claude-opus-4.8",
     "anthropic/claude-fable-5": "anthropic/claude-fable-5",
+    "anthropic/claude-sonnet-5": "anthropic/claude-sonnet-5",
     "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
     "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
     "z-ai/glm-5.2": "z-ai/glm-5.2",
@@ -154,8 +156,10 @@ OPENROUTER_FALLBACK_MAP = {
     "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
     "x-ai/grok-4.3": "x-ai/grok-4.3",
     "fireworks/kimi-k2.6": "moonshotai/kimi-k2.6",
+    "fireworks/kimi-k2.7-code": "moonshotai/kimi-k2.7-code",
     "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro",
     "meta-llama/llama-4-maverick": "meta-llama/llama-4-maverick",
+    "minimax/minimax-m3": "minimax/minimax-m3",
     "qwen/qwen3.7-max": "qwen/qwen3.7-max",
     "qwen/qwen3.5-122b-a10b": "qwen/qwen3.5-122b-a10b",
 }
@@ -177,7 +181,8 @@ MODEL_ALIASES = {
     "llama": "meta-llama/llama-4-maverick",
     "qwen": "qwen/qwen3.7-max",
     "fable": "anthropic/claude-fable-5",
-    "sonnet": "anthropic/claude-sonnet-4.6",
+    "sonnet": "anthropic/claude-sonnet-5",
+    "minimax": "minimax/minimax-m3",
     "flash": "google/gemini-3.5-flash",
 }
 
