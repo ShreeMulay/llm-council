@@ -8,6 +8,7 @@ OpenRouter fallback remains non-PHI/deidentified only.
 
 import asyncio
 import logging
+from threading import Lock
 from typing import Any
 
 from .config import (
@@ -28,6 +29,9 @@ logger = logging.getLogger("llm-council.vertex_anthropic")
 # longer than 10 minutes. The council currently uses non-streaming provider
 # calls, so cap Vertex max_tokens below that validation threshold.
 VERTEX_NON_STREAMING_MAX_TOKENS = 16_000
+
+_VERTEX_CLIENT_CACHE: dict[tuple[str, str], Any] = {}
+_VERTEX_CLIENT_CACHE_LOCK = Lock()
 
 
 def _extract_text(response: Any) -> str:
@@ -58,10 +62,40 @@ def _extract_usage(response: Any) -> dict[str, int]:
     }
 
 
+def _get_vertex_client(project_id: str, location: str) -> Any:
+    """Return a cached AnthropicVertex client scoped only by project/location."""
+    cache_key = (project_id, location)
+    with _VERTEX_CLIENT_CACHE_LOCK:
+        client = _VERTEX_CLIENT_CACHE.get(cache_key)
+        if client is None:
+            client = AnthropicVertex(project_id=project_id, region=location)
+            _VERTEX_CLIENT_CACHE[cache_key] = client
+        return client
+
+
+def _is_unsupported_payload_parameter_error(error: TypeError) -> bool:
+    """Return True only for SDK TypeErrors that reject new payload fields."""
+    message = str(error).lower()
+    mentions_vertex_payload_field = "thinking" in message or "output_config" in message
+    mentions_unsupported_parameter = any(
+        phrase in message
+        for phrase in (
+            "unexpected keyword argument",
+            "got an unexpected keyword",
+            "unsupported keyword",
+            "unsupported argument",
+            "unknown field",
+            "extra inputs are not permitted",
+        )
+    )
+    return mentions_vertex_payload_field and mentions_unsupported_parameter
+
+
 def _query_vertex_anthropic_sync(
     model_id: str,
     messages: list[dict[str, str]],
     max_tokens: int,
+    reasoning_effort: str | None,
 ) -> dict[str, Any] | None:
     """Run the sync AnthropicVertex SDK call."""
     if AnthropicVertex is None:
@@ -77,18 +111,21 @@ def _query_vertex_anthropic_sync(
         logger.warning("No Vertex Anthropic model mapping for %s", model_id)
         return None
 
-    client = AnthropicVertex(project_id=VERTEX_PROJECT_ID, region=VERTEX_LOCATION)
+    client = _get_vertex_client(VERTEX_PROJECT_ID, VERTEX_LOCATION)
     payload: dict[str, Any] = {
         "model": vertex_model,
         "max_tokens": min(max_tokens, VERTEX_NON_STREAMING_MAX_TOKENS),
         "messages": messages,
         "thinking": {"type": "adaptive", "display": "omitted"},
-        "output_config": {"effort": get_model_reasoning_effort(model_id) or "high"},
+        "output_config": {"effort": reasoning_effort or get_model_reasoning_effort(model_id) or "high"},
     }
 
     try:
         response = client.messages.create(**payload)
-    except TypeError:
+    except TypeError as exc:
+        if not _is_unsupported_payload_parameter_error(exc):
+            raise
+
         # Older SDK/provider surfaces may not support thinking/output_config yet.
         fallback_payload = {
             "model": vertex_model,
@@ -111,6 +148,7 @@ async def query_vertex_anthropic_model(
     messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any] | None:
     """Query Claude via Anthropic-on-Vertex using async-compatible wrapping.
 
@@ -124,4 +162,5 @@ async def query_vertex_anthropic_model(
         model_id,
         messages,
         max_tokens,
+        reasoning_effort,
     )

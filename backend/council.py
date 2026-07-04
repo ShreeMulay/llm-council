@@ -211,17 +211,24 @@ async def _query_primary(
     messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any] | None:
     """Query a model via its primary (direct) provider. Returns None on failure."""
     if is_vertex_anthropic_model(model_id):
-        return await query_vertex_anthropic_model(model_id, messages, max_tokens, temperature)
+        return await query_vertex_anthropic_model(
+            model_id,
+            messages,
+            max_tokens,
+            temperature,
+            reasoning_effort=reasoning_effort,
+        )
     elif is_fireworks_model(model_id):
         return await query_fireworks_model(
             model_id,
             messages,
             max_tokens=max_tokens,
             temperature=temperature,
-            reasoning_effort=get_model_reasoning_effort(model_id),
+            reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
         )
     elif is_cerebras_model(model_id):
         return await query_cerebras_model(model_id, messages, max_tokens, temperature)
@@ -253,6 +260,7 @@ async def query_single_model(
     messages: list[dict[str, str]],
     max_tokens: int = 32768,
     temperature: float = 0.7,
+    reasoning_effort: str | None = None,
 ) -> dict[str, Any] | None:
     """
     Query a single model via primary provider, with OpenRouter fallback.
@@ -262,7 +270,13 @@ async def query_single_model(
     non-PHI/deidentified only; this service does not perform PHI detection.
     """
     try:
-        result = await _query_primary(model_id, messages, max_tokens, temperature)
+        result = await _query_primary(
+            model_id,
+            messages,
+            max_tokens,
+            temperature,
+            reasoning_effort=reasoning_effort,
+        )
         if result and result.get("content"):
             return result
     except Exception as e:
@@ -285,7 +299,7 @@ async def query_single_model(
                 messages,
                 max_tokens,
                 temperature,
-                reasoning_effort=get_model_reasoning_effort(model_id),
+                reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
             )
         except Exception as e:
             logger.error("OpenRouter fallback also failed for %s: %s", model_id, e)
@@ -333,6 +347,7 @@ async def _query_single_with_reasoning_override(
                 messages,
                 max_tokens=max_tokens,
                 temperature=temperature,
+                reasoning_effort=reasoning_effort,
             )
             if result and result.get("content"):
                 return result

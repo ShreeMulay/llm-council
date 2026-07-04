@@ -6,6 +6,7 @@ from hypothesis import strategies as st
 
 from backend.council import (
     _query_primary,
+    _query_single_with_reasoning_override,
     _truncate_for_prompt,
     parse_ranking_from_text,
     query_single_model,
@@ -102,6 +103,49 @@ async def test_fable_strict_vertex_mode_refuses_openrouter_fallback(monkeypatch)
 
     assert result is None
     assert openrouter_calls == []
+
+
+@pytest.mark.asyncio
+async def test_vertex_reasoning_override_routes_to_vertex_client(monkeypatch):
+    calls = []
+
+    async def fake_query_vertex_anthropic_model(model_id, messages, *args, **kwargs):
+        calls.append(
+            {
+                "model_id": model_id,
+                "messages": messages,
+                "args": args,
+                "kwargs": kwargs,
+            }
+        )
+        return {"content": "vertex ok", "usage": {}, "provider": "vertex-anthropic"}
+
+    async def fail_openrouter(*args, **kwargs):
+        raise AssertionError("Vertex override should not route to OpenRouter")
+
+    monkeypatch.setattr(
+        "backend.council.query_vertex_anthropic_model",
+        fake_query_vertex_anthropic_model,
+    )
+    monkeypatch.setattr("backend.council.query_openrouter_model", fail_openrouter)
+
+    messages = [{"role": "user", "content": "test"}]
+    result = await _query_single_with_reasoning_override(
+        "anthropic/claude-fable-5",
+        messages,
+        max_tokens=2048,
+        temperature=0.1,
+        reasoning_effort="medium",
+    )
+
+    assert result is not None
+    assert result["content"] == "vertex ok"
+    assert calls[0]["model_id"] == "anthropic/claude-fable-5"
+    assert calls[0]["kwargs"] == {
+        "max_tokens": 2048,
+        "temperature": 0.1,
+        "reasoning_effort": "medium",
+    }
 
 
 class TestGetEvaluatorModels:
