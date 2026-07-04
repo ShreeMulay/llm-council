@@ -190,8 +190,8 @@ async def handle_council_command(
 MCP_TOOL_SCHEMA = {
     "name": "llm_council",
     "description": (
-        "Consult 9 LLMs (GPT-5.5, Fable 5, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.3, Kimi K2.7 Code, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. "
-        "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Fable 5). "
+        "Consult 9 LLMs (GPT-5.5, Fable 5 via Vertex AI Anthropic, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.3, Kimi K2.7 Code, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. "
+        "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Fable 5 via Vertex AI; OpenRouter fallback is non-PHI/deidentified only). "
         "Explicit URL context is fetched and injected before deliberation by default. Use for complex questions requiring multiple perspectives."
     ),
     "inputSchema": {
@@ -244,7 +244,7 @@ MODEL_ALIASES_HELP = """
 - `glm` -> fireworks/glm-5.2 (default Fireworks GLM-5.2 xHigh)
 - `glm-fw` -> fireworks/glm-5.2 (legacy alias for default GLM)
 - `glm-zai` -> z-ai/glm-5.2 (explicit legacy baseline)
-- `fable` -> anthropic/claude-fable-5 (default production council member/chairman; non-PHI unless verified BAA-safe route)
+- `fable` -> anthropic/claude-fable-5 (default production council member/chairman via Vertex AI; OpenRouter fallback is non-PHI/deidentified only)
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3
 - `kimi` -> fireworks/kimi-k2.7-code

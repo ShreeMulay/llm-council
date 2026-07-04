@@ -39,10 +39,28 @@ MOONSHOT_API_URL = "https://api.moonshot.ai/v1/chat/completions"
 XAI_API_URL = "https://api.x.ai/v1/chat/completions"
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 
+# Vertex AI Anthropic configuration.
+# Cloud Run uses ADC/service account auth; do not configure JSON key files.
+# BAA policy: Claude Fable 5 through Vertex AI is PHI-eligible only when this
+# service runs in covered Google Cloud projects/services under the Google/Vertex
+# BAA. The OpenRouter fallback for Fable remains non-PHI/deidentified only.
+VERTEX_PROJECT_ID = (
+    os.getenv("VERTEX_PROJECT_ID")
+    or os.getenv("GOOGLE_CLOUD_PROJECT")
+    or os.getenv("GCP_PROJECT")
+)
+VERTEX_LOCATION = os.getenv("VERTEX_LOCATION") or os.getenv("GOOGLE_CLOUD_LOCATION") or "global"
+REQUIRE_VERTEX_ANTHROPIC = os.getenv("REQUIRE_VERTEX_ANTHROPIC", "").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
+
 # Council Models - 9 models for deliberation
 # Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
 # 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
-# 2. Claude Fable 5 via OpenRouter (Lead Coder + Chairman, reasoning: high)
+# 2. Claude Fable 5 via Vertex AI Anthropic (Lead Coder + Chairman, reasoning: high)
 # 3. GLM-5.2 xHigh via Fireworks Direct (Tool Specialist)
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
 # 5. Grok 4.3 via xAI Direct (Real-time Intel)
@@ -131,6 +149,12 @@ GEMINI_DIRECT_MODEL_IDS = [
     "google/gemini-3-pro-preview",
     "google/gemini-2.0-flash",
 ]
+
+# Claude models routed to Anthropic-on-Vertex as primary provider.
+VERTEX_ANTHROPIC_MODEL_MAP = {
+    "anthropic/claude-fable-5": "claude-fable-5",
+}
+VERTEX_ANTHROPIC_MODEL_IDS = list(VERTEX_ANTHROPIC_MODEL_MAP.keys())
 
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
@@ -256,8 +280,27 @@ def is_gemini_direct_model(model_id: str) -> bool:
     return model_id in GEMINI_DIRECT_MODEL_IDS
 
 
+def is_vertex_anthropic_model(model_id: str) -> bool:
+    """Check if a model ID should be routed to Anthropic-on-Vertex."""
+    return model_id in VERTEX_ANTHROPIC_MODEL_MAP
+
+
+def requires_vertex_anthropic(model_id: str) -> bool:
+    """Return whether fallback away from Vertex is disabled for this model."""
+    return REQUIRE_VERTEX_ANTHROPIC and is_vertex_anthropic_model(model_id)
+
+
+def get_vertex_anthropic_model_id(model_id: str) -> str | None:
+    """Get the Vertex Anthropic model ID for a council model ID."""
+    return VERTEX_ANTHROPIC_MODEL_MAP.get(model_id)
+
+
 def get_openrouter_fallback(model_id: str) -> str | None:
-    """Get the OpenRouter model ID for fallback routing."""
+    """Get the OpenRouter model ID for fallback routing.
+
+    For Fable, OpenRouter fallback is non-PHI/deidentified only. PHI-eligible
+    Fable traffic must use the configured Vertex AI Anthropic primary route.
+    """
     return OPENROUTER_FALLBACK_MAP.get(model_id)
 
 

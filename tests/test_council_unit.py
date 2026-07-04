@@ -77,6 +77,33 @@ async def test_fireworks_glm_5_2_fallback_preserves_xhigh_reasoning_effort(monke
     assert openrouter_calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
 
 
+@pytest.mark.asyncio
+async def test_fable_strict_vertex_mode_refuses_openrouter_fallback(monkeypatch):
+    openrouter_calls = []
+
+    async def fake_query_vertex_anthropic_model(*args, **kwargs):
+        return None
+
+    async def fake_query_openrouter_model(*args, **kwargs):
+        openrouter_calls.append((args, kwargs))
+        return {"content": "should not happen", "usage": {}, "provider": "openrouter"}
+
+    monkeypatch.setattr(
+        "backend.council.query_vertex_anthropic_model",
+        fake_query_vertex_anthropic_model,
+    )
+    monkeypatch.setattr("backend.council.query_openrouter_model", fake_query_openrouter_model)
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+
+    result = await query_single_model(
+        "anthropic/claude-fable-5",
+        [{"role": "user", "content": "test"}],
+    )
+
+    assert result is None
+    assert openrouter_calls == []
+
+
 class TestGetEvaluatorModels:
     """Test evaluator selection from priority list."""
 

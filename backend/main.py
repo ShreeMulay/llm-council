@@ -29,7 +29,16 @@ from pydantic import BaseModel
 
 from . import storage
 from .auth import ApiKeyMiddleware
-from .config import BACKEND_HOST, BACKEND_PORT, CHAIRMAN_MODEL, COUNCIL_MODELS
+from .config import (
+    BACKEND_HOST,
+    BACKEND_PORT,
+    CHAIRMAN_MODEL,
+    COUNCIL_MODELS,
+    REQUIRE_VERTEX_ANTHROPIC,
+    VERTEX_ANTHROPIC_MODEL_IDS,
+    VERTEX_LOCATION,
+    VERTEX_PROJECT_ID,
+)
 from .council import (
     calculate_aggregate_rankings,
     generate_conversation_title,
@@ -158,7 +167,15 @@ async def health():
     return {
         "status": "healthy",
         "service": "llm-council",
-        "config": {"council_models": COUNCIL_MODELS, "chairman_model": CHAIRMAN_MODEL},
+        "config": {
+            "council_models": COUNCIL_MODELS,
+            "chairman_model": CHAIRMAN_MODEL,
+            "vertex_anthropic_models": VERTEX_ANTHROPIC_MODEL_IDS,
+            "vertex_location": VERTEX_LOCATION,
+            "vertex_project_configured": bool(VERTEX_PROJECT_ID),
+            "require_vertex_anthropic": REQUIRE_VERTEX_ANTHROPIC,
+            "fable_baa_policy": "Vertex AI primary route is PHI-eligible only in covered Google Cloud projects/services under BAA; OpenRouter fallback is non-PHI/deidentified only.",
+        },
     }
 
 
@@ -169,6 +186,10 @@ async def api_info():
         "name": "LLM Council API",
         "version": "1.2.0",
         "description": "Multi-model LLM deliberation with peer review",
+        "safety": {
+            "fable_primary": "Claude Fable 5 routes through Vertex AI Anthropic when configured.",
+            "phi_policy": "Fable via Vertex AI is PHI-eligible only in covered Google Cloud projects/services under BAA; Fable via OpenRouter fallback is non-PHI/deidentified only.",
+        },
         "endpoints": {
             "/api/council": "Execute council deliberation (POST, sync). ?format=markdown|markdown-raw for export.",
             "/api/council/export": "Export council result as downloadable file (POST). ?format=markdown|json",

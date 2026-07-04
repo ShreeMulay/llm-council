@@ -40,7 +40,7 @@ Claude Fable 5, serving as Chairman, reviews all ranked responses and critiques 
 
 | Member | Role | Specialty |
 |--------|------|-----------|
-| **Claude Fable 5** | **Chairman & Lead Coder** | Default production synthesis, code architecture, and final decision-making with high reasoning effort. Non-PHI unless routed through a verified BAA-safe path. Ensures outputs are clean, practical, and well-structured. |
+| **Claude Fable 5** | **Chairman & Lead Coder** | Default production synthesis, code architecture, and final decision-making with high effort through Vertex AI Anthropic. PHI-eligible only in covered Google Cloud projects/services under BAA; OpenRouter fallback is non-PHI/deidentified only. |
 | **GPT-5.5** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
 | **Fireworks GLM-5.2 xHigh** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation through Fireworks direct routing with xHigh reasoning. Promoted after the 2026-07-04 benchmark tied z-ai GLM quality while improving latency under the cost gate. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
@@ -57,7 +57,6 @@ Claude Fable 5, serving as Chairman, reviews all ranked responses and critiques 
 | `glm-zai` | `z-ai/glm-5.2` | Explicit legacy GLM baseline after Fireworks GLM-5.2 xHigh promotion. |
 | `kimi26` | `fireworks/kimi-k2.6` | Explicit legacy Kimi baseline after Kimi K2.7 Code promotion. |
 | `minimax` | `minimax/minimax-m3` | Explicit challenger only; MiniMax beat Llama quality in the 2026-07-04 benchmark but failed latency/cost gates, so Llama 4 Maverick remains default. |
-| `fable` | `anthropic/claude-fable-5` | Explicit challenger only; never default or chairman in this roster refresh. |
 | `sonnet` | `anthropic/claude-sonnet-5` | Convenience alias only; not a default council member. |
 
 ## Use Cases

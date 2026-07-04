@@ -193,13 +193,16 @@ from .config import (
     is_gemini_direct_model,
     is_moonshot_model,
     is_openai_model,
+    is_vertex_anthropic_model,
     is_xai_model,
+    requires_vertex_anthropic,
 )
 from .fireworks_client import query_fireworks_model
 from .gemini_client import query_gemini_model
 from .moonshot_client import query_moonshot_model
 from .openai_client import call_openai
 from .openrouter import query_model as query_openrouter_model
+from .vertex_anthropic_client import query_vertex_anthropic_model
 from .xai_client import query_xai_model
 
 
@@ -210,7 +213,9 @@ async def _query_primary(
     temperature: float = 0.7,
 ) -> dict[str, Any] | None:
     """Query a model via its primary (direct) provider. Returns None on failure."""
-    if is_fireworks_model(model_id):
+    if is_vertex_anthropic_model(model_id):
+        return await query_vertex_anthropic_model(model_id, messages, max_tokens, temperature)
+    elif is_fireworks_model(model_id):
         return await query_fireworks_model(
             model_id,
             messages,
@@ -237,7 +242,7 @@ async def _query_primary(
             "provider": "openai",
         }
     else:
-        # No direct provider — go straight to OpenRouter
+        # No direct provider — go straight to OpenRouter.
         # Use the fallback mapping if available (e.g. council ID -> OpenRouter ID)
         or_model = get_openrouter_fallback(model_id) or model_id
         return await query_openrouter_model(or_model, messages, max_tokens, temperature)
@@ -251,6 +256,10 @@ async def query_single_model(
 ) -> dict[str, Any] | None:
     """
     Query a single model via primary provider, with OpenRouter fallback.
+
+    Safety: Fable's primary Vertex AI route is PHI-eligible only in covered
+    Google Cloud projects/services under BAA. Its OpenRouter fallback is
+    non-PHI/deidentified only; this service does not perform PHI detection.
     """
     try:
         result = await _query_primary(model_id, messages, max_tokens, temperature)
@@ -259,7 +268,14 @@ async def query_single_model(
     except Exception as e:
         logger.warning("Primary provider failed for %s: %s", model_id, e)
 
-    # Fallback to OpenRouter
+    if requires_vertex_anthropic(model_id):
+        logger.error(
+            "Vertex Anthropic primary failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
+            model_id,
+        )
+        return None
+
+    # Fallback to OpenRouter. For Fable this is non-PHI/deidentified only.
     or_model = get_openrouter_fallback(model_id)
     if or_model:
         logger.info("Falling back to OpenRouter for %s -> %s", model_id, or_model)
@@ -310,7 +326,21 @@ async def _query_single_with_reasoning_override(
         except Exception as e:
             logger.warning("Fireworks reasoning override failed for %s: %s", model_id, e)
 
-    # For OpenRouter models and fallbacks, pass reasoning_effort directly
+    if is_vertex_anthropic_model(model_id):
+        try:
+            result = await query_vertex_anthropic_model(
+                model_id,
+                messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+            if result and result.get("content"):
+                return result
+        except Exception as e:
+            logger.warning("Vertex Anthropic reasoning override failed for %s: %s", model_id, e)
+
+    # For OpenRouter models and fallbacks, pass reasoning_effort directly.
+    # Fable fallback to OpenRouter is non-PHI/deidentified only.
     or_model = get_openrouter_fallback(model_id) or model_id
     try:
         return await query_openrouter_model(
@@ -418,7 +448,8 @@ async def query_models_with_retries(
                 logger.info("Retry %d succeeded for %s", attempt + 1, model)
                 results[model] = result
 
-    # Final fallback: try OpenRouter for any models that still failed
+    # Final fallback: try OpenRouter for any models that still failed.
+    # Fable fallback to OpenRouter is non-PHI/deidentified only.
     still_failed = [m for m in model_ids if results.get(m) is None]
     if still_failed:
         logger.warning(
@@ -431,6 +462,13 @@ async def query_models_with_retries(
         async def _openrouter_fallback(
             model: str,
         ) -> tuple[str, dict[str, Any] | None]:
+            if requires_vertex_anthropic(model):
+                logger.error(
+                    "Skipping OpenRouter fallback for %s because REQUIRE_VERTEX_ANTHROPIC is enabled",
+                    model,
+                )
+                return model, None
+
             or_model = get_openrouter_fallback(model)
             if not or_model or or_model == model:
                 return model, None
@@ -943,6 +981,7 @@ async def _query_single_with_retry(
         or is_cerebras_model(model_id)
         or is_openai_model(model_id)
         or is_xai_model(model_id)
+        or is_vertex_anthropic_model(model_id)
     )
 
     async def _try_query() -> dict[str, Any] | None:
