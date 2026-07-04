@@ -230,7 +230,6 @@ from .config import (
     is_fireworks_model,
     is_gemini_direct_model,
     is_moonshot_model,
-    is_openai_model,
     is_vertex_anthropic_model,
     is_xai_model,
     requires_vertex_anthropic,
@@ -238,7 +237,6 @@ from .config import (
 from .fireworks_client import query_fireworks_model
 from .gemini_client import query_gemini_model
 from .moonshot_client import query_moonshot_model
-from .openai_client import call_openai
 from .openrouter import query_model as query_openrouter_model
 from .vertex_anthropic_client import query_vertex_anthropic_model
 from .xai_client import query_xai_model
@@ -276,16 +274,6 @@ async def _query_primary(
         return await query_xai_model(model_id, messages, max_tokens, temperature)
     elif is_gemini_direct_model(model_id):
         return await query_gemini_model(model_id, messages, max_tokens, temperature)
-    elif is_openai_model(model_id):
-        prompt = messages[-1].get("content", "") if messages else ""
-        result = await call_openai(
-            model_id, prompt, max_tokens, reasoning_effort="high"
-        )
-        return {
-            "content": result.get("response", ""),
-            "usage": result.get("usage", {}),
-            "provider": "openai",
-        }
     else:
         # No direct provider — go straight to OpenRouter.
         # Use the fallback mapping if available (e.g. council ID -> OpenRouter ID)
@@ -1060,7 +1048,7 @@ async def _query_single_with_retry(
     Query a single model with retries and OpenRouter fallback.
 
     Uses the SAME provider routing as query_models_parallel:
-    fireworks, cerebras, anthropic, openai → direct providers.
+    fireworks, cerebras, xAI, Vertex Anthropic → direct providers.
     Everything else → OpenRouter (with ID translation via fallback map).
 
     Returns a dict with model, response, usage, provider keys.
@@ -1070,7 +1058,6 @@ async def _query_single_with_retry(
     has_direct_provider = (
         is_fireworks_model(model_id)
         or is_cerebras_model(model_id)
-        or is_openai_model(model_id)
         or is_xai_model(model_id)
         or is_vertex_anthropic_model(model_id)
     )
