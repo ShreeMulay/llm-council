@@ -2,7 +2,7 @@
  * API client for the LLM Council backend.
  */
 
-const API_BASE = 'http://100.106.122.86:8800';
+export const API_BASE = import.meta.env?.VITE_API_BASE || 'http://localhost:8800';
 
 // API key from Vite env (prefixed with VITE_)
 const API_KEY = import.meta.env?.VITE_COUNCIL_API_KEY || '';
@@ -226,10 +226,10 @@ export function getModelInfo(modelId) {
   if (lower.includes('opus')) return MODEL_INFO['opus'];
   if (lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['fable'];
   if (lower.includes('glm') || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
-  if (lower.includes('gemini') || lower.includes('google') || lower.includes('pro')) return MODEL_INFO['gemini'];
+  if (lower.includes('deepseek')) return MODEL_INFO['deepseek'];
+  if (lower.includes('gemini') || lower.includes('google')) return MODEL_INFO['gemini'];
   if (lower.includes('grok') || lower.includes('x-ai') || lower.includes('xai')) return MODEL_INFO['grok'];
   if (lower.includes('kimi') || lower.includes('moonshot')) return MODEL_INFO['kimi'];
-  if (lower.includes('deepseek')) return MODEL_INFO['deepseek'];
   if (lower.includes('llama') || lower.includes('meta')) return MODEL_INFO['llama'];
   if (lower.includes('qwen')) return MODEL_INFO['qwen'];
   

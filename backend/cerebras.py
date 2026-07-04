@@ -1,6 +1,7 @@
 """Cerebras API client for direct queries to Cerebras inference."""
 
 import asyncio
+import logging
 from typing import Any
 
 import httpx
@@ -9,6 +10,7 @@ from .secrets import CEREBRAS_API_KEY
 
 # Cerebras API base URL
 CEREBRAS_API_URL = "https://api.cerebras.ai/v1"
+logger = logging.getLogger("llm-council.cerebras")
 
 
 async def query_cerebras_model(
@@ -32,7 +34,7 @@ async def query_cerebras_model(
         Response dict with content, usage, model or None on error
     """
     if not CEREBRAS_API_KEY:
-        print("Error: CEREBRAS_API_KEY not configured")
+        logger.error("CEREBRAS_API_KEY not configured")
         return None
 
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -63,13 +65,13 @@ async def query_cerebras_model(
                 "provider": "cerebras"
             }
         except httpx.HTTPStatusError as e:
-            print(f"HTTP error querying Cerebras {model_id}: {e.response.status_code} - {e.response.text}")
+            logger.warning("HTTP error querying Cerebras %s: %s", model_id, e.response.status_code)
             return None
         except httpx.RequestError as e:
-            print(f"Request error querying Cerebras {model_id}: {e}")
+            logger.warning("Request error querying Cerebras %s: %s", model_id, e)
             return None
         except Exception as e:
-            print(f"Error querying Cerebras {model_id}: {e}")
+            logger.warning("Error querying Cerebras %s: %s", model_id, e)
             return None
 
 
@@ -111,7 +113,7 @@ async def list_cerebras_models() -> list[dict[str, Any]]:
         List of model objects with id, owned_by, etc.
     """
     if not CEREBRAS_API_KEY:
-        print("Error: CEREBRAS_API_KEY not configured")
+        logger.error("CEREBRAS_API_KEY not configured")
         return []
 
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -126,5 +128,5 @@ async def list_cerebras_models() -> list[dict[str, Any]]:
             data = response.json()
             return data.get("data", [])
         except Exception as e:
-            print(f"Error listing Cerebras models: {e}")
+            logger.warning("Error listing Cerebras models: %s", e)
             return []

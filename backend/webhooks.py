@@ -6,7 +6,7 @@ import logging
 import socket
 import time
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from urllib.parse import urlparse
@@ -15,6 +15,19 @@ import httpx
 from pydantic import BaseModel, HttpUrl
 
 logger = logging.getLogger("llm-council.webhooks")
+
+_BLOCKED_IP_NETWORKS = tuple(
+    ipaddress.ip_network(network)
+    for network in (
+        "100.64.0.0/10",  # CGNAT, including Tailscale defaults
+        "fc00::/7",  # IPv6 Unique Local Address space
+    )
+)
+
+
+def _utc_now_iso() -> str:
+    """Return a timezone-aware UTC timestamp using the existing trailing-Z format."""
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
 
 class JobStatus(str, Enum):
@@ -81,7 +94,13 @@ def _validate_webhook_url(url: str) -> None:
 
     for _family, _, _, _, sockaddr in addrs:
         ip = ipaddress.ip_address(sockaddr[0])
-        if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_reserved:
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or any(ip in network for network in _BLOCKED_IP_NETWORKS)
+        ):
             raise ValueError(
                 f"Webhook URL blocked: {hostname!r} resolves to private/internal IP {ip}"
             )
@@ -173,12 +192,13 @@ def create_job(request: CouncilAsyncRequest) -> str:
         "query": request.query,
         "webhook_url": str(request.webhook_url),
         "webhook_secret": request.webhook_secret,
+        "webhook_secret_configured": bool(request.webhook_secret),
         "final_only": request.final_only,
         "models": request.models,
         "chairman": request.chairman,
         "include_details": request.include_details,
         "metadata": request.metadata,
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": _utc_now_iso(),
         "started_at": None,
         "completed_at": None,
         "error": None,
@@ -287,13 +307,15 @@ async def send_webhook(
                 )
                 if response.status_code < 300:
                     return True
-                print(
-                    f"Webhook attempt {attempt + 1} failed: HTTP {response.status_code}"
+                logger.warning(
+                    "Webhook attempt %d failed: HTTP %d",
+                    attempt + 1,
+                    response.status_code,
                 )
             except httpx.TimeoutException:
-                print(f"Webhook attempt {attempt + 1} timed out")
+                logger.warning("Webhook attempt %d timed out", attempt + 1)
             except Exception as e:
-                print(f"Webhook attempt {attempt + 1} error: {e}")
+                logger.warning("Webhook attempt %d error: %s", attempt + 1, e)
 
             # Exponential backoff
             if attempt < retries - 1:
@@ -316,7 +338,7 @@ async def run_council_async(
         return
 
     update_job(
-        job_id, status=JobStatus.RUNNING, started_at=datetime.utcnow().isoformat() + "Z"
+        job_id, status=JobStatus.RUNNING, started_at=_utc_now_iso()
     )
 
     try:
@@ -332,7 +354,7 @@ async def run_council_async(
         update_job(
             job_id,
             status=JobStatus.COMPLETED,
-            completed_at=datetime.utcnow().isoformat() + "Z",
+            completed_at=_utc_now_iso(),
             result=result,
             result_summary=f"Council completed with {len(result.get('stage1', {}))} models",
         )
@@ -346,10 +368,18 @@ async def run_council_async(
             "metadata": job.get("metadata"),
             "timing": {
                 "created_at": job["created_at"],
-                "started_at": job["started_at"],
+                "started_at": _jobs[job_id]["started_at"],
                 "completed_at": _jobs[job_id]["completed_at"],
             },
         }
+
+        if job.get("webhook_secret_configured") and not job.get("webhook_secret"):
+            update_job(
+                job_id,
+                status=JobStatus.WEBHOOK_FAILED,
+                error="Webhook secret was configured but is unavailable after reload; refusing to send unsigned webhook",
+            )
+            return
 
         # Send webhook
         success = await send_webhook(
@@ -372,9 +402,12 @@ async def run_council_async(
         update_job(
             job_id,
             status=JobStatus.FAILED,
-            completed_at=datetime.utcnow().isoformat() + "Z",
+            completed_at=_utc_now_iso(),
             error=error_msg,
         )
+
+        if job.get("webhook_secret_configured") and not job.get("webhook_secret"):
+            return
 
         # Send failure webhook (best effort)
         with contextlib.suppress(Exception):
@@ -396,7 +429,7 @@ def cleanup_old_jobs(max_age_hours: int = 24):
     cutoff = time.time() - (max_age_hours * 3600)
     to_remove = []
     for job_id, job in _jobs.items():
-        created = datetime.fromisoformat(job["created_at"].rstrip("Z"))
+        created = datetime.fromisoformat(job["created_at"].replace("Z", "+00:00"))
         if created.timestamp() < cutoff:
             to_remove.append(job_id)
     for job_id in to_remove:

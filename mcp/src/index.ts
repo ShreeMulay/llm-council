@@ -5,8 +5,9 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
-import { spawn } from "child_process";
-import { readFileSync, writeFileSync, unlinkSync, existsSync, openSync } from "fs";
+import { execFileSync, spawn } from "child_process";
+import { readFileSync, writeFileSync, unlinkSync, existsSync, openSync, mkdirSync } from "fs";
+import { tmpdir } from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -16,8 +17,15 @@ const __dirname = path.dirname(__filename);
 const BACKEND_URL = process.env.LLM_COUNCIL_URL || "http://localhost:8800";
 const HEALTH_URL = `${BACKEND_URL}/health`;
 const BACKEND_CWD = path.join(__dirname, "../../");
-const PID_FILE = "/tmp/llm-council-backend.pid";
-const BACKEND_LOG = "/tmp/llm-council.log";
+const RUNTIME_DIR = (() => {
+  const configured = process.env.XDG_RUNTIME_DIR;
+  if (configured) return configured;
+  const uid = typeof process.getuid === "function" ? process.getuid() : "nouid";
+  return path.join(tmpdir(), `llm-council-${uid}`);
+})();
+mkdirSync(RUNTIME_DIR, { recursive: true, mode: 0o700 });
+const PID_FILE = path.join(RUNTIME_DIR, "llm-council-backend.pid");
+const BACKEND_LOG = path.join(RUNTIME_DIR, "llm-council.log");
 const COUNCIL_API_KEY = process.env.COUNCIL_API_KEY || process.env.LLM_COUNCIL_KEY || "";
 const IS_REMOTE = (() => {
   try {
@@ -99,15 +107,21 @@ class BackendManager {
 
       // Validate the PID belongs to a Python/backend process before killing
       try {
-        const { execSync } = require("child_process");
-        const cmdline = execSync(`cat /proc/${pid}/cmdline 2>/dev/null || ps -p ${pid} -o args= 2>/dev/null`, { encoding: "utf-8" });
+        let cmdline = "";
+        try {
+          cmdline = readFileSync(`/proc/${pid}/cmdline`, "utf-8").replace(/\0/g, " ");
+        } catch {
+          cmdline = execFileSync("ps", ["-p", String(pid), "-o", "args="], { encoding: "utf-8" });
+        }
         if (!cmdline.includes("python") && !cmdline.includes("backend.main") && !cmdline.includes("uvicorn")) {
           console.error(`[Backend] PID ${pid} is not a backend process (${cmdline.trim().slice(0, 80)}), skipping kill`);
           this.cleanStalePidFile();
           return;
         }
       } catch {
-        // Can't verify — process may be dead already, safe to proceed
+        console.error(`[Backend] Could not verify PID ${pid} command, skipping kill`);
+        this.cleanStalePidFile();
+        return;
       }
 
       process.kill(pid, "SIGTERM");
@@ -147,7 +161,7 @@ class BackendManager {
     }
 
     // Write PID file for coordination with other MCP server instances
-    writeFileSync(PID_FILE, String(child.pid), "utf-8");
+    writeFileSync(PID_FILE, String(child.pid), { encoding: "utf-8", mode: 0o600 });
     console.error(`[Backend] Spawned PID ${child.pid}, wrote ${PID_FILE}`);
 
     // Unref so this MCP server can exit without killing the backend

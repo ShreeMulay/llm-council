@@ -34,11 +34,11 @@
 
 ## Lane 4 — Reliability hygiene
 
-- [ ] Add webhook SSRF and secret-persistence tests.
-- [ ] Fix webhook validation, secret persistence, and timezone handling.
-- [ ] Fix frontend API base and model classification assumptions.
-- [ ] Fix MCP PID validation and stale-PID safety.
-- [ ] Clean provider logging/dead paths where tests prove safe.
+- [x] Add webhook SSRF and secret-persistence tests.
+- [x] Fix webhook validation, secret persistence, and timezone handling.
+- [x] Fix frontend API base and model classification assumptions.
+- [x] Fix MCP PID validation and stale-PID safety.
+- [x] Clean provider logging/dead paths where tests prove safe.
 - [ ] PR, CI, merge.
 
 ## Closeout

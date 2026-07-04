@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 
-import { MODEL_INFO, parseSseEventBlock } from './api.js';
+import { API_BASE, MODEL_INFO, getModelInfo, parseSseEventBlock } from './api.js';
 
 function testSingleDataLine() {
   const event = parseSseEventBlock('data: {"type":"stage1_start"}');
@@ -42,9 +42,19 @@ function testModelMetadataUsesRefreshedRoster() {
   assert.equal(MODEL_INFO.qwen.name, 'Qwen 3.7 Max');
 }
 
+function testApiBaseDefaultsToLocalhost() {
+  assert.equal(API_BASE, 'http://localhost:8800');
+}
+
+function testDeepSeekProDoesNotClassifyAsGemini() {
+  assert.equal(getModelInfo('deepseek/deepseek-v4-pro').id, 'deepseek');
+}
+
 testSingleDataLine();
 testCrLfLineEndings();
 testLargePayloadCanBeParsedAfterChunkReassembly();
 testModelMetadataUsesRefreshedRoster();
+testApiBaseDefaultsToLocalhost();
+testDeepSeekProDoesNotClassifyAsGemini();
 
 console.log('SSE parser tests passed');

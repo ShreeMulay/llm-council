@@ -6,7 +6,7 @@ import json
 import os
 import re
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .config import CONVERSATIONS_DIR
@@ -66,7 +66,7 @@ def create_conversation(conversation_id: str, active_models: list[str] | None = 
 
     conversation = {
         "id": conversation_id,
-        "created_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "title": "New Conversation",
         "active_models": active_models,
         "messages": [],
