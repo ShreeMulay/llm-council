@@ -24,12 +24,12 @@
 
 ## Lane 2 — Deliberation correctness
 
-- [ ] Add label-map aggregation regression test.
-- [ ] Add ≥7-response curation regression test.
-- [ ] Add streaming Stage 2 parity and timeout/cache-bound tests.
-- [ ] Implement label-map fix.
-- [ ] Implement streaming parity/shared Stage 2.
-- [ ] Implement score-based curation, timeouts, and cache bounds.
+- [x] Add label-map aggregation regression test.
+- [x] Add ≥7-response curation regression test.
+- [x] Add streaming Stage 2 parity and timeout/cache-bound tests.
+- [x] Implement label-map fix.
+- [x] Implement streaming parity/shared Stage 2.
+- [x] Implement score-based curation, timeouts, and cache bounds.
 - [ ] PR, CI, merge.
 
 ## Lane 4 — Reliability hygiene
