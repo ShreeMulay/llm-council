@@ -40,5 +40,16 @@ steps:
       - '--set-secrets=OPENROUTER_API_KEY=llm-council-openrouter-key:latest,ANTHROPIC_API_KEY=llm-council-anthropic-key:latest,FIREWORKS_API_KEY=llm-council-fireworks-key:latest,GROK_API_KEY=llm-council-grok-key:latest,COUNCIL_API_KEY=llm-council-api-key:latest'
       - '--quiet'
 
+  # Verify deployed strict Vertex configuration from /health.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-euo'
+      - 'pipefail'
+      - '-c'
+      - >-
+        URL=$$(gcloud run services describe llm-council --region=us-central1 --project=$PROJECT_ID --format='value(status.url)') &&
+        python3 scripts/verify_deploy_health.py "$${URL}"
+
 options:
   logging: CLOUD_LOGGING_ONLY
