@@ -100,10 +100,13 @@ export default function ModelPicker({
                 '--model-bg': info.bg,
                 '--model-border': info.border,
               }}
-              title={`${info.name} (${info.provider})`}
+              title={`${info.name} (${info.provider})${info.note ? ` — ${info.note}` : ''}`}
             >
               <span className="model-chip-icon">{info.icon}</span>
-              <span className="model-chip-name">{info.name}</span>
+              <span className="model-chip-text">
+                <span className="model-chip-name">{info.name}</span>
+                {info.note && <span className="model-chip-note">{info.note}</span>}
+              </span>
               {selected && <span className="model-chip-check">✓</span>}
             </button>
           );
