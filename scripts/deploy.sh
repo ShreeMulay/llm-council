@@ -4,6 +4,7 @@
 set -euo pipefail
 
 PROJECT="tke-phi-privacy-engine"
+VERTEX_PROJECT="shree-development"
 REGION="us-central1"
 SERVICE="llm-council"
 REGISTRY="us-central1-docker.pkg.dev/${PROJECT}/llm-council/llm-council"
@@ -36,7 +37,7 @@ gcloud run deploy "${SERVICE}" \
   --min-instances=1 \
   --max-instances=2 \
   --allow-unauthenticated \
-  --update-env-vars=VERTEX_PROJECT_ID="${PROJECT}",VERTEX_LOCATION=global,REQUIRE_VERTEX_ANTHROPIC=true \
+  --update-env-vars=VERTEX_PROJECT_ID="${VERTEX_PROJECT}",VERTEX_LOCATION=global,REQUIRE_VERTEX_ANTHROPIC=true \
   --set-secrets=OPENROUTER_API_KEY=llm-council-openrouter-key:latest,ANTHROPIC_API_KEY=llm-council-anthropic-key:latest,FIREWORKS_API_KEY=llm-council-fireworks-key:latest,GROK_API_KEY=llm-council-grok-key:latest,COUNCIL_API_KEY=llm-council-api-key:latest \
   --quiet
 
