@@ -79,12 +79,13 @@ The system SHALL have chairman model synthesize final response.
 
 The system SHALL route queries to appropriate API providers.
 
-### Scenario: Route to Cerebras
+### Scenario: Route Legacy Cerebras Models Explicitly
 
-- **GIVEN** model ID matches Cerebras model (e.g., "zai-glm-4.7")
-- **WHEN** querying model
+- **GIVEN** a legacy model ID matches a Cerebras model (for example, "zai-glm-4.7")
+- **WHEN** querying the model explicitly
 - **THEN** it uses Cerebras API endpoint
 - **AND** uses CEREBRAS_API_KEY for authentication
+- **AND** the model is not part of the default or compact production rosters
 
 ### Scenario: Route to OpenRouter
 
@@ -149,7 +150,9 @@ DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
 
 Legacy explicit IDs such as `anthropic/claude-opus-4.8`, `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through aliases/fallback maps for backward compatibility, but MUST NOT be default production roster members.
 
-### Cerebras Model IDs
+### Legacy Cerebras Model IDs
+
+These IDs MAY remain available for explicit backward-compatible routes only. They MUST NOT be default production roster members.
 
 ```python
 CEREBRAS_MODEL_IDS = [
