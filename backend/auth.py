@@ -1,11 +1,13 @@
 """API key authentication middleware for Cloud Run deployment.
 
 Protects /api/* routes with X-Council-Key header validation.
-Skips auth for /health, /, Tailscale IPs, and when COUNCIL_API_KEY is not set (local dev).
+Skips auth for /health, /, explicitly enabled direct Tailscale ingress, and when
+COUNCIL_API_KEY is not set (local dev).
 """
 
 import ipaddress
 import logging
+import os
 import secrets
 
 from fastapi import Request
@@ -47,6 +49,16 @@ def _is_tailscale_ip(client_host: str | None) -> bool:
         return False
 
 
+def _tailscale_auth_bypass_enabled() -> bool:
+    """Return whether direct trusted-ingress Tailscale auth bypass is enabled."""
+    return os.getenv("ENABLE_TAILSCALE_AUTH_BYPASS", "").lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 class ApiKeyMiddleware(BaseHTTPMiddleware):
     """Validate X-Council-Key header on protected routes."""
 
@@ -59,9 +71,11 @@ class ApiKeyMiddleware(BaseHTTPMiddleware):
         if request.url.path in _PUBLIC_PATHS:
             return await call_next(request)
 
-        # Tailscale IPs — authenticated at network layer
-        client_host = request.headers.get("X-Forwarded-For", request.client.host if request.client else None)
-        if _is_tailscale_ip(client_host):
+        # Tailscale IPs — authenticated at network layer only when this service
+        # is intentionally deployed behind direct trusted ingress. Never trust
+        # X-Forwarded-For for this bypass; public proxies let clients spoof it.
+        client_host = request.client.host if request.client else None
+        if _tailscale_auth_bypass_enabled() and _is_tailscale_ip(client_host):
             logger.debug("Tailscale IP %s — skipping API key check", client_host)
             return await call_next(request)
 

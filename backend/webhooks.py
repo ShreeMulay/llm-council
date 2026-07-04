@@ -120,8 +120,8 @@ def _save_job(job: dict[str, Any]) -> None:
     """Persist a job to disk (atomic write)."""
     path = _job_path(job["job_id"])
     dir_path = _os.path.dirname(path)
-    # Exclude large 'result' from disk to save space — it's in the webhook payload
-    persist = {k: v for k, v in job.items() if k != "result"}
+    # Exclude large 'result' from disk and never persist plaintext webhook secrets.
+    persist = {k: v for k, v in job.items() if k not in {"result", "webhook_secret"}}
     fd, tmp = _tempfile.mkstemp(dir=dir_path, suffix=".tmp")
     try:
         with _os.fdopen(fd, "w") as f:
@@ -165,6 +165,7 @@ logger.info("Loaded %d persisted jobs from disk", len(_jobs))
 
 def create_job(request: CouncilAsyncRequest) -> str:
     """Create a new async job and return its ID. Persisted to disk."""
+    _validate_webhook_url(str(request.webhook_url))
     job_id = str(uuid.uuid4())
     job = {
         "job_id": job_id,

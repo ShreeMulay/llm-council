@@ -7,6 +7,7 @@ from hypothesis import strategies as st
 from backend.council import (
     _query_primary,
     _query_single_with_reasoning_override,
+    _query_single_with_retry,
     _truncate_for_prompt,
     parse_ranking_from_text,
     query_single_model,
@@ -146,6 +147,63 @@ async def test_vertex_reasoning_override_routes_to_vertex_client(monkeypatch):
         "temperature": 0.1,
         "reasoning_effort": "medium",
     }
+
+
+@pytest.mark.asyncio
+async def test_fable_strict_vertex_retry_refuses_openrouter_fallback(monkeypatch):
+    openrouter_calls = []
+
+    async def fake_query_vertex_anthropic_model(*args, **kwargs):
+        return None
+
+    async def fake_query_openrouter_model(*args, **kwargs):
+        openrouter_calls.append((args, kwargs))
+        return {"content": "should not happen", "usage": {}, "provider": "openrouter"}
+
+    monkeypatch.setattr(
+        "backend.council.query_vertex_anthropic_model",
+        fake_query_vertex_anthropic_model,
+    )
+    monkeypatch.setattr("backend.council.query_openrouter_model", fake_query_openrouter_model)
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+
+    result = await _query_single_with_retry(
+        "anthropic/claude-fable-5",
+        [{"role": "user", "content": "test"}],
+        max_retries=0,
+    )
+
+    assert result["provider"] == "failed"
+    assert result["response"] == ""
+    assert openrouter_calls == []
+
+
+@pytest.mark.asyncio
+async def test_fable_strict_vertex_reasoning_override_refuses_openrouter_fallback(monkeypatch):
+    openrouter_calls = []
+
+    async def fake_query_vertex_anthropic_model(*args, **kwargs):
+        return None
+
+    async def fake_query_openrouter_model(*args, **kwargs):
+        openrouter_calls.append((args, kwargs))
+        return {"content": "should not happen", "usage": {}, "provider": "openrouter"}
+
+    monkeypatch.setattr(
+        "backend.council.query_vertex_anthropic_model",
+        fake_query_vertex_anthropic_model,
+    )
+    monkeypatch.setattr("backend.council.query_openrouter_model", fake_query_openrouter_model)
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+
+    result = await _query_single_with_reasoning_override(
+        "anthropic/claude-fable-5",
+        [{"role": "user", "content": "test"}],
+        reasoning_effort="high",
+    )
+
+    assert result is None
+    assert openrouter_calls == []
 
 
 class TestGetEvaluatorModels:

@@ -8,11 +8,11 @@
 
 ## Lane 1 — Security hotfix
 
-- [ ] Add failing auth spoof regression test.
-- [ ] Add failing strict-Vertex streaming/reasoning fallback regression test.
-- [ ] Add SSE generic-error regression coverage where practical.
-- [ ] Fix auth bypass and strict fallback holes.
-- [ ] Run focused + full backend validation.
+- [x] Add failing auth spoof regression test.
+- [x] Add failing strict-Vertex streaming/reasoning fallback regression test.
+- [x] Add SSE generic-error regression coverage where practical.
+- [x] Fix auth bypass and strict fallback holes.
+- [x] Run focused + full backend validation.
 - [ ] PR, CI, merge, deploy smoke.
 
 ## Lane 3 — Deploy/CI hardening
