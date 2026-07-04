@@ -57,16 +57,20 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 |-------|---------------|
 | `gpt` | openai/gpt-5.5 |
 | `opus` | anthropic/claude-opus-4.8 |
-| `glm` | z-ai/glm-5.2 |
+| `glm` | fireworks/glm-5.2 |
+| `glm-fw` | fireworks/glm-5.2 (legacy alias for default Fireworks GLM xHigh) |
+| `glm-zai` | z-ai/glm-5.2 (explicit legacy baseline) |
 | `gemini`, `pro` | google/gemini-3.1-pro-preview |
 | `grok` | x-ai/grok-4.3 |
-| `kimi` | fireworks/kimi-k2.6 |
+| `kimi` | fireworks/kimi-k2.7-code |
+| `kimi26` | fireworks/kimi-k2.6 (explicit legacy baseline) |
 | `deepseek` | deepseek/deepseek-v4-pro |
 | `llama` | meta-llama/llama-4-maverick |
 | `qwen` | qwen/qwen3.7-max |
-| `sonnet` | anthropic/claude-sonnet-4.5 |
+| `sonnet` | anthropic/claude-sonnet-5 (explicit alias only; not default) |
+| `minimax` | minimax/minimax-m3 (explicit challenger only) |
 | `fable` | anthropic/claude-fable-5 (explicit challenger only) |
-| `flash` | google/gemini-3-flash-preview |
+| `flash` | google/gemini-3.5-flash |
 
 ### API Endpoint
 

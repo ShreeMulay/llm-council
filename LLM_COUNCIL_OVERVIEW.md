@@ -42,10 +42,10 @@ Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques
 |--------|------|-----------|
 | **Claude Opus 4.8** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Upgraded to 4.8 on May 29 2026 — improved reasoning and software engineering. Ensures outputs are clean, practical, and well-structured. |
 | **GPT-5.5** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
-| **GLM-5.2** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation via OpenRouter/Z.ai. Ensures solutions actually work in practice. |
+| **Fireworks GLM-5.2 xHigh** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation through Fireworks direct routing with xHigh reasoning. Promoted after the 2026-07-04 benchmark tied z-ai GLM quality while improving latency under the cost gate. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
 | **Grok 4.3** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks. |
-| **Kimi K2.6** | **Long-context Generalist** | Long-context review and synthesis through Fireworks direct routing. |
+| **Kimi K2.7 Code** | **Long-context/Coding Generalist** | Long-context review, coding/debugging, and synthesis through Fireworks direct routing. Promoted after the 2026-07-04 benchmark beat Kimi K2.6 overall while tying coding/debugging and improving speed. |
 | **DeepSeek V4 Pro** | **Code & Math Specialist** | Rigorous code, math, and structured reasoning; priority evaluator. |
 | **Llama 4 Maverick** | **Open-weight Generalist** | Open-weight perspective for diversity and practical critique. |
 | **Qwen 3.7 Max** | **Multilingual Specialist** | Multilingual and agentic/tool-use perspective via OpenRouter. |
@@ -54,7 +54,11 @@ Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques
 
 | Alias | Model | Notes |
 |-------|-------|-------|
-| `glm-fw` | `fireworks/glm-5.2` | Fireworks GLM-5.2 xHigh challenger only, pending benchmark promotion; default `glm` and production rosters remain on `z-ai/glm-5.2`. |
+| `glm-zai` | `z-ai/glm-5.2` | Explicit legacy GLM baseline after Fireworks GLM-5.2 xHigh promotion. |
+| `kimi26` | `fireworks/kimi-k2.6` | Explicit legacy Kimi baseline after Kimi K2.7 Code promotion. |
+| `minimax` | `minimax/minimax-m3` | Explicit challenger only; MiniMax beat Llama quality in the 2026-07-04 benchmark but failed latency/cost gates, so Llama 4 Maverick remains default. |
+| `fable` | `anthropic/claude-fable-5` | Explicit challenger only; never default or chairman in this roster refresh. |
+| `sonnet` | `anthropic/claude-sonnet-5` | Convenience alias only; not a default council member. |
 
 ## Use Cases
 

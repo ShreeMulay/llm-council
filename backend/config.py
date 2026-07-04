@@ -43,20 +43,20 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
 # 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
 # 2. Claude Opus 4.8 via OpenRouter (Lead Coder + Chairman, reasoning: xhigh)
-# 3. GLM-5.2 via OpenRouter/Z.ai (Tool Specialist)
+# 3. GLM-5.2 xHigh via Fireworks Direct (Tool Specialist)
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
 # 5. Grok 4.3 via xAI Direct (Real-time Intel)
-# 6. Kimi K2.6 via Fireworks Direct (Long-Context Specialist)
+# 6. Kimi K2.7 Code via Fireworks Direct (Long-Context Specialist)
 # 7. DeepSeek V4 Pro via OpenRouter (Deep Reasoner)
 # 8. Llama 4 Maverick via OpenRouter (Open-Weights Leader)
 # 9. Qwen 3.7 Max via OpenRouter (Agentic/Tools Expert)
 ALL_MODEL_IDS = [
     "openai/gpt-5.5",
     "anthropic/claude-opus-4.8",
-    "z-ai/glm-5.2",
+    "fireworks/glm-5.2",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
-    "fireworks/kimi-k2.6",
+    "fireworks/kimi-k2.7-code",
     "deepseek/deepseek-v4-pro",
     "meta-llama/llama-4-maverick",
     "qwen/qwen3.7-max",
@@ -68,7 +68,7 @@ DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
 COMPACT_COUNCIL_MODELS = [
     "openai/gpt-5.5",
     "anthropic/claude-opus-4.8",
-    "z-ai/glm-5.2",
+    "fireworks/glm-5.2",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
 ]
@@ -171,12 +171,14 @@ OPENAI_MODEL_IDS = []
 MODEL_ALIASES = {
     "gpt": "openai/gpt-5.5",
     "opus": "anthropic/claude-opus-4.8",
-    "glm": "z-ai/glm-5.2",
+    "glm": "fireworks/glm-5.2",
     "glm-fw": "fireworks/glm-5.2",
+    "glm-zai": "z-ai/glm-5.2",
     "gemini": "google/gemini-3.1-pro-preview",
     "pro": "google/gemini-3.1-pro-preview",
     "grok": "x-ai/grok-4.3",
-    "kimi": "fireworks/kimi-k2.6",
+    "kimi": "fireworks/kimi-k2.7-code",
+    "kimi26": "fireworks/kimi-k2.6",
     "deepseek": "deepseek/deepseek-v4-pro",
     "llama": "meta-llama/llama-4-maverick",
     "qwen": "qwen/qwen3.7-max",
@@ -208,6 +210,7 @@ TIERED_TRUNCATION = {
         "fireworks/glm-5.2",
         "x-ai/grok-4.3",
         "fireworks/kimi-k2.6",
+        "fireworks/kimi-k2.7-code",
         "qwen/qwen3.7-max",
     ],
     "weak": [

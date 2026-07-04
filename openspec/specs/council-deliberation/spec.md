@@ -93,18 +93,26 @@ The system SHALL route queries to appropriate API providers.
 - **THEN** it uses OpenRouter API endpoint
 - **AND** uses OPENROUTER_API_KEY for authentication
 
-### Scenario: Route Kimi to Fireworks Direct
+### Scenario: Route Kimi K2.7 Code to Fireworks Direct
 
-- **GIVEN** model ID is "fireworks/kimi-k2.6"
+- **GIVEN** model ID is "fireworks/kimi-k2.7-code"
 - **WHEN** querying model
 - **THEN** it uses the Fireworks API endpoint
 - **AND** uses FIREWORKS_API_KEY for authentication
 
-### Scenario: Route GLM 5.2 to OpenRouter
+### Scenario: Route default GLM 5.2 xHigh to Fireworks Direct
+
+- **GIVEN** model ID is "fireworks/glm-5.2"
+- **WHEN** querying model
+- **THEN** it uses the Fireworks API endpoint
+- **AND** sends configured xHigh reasoning effort
+
+### Scenario: Route legacy z-ai GLM 5.2 explicitly
 
 - **GIVEN** model ID is "z-ai/glm-5.2"
-- **WHEN** querying model
-- **THEN** it uses OpenRouter rather than Fireworks Direct
+- **WHEN** querying model explicitly
+- **THEN** it remains routable through OpenRouter
+- **AND** it is not part of default or compact production rosters
 
 ## Technical Implementation
 
@@ -114,10 +122,10 @@ The system SHALL route queries to appropriate API providers.
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.5",                 # OpenRouter
     "anthropic/claude-opus-4.8",      # OpenRouter + chairman
-    "z-ai/glm-5.2",                   # OpenRouter/Z.ai
+    "fireworks/glm-5.2",              # Fireworks direct + xHigh reasoning
     "google/gemini-3.1-pro-preview",  # OpenRouter
     "x-ai/grok-4.3",                  # xAI direct
-    "fireworks/kimi-k2.6",            # Fireworks direct
+    "fireworks/kimi-k2.7-code",       # Fireworks direct
     "deepseek/deepseek-v4-pro",       # OpenRouter
     "meta-llama/llama-4-maverick",    # OpenRouter
     "qwen/qwen3.7-max",               # OpenRouter
@@ -126,7 +134,7 @@ DEFAULT_COUNCIL_MODELS = [
 DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.8"
 ```
 
-Legacy explicit IDs such as `fireworks/glm-5.1` and `qwen/qwen3.5-122b-a10b` MAY remain routed through fallback maps for backward compatibility, but MUST NOT be default production roster members.
+Legacy explicit IDs such as `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through fallback maps or explicit aliases for backward compatibility, but MUST NOT be default production roster members.
 
 ### Cerebras Model IDs
 

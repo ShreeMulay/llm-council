@@ -1,0 +1,18 @@
+{
+  "allow_fallbacks": false,
+  "budget_usd": 5.0,
+  "clock_iso": "2026-07-04T07:22:29Z",
+  "estimated_judge_call_usd": 0.05,
+  "estimated_projected_spend_usd": 0.5,
+  "judge_call_count": 10,
+  "judge_id": "openrouter-gemini-3.1-pro-independent",
+  "judge_model": "google/gemini-3.1-pro-preview",
+  "max_tokens": 8192,
+  "prompt_count": 10,
+  "prompt_suite_path": null,
+  "run_dir": "benchmarks/runs/2026-07-04-roster-refresh-live",
+  "seed": 1,
+  "source_run_created_at": "2026-07-04T06:31:01Z",
+  "source_run_id": "2026-07-04-roster-refresh-live",
+  "temperature": 0.0
+}

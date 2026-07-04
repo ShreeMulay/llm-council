@@ -2,8 +2,8 @@
 
 Fireworks provides an OpenAI-compatible API for selected direct-provider models.
 
-Used as primary provider for: Kimi K2.6. Legacy explicit Fireworks GLM IDs remain
-available, with OpenRouter fallback to their Z.ai equivalents.
+Used as primary provider for: Fireworks GLM-5.2 xHigh and Kimi K2.7 Code.
+Legacy explicit Fireworks GLM/Kimi IDs remain available.
 """
 
 import asyncio

@@ -53,6 +53,13 @@ Promotion rules:
 - `glm-fw` MAY be promoted only if Fireworks GLM 5.2 xHigh beats z-ai GLM 5.2 by at least 0.25 judge-score points, or ties within 0.25 while improving latency, with estimated per-response cost no more than 2x z-ai GLM 5.2.
 - Fable 5 SHALL remain challenger-only regardless of score.
 
+Benchmark result decisions from `benchmarks/runs/2026-07-04-roster-refresh-live`:
+
+- Promote `fireworks/kimi-k2.7-code` over `fireworks/kimi-k2.6`: +0.50 independent judge score, coding/debugging tied, faster, and 1.2x cost.
+- Promote `fireworks/glm-5.2` as default GLM over `z-ai/glm-5.2`: judge score tied, Fireworks was faster, and 1.81x cost stayed under the 2x cap. It keeps xHigh reasoning through `MODEL_REASONING_EFFORT`.
+- Do not promote `minimax/minimax-m3`: quality beat Llama 4 Maverick, but latency/cost gates failed. Keep `minimax` explicit challenger-only and keep Llama 4 Maverick in the default roster.
+- Keep Claude Fable 5 challenger-only/non-default/non-chairman and Claude Sonnet 5 alias-only/non-default.
+
 ## Risks
 
 - Provider IDs or Fireworks account slugs may differ from advertised slugs and must be tested before production use.

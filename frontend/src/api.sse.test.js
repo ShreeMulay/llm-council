@@ -31,11 +31,13 @@ function testLargePayloadCanBeParsedAfterChunkReassembly() {
 }
 
 function testModelMetadataUsesRefreshedRoster() {
-  assert.equal(MODEL_INFO.glm.modelId, 'z-ai/glm-5.2');
-  assert.equal(MODEL_INFO.glm.name, 'GLM-5.2');
+  assert.equal(MODEL_INFO.glm.modelId, 'fireworks/glm-5.2');
+  assert.equal(MODEL_INFO.glm.name, 'Fireworks GLM-5.2 xHigh');
+  assert.equal(MODEL_INFO.glm.provider, 'Fireworks');
   assert.equal(MODEL_INFO['glm-fw'].modelId, 'fireworks/glm-5.2');
-  assert.notEqual(MODEL_INFO['glm-fw'].name, MODEL_INFO.glm.name);
-  assert.notEqual(MODEL_INFO['glm-fw'].provider, MODEL_INFO.glm.provider);
+  assert.equal(MODEL_INFO['glm-zai'].modelId, 'z-ai/glm-5.2');
+  assert.equal(MODEL_INFO.kimi.modelId, 'fireworks/kimi-k2.7-code');
+  assert.equal(MODEL_INFO.minimax.challenger, true);
   assert.equal(MODEL_INFO.qwen.modelId, 'qwen/qwen3.7-max');
   assert.equal(MODEL_INFO.qwen.name, 'Qwen 3.7 Max');
 }

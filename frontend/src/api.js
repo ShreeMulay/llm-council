@@ -38,9 +38,9 @@ export const MODEL_INFO = {
   },
   'glm': {
     id: 'glm',
-    modelId: 'z-ai/glm-5.2',
-    name: 'GLM-5.2',
-    provider: 'Z.ai / OpenRouter',
+    modelId: 'fireworks/glm-5.2',
+    name: 'Fireworks GLM-5.2 xHigh',
+    provider: 'Fireworks',
     color: '#3b82f6',
     bg: '#eff6ff',
     border: '#bfdbfe',
@@ -49,13 +49,24 @@ export const MODEL_INFO = {
   'glm-fw': {
     id: 'glm-fw',
     modelId: 'fireworks/glm-5.2',
-    name: 'GLM-5.2 xHigh',
-    provider: 'Fireworks challenger',
+    name: 'Fireworks GLM-5.2 xHigh',
+    provider: 'Fireworks',
     challenger: true,
     color: '#2563eb',
     bg: '#eff6ff',
     border: '#93c5fd',
     icon: '🎇',
+  },
+  'glm-zai': {
+    id: 'glm-zai',
+    modelId: 'z-ai/glm-5.2',
+    name: 'Z.ai GLM-5.2',
+    provider: 'Z.ai / OpenRouter',
+    challenger: true,
+    color: '#3b82f6',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    icon: '🎆',
   },
   'gemini': {
     id: 'gemini',
@@ -79,13 +90,24 @@ export const MODEL_INFO = {
   },
   'kimi': {
     id: 'kimi',
-    modelId: 'fireworks/kimi-k2.6',
-    name: 'Kimi K2.6',
-    provider: 'Moonshot',
+    modelId: 'fireworks/kimi-k2.7-code',
+    name: 'Kimi K2.7 Code',
+    provider: 'Fireworks / Moonshot',
     color: '#ec4899',
     bg: '#fdf2f8',
     border: '#fbcfe8',
     icon: '🌙',
+  },
+  'kimi26': {
+    id: 'kimi26',
+    modelId: 'fireworks/kimi-k2.6',
+    name: 'Kimi K2.6',
+    provider: 'Fireworks / Moonshot legacy',
+    challenger: true,
+    color: '#db2777',
+    bg: '#fdf2f8',
+    border: '#f9a8d4',
+    icon: '🌘',
   },
   'deepseek': {
     id: 'deepseek',
@@ -116,6 +138,17 @@ export const MODEL_INFO = {
     bg: '#eef2ff',
     border: '#e0e7ff',
     icon: '👑',
+  },
+  'minimax': {
+    id: 'minimax',
+    modelId: 'minimax/minimax-m3',
+    name: 'MiniMax M3',
+    provider: 'MiniMax / OpenRouter',
+    challenger: true,
+    color: '#0ea5e9',
+    bg: '#f0f9ff',
+    border: '#bae6fd',
+    icon: '🧪',
   }
 };
 
@@ -166,7 +199,10 @@ export function getModelInfo(modelId) {
     };
   }
   const lower = modelId.toLowerCase();
-  if (lower === 'glm-fw' || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm-fw'];
+  if (lower === 'glm-fw' || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
+  if (lower === 'glm-zai' || (lower.includes('z-ai') && lower.includes('glm'))) return MODEL_INFO['glm-zai'];
+  if (lower.includes('minimax')) return MODEL_INFO['minimax'];
+  if (lower === 'kimi26' || lower.includes('kimi-k2.6')) return MODEL_INFO['kimi26'];
   if (lower.includes('gpt') || lower.includes('openai')) return MODEL_INFO['gpt-5.5'];
   if (lower.includes('opus') || lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['opus'];
   if (lower.includes('glm')) return MODEL_INFO['glm'];
@@ -179,6 +215,7 @@ export function getModelInfo(modelId) {
   
   // Fireworks direct fallback
   if (lower.includes('fireworks')) {
+    if (lower.includes('kimi-k2.6')) return MODEL_INFO['kimi26'];
     if (lower.includes('kimi')) return MODEL_INFO['kimi'];
     return MODEL_INFO['glm'];
   }
@@ -218,7 +255,9 @@ export function toBackendModelIds(frontendIds) {
 export function toFrontendModelIds(backendIds) {
   const backendToFrontend = {};
   Object.values(MODEL_INFO).forEach(info => {
-    backendToFrontend[info.modelId] = info.id;
+    if (!backendToFrontend[info.modelId] || !info.challenger) {
+      backendToFrontend[info.modelId] = info.id;
+    }
   });
   return backendIds.map(id => backendToFrontend[id] || id);
 }

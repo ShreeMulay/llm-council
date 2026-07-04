@@ -5,9 +5,9 @@
 - [x] Implement benchmark variants and Kimi K2.7 Fireworks mapping.
 - [x] Implement Sonnet 5 alias-only update.
 - [x] Run mock benchmark and local unit gates.
-- [ ] Run PHI-free live benchmark under $25 cap with independent judge.
-- [ ] Apply benchmark-supported production roster swaps.
-- [ ] Update frontend/MCP/docs metadata for final accepted roster.
+- [x] Run PHI-free live benchmark under $25 cap with independent judge (`benchmarks/runs/2026-07-04-roster-refresh-live`).
+- [x] Apply benchmark-supported production roster swaps: Kimi K2.7 Code and Fireworks GLM-5.2 xHigh promoted; MiniMax not promoted.
+- [x] Update frontend/MCP/docs metadata for final accepted roster.
 - [ ] Run full local quality gates.
 - [ ] Deploy Cloud Run and smoke production.
 - [ ] Open Forgejo PR, pass CI, merge, mirror to GitHub.

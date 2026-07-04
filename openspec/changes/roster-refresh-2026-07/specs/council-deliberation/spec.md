@@ -23,10 +23,19 @@ AND the `kimi` alias MAY resolve to `fireworks/kimi-k2.7-code`.
 
 #### Scenario: GLM Fireworks promotion is gated
 
-GIVEN `glm-fw` is an explicit Fireworks GLM 5.2 xHigh challenger
+GIVEN `glm-fw` is an explicit Fireworks GLM 5.2 xHigh challenger before benchmark promotion
 WHEN the July 2026 benchmark shows Fireworks GLM 5.2 xHigh beats or ties `z-ai/glm-5.2` with acceptable latency and cost
 THEN the production `glm` slot MAY be promoted to `fireworks/glm-5.2`
 AND the benchmark result SHALL be documented.
+
+#### Scenario: July live benchmark result applies supported swaps only
+
+GIVEN live run `benchmarks/runs/2026-07-04-roster-refresh-live` passed the Kimi and GLM gates
+WHEN the production roster is resolved
+THEN `fireworks/kimi-k2.7-code` SHALL replace `fireworks/kimi-k2.6`
+AND `fireworks/glm-5.2` SHALL replace `z-ai/glm-5.2`
+AND `meta-llama/llama-4-maverick` SHALL remain in the default roster because MiniMax M3 failed cost/latency gates
+AND `minimax/minimax-m3`, `anthropic/claude-fable-5`, and `anthropic/claude-sonnet-5` SHALL NOT appear in default council models.
 
 ### Requirement: Claude Sonnet 5 SHALL be alias-only in this change
 
