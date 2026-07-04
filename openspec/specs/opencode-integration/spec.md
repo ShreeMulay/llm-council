@@ -60,6 +60,7 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 | `glm` | fireworks/glm-5.2 |
 | `glm-fw` | fireworks/glm-5.2 (legacy alias for default Fireworks GLM xHigh) |
 | `glm-zai` | z-ai/glm-5.2 (explicit legacy baseline) |
+| `fable` | anthropic/claude-fable-5 (default production council member/chairman; non-PHI unless verified BAA-safe route) |
 | `gemini`, `pro` | google/gemini-3.1-pro-preview |
 | `grok` | x-ai/grok-4.3 |
 | `kimi` | fireworks/kimi-k2.7-code |
@@ -69,7 +70,6 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 | `qwen` | qwen/qwen3.7-max |
 | `sonnet` | anthropic/claude-sonnet-5 (explicit alias only; not default) |
 | `minimax` | minimax/minimax-m3 (explicit challenger only) |
-| `fable` | anthropic/claude-fable-5 (explicit challenger only) |
 | `flash` | google/gemini-3.5-flash |
 
 ### API Endpoint

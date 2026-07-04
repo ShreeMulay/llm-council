@@ -17,7 +17,7 @@ uv run python -m backend.main
 | # | Model | Provider | Role | Tier | Special Settings |
 |---|-------|----------|------|------|------------------|
 | 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
-| 2 | Claude Opus 4.8 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
+| 2 | Claude Fable 5 | OpenRouter | Lead Coder + **Chairman** | Strong | `reasoning_effort: high`; non-PHI unless routed through a verified BAA-safe path |
 | 3 | Fireworks GLM-5.2 xHigh | Fireworks Direct | Tool Specialist | Medium | Promoted by 2026-07-04 benchmark; `reasoning_effort: xhigh` |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
 | 5 | Grok 4.3 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
@@ -28,12 +28,12 @@ uv run python -m backend.main
 
 ### Compact Mode (5 Models)
 
-Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Opus 4.8, GLM-5.2, Gemini 3.1 Pro, Grok 4.3.
+Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Fable 5, GLM-5.2, Gemini 3.1 Pro, Grok 4.3.
 
 ### Deliberation Architecture
 
 **Stage 1** — All 9 models respond in parallel (cached for 1 hour by model+prompt hash)
-**Stage 2** — Top 3 evaluators rank responses (Opus 4.8, DeepSeek V4 Pro, GPT-5.5-high):
+**Stage 2** — Top 3 evaluators rank responses (Fable 5-high, DeepSeek V4 Pro, GPT-5.5-high):
 - Self-exclusion: evaluators don't rank their own response
 - Randomized order: different label-to-model mapping per evaluator
 - Dynamic truncation: strong models 8K, medium 10K, weak 12K (inverse allocation)
@@ -42,8 +42,8 @@ Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5,
 
 ### Chairman Selection
 
-**Claude Opus 4.8** serves as chairman.
-Key reasoning: Synthesis > Reasoning, Constitutional AI reduces self-preference bias, "Strong but not supreme" separation of powers.
+**Claude Fable 5** serves as chairman with high reasoning effort.
+Safety: do not send PHI unless this model is routed through a verified BAA-safe path.
 
 ## API Endpoints
 
@@ -92,7 +92,7 @@ MCP Config:
 - `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Opus 4.8, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, Claude Fable 5 challenger, and fallbacks
+- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Fable 5, Claude Opus 4.8 compatibility, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, and fallbacks
 - `FIREWORKS_API_KEY` - For default Fireworks GLM-5.2 xHigh and Kimi K2.7 Code routing, plus explicit legacy Kimi K2.6
 - `GROK_API_KEY` - For Grok 4.3 via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
@@ -112,7 +112,7 @@ Use aliases in `/council` command:
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick
 - `qwen` -> qwen/qwen3.7-max
-- `fable` -> anthropic/claude-fable-5 (explicit challenger only; not default chairman)
+- `fable` -> anthropic/claude-fable-5 (default chairman/member; non-PHI unless routed through a verified BAA-safe path)
 - `sonnet` -> anthropic/claude-sonnet-5
 - `minimax` -> minimax/minimax-m3 (explicit challenger only; Llama remains default)
 - `flash` -> google/gemini-3.5-flash

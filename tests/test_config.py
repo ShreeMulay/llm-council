@@ -58,7 +58,7 @@ class TestResolveModelAlias:
     def test_qwen_alias(self):
         assert resolve_model_alias("qwen") == "qwen/qwen3.7-max"
 
-    def test_fable_alias_available_as_challenger(self):
+    def test_fable_alias_available_as_default_member(self):
         assert resolve_model_alias("fable") == "anthropic/claude-fable-5"
 
     def test_sonnet_alias(self):
@@ -99,6 +99,9 @@ class TestGetModelReasoningEffort:
     def test_fireworks_glm_5_2_xhigh(self):
         assert get_model_reasoning_effort("fireworks/glm-5.2") == "xhigh"
 
+    def test_fable_high(self):
+        assert get_model_reasoning_effort("anthropic/claude-fable-5") == "high"
+
     def test_unknown_model_returns_none(self):
         assert get_model_reasoning_effort("unknown/model") is None
 
@@ -138,8 +141,14 @@ class TestDefaultCouncilModels:
     def test_includes_gpt_5_5(self):
         assert "openai/gpt-5.5" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_opus_4_8(self):
-        assert "anthropic/claude-opus-4.8" in DEFAULT_COUNCIL_MODELS
+    def test_includes_fable_5(self):
+        assert "anthropic/claude-fable-5" in DEFAULT_COUNCIL_MODELS
+
+    def test_default_excludes_opus_4_8(self):
+        assert "anthropic/claude-opus-4.8" not in DEFAULT_COUNCIL_MODELS
+
+    def test_default_chairman_is_fable_5(self):
+        assert DEFAULT_CHAIRMAN_MODEL == "anthropic/claude-fable-5"
 
     def test_includes_glm_5_2(self):
         assert "fireworks/glm-5.2" in DEFAULT_COUNCIL_MODELS
@@ -178,10 +187,9 @@ class TestDefaultCouncilModels:
         assert "minimax/minimax-m3" not in DEFAULT_COUNCIL_MODELS
         assert "meta-llama/llama-4-maverick" in DEFAULT_COUNCIL_MODELS
 
-    def test_july_challengers_are_not_default_rosters_or_evaluators(self):
+    def test_july_challengers_except_promoted_fable_are_not_default_rosters_or_evaluators(self):
         excluded = {
             "anthropic/claude-sonnet-5",
-            "anthropic/claude-fable-5",
             "minimax/minimax-m3",
         }
 
@@ -189,9 +197,9 @@ class TestDefaultCouncilModels:
         assert excluded.isdisjoint(COMPACT_COUNCIL_MODELS)
         assert excluded.isdisjoint(EVALUATOR_PRIORITY)
 
-    def test_default_chairman_remains_opus_4_8(self):
-        assert DEFAULT_CHAIRMAN_MODEL == "anthropic/claude-opus-4.8"
-
+        assert "anthropic/claude-fable-5" in DEFAULT_COUNCIL_MODELS
+        assert "anthropic/claude-fable-5" in COMPACT_COUNCIL_MODELS
+        assert EVALUATOR_PRIORITY[0] == "anthropic/claude-fable-5"
 
 class TestCompactCouncilModels:
     """Test compact council uses refreshed core roster."""
@@ -205,6 +213,12 @@ class TestCompactCouncilModels:
     def test_excludes_zai_glm_5_2(self):
         assert "z-ai/glm-5.2" not in COMPACT_COUNCIL_MODELS
 
+    def test_includes_fable_5(self):
+        assert "anthropic/claude-fable-5" in COMPACT_COUNCIL_MODELS
+
+    def test_excludes_opus_4_8(self):
+        assert "anthropic/claude-opus-4.8" not in COMPACT_COUNCIL_MODELS
+
     def test_excludes_legacy_glm_5_1(self):
         assert "fireworks/glm-5.1" not in COMPACT_COUNCIL_MODELS
 
@@ -215,8 +229,8 @@ class TestEvaluatorPriority:
     def test_has_3_evaluators(self):
         assert len(EVALUATOR_PRIORITY) == 3
 
-    def test_opus_first(self):
-        assert EVALUATOR_PRIORITY[0] == "anthropic/claude-opus-4.8"
+    def test_fable_first(self):
+        assert EVALUATOR_PRIORITY[0] == "anthropic/claude-fable-5"
 
     def test_deepseek_second(self):
         assert EVALUATOR_PRIORITY[1] == "deepseek/deepseek-v4-pro"
@@ -232,9 +246,14 @@ class TestTieredTruncation:
         """Strong models (concise) get less space."""
         # These functions don't exist yet — they will be added to config.py
         from backend.config import calculate_max_response_chars
-        assert calculate_max_response_chars("anthropic/claude-opus-4.8", 9) == 8000
+        assert calculate_max_response_chars("anthropic/claude-fable-5", 9) == 8000
         assert calculate_max_response_chars("openai/gpt-5.5", 9) == 8000
         assert calculate_max_response_chars("deepseek/deepseek-v4-pro", 9) == 8000
+
+    def test_legacy_opus_stays_strong_for_backcompat(self):
+        """Explicit Opus usage keeps its historical truncation tier."""
+        from backend.config import calculate_max_response_chars
+        assert calculate_max_response_chars("anthropic/claude-opus-4.8", 9) == 8000
 
     def test_medium_models_get_10k(self):
         """Medium models get moderate space."""
@@ -255,7 +274,7 @@ class TestTieredTruncation:
     def test_compact_mode_all_get_12k(self):
         """With 5 models (compact), all get maximum space."""
         from backend.config import calculate_max_response_chars
-        assert calculate_max_response_chars("anthropic/claude-opus-4.8", 5) == 12000
+        assert calculate_max_response_chars("anthropic/claude-fable-5", 5) == 12000
         assert calculate_max_response_chars("z-ai/glm-5.2", 5) == 12000
 
     def test_unknown_model_defaults_to_12k(self):
@@ -305,7 +324,7 @@ class TestOpenRouterFallbackMap:
     def test_legacy_qwen_3_5_keeps_explicit_fallback(self):
         assert get_openrouter_fallback("qwen/qwen3.5-122b-a10b") == "qwen/qwen3.5-122b-a10b"
 
-    def test_fable_challenger_routes_to_openrouter_id(self):
+    def test_fable_routes_to_openrouter_id(self):
         assert get_openrouter_fallback("anthropic/claude-fable-5") == "anthropic/claude-fable-5"
 
 

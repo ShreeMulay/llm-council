@@ -42,7 +42,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # Council Models - 9 models for deliberation
 # Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
 # 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
-# 2. Claude Opus 4.8 via OpenRouter (Lead Coder + Chairman, reasoning: xhigh)
+# 2. Claude Fable 5 via OpenRouter (Lead Coder + Chairman, reasoning: high)
 # 3. GLM-5.2 xHigh via Fireworks Direct (Tool Specialist)
 # 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
 # 5. Grok 4.3 via xAI Direct (Real-time Intel)
@@ -52,7 +52,7 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta"
 # 9. Qwen 3.7 Max via OpenRouter (Agentic/Tools Expert)
 ALL_MODEL_IDS = [
     "openai/gpt-5.5",
-    "anthropic/claude-opus-4.8",
+    "anthropic/claude-fable-5",
     "fireworks/glm-5.2",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
@@ -67,15 +67,15 @@ DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
 # Core 5 models for compact mode (faster/cheaper)
 COMPACT_COUNCIL_MODELS = [
     "openai/gpt-5.5",
-    "anthropic/claude-opus-4.8",
+    "anthropic/claude-fable-5",
     "fireworks/glm-5.2",
     "google/gemini-3.1-pro-preview",
     "x-ai/grok-4.3",
 ]
 
 # Chairman Model - synthesizes final response
-# Claude Opus 4.8 for best synthesis capability
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.8"
+# Claude Fable 5 for best synthesis capability
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
 
 # Override via environment
 COUNCIL_MODELS = (
@@ -191,7 +191,7 @@ MODEL_ALIASES = {
 # Evaluator priority list — models best at critical evaluation
 # Stage 2 uses top 3 from this list that are present in the active council
 EVALUATOR_PRIORITY = [
-    "anthropic/claude-opus-4.8",
+    "anthropic/claude-fable-5",
     "deepseek/deepseek-v4-pro",
     "openai/gpt-5.5",
 ]
@@ -200,7 +200,8 @@ EVALUATOR_PRIORITY = [
 # Strong models are concise; weaker models need more tokens for same quality
 TIERED_TRUNCATION = {
     "strong": [
-        "anthropic/claude-opus-4.8",
+        "anthropic/claude-fable-5",
+        "anthropic/claude-opus-4.8",  # backward compat for explicit Opus usage
         "openai/gpt-5.5",
         "deepseek/deepseek-v4-pro",
     ],
@@ -292,13 +293,15 @@ def calculate_max_response_chars(model_id: str, num_models: int) -> int:
 
 # Per-model reasoning effort for OpenRouter requests.
 # GPT-5.5 dual-mode: medium for Stage 1 (responder), high for Stage 2 (evaluator)
-# Opus 4.8 supports xhigh effort level (low < medium < high < xhigh < max).
+# Fable 5 uses high effort as the default chairman/evaluator.
+# Opus 4.8 keeps xhigh for backward-compatible explicit usage.
 # Validated 2026-05-29: reasoning_effort=xhigh is honored by Opus 4.8 via
 # OpenRouter native Anthropic provider (enables thinking, no API error).
 # Models not listed use provider default (no reasoning_effort sent).
 MODEL_REASONING_EFFORT = {
     "openai/gpt-5.5": "medium",
     "openai/gpt-5.5-evaluator": "high",
+    "anthropic/claude-fable-5": "high",
     "anthropic/claude-opus-4.8": "xhigh",
     "anthropic/claude-opus-4.7": "xhigh",  # backward compat for stored configs
     "fireworks/glm-5.2": "xhigh",

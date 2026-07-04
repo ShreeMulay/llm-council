@@ -30,7 +30,7 @@ Council members review and rank each other's responses based on:
 This internal quality control surfaces the best ideas while identifying weaknesses and edge cases.
 
 ### Stage 3: Chairman Synthesis (~1-2 minutes)
-Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques to produce a final, unified solution that:
+Claude Fable 5, serving as Chairman, reviews all ranked responses and critiques to produce a final, unified solution that:
 - Integrates the strongest elements from each perspective
 - Resolves contradictions between approaches
 - Delivers a polished, implementation-ready answer
@@ -40,7 +40,7 @@ Claude Opus 4.8, serving as Chairman, reviews all ranked responses and critiques
 
 | Member | Role | Specialty |
 |--------|------|-----------|
-| **Claude Opus 4.8** | **Chairman & Lead Coder** | Synthesis, code architecture, and final decision-making. Upgraded to 4.8 on May 29 2026 — improved reasoning and software engineering. Ensures outputs are clean, practical, and well-structured. |
+| **Claude Fable 5** | **Chairman & Lead Coder** | Default production synthesis, code architecture, and final decision-making with high reasoning effort. Non-PHI unless routed through a verified BAA-safe path. Ensures outputs are clean, practical, and well-structured. |
 | **GPT-5.5** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
 | **Fireworks GLM-5.2 xHigh** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation through Fireworks direct routing with xHigh reasoning. Promoted after the 2026-07-04 benchmark tied z-ai GLM quality while improving latency under the cost gate. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |

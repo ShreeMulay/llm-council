@@ -46,7 +46,7 @@ When users query the system, it proceeds in 3 stages:
 - **Model Cache**: JSON in `data/cache/models.json`
 
 ### API Providers
-- **OpenRouter**: Claude Opus, Gemini Flash, Grok
+- **OpenRouter**: Claude Fable (default), Claude Opus (explicit/backcompat), Gemini Flash, Grok
 - **Cerebras**: GLM 4.7 (direct)
 
 ## Model Configuration
@@ -54,14 +54,14 @@ When users query the system, it proceeds in 3 stages:
 ### Council Members (4 models)
 | Model | Provider | Alias |
 |-------|----------|-------|
-| anthropic/claude-opus-4.8 | OpenRouter | `opus` |
+| anthropic/claude-fable-5 | OpenRouter | `fable` |
 | google/gemini-3-flash-preview | OpenRouter | `gemini`, `flash` |
 | x-ai/grok-4.1-fast | OpenRouter | `grok` |
 | zai-glm-4.7 | Cerebras | `glm` |
 
 ### Chairman
-- **Model**: anthropic/claude-opus-4.8
-- **Rationale**: Best synthesis and reasoning capability
+- **Model**: anthropic/claude-fable-5
+- **Rationale**: Default production synthesis and reasoning capability with `reasoning_effort="high"`; non-PHI unless routed through a verified BAA-safe path
 
 ## API Design
 

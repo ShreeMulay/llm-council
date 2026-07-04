@@ -121,7 +121,7 @@ The system SHALL route queries to appropriate API providers.
 ```python
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.5",                 # OpenRouter
-    "anthropic/claude-opus-4.8",      # OpenRouter + chairman
+    "anthropic/claude-fable-5",       # OpenRouter + chairman
     "fireworks/glm-5.2",              # Fireworks direct + xHigh reasoning
     "google/gemini-3.1-pro-preview",  # OpenRouter
     "x-ai/grok-4.3",                  # xAI direct
@@ -131,10 +131,12 @@ DEFAULT_COUNCIL_MODELS = [
     "qwen/qwen3.7-max",               # OpenRouter
 ]
 
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-opus-4.8"
+DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
 ```
 
-Legacy explicit IDs such as `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through fallback maps or explicit aliases for backward compatibility, but MUST NOT be default production roster members.
+`anthropic/claude-fable-5` SHALL be the default production Anthropic council member, lead evaluator, and chairman with `reasoning_effort="high"`. Fable MUST NOT be used for PHI unless routed through a verified BAA-safe path.
+
+Legacy explicit IDs such as `anthropic/claude-opus-4.8`, `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through aliases/fallback maps for backward compatibility, but MUST NOT be default production roster members.
 
 ### Cerebras Model IDs
 
