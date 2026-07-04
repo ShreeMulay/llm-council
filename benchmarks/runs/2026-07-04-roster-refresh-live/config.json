@@ -1,0 +1,151 @@
+{
+  "blocked_variants": [],
+  "budget": {
+    "cap_usd": 25.0,
+    "observed_spend_usd": 1.3765054200000004,
+    "stop_reason": null,
+    "stopped": false
+  },
+  "created_at": "2026-07-04T06:31:01Z",
+  "mode": "live",
+  "probe_gated_variants": false,
+  "probe_results": [],
+  "probe_support": {},
+  "promotion_thresholds": {
+    "glm-fw-vs-z-ai-glm": {
+      "baseline_variant_id": "openrouter-z-ai-glm-5.2",
+      "candidate_variant_id": "fireworks-glm-5.2-xhigh",
+      "max_estimated_cost_multiplier": 2.0,
+      "tie_requires_latency_improvement": true,
+      "tie_window_mean_score_delta": 0.25,
+      "win_min_mean_score_delta": 0.25
+    },
+    "kimi2.7-vs-kimi2.6": {
+      "baseline_variant_id": "fireworks-kimi-k2.6",
+      "candidate_variant_id": "fireworks-kimi-k2.7-code",
+      "coding_debugging_subset_min_delta": 0.0,
+      "min_mean_score_delta": -0.25
+    },
+    "minimax-vs-llama": {
+      "baseline_variant_id": "openrouter-llama-4-maverick",
+      "candidate_variant_id": "openrouter-minimax-m3",
+      "max_estimated_cost_multiplier": 2.0,
+      "max_median_latency_multiplier": 2.0,
+      "min_mean_score_delta": 0.0
+    }
+  },
+  "prompt_suite": {
+    "path": "benchmarks/prompts/internal_suite_v1.json",
+    "suite_id": "internal_suite_v1",
+    "version": 1
+  },
+  "run_id": "2026-07-04-roster-refresh-live",
+  "seed": 0,
+  "settings": {
+    "allow_fallbacks": false,
+    "max_tokens": 2048,
+    "temperature": 0.2,
+    "trials": 2
+  },
+  "variant_set": "july-2026-roster",
+  "variants": [
+    {
+      "allow_fallbacks": false,
+      "display_name": "Llama 4 Maverick baseline via OpenRouter",
+      "model_id": "meta-llama/llama-4-maverick",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 0.3,
+        "output_per_million_usd": 0.6,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": null,
+      "variant_id": "openrouter-llama-4-maverick"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "MiniMax M3 challenger via OpenRouter",
+      "model_id": "minimax/minimax-m3",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 0.3,
+        "output_per_million_usd": 1.2,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": null,
+      "variant_id": "openrouter-minimax-m3"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "Kimi K2.6 baseline via Fireworks",
+      "model_id": "fireworks/kimi-k2.6",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 0.6,
+        "output_per_million_usd": 2.5,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "fireworks",
+      "reasoning_effort": null,
+      "variant_id": "fireworks-kimi-k2.6"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "Kimi K2.7 Code challenger via Fireworks",
+      "model_id": "fireworks/kimi-k2.7-code",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 0.8,
+        "output_per_million_usd": 4.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "fireworks",
+      "reasoning_effort": null,
+      "variant_id": "fireworks-kimi-k2.7-code"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "z-ai GLM-5.2 production baseline via OpenRouter",
+      "model_id": "z-ai/glm-5.2",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 0.91,
+        "output_per_million_usd": 2.86,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": null,
+      "variant_id": "openrouter-z-ai-glm-5.2"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "Fireworks GLM-5.2 xHigh challenger",
+      "model_id": "fireworks/glm-5.2",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 1.4,
+        "output_per_million_usd": 4.4,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "fireworks",
+      "reasoning_effort": "xhigh",
+      "variant_id": "fireworks-glm-5.2-xhigh"
+    },
+    {
+      "allow_fallbacks": false,
+      "display_name": "Claude Fable 5 challenger via OpenRouter",
+      "model_id": "anthropic/claude-fable-5",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 10.0,
+        "output_per_million_usd": 50.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "medium",
+      "variant_id": "openrouter-claude-fable-5"
+    }
+  ]
+}

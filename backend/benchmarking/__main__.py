@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from .models import VARIANT_SETS
 from .runner import BenchmarkRunConfig, run_benchmark
 
 
@@ -17,6 +18,12 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--budget-usd", type=float, default=25.0)
     parser.add_argument("--prompt-suite", type=Path, default=Path("benchmarks/prompts/internal_suite_v1.json"))
+    parser.add_argument(
+        "--variant-set",
+        choices=sorted(VARIANT_SETS),
+        default="default",
+        help="Named benchmark variant set to run; default preserves existing June reasoning-ladder behavior.",
+    )
     parser.add_argument(
         "--probe-gated-variants",
         action="store_true",
@@ -36,6 +43,7 @@ def main() -> None:
             seed=args.seed,
             budget_usd=args.budget_usd,
             prompt_suite_path=args.prompt_suite,
+            variant_set=args.variant_set,
             probe_gated_variants=args.probe_gated_variants,
             trials=args.trials,
             max_tokens=args.max_tokens,

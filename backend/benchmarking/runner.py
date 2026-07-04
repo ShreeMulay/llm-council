@@ -11,7 +11,12 @@ from .artifacts import write_artifacts
 from .budget import BudgetGuard
 from .costs import compute_cost, output_tokens_per_second
 from .judge import generate_mock_judge_scores
-from .models import BenchmarkVariant, resolve_default_variants
+from .models import (
+    DEFAULT_VARIANT_SET,
+    BenchmarkVariant,
+    promotion_thresholds_for_variant_set,
+    resolve_benchmark_variants,
+)
 from .probes import configured_probe_results, probe_support_map, run_support_probes
 from .prompts import DEFAULT_PROMPT_SUITE_PATH, load_prompt_suite
 
@@ -37,6 +42,7 @@ class BenchmarkRunConfig:
     probe_gated_variants: bool = False
     probe_timeout_seconds: float = 30.0
     mock_judging_enabled: bool = True
+    variant_set: str = DEFAULT_VARIANT_SET
 
 
 @dataclass(frozen=True)
@@ -68,7 +74,7 @@ async def _run_benchmark_async(config: BenchmarkRunConfig) -> BenchmarkRunSummar
     if config.mode == "live" and config.probe_gated_variants:
         probe_details = await run_support_probes(timeout=config.probe_timeout_seconds)
         effective_probe_results.update(probe_support_map(probe_details))
-    resolution = resolve_default_variants(effective_probe_results)
+    resolution = resolve_benchmark_variants(config.variant_set, effective_probe_results)
     budget = BudgetGuard(config.budget_usd)
     results: list[dict[str, Any]] = []
 
@@ -92,6 +98,7 @@ async def _run_benchmark_async(config: BenchmarkRunConfig) -> BenchmarkRunSummar
     artifact_config = {
         "run_id": config.run_id,
         "mode": config.mode,
+        "variant_set": config.variant_set,
         "created_at": config.clock_iso,
         "seed": config.seed,
         "prompt_suite": {
@@ -104,6 +111,7 @@ async def _run_benchmark_async(config: BenchmarkRunConfig) -> BenchmarkRunSummar
         "probe_gated_variants": config.probe_gated_variants,
         "probe_results": [result.to_dict() for result in probe_details],
         "probe_support": effective_probe_results,
+        "promotion_thresholds": promotion_thresholds_for_variant_set(config.variant_set),
         "budget": budget.to_dict(),
         "settings": {
             "trials": config.trials,

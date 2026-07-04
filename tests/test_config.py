@@ -3,6 +3,7 @@
 
 from backend.config import (
     COMPACT_COUNCIL_MODELS,
+    DEFAULT_CHAIRMAN_MODEL,
     DEFAULT_COUNCIL_MODELS,
     EVALUATOR_PRIORITY,
     FIREWORKS_MODEL_IDS,
@@ -25,10 +26,13 @@ class TestResolveModelAlias:
         assert resolve_model_alias("opus") == "anthropic/claude-opus-4.8"
 
     def test_glm_alias(self):
-        assert resolve_model_alias("glm") == "z-ai/glm-5.2"
+        assert resolve_model_alias("glm") == "fireworks/glm-5.2"
 
     def test_glm_fireworks_alias(self):
         assert resolve_model_alias("glm-fw") == "fireworks/glm-5.2"
+
+    def test_glm_zai_legacy_alias(self):
+        assert resolve_model_alias("glm-zai") == "z-ai/glm-5.2"
 
     def test_gemini_alias(self):
         assert resolve_model_alias("gemini") == "google/gemini-3.1-pro-preview"
@@ -40,7 +44,10 @@ class TestResolveModelAlias:
         assert resolve_model_alias("grok") == "x-ai/grok-4.3"
 
     def test_kimi_alias(self):
-        assert resolve_model_alias("kimi") == "fireworks/kimi-k2.6"
+        assert resolve_model_alias("kimi") == "fireworks/kimi-k2.7-code"
+
+    def test_kimi26_legacy_alias(self):
+        assert resolve_model_alias("kimi26") == "fireworks/kimi-k2.6"
 
     def test_deepseek_alias(self):
         assert resolve_model_alias("deepseek") == "deepseek/deepseek-v4-pro"
@@ -55,7 +62,11 @@ class TestResolveModelAlias:
         assert resolve_model_alias("fable") == "anthropic/claude-fable-5"
 
     def test_sonnet_alias(self):
-        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-4.6"
+        assert resolve_model_alias("sonnet") == "anthropic/claude-sonnet-5"
+        assert MODEL_ALIASES["sonnet"] == "anthropic/claude-sonnet-5"
+
+    def test_minimax_alias_available_as_candidate(self):
+        assert resolve_model_alias("minimax") == "minimax/minimax-m3"
 
     def test_flash_alias(self):
         assert resolve_model_alias("flash") == "google/gemini-3.5-flash"
@@ -107,6 +118,9 @@ class TestIsFireworksModel:
     def test_kimi_k2_6(self):
         assert is_fireworks_model("fireworks/kimi-k2.6") is True
 
+    def test_kimi_k2_7_code(self):
+        assert is_fireworks_model("fireworks/kimi-k2.7-code") is True
+
     def test_fireworks_prefix(self):
         assert is_fireworks_model("fireworks/any-model") is True
 
@@ -128,7 +142,10 @@ class TestDefaultCouncilModels:
         assert "anthropic/claude-opus-4.8" in DEFAULT_COUNCIL_MODELS
 
     def test_includes_glm_5_2(self):
-        assert "z-ai/glm-5.2" in DEFAULT_COUNCIL_MODELS
+        assert "fireworks/glm-5.2" in DEFAULT_COUNCIL_MODELS
+
+    def test_excludes_zai_glm_5_2_from_default(self):
+        assert "z-ai/glm-5.2" not in DEFAULT_COUNCIL_MODELS
 
     def test_default_excludes_legacy_glm_5_1(self):
         assert "fireworks/glm-5.1" not in DEFAULT_COUNCIL_MODELS
@@ -139,8 +156,11 @@ class TestDefaultCouncilModels:
     def test_includes_grok_4_20(self):
         assert "x-ai/grok-4.3" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_kimi_k2_6(self):
-        assert "fireworks/kimi-k2.6" in DEFAULT_COUNCIL_MODELS
+    def test_includes_kimi_k2_7_code(self):
+        assert "fireworks/kimi-k2.7-code" in DEFAULT_COUNCIL_MODELS
+
+    def test_excludes_kimi_k2_6_from_default(self):
+        assert "fireworks/kimi-k2.6" not in DEFAULT_COUNCIL_MODELS
 
     def test_includes_deepseek_v4(self):
         assert "deepseek/deepseek-v4-pro" in DEFAULT_COUNCIL_MODELS
@@ -154,6 +174,24 @@ class TestDefaultCouncilModels:
     def test_default_excludes_legacy_qwen_3_5(self):
         assert "qwen/qwen3.5-122b-a10b" not in DEFAULT_COUNCIL_MODELS
 
+    def test_minimax_remains_challenger_only(self):
+        assert "minimax/minimax-m3" not in DEFAULT_COUNCIL_MODELS
+        assert "meta-llama/llama-4-maverick" in DEFAULT_COUNCIL_MODELS
+
+    def test_july_challengers_are_not_default_rosters_or_evaluators(self):
+        excluded = {
+            "anthropic/claude-sonnet-5",
+            "anthropic/claude-fable-5",
+            "minimax/minimax-m3",
+        }
+
+        assert excluded.isdisjoint(DEFAULT_COUNCIL_MODELS)
+        assert excluded.isdisjoint(COMPACT_COUNCIL_MODELS)
+        assert excluded.isdisjoint(EVALUATOR_PRIORITY)
+
+    def test_default_chairman_remains_opus_4_8(self):
+        assert DEFAULT_CHAIRMAN_MODEL == "anthropic/claude-opus-4.8"
+
 
 class TestCompactCouncilModels:
     """Test compact council uses refreshed core roster."""
@@ -162,7 +200,10 @@ class TestCompactCouncilModels:
         assert len(COMPACT_COUNCIL_MODELS) == 5
 
     def test_includes_glm_5_2(self):
-        assert "z-ai/glm-5.2" in COMPACT_COUNCIL_MODELS
+        assert "fireworks/glm-5.2" in COMPACT_COUNCIL_MODELS
+
+    def test_excludes_zai_glm_5_2(self):
+        assert "z-ai/glm-5.2" not in COMPACT_COUNCIL_MODELS
 
     def test_excludes_legacy_glm_5_1(self):
         assert "fireworks/glm-5.1" not in COMPACT_COUNCIL_MODELS
@@ -201,6 +242,7 @@ class TestTieredTruncation:
         assert calculate_max_response_chars("google/gemini-3.1-pro-preview", 9) == 10000
         assert calculate_max_response_chars("x-ai/grok-4.3", 9) == 10000
         assert calculate_max_response_chars("fireworks/kimi-k2.6", 9) == 10000
+        assert calculate_max_response_chars("fireworks/kimi-k2.7-code", 9) == 10000
         assert calculate_max_response_chars("fireworks/glm-5.2", 9) == 10000
 
     def test_weak_models_get_12k(self):
@@ -227,6 +269,9 @@ class TestFireworksModelIds:
 
     def test_includes_kimi_k2_6(self):
         assert "fireworks/kimi-k2.6" in FIREWORKS_MODEL_IDS
+
+    def test_includes_kimi_k2_7_code(self):
+        assert "fireworks/kimi-k2.7-code" in FIREWORKS_MODEL_IDS
 
     def test_includes_glm_5_2(self):
         assert "fireworks/glm-5.2" in FIREWORKS_MODEL_IDS

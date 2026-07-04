@@ -11,10 +11,14 @@ from backend.benchmarking.artifacts import (
     write_text_guarded,
 )
 from backend.benchmarking.costs import compute_cost
+from backend.benchmarking.independent_judge import DEFAULT_JUDGE_MODEL
 from backend.benchmarking.judge import build_blind_judge_payload
 from backend.benchmarking.models import (
+    JULY_2026_PROMOTION_THRESHOLDS,
+    JULY_2026_ROSTER_VARIANT_SET,
     BenchmarkVariant,
     PricingSnapshot,
+    resolve_benchmark_variants,
     resolve_default_variants,
 )
 from backend.benchmarking.probes import PROBE_TARGETS, ProbeResult, probe_target
@@ -24,6 +28,7 @@ from backend.benchmarking.runner import (
     _run_single,
     run_benchmark,
 )
+from backend.fireworks_client import FIREWORKS_MODEL_MAP
 from backend.main import app
 
 
@@ -83,6 +88,131 @@ def test_default_variant_expansion_probe_gates_unsupported_efforts():
     assert prices["openrouter-opus-4.8-max"].input_per_million_usd == 5.00
     assert prices["openrouter-opus-4.8-max"].output_per_million_usd == 25.00
     assert "approved benchmark plan/current lookup" in prices["fireworks-glm-5.2-default"].source
+
+
+def test_july_roster_variant_set_is_selectable_and_roster_neutral():
+    resolution = resolve_benchmark_variants(JULY_2026_ROSTER_VARIANT_SET)
+    variants = {variant.variant_id: variant for variant in resolution.variants}
+
+    assert set(variants) == {
+        "openrouter-llama-4-maverick",
+        "openrouter-minimax-m3",
+        "fireworks-kimi-k2.6",
+        "fireworks-kimi-k2.7-code",
+        "openrouter-z-ai-glm-5.2",
+        "fireworks-glm-5.2-xhigh",
+        "openrouter-claude-fable-5",
+    }
+    assert {variant.model_id for variant in variants.values()} == {
+        "meta-llama/llama-4-maverick",
+        "minimax/minimax-m3",
+        "fireworks/kimi-k2.6",
+        "fireworks/kimi-k2.7-code",
+        "z-ai/glm-5.2",
+        "fireworks/glm-5.2",
+        "anthropic/claude-fable-5",
+    }
+    assert not {
+        "openrouter-gpt-5.5-medium",
+        "openrouter-gpt-5.5-high",
+        "openrouter-gpt-5.5-xhigh",
+        "openrouter-opus-4.8-xhigh",
+        "openrouter-opus-4.8-max",
+    }.intersection(variants)
+    assert all(
+        variant.pricing.captured_at == "2026-07-04T00:00:00Z"
+        and "roster-refresh-2026-07" in variant.pricing.source
+        for variant in variants.values()
+    )
+    assert variants["openrouter-minimax-m3"].pricing.input_per_million_usd == 0.30
+    assert variants["openrouter-minimax-m3"].pricing.output_per_million_usd == 1.20
+    assert variants["openrouter-z-ai-glm-5.2"].pricing.input_per_million_usd == 0.91
+    assert variants["openrouter-z-ai-glm-5.2"].pricing.output_per_million_usd == 2.86
+    assert variants["openrouter-claude-fable-5"].reasoning_effort == "medium"
+    assert variants["openrouter-claude-fable-5"].pricing.input_per_million_usd == 10.00
+    assert variants["openrouter-claude-fable-5"].pricing.output_per_million_usd == 50.00
+
+
+def test_july_fireworks_variants_have_explicit_mappings():
+    resolution = resolve_benchmark_variants(JULY_2026_ROSTER_VARIANT_SET)
+    fireworks_model_ids = {
+        variant.model_id for variant in resolution.variants if variant.provider == "fireworks"
+    }
+
+    assert fireworks_model_ids
+    assert fireworks_model_ids.issubset(FIREWORKS_MODEL_MAP)
+    assert FIREWORKS_MODEL_MAP["fireworks/kimi-k2.7-code"] == (
+        "accounts/fireworks/models/kimi-k2p7-code"
+    )
+
+
+def test_unknown_fireworks_benchmark_variant_fails_closed_before_spend():
+    with pytest.raises(ValueError, match="explicit FIREWORKS_MODEL_MAP"):
+        resolve_benchmark_variants(
+            [
+                BenchmarkVariant(
+                    variant_id="fireworks-unknown-model",
+                    provider="fireworks",
+                    model_id="fireworks/unknown-model",
+                    display_name="Unknown Fireworks model",
+                    reasoning_effort=None,
+                    pricing=PricingSnapshot(
+                        input_per_million_usd=1.0,
+                        output_per_million_usd=1.0,
+                        source="test",
+                        captured_at="2026-07-04T00:00:00Z",
+                    ),
+                )
+            ]
+        )
+
+
+def test_independent_judge_default_is_not_july_candidate():
+    resolution = resolve_benchmark_variants(JULY_2026_ROSTER_VARIANT_SET)
+
+    assert DEFAULT_JUDGE_MODEL == "google/gemini-3.1-pro-preview"
+    assert DEFAULT_JUDGE_MODEL not in {variant.model_id for variant in resolution.variants}
+
+
+def test_july_promotion_thresholds_are_registered_in_mock_artifact(tmp_path: Path):
+    config = BenchmarkRunConfig(
+        mode="mock",
+        output_dir=tmp_path,
+        run_id="july-thresholds-run",
+        variant_set=JULY_2026_ROSTER_VARIANT_SET,
+        budget_usd=1.0,
+        fixed_prompt_tokens=1,
+        fixed_completion_tokens=1,
+    )
+
+    run = run_benchmark(config)
+    config_json = json.loads((run.run_dir / "config.json").read_text())
+
+    assert config_json["variant_set"] == JULY_2026_ROSTER_VARIANT_SET
+    assert config_json["promotion_thresholds"] == JULY_2026_PROMOTION_THRESHOLDS
+    assert config_json["promotion_thresholds"] == {
+        "minimax-vs-llama": {
+            "candidate_variant_id": "openrouter-minimax-m3",
+            "baseline_variant_id": "openrouter-llama-4-maverick",
+            "min_mean_score_delta": 0.0,
+            "max_median_latency_multiplier": 2.0,
+            "max_estimated_cost_multiplier": 2.0,
+        },
+        "kimi2.7-vs-kimi2.6": {
+            "candidate_variant_id": "fireworks-kimi-k2.7-code",
+            "baseline_variant_id": "fireworks-kimi-k2.6",
+            "min_mean_score_delta": -0.25,
+            "coding_debugging_subset_min_delta": 0.0,
+        },
+        "glm-fw-vs-z-ai-glm": {
+            "candidate_variant_id": "fireworks-glm-5.2-xhigh",
+            "baseline_variant_id": "openrouter-z-ai-glm-5.2",
+            "win_min_mean_score_delta": 0.25,
+            "tie_window_mean_score_delta": 0.25,
+            "tie_requires_latency_improvement": True,
+            "max_estimated_cost_multiplier": 2.0,
+        },
+    }
 
 
 def test_cost_math_uses_pricing_snapshot():

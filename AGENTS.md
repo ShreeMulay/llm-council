@@ -18,10 +18,10 @@ uv run python -m backend.main
 |---|-------|----------|------|------|------------------|
 | 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
 | 2 | Claude Opus 4.8 | OpenRouter | Lead Coder + **Chairman** | Strong | Dual-mode: medium Stage 1, xhigh Stage 2 |
-| 3 | GLM-5.2 | OpenRouter / Z.ai | Tool Specialist | Medium | Refreshed production GLM slot; legacy Fireworks GLM IDs remain explicit-only |
+| 3 | Fireworks GLM-5.2 xHigh | Fireworks Direct | Tool Specialist | Medium | Promoted by 2026-07-04 benchmark; `reasoning_effort: xhigh` |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
 | 5 | Grok 4.3 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
-| 6 | Kimi K2.6 | Fireworks Direct | Long-context Generalist | Medium | 3.4x faster via Fireworks |
+| 6 | Kimi K2.7 Code | Fireworks Direct | Long-context/Coding Generalist | Medium | Promoted by 2026-07-04 benchmark over Kimi K2.6 |
 | 7 | DeepSeek V4 Pro | OpenRouter | Code/Math Specialist | Strong | Evaluator priority #2 |
 | 8 | Llama 4 Maverick | OpenRouter | Open-weight Generalist | Weak | - |
 | 9 | Qwen 3.7 Max | OpenRouter | Multilingual Specialist | Medium | Refreshed production Qwen slot |
@@ -92,8 +92,8 @@ MCP Config:
 - `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Opus 4.8, GLM-5.2, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, Claude Fable 5 challenger, and fallbacks
-- `FIREWORKS_API_KEY` - For Kimi K2.6 primary routing and legacy explicit Fireworks GLM IDs
+- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Opus 4.8, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, Claude Fable 5 challenger, and fallbacks
+- `FIREWORKS_API_KEY` - For default Fireworks GLM-5.2 xHigh and Kimi K2.7 Code routing, plus explicit legacy Kimi K2.6
 - `GROK_API_KEY` - For Grok 4.3 via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
 
@@ -102,16 +102,19 @@ MCP Config:
 Use aliases in `/council` command:
 - `gpt` -> openai/gpt-5.5
 - `opus` -> anthropic/claude-opus-4.8
-- `glm` -> z-ai/glm-5.2
-- `glm-fw` -> fireworks/glm-5.2 (xHigh challenger only; pending benchmark promotion, not in default roster)
+- `glm` -> fireworks/glm-5.2 (default Fireworks GLM-5.2 xHigh)
+- `glm-fw` -> fireworks/glm-5.2 (legacy alias for default GLM)
+- `glm-zai` -> z-ai/glm-5.2 (explicit legacy baseline)
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
 - `grok` -> x-ai/grok-4.3
-- `kimi` -> fireworks/kimi-k2.6
+- `kimi` -> fireworks/kimi-k2.7-code
+- `kimi26` -> fireworks/kimi-k2.6 (explicit legacy baseline)
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick
 - `qwen` -> qwen/qwen3.7-max
 - `fable` -> anthropic/claude-fable-5 (explicit challenger only; not default chairman)
-- `sonnet` -> anthropic/claude-sonnet-4.6
+- `sonnet` -> anthropic/claude-sonnet-5
+- `minimax` -> minimax/minimax-m3 (explicit challenger only; Llama remains default)
 - `flash` -> google/gemini-3.5-flash
 
 ## Tech Stack

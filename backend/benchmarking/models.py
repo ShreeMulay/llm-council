@@ -2,10 +2,38 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 
 PRICING_SOURCE = "approved benchmark plan/current lookup snapshot for model-benchmark-harness"
 PRICING_CAPTURED_AT = "2026-06-20T00:00:00Z"
+JULY_2026_PRICING_SOURCE = "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+JULY_2026_PRICING_CAPTURED_AT = "2026-07-04T00:00:00Z"
+DEFAULT_VARIANT_SET = "default"
+JULY_2026_ROSTER_VARIANT_SET = "july-2026-roster"
+JULY_2026_PROMOTION_THRESHOLDS = {
+    "minimax-vs-llama": {
+        "candidate_variant_id": "openrouter-minimax-m3",
+        "baseline_variant_id": "openrouter-llama-4-maverick",
+        "min_mean_score_delta": 0.0,
+        "max_median_latency_multiplier": 2.0,
+        "max_estimated_cost_multiplier": 2.0,
+    },
+    "kimi2.7-vs-kimi2.6": {
+        "candidate_variant_id": "fireworks-kimi-k2.7-code",
+        "baseline_variant_id": "fireworks-kimi-k2.6",
+        "min_mean_score_delta": -0.25,
+        "coding_debugging_subset_min_delta": 0.0,
+    },
+    "glm-fw-vs-z-ai-glm": {
+        "candidate_variant_id": "fireworks-glm-5.2-xhigh",
+        "baseline_variant_id": "openrouter-z-ai-glm-5.2",
+        "win_min_mean_score_delta": 0.25,
+        "tie_window_mean_score_delta": 0.25,
+        "tie_requires_latency_improvement": True,
+        "max_estimated_cost_multiplier": 2.0,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -80,6 +108,15 @@ def _pricing(input_usd: float, output_usd: float) -> PricingSnapshot:
         output_per_million_usd=output_usd,
         source=PRICING_SOURCE,
         captured_at=PRICING_CAPTURED_AT,
+    )
+
+
+def _july_pricing(input_usd: float, output_usd: float) -> PricingSnapshot:
+    return PricingSnapshot(
+        input_per_million_usd=input_usd,
+        output_per_million_usd=output_usd,
+        source=JULY_2026_PRICING_SOURCE,
+        captured_at=JULY_2026_PRICING_CAPTURED_AT,
     )
 
 
@@ -158,14 +195,138 @@ DEFAULT_VARIANT_SPECS: tuple[VariantSpec, ...] = (
     ),
 )
 
+JULY_2026_ROSTER_VARIANT_SPECS: tuple[VariantSpec, ...] = (
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="openrouter-llama-4-maverick",
+            provider="openrouter",
+            model_id="meta-llama/llama-4-maverick",
+            display_name="Llama 4 Maverick baseline via OpenRouter",
+            reasoning_effort=None,
+            pricing=_july_pricing(0.30, 0.60),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="openrouter-minimax-m3",
+            provider="openrouter",
+            model_id="minimax/minimax-m3",
+            display_name="MiniMax M3 challenger via OpenRouter",
+            reasoning_effort=None,
+            pricing=_july_pricing(0.30, 1.20),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="fireworks-kimi-k2.6",
+            provider="fireworks",
+            model_id="fireworks/kimi-k2.6",
+            display_name="Kimi K2.6 baseline via Fireworks",
+            reasoning_effort=None,
+            pricing=_july_pricing(0.60, 2.50),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="fireworks-kimi-k2.7-code",
+            provider="fireworks",
+            model_id="fireworks/kimi-k2.7-code",
+            display_name="Kimi K2.7 Code challenger via Fireworks",
+            reasoning_effort=None,
+            pricing=_july_pricing(0.80, 4.00),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="openrouter-z-ai-glm-5.2",
+            provider="openrouter",
+            model_id="z-ai/glm-5.2",
+            display_name="z-ai GLM-5.2 production baseline via OpenRouter",
+            reasoning_effort=None,
+            pricing=_july_pricing(0.91, 2.86),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="fireworks-glm-5.2-xhigh",
+            provider="fireworks",
+            model_id="fireworks/glm-5.2",
+            display_name="Fireworks GLM-5.2 xHigh challenger",
+            reasoning_effort="xhigh",
+            pricing=_july_pricing(1.40, 4.40),
+        )
+    ),
+    VariantSpec(
+        BenchmarkVariant(
+            variant_id="openrouter-claude-fable-5",
+            provider="openrouter",
+            model_id="anthropic/claude-fable-5",
+            display_name="Claude Fable 5 challenger via OpenRouter",
+            reasoning_effort="medium",
+            pricing=_july_pricing(10.00, 50.00),
+        )
+    ),
+)
 
-def resolve_default_variants(probe_results: dict[str, bool] | None = None) -> VariantResolution:
-    """Resolve default variants, blocking support-probe-gated efforts fail-closed."""
+VARIANT_SETS = {
+    DEFAULT_VARIANT_SET: DEFAULT_VARIANT_SPECS,
+    JULY_2026_ROSTER_VARIANT_SET: JULY_2026_ROSTER_VARIANT_SPECS,
+}
+
+PROMOTION_THRESHOLDS_BY_VARIANT_SET = {
+    JULY_2026_ROSTER_VARIANT_SET: JULY_2026_PROMOTION_THRESHOLDS,
+}
+
+
+def promotion_thresholds_for_variant_set(variant_set: str) -> dict[str, dict[str, object]]:
+    """Return pre-registered promotion thresholds for a variant set."""
+    return PROMOTION_THRESHOLDS_BY_VARIANT_SET.get(variant_set, {})
+
+
+def resolve_benchmark_variants(
+    variant_set: str | Sequence[VariantSpec | BenchmarkVariant] = DEFAULT_VARIANT_SET,
+    probe_results: dict[str, bool] | None = None,
+) -> VariantResolution:
+    """Resolve benchmark variants, blocking gated efforts and invalid Fireworks IDs fail-closed."""
+    if isinstance(variant_set, str):
+        try:
+            specs = VARIANT_SETS[variant_set]
+        except KeyError as exc:
+            raise ValueError(f"unknown benchmark variant set: {variant_set}") from exc
+    else:
+        specs = tuple(
+            VariantSpec(item) if isinstance(item, BenchmarkVariant) else item
+            for item in variant_set
+        )
+
+    _validate_fireworks_mappings(specs)
+    return _resolve_variant_specs(specs, probe_results)
+
+
+def _validate_fireworks_mappings(specs: Sequence[VariantSpec]) -> None:
+    from backend.fireworks_client import FIREWORKS_MODEL_MAP
+
+    missing = sorted(
+        spec.variant.model_id
+        for spec in specs
+        if spec.variant.provider == "fireworks" and spec.variant.model_id not in FIREWORKS_MODEL_MAP
+    )
+    if missing:
+        raise ValueError(
+            "Fireworks benchmark variants require explicit FIREWORKS_MODEL_MAP entries: "
+            + ", ".join(missing)
+        )
+
+
+def _resolve_variant_specs(
+    specs: Sequence[VariantSpec],
+    probe_results: dict[str, bool] | None = None,
+) -> VariantResolution:
     probes = probe_results or {}
     variants: list[BenchmarkVariant] = []
     blocked: list[BlockedVariant] = []
 
-    for spec in DEFAULT_VARIANT_SPECS:
+    for spec in specs:
         variant = spec.variant
         if spec.probe_key and probes.get(spec.probe_key) is not True:
             blocked.append(
@@ -184,3 +345,8 @@ def resolve_default_variants(probe_results: dict[str, bool] | None = None) -> Va
         variants.append(variant)
 
     return VariantResolution(variants=variants, blocked=blocked)
+
+
+def resolve_default_variants(probe_results: dict[str, bool] | None = None) -> VariantResolution:
+    """Resolve default variants, blocking support-probe-gated efforts fail-closed."""
+    return resolve_benchmark_variants(DEFAULT_VARIANT_SET, probe_results)
