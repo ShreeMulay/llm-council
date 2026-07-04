@@ -1,6 +1,7 @@
 """Direct Anthropic API client for Claude models with OAuth support."""
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from .secrets import ANTHROPIC_API_KEY
 # Anthropic API endpoint
 ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_API_VERSION = "2023-06-01"
+logger = logging.getLogger("llm-council.anthropic")
 
 # OAuth configuration (from opencode-anthropic-auth plugin)
 ANTHROPIC_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
@@ -79,7 +81,7 @@ def save_oauth_credentials(auth_path: Path, access: str, refresh: str, expires: 
         }
         auth_path.write_text(json.dumps(data, indent=2))
     except Exception as e:
-        print(f"Warning: Could not save OAuth credentials: {e}")
+        logger.warning("Could not save Anthropic OAuth credentials: %s", e)
 
 
 async def refresh_oauth_token(refresh_token: str) -> dict | None:
@@ -96,7 +98,7 @@ async def refresh_oauth_token(refresh_token: str) -> dict | None:
         )
 
         if not response.is_success:
-            print(f"Token refresh failed: {response.status_code} - {response.text}")
+            logger.warning("Anthropic token refresh failed: %s", response.status_code)
             return None
 
         data = response.json()
@@ -123,7 +125,7 @@ async def get_valid_oauth_token() -> tuple[str, Path] | None:
     if not creds["refresh"]:
         return None
 
-    print("OAuth token expired, refreshing...")
+    logger.info("Anthropic OAuth token expired, refreshing")
     new_tokens = await refresh_oauth_token(creds["refresh"])
     if not new_tokens:
         return None
@@ -136,7 +138,7 @@ async def get_valid_oauth_token() -> tuple[str, Path] | None:
         new_tokens["expires"],
     )
 
-    print("OAuth token refreshed successfully")
+    logger.info("Anthropic OAuth token refreshed successfully")
     return new_tokens["access"], creds["auth_path"]
 
 
@@ -315,9 +317,7 @@ async def call_anthropic(
                 system_prompt=system_prompt,
             )
         except httpx.HTTPStatusError as e:
-            print(
-                f"OAuth call failed ({e.response.status_code}): {e.response.text[:200]}"
-            )
+            logger.warning("Anthropic OAuth call failed: %s", e.response.status_code)
             # Fall through to API key as a second attempt
 
     if not ANTHROPIC_API_KEY:

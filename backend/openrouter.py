@@ -1,6 +1,7 @@
 """OpenRouter API client for making LLM requests."""
 
 import asyncio
+import logging
 from typing import Any
 
 import httpx
@@ -11,6 +12,8 @@ from .config import (
     get_model_reasoning_effort,
 )
 from .secrets import OPENROUTER_API_KEY
+
+logger = logging.getLogger("llm-council.openrouter")
 
 
 async def query_model(
@@ -39,7 +42,7 @@ async def query_model(
         Response dict with 'content', 'usage', 'model', 'provider' or None if failed
     """
     if not OPENROUTER_API_KEY:
-        print("Error: OPENROUTER_API_KEY not configured")
+        logger.error("OPENROUTER_API_KEY not configured")
         return None
 
     headers = {
@@ -81,15 +84,13 @@ async def query_model(
             }
 
     except httpx.HTTPStatusError as e:
-        print(
-            f"HTTP error querying OpenRouter {model}: {e.response.status_code} - {e.response.text}"
-        )
+        logger.warning("HTTP error querying OpenRouter %s: %s", model, e.response.status_code)
         return None
     except httpx.RequestError as e:
-        print(f"Request error querying OpenRouter {model}: {e}")
+        logger.warning("Request error querying OpenRouter %s: %s", model, e)
         return None
     except Exception as e:
-        print(f"Error querying model {model}: {e}")
+        logger.warning("Error querying model %s: %s", model, e)
         return None
 
 
@@ -169,7 +170,7 @@ async def list_openrouter_models() -> list[dict[str, Any]]:
         List of model objects with id, name, pricing, context_length, etc.
     """
     if not OPENROUTER_API_KEY:
-        print("Error: OPENROUTER_API_KEY not configured")
+        logger.error("OPENROUTER_API_KEY not configured")
         return []
 
     headers = {
@@ -184,5 +185,5 @@ async def list_openrouter_models() -> list[dict[str, Any]]:
             data = response.json()
             return data.get("data", [])
     except Exception as e:
-        print(f"Error listing OpenRouter models: {e}")
+        logger.warning("Error listing OpenRouter models: %s", e)
         return []

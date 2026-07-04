@@ -1,5 +1,6 @@
 """Moonshot API client for direct queries to Kimi models."""
 
+import logging
 from typing import Any
 
 import httpx
@@ -7,6 +8,7 @@ import httpx
 from .secrets import MOONSHOT_API_KEY
 
 MOONSHOT_API_URL = "https://api.moonshot.ai/v1"
+logger = logging.getLogger("llm-council.moonshot")
 
 # Model ID mapping: council ID -> Moonshot model ID
 MOONSHOT_MODEL_MAP = {
@@ -29,7 +31,7 @@ async def query_moonshot_model(
 ) -> dict[str, Any] | None:
     """Query a Moonshot model directly via OpenAI-compatible API."""
     if not MOONSHOT_API_KEY:
-        print("Error: MOONSHOT_API_KEY not configured")
+        logger.error("MOONSHOT_API_KEY not configured")
         return None
 
     moonshot_model = get_moonshot_model_id(model_id)
@@ -63,8 +65,8 @@ async def query_moonshot_model(
                 "provider": "moonshot"
             }
         except httpx.HTTPStatusError as e:
-            print(f"HTTP error querying Moonshot {model_id}: {e.response.status_code} - {e.response.text[:200]}")
+            logger.warning("HTTP error querying Moonshot %s: %s", model_id, e.response.status_code)
             return None
         except Exception as e:
-            print(f"Error querying Moonshot {model_id}: {e}")
+            logger.warning("Error querying Moonshot %s: %s", model_id, e)
             return None

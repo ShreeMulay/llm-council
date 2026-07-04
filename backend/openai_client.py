@@ -1,6 +1,7 @@
 """Direct OpenAI API client for GPT models with Codex OAuth support."""
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,7 @@ import httpx
 
 # OpenAI API endpoint
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+logger = logging.getLogger("llm-council.openai")
 
 # OpenCode auth file locations (check multiple possible paths)
 OPENCODE_AUTH_PATHS = [
@@ -72,7 +74,7 @@ def save_oauth_credentials(
         }
         auth_path.write_text(json.dumps(data, indent=2))
     except Exception as e:
-        print(f"Warning: Could not save OpenAI OAuth credentials: {e}")
+        logger.warning("Could not save OpenAI OAuth credentials: %s", e)
 
 
 async def refresh_oauth_token(refresh_token: str) -> dict | None:
@@ -93,9 +95,7 @@ async def refresh_oauth_token(refresh_token: str) -> dict | None:
         )
 
         if not response.is_success:
-            print(
-                f"OpenAI token refresh failed: {response.status_code} - {response.text}"
-            )
+            logger.warning("OpenAI token refresh failed: %s", response.status_code)
             return None
 
         data = response.json()
@@ -126,7 +126,7 @@ async def get_valid_oauth_token() -> tuple[str, Path, str] | None:
     if not creds["refresh"]:
         return None
 
-    print("OpenAI OAuth token expired, refreshing...")
+    logger.info("OpenAI OAuth token expired, refreshing")
     new_tokens = await refresh_oauth_token(creds["refresh"])
     if not new_tokens:
         return None
@@ -140,7 +140,7 @@ async def get_valid_oauth_token() -> tuple[str, Path, str] | None:
         new_tokens["expires"],
     )
 
-    print("OpenAI OAuth token refreshed successfully")
+    logger.info("OpenAI OAuth token refreshed successfully")
     return new_tokens["access"], creds["auth_path"], creds["auth_key"]
 
 

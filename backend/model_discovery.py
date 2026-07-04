@@ -1,6 +1,7 @@
 """Dynamic model discovery from OpenRouter and Cerebras APIs."""
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,8 @@ import httpx
 
 from .config import CACHE_FILE, CACHE_TTL_SECONDS
 from .secrets import CEREBRAS_API_KEY, OPENROUTER_API_KEY
+
+logger = logging.getLogger("llm-council.model-discovery")
 
 
 class ModelDiscovery:
@@ -36,7 +39,7 @@ class ModelDiscovery:
             with open(self.cache_file, "w") as f:
                 json.dump(self._cache, f, indent=2)
         except OSError as e:
-            print(f"Warning: Could not save cache: {e}")
+            logger.warning("Could not save cache: %s", e)
 
     def _is_cache_valid(self, provider: str) -> bool:
         """Check if cache for a provider is still valid."""
@@ -58,7 +61,7 @@ class ModelDiscovery:
             return self._cache.get("openrouter", {}).get("models", [])
 
         if not OPENROUTER_API_KEY:
-            print("Error: OPENROUTER_API_KEY not configured")
+            logger.error("OPENROUTER_API_KEY not configured")
             return self._cache.get("openrouter", {}).get("models", [])
 
         try:
@@ -85,7 +88,7 @@ class ModelDiscovery:
 
             return models
         except Exception as e:
-            print(f"Error fetching OpenRouter models: {e}")
+            logger.warning("Error fetching OpenRouter models: %s", e)
             return self._cache.get("openrouter", {}).get("models", [])
 
     async def fetch_cerebras_models(self, force_refresh: bool = False) -> list[dict[str, Any]]:
@@ -102,7 +105,7 @@ class ModelDiscovery:
             return self._cache.get("cerebras", {}).get("models", [])
 
         if not CEREBRAS_API_KEY:
-            print("Error: CEREBRAS_API_KEY not configured")
+            logger.error("CEREBRAS_API_KEY not configured")
             return self._cache.get("cerebras", {}).get("models", [])
 
         # Estimated pricing for Cerebras models (per million tokens)
@@ -143,7 +146,7 @@ class ModelDiscovery:
 
             return models
         except Exception as e:
-            print(f"Error fetching Cerebras models: {e}")
+            logger.warning("Error fetching Cerebras models: %s", e)
             return self._cache.get("cerebras", {}).get("models", [])
 
     async def get_all_models(

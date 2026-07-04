@@ -1,10 +1,13 @@
 """Google Gemini API client for direct queries."""
 
+import logging
 from typing import Any
 
 import httpx
 
 from .secrets import GEMINI_API_KEY
+
+logger = logging.getLogger("llm-council.gemini")
 
 GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta"
 
@@ -43,7 +46,7 @@ async def query_gemini_model(
     timeout: float = 900.0,
 ) -> dict[str, Any] | None:
     if not GEMINI_API_KEY:
-        print("Error: GEMINI_API_KEY not configured")
+        logger.error("GEMINI_API_KEY not configured")
         return None
 
     gemini_model = get_gemini_model_id(model_id)
@@ -68,8 +71,7 @@ async def query_gemini_model(
         try:
             response = await client.post(
                 url,
-                params={"key": GEMINI_API_KEY},
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
                 json=payload,
             )
             response.raise_for_status()
@@ -77,7 +79,7 @@ async def query_gemini_model(
 
             candidates = data.get("candidates", [])
             if not candidates:
-                print(f"Gemini {model_id}: no candidates in response")
+                logger.warning("Gemini %s returned no candidates", model_id)
                 return None
 
             parts = candidates[0].get("content", {}).get("parts", [])
@@ -95,10 +97,12 @@ async def query_gemini_model(
                 "provider": "gemini",
             }
         except httpx.HTTPStatusError as e:
-            print(
-                f"HTTP error querying Gemini {model_id}: {e.response.status_code} - {e.response.text[:200]}"
+            logger.warning(
+                "HTTP error querying Gemini %s: %s",
+                model_id,
+                e.response.status_code,
             )
             return None
         except Exception as e:
-            print(f"Error querying Gemini {model_id}: {e}")
+            logger.warning("Error querying Gemini %s: %s", model_id, e)
             return None
