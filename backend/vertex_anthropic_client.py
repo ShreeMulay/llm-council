@@ -24,6 +24,11 @@ except ImportError:  # pragma: no cover
 
 logger = logging.getLogger("llm-council.vertex_anthropic")
 
+# The Anthropic Vertex SDK requires streaming for requests it predicts may run
+# longer than 10 minutes. The council currently uses non-streaming provider
+# calls, so cap Vertex max_tokens below that validation threshold.
+VERTEX_NON_STREAMING_MAX_TOKENS = 16_000
+
 
 def _extract_text(response: Any) -> str:
     """Extract visible text content from an Anthropic SDK response object/dict."""
@@ -75,7 +80,7 @@ def _query_vertex_anthropic_sync(
     client = AnthropicVertex(project_id=VERTEX_PROJECT_ID, region=VERTEX_LOCATION)
     payload: dict[str, Any] = {
         "model": vertex_model,
-        "max_tokens": max_tokens,
+        "max_tokens": min(max_tokens, VERTEX_NON_STREAMING_MAX_TOKENS),
         "messages": messages,
         "thinking": {"type": "adaptive", "display": "omitted"},
         "output_config": {"effort": get_model_reasoning_effort(model_id) or "high"},
@@ -87,7 +92,7 @@ def _query_vertex_anthropic_sync(
         # Older SDK/provider surfaces may not support thinking/output_config yet.
         fallback_payload = {
             "model": vertex_model,
-            "max_tokens": max_tokens,
+            "max_tokens": min(max_tokens, VERTEX_NON_STREAMING_MAX_TOKENS),
             "messages": messages,
         }
         response = client.messages.create(**fallback_payload)

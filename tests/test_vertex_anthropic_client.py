@@ -61,6 +61,32 @@ async def test_vertex_fable_payload_uses_high_effort_and_omitted_thinking(monkey
 
 
 @pytest.mark.asyncio
+async def test_vertex_fable_caps_non_streaming_max_tokens(monkeypatch):
+    calls = []
+
+    class FakeMessages:
+        def create(self, **payload):
+            calls.append(payload)
+            return FakeResponse()
+
+    class FakeAnthropicVertex:
+        def __init__(self, *args, **kwargs):
+            self.messages = FakeMessages()
+
+    monkeypatch.setattr("backend.vertex_anthropic_client.AnthropicVertex", FakeAnthropicVertex)
+    monkeypatch.setattr("backend.vertex_anthropic_client.VERTEX_PROJECT_ID", "covered-project")
+
+    result = await query_vertex_anthropic_model(
+        "anthropic/claude-fable-5",
+        [{"role": "user", "content": "test"}],
+        max_tokens=32768,
+    )
+
+    assert result is not None
+    assert calls[0]["max_tokens"] == 16000
+
+
+@pytest.mark.asyncio
 async def test_vertex_fable_returns_none_without_project(monkeypatch):
     class FailIfConstructed:
         def __init__(self, *args, **kwargs):
