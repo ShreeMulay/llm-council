@@ -26,6 +26,7 @@ OPENCODE_AUTH_PATHS = [
 
 # Model ID mapping: council ID -> Anthropic model ID
 ANTHROPIC_MODEL_MAP = {
+    "anthropic/claude-fable-5": "claude-fable-5",
     "anthropic/claude-opus-4.8": "claude-opus-4-8",
     "anthropic/claude-opus-4.7": "claude-opus-4-7",
     "anthropic/claude-opus-4.6": "claude-opus-4-6",
@@ -34,6 +35,7 @@ ANTHROPIC_MODEL_MAP = {
     "anthropic/claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
     "anthropic/claude-3.5-haiku": "claude-3-5-haiku-20241022",
     "claude-opus-4.8": "claude-opus-4-8",
+    "claude-fable-5": "claude-fable-5",
     "claude-opus-4.7": "claude-opus-4-7",
     "claude-opus-4.6": "claude-opus-4-6",
     "claude-opus-4.5": "claude-opus-4-20250514",

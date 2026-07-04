@@ -113,7 +113,7 @@ def build_chat_payload(
     }
 
     # Add reasoning_effort if configured for this model (e.g., GPT-5.5 Thinking,
-    # Opus 4.8 xhigh). Supports per-call override for dual-mode models.
+    # Fable 5 high, Opus 4.8 xhigh). Supports per-call override for dual-mode models.
     effective_reasoning = reasoning_effort or get_model_reasoning_effort(model)
     if effective_reasoning:
         payload["reasoning_effort"] = effective_reasoning

@@ -26,12 +26,22 @@ export const MODEL_INFO = {
     border: '#a7f3d0',
     icon: '⚡',
   },
+  'fable': {
+    id: 'fable',
+    modelId: 'anthropic/claude-fable-5',
+    name: 'Claude Fable 5',
+    provider: 'Anthropic',
+    color: '#f97316',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    icon: '📜',
+  },
   'opus': {
     id: 'opus',
     modelId: 'anthropic/claude-opus-4.8',
     name: 'Claude Opus 4.8',
     provider: 'Anthropic',
-    color: '#f97316',
+    color: '#fb923c',
     bg: '#fff7ed',
     border: '#fed7aa',
     icon: '🏺',
@@ -152,11 +162,18 @@ export const MODEL_INFO = {
   }
 };
 
-// Production model IDs in order. Challenger-only models stay opt-in and are
-// excluded from default/full council rosters.
-export const ALL_MODEL_IDS = Object.values(MODEL_INFO)
-  .filter((info) => !info.challenger)
-  .map((info) => info.id);
+// All default production model IDs in order (Opus remains in MODEL_INFO for backcompat)
+export const ALL_MODEL_IDS = [
+  'gpt-5.5',
+  'fable',
+  'glm',
+  'gemini',
+  'grok',
+  'kimi',
+  'deepseek',
+  'llama',
+  'qwen',
+];
 
 // Default active models (all 9)
 export const DEFAULT_ACTIVE_MODELS = ALL_MODEL_IDS;
@@ -171,17 +188,17 @@ export const MODEL_PRESETS = {
   compact: {
     name: 'Compact',
     icon: '⚡',
-    models: ['gpt-5.5', 'opus', 'glm', 'gemini', 'grok'],
+    models: ['gpt-5.5', 'fable', 'glm', 'gemini', 'grok'],
   },
   speed: {
     name: 'Speed',
     icon: '🚀',
-    models: ['gpt-5.5', 'opus', 'gemini'],
+    models: ['gpt-5.5', 'fable', 'gemini'],
   },
   minimal: {
     name: 'Minimal',
     icon: '🎯',
-    models: ['gpt-5.5', 'opus'],
+    models: ['gpt-5.5', 'fable'],
   },
 };
 
@@ -204,8 +221,10 @@ export function getModelInfo(modelId) {
   if (lower.includes('minimax')) return MODEL_INFO['minimax'];
   if (lower === 'kimi26' || lower.includes('kimi-k2.6')) return MODEL_INFO['kimi26'];
   if (lower.includes('gpt') || lower.includes('openai')) return MODEL_INFO['gpt-5.5'];
-  if (lower.includes('opus') || lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['opus'];
-  if (lower.includes('glm')) return MODEL_INFO['glm'];
+  if (lower.includes('fable')) return MODEL_INFO['fable'];
+  if (lower.includes('opus')) return MODEL_INFO['opus'];
+  if (lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['fable'];
+  if (lower.includes('glm') || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
   if (lower.includes('gemini') || lower.includes('google') || lower.includes('pro')) return MODEL_INFO['gemini'];
   if (lower.includes('grok') || lower.includes('x-ai') || lower.includes('xai')) return MODEL_INFO['grok'];
   if (lower.includes('kimi') || lower.includes('moonshot')) return MODEL_INFO['kimi'];

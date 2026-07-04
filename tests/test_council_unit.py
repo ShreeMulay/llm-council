@@ -86,14 +86,14 @@ class TestGetEvaluatorModels:
 
         council = [
             "openai/gpt-5.5",
-            "anthropic/claude-opus-4.8",
+            "anthropic/claude-fable-5",
             "deepseek/deepseek-v4-pro",
             "z-ai/glm-5.2",
         ]
         evaluators = get_evaluator_models(council)
 
         assert len(evaluators) == 3
-        assert evaluators[0] == "anthropic/claude-opus-4.8"
+        assert evaluators[0] == "anthropic/claude-fable-5"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
         assert evaluators[2] == "openai/gpt-5.5"
 
@@ -102,7 +102,7 @@ class TestGetEvaluatorModels:
         from backend.council import get_evaluator_models
 
         council = [
-            "anthropic/claude-opus-4.8",
+            "anthropic/claude-fable-5",
             "deepseek/deepseek-v4-pro",
             "z-ai/glm-5.2",
         ]
@@ -127,11 +127,11 @@ class TestGetEvaluatorModels:
         council = [
             "openai/gpt-5.5",  # priority 3
             "deepseek/deepseek-v4-pro",  # priority 2
-            "anthropic/claude-opus-4.8",  # priority 1
+            "anthropic/claude-fable-5",  # priority 1
         ]
         evaluators = get_evaluator_models(council)
 
-        assert evaluators[0] == "anthropic/claude-opus-4.8"
+        assert evaluators[0] == "anthropic/claude-fable-5"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
         assert evaluators[2] == "openai/gpt-5.5"
 
@@ -145,7 +145,7 @@ class TestSelfExclusion:
 
         responses = [
             {"model": "openai/gpt-5.5", "response": "GPT's answer"},
-            {"model": "anthropic/claude-opus-4.8", "response": "Claude's answer"},
+            {"model": "anthropic/claude-fable-5", "response": "Claude's answer"},
             {"model": "deepseek/deepseek-v4-pro", "response": "DeepSeek's answer"},
         ]
 
@@ -160,7 +160,7 @@ class TestSelfExclusion:
         from backend.council import filter_responses_for_evaluator
 
         responses = [
-            {"model": "anthropic/claude-opus-4.8", "response": "Claude's answer"},
+            {"model": "anthropic/claude-fable-5", "response": "Claude's answer"},
             {"model": "deepseek/deepseek-v4-pro", "response": "DeepSeek's answer"},
         ]
 

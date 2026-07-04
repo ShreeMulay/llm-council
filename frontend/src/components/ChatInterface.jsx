@@ -112,8 +112,8 @@ export default function ChatInterface({
                 <span className="roster-role">Anchor Reasoning</span>
               </div>
               <div className="roster-item anthropic">
-                <span className="roster-icon">🏺</span>
-                <span className="roster-name">Claude Opus 4.8</span>
+                <span className="roster-icon">📜</span>
+                <span className="roster-name">Claude Fable 5</span>
                 <span className="roster-role">Chairman & Coder</span>
               </div>
               <div className="roster-item fireworks">
