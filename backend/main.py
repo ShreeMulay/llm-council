@@ -449,8 +449,9 @@ async def council_stream(request: CouncilRequest):
                     )
 
                 yield f"data: {json.dumps(event)}\n\n"
-        except Exception as e:
-            yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
+        except Exception:
+            logging.getLogger("llm-council.api").exception("Council stream failed")
+            yield f"data: {json.dumps({'event': 'error', 'message': 'Council stream failed. Please try again.'})}\n\n"
 
     return StreamingResponse(
         event_generator(),
@@ -495,8 +496,16 @@ async def council_async(request: CouncilAsyncRequest):
     If webhook_secret is provided, the payload is signed with HMAC-SHA256
     and the signature is included in the X-Webhook-Signature header.
     """
-    # Create job
-    job_id = create_job(request)
+    # Create job after validating webhook destination. Keep client detail generic;
+    # validation errors can include resolved IPs or DNS details.
+    try:
+        job_id = create_job(request)
+    except ValueError as exc:
+        logging.getLogger("llm-council.api").warning("Rejected async council webhook URL: %s", exc)
+        raise HTTPException(
+            status_code=400,
+            detail="Webhook URL rejected: destination not allowed",
+        ) from exc
 
     # Start background task
     asyncio.create_task(run_council_async(job_id, handle_council_command))
@@ -760,9 +769,10 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             # Send completion event
             yield f"data: {json.dumps({'type': 'complete'})}\n\n"
 
-        except Exception as e:
+        except Exception:
             # Send error event
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            logging.getLogger("llm-council.api").exception("Conversation stream failed")
+            yield f"data: {json.dumps({'type': 'error', 'message': 'Conversation stream failed. Please try again.'})}\n\n"
 
     return StreamingResponse(
         event_generator(),

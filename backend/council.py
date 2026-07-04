@@ -354,6 +354,13 @@ async def _query_single_with_reasoning_override(
         except Exception as e:
             logger.warning("Vertex Anthropic reasoning override failed for %s: %s", model_id, e)
 
+        if requires_vertex_anthropic(model_id):
+            logger.error(
+                "Vertex Anthropic reasoning override failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
+                model_id,
+            )
+            return None
+
     # For OpenRouter models and fallbacks, pass reasoning_effort directly.
     # Fable fallback to OpenRouter is non-PHI/deidentified only.
     or_model = get_openrouter_fallback(model_id) or model_id
@@ -1030,6 +1037,18 @@ async def _query_single_with_retry(
         if attempt < max_retries:
             wait = backoff_base * (2**attempt)
             await asyncio.sleep(wait)
+
+    if requires_vertex_anthropic(model_id):
+        logger.error(
+            "Vertex Anthropic primary failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
+            model_id,
+        )
+        return {
+            "model": model_id,
+            "response": "",
+            "usage": {},
+            "provider": "failed",
+        }
 
     # Final fallback: OpenRouter (only if we were using a direct provider)
     if has_direct_provider:

@@ -72,17 +72,69 @@ class TestApiAuth:
     def test_tailscale_ip_helper_rejects_public_ip(self):
         assert _is_tailscale_ip("8.8.8.8") is False
 
-    def test_tailscale_request_bypasses_api_key(self):
+    def test_tailscale_x_forwarded_for_spoof_requires_api_key(self):
         with patch("backend.auth.COUNCIL_API_KEY", "test-key"):
-            response = client.get("/api/info", headers={"X-Forwarded-For": "100.106.122.86"})
+            response = client.get(
+                "/api/info",
+                headers={"X-Forwarded-For": "100.106.122.86, 8.8.8.8"},
+            )
 
-        assert response.status_code == 200
+        assert response.status_code == 401
+
+    def test_cloud_run_x_forwarded_for_tailscale_requires_api_key(self):
+        with patch("backend.auth.COUNCIL_API_KEY", "test-key"), patch.dict(
+            "os.environ",
+            {"K_SERVICE": "llm-council", "ENABLE_TAILSCALE_AUTH_BYPASS": "true"},
+        ):
+            response = client.get(
+                "/api/info",
+                headers={"X-Forwarded-For": "100.106.122.86"},
+            )
+
+        assert response.status_code == 401
 
     def test_non_tailscale_request_requires_api_key(self):
         with patch("backend.auth.COUNCIL_API_KEY", "test-key"):
             response = client.get("/api/info", headers={"X-Forwarded-For": "8.8.8.8"})
 
         assert response.status_code == 401
+
+    @patch("backend.main.stream_council")
+    @patch("backend.main.augment_query_with_tool_context")
+    def test_council_stream_errors_are_generic(self, mock_augment, mock_stream):
+        async def failing_stream(*args, **kwargs):
+            raise RuntimeError("raw secret exception")
+            if False:
+                yield  # pragma: no cover
+
+        mock_augment.return_value = ("test", {"enabled": False})
+        mock_stream.return_value = failing_stream()
+
+        response = client.post(
+            "/api/council/stream",
+            json={"query": "test"},
+            headers={"X-Council-Key": "test-key"},
+        )
+
+        assert response.status_code == 200
+        assert "Council stream failed. Please try again." in response.text
+        assert "raw secret exception" not in response.text
+
+    @patch("backend.main.storage.add_user_message")
+    @patch("backend.main.storage.get_conversation")
+    def test_conversation_stream_errors_are_generic(self, mock_get, mock_add):
+        mock_get.return_value = {"id": "conversation-id", "messages": [], "active_models": None}
+        mock_add.side_effect = RuntimeError("raw conversation exception")
+
+        response = client.post(
+            "/api/conversations/conversation-id/message/stream",
+            json={"content": "test"},
+            headers={"X-Council-Key": "test-key"},
+        )
+
+        assert response.status_code == 200
+        assert "Conversation stream failed. Please try again." in response.text
+        assert "raw conversation exception" not in response.text
 
 
 class TestCouncilEndpoint:
@@ -122,6 +174,18 @@ class TestCouncilEndpoint:
                 "compact": False,
             },
         }
+
+    def test_council_async_rejects_internal_webhook_url(self):
+        response = client.post(
+            "/api/council/async",
+            json={
+                "query": "test",
+                "webhook_url": "http://169.254.169.254/latest/meta-data/",
+            },
+        )
+
+        assert response.status_code == 400
+        assert response.json()["detail"] == "Webhook URL rejected: destination not allowed"
 
     @patch("backend.main.handle_council_command")
     def test_council_basic_query(self, mock_handle, mock_council_result):
