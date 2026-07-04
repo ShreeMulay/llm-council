@@ -458,6 +458,197 @@ class TestSelectTopResponses:
 
         assert len(selected) == 2
 
+    def test_uses_consensus_not_response_length_with_seven_responses(self):
+        """With >=7 responses, consensus winners beat longer low-ranked answers."""
+        from backend.council import select_top_responses
+
+        models = list("ABCDEFG")
+        stage1 = [
+            {"model": model, "response": model * (100 - index * 10)}
+            for index, model in enumerate(models)
+        ]
+        label_to_model = {
+            f"Response {chr(65 + index)}": model
+            for index, model in enumerate(models)
+        }
+        stage2 = [
+            {
+                "model": "eval1",
+                "parsed_ranking": [
+                    "Response E", "Response F", "Response G", "Response D",
+                    "Response C", "Response B", "Response A",
+                ],
+                "label_to_model": label_to_model,
+            },
+            {
+                "model": "eval2",
+                "parsed_ranking": [
+                    "Response F", "Response E", "Response G", "Response D",
+                    "Response C", "Response B", "Response A",
+                ],
+                "label_to_model": label_to_model,
+            },
+        ]
+
+        selected = select_top_responses(stage1, stage2)
+        selected_models = [result["model"] for result in selected]
+
+        assert selected_models[:3] == ["E", "F", "G"]
+        assert "A" not in selected_models[:3]
+
+
+class TestAggregateRankings:
+    def test_uses_evaluator_local_label_maps(self):
+        """Two evaluators may reuse labels for different shuffled models."""
+        from backend.council import calculate_aggregate_rankings
+
+        global_map = {"Response A": "model-a", "Response B": "model-b"}
+        stage2 = [
+            {
+                "model": "eval1",
+                "ranking": "FINAL RANKING:\n1. Response A\n2. Response B",
+                "label_to_model": {"Response A": "model-a", "Response B": "model-b"},
+            },
+            {
+                "model": "eval2",
+                "ranking": "FINAL RANKING:\n1. Response A\n2. Response B",
+                "label_to_model": {"Response A": "model-b", "Response B": "model-a"},
+            },
+        ]
+
+        aggregate = calculate_aggregate_rankings(stage2, global_map)
+        by_model = {entry["model"]: entry for entry in aggregate}
+
+        assert by_model["model-a"]["positions"] == [1, 2]
+        assert by_model["model-b"]["positions"] == [2, 1]
+
+
+@pytest.mark.asyncio
+async def test_stream_stage2_uses_shared_evaluator_semantics(monkeypatch):
+    from backend.council import stream_council
+
+    council_models = [
+        "anthropic/claude-fable-5",
+        "deepseek/deepseek-v4-pro",
+        "openai/gpt-5.5",
+    ]
+
+    async def fake_stage1_query(model_id, messages, **kwargs):
+        return {
+            "model": model_id,
+            "response": f"stage1 response from {model_id}",
+            "usage": {},
+            "provider": "fake",
+        }
+
+    prompts_by_evaluator = {}
+
+    async def fake_query_single_model(model_id, messages, *args, **kwargs):
+        prompts_by_evaluator.setdefault(model_id, []).append(messages[0]["content"])
+        return {
+            "content": "FINAL RANKING:\n1. Response A\n2. Response B",
+            "usage": {},
+            "provider": "fake",
+        }
+
+    monkeypatch.setattr("backend.council._query_single_with_retry", fake_stage1_query)
+    monkeypatch.setattr(
+        "backend.council._query_single_with_reasoning_override", fake_query_single_model
+    )
+    monkeypatch.setattr("backend.council.query_single_model", fake_query_single_model)
+    monkeypatch.setattr("backend.council.query_vertex_anthropic_model", fake_query_single_model)
+    monkeypatch.setattr(
+        "backend.council.shuffle_responses_for_evaluator",
+        lambda responses: list(reversed(responses)),
+    )
+
+    events = [
+        event async for event in stream_council("question", council_models=council_models)
+    ]
+    complete = next(event for event in events if event["event"] == "complete")
+
+    assert len(complete["stage2"]) == 3
+    for evaluator in council_models:
+        assert any(
+            f"stage1 response from {evaluator}" not in prompt
+            and "FINAL RANKING" in prompt
+            for prompt in prompts_by_evaluator[evaluator]
+        )
+    assert all("label_to_model" in result for result in complete["stage2"])
+
+
+@pytest.mark.asyncio
+async def test_single_model_retry_timeout_returns_failed(monkeypatch):
+    from backend.council import _query_single_with_retry
+
+    async def hung_openrouter(*args, **kwargs):
+        await __import__("asyncio").sleep(10)
+
+    monkeypatch.setattr("backend.council.PER_MODEL_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr("backend.council.query_openrouter_model", hung_openrouter)
+
+    result = await _query_single_with_retry("unrouted/model", [], max_retries=0)
+
+    assert result["provider"] == "failed"
+    assert result["response"] == ""
+
+
+@pytest.mark.asyncio
+async def test_stage2_evaluator_timeout_is_bounded(monkeypatch):
+    from backend.council import stage2_collect_rankings
+
+    async def hung_query(*args, **kwargs):
+        await __import__("asyncio").sleep(10)
+
+    monkeypatch.setattr("backend.council.STAGE2_EVALUATOR_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr("backend.council.query_single_model", hung_query)
+
+    stage1 = [
+        {"model": "anthropic/claude-fable-5", "response": "a"},
+        {"model": "deepseek/deepseek-v4-pro", "response": "b"},
+    ]
+    rankings, label_to_model = await stage2_collect_rankings(
+        "question", stage1, ["anthropic/claude-fable-5", "deepseek/deepseek-v4-pro"]
+    )
+
+    assert rankings == []
+    assert label_to_model
+
+
+@pytest.mark.asyncio
+async def test_chairman_timeout_returns_error_synthesis(monkeypatch):
+    from backend.council import stage3_synthesize_final
+
+    async def hung_chairman(*args, **kwargs):
+        await __import__("asyncio").sleep(10)
+
+    monkeypatch.setattr("backend.council.CHAIRMAN_TIMEOUT_SECONDS", 0.01)
+    monkeypatch.setattr("backend.council.query_single_model", hung_chairman)
+
+    result = await stage3_synthesize_final(
+        "question",
+        [{"model": "model-a", "response": "answer"}],
+        [],
+        chairman_model="chairman-model",
+    )
+
+    assert result["model"] == "chairman-model"
+    assert result["response"] == "Error: Unable to generate final synthesis."
+
+
+def test_stage1_cache_eviction_is_bounded(monkeypatch):
+    from backend import council
+
+    council._stage1_cache.clear()
+    monkeypatch.setattr(council, "STAGE1_CACHE_MAX_ENTRIES", 2)
+
+    council._cache_response("model-a", "prompt", {"content": "a"})
+    council._cache_response("model-b", "prompt", {"content": "b"})
+    council._cache_response("model-c", "prompt", {"content": "c"})
+
+    assert len(council._stage1_cache) == 2
+    assert council._get_cached_response("model-a", "prompt") is None
+
 
 class TestParseRankingFromText:
     """Test ranking parser with Hypothesis fuzzing."""

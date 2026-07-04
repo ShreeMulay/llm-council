@@ -22,11 +22,14 @@ MAX_RESPONSE_CHARS_FOR_PROMPT = 12_000
 # Prevents a single dead/slow provider from blocking the entire council.
 # Individual models that exceed this are skipped (others continue).
 PER_MODEL_TIMEOUT_SECONDS = 180  # 3 minutes per model
+STAGE2_EVALUATOR_TIMEOUT_SECONDS = 2 * PER_MODEL_TIMEOUT_SECONDS + 30
+CHAIRMAN_TIMEOUT_SECONDS = 2 * PER_MODEL_TIMEOUT_SECONDS + 30
 
 # Stage 1 response cache: (model_id + prompt_hash) -> (response, timestamp)
 # TTL: 1 hour. Saves ~30% cost when same model+prompt called twice (e.g., GPT-5.5 in Stage 1 + Stage 2)
 _stage1_cache: dict[str, tuple[dict[str, Any], float]] = {}
 CACHE_TTL_SECONDS = 3600
+STAGE1_CACHE_MAX_ENTRIES = 512
 
 
 def _get_cache_key(model_id: str, prompt: str) -> str:
@@ -47,10 +50,29 @@ def _get_cached_response(model_id: str, prompt: str) -> dict[str, Any] | None:
     return None
 
 
+def _sweep_stage1_cache(now: float | None = None) -> None:
+    """Evict expired and oldest Stage 1 cache entries to keep cache bounded."""
+    now = time.time() if now is None else now
+    expired_keys = [
+        key for key, (_, timestamp) in _stage1_cache.items()
+        if now - timestamp >= CACHE_TTL_SECONDS
+    ]
+    for key in expired_keys:
+        del _stage1_cache[key]
+
+    overflow = len(_stage1_cache) - STAGE1_CACHE_MAX_ENTRIES
+    if overflow > 0:
+        oldest_keys = sorted(_stage1_cache, key=lambda key: _stage1_cache[key][1])[:overflow]
+        for key in oldest_keys:
+            del _stage1_cache[key]
+
+
 def _cache_response(model_id: str, prompt: str, response: dict[str, Any]):
     """Cache Stage 1 response."""
+    _sweep_stage1_cache()
     key = _get_cache_key(model_id, prompt)
     _stage1_cache[key] = (response, time.time())
+    _sweep_stage1_cache()
 
 
 def _truncate_for_prompt(
@@ -137,48 +159,64 @@ def select_top_responses(
     This prevents the chairman from being overwhelmed by 9 responses while
     preserving both consensus signal and dissenting voices.
     """
-    if len(stage1_results) <= n_top + n_wildcard + n_diversity:
+    target_count = n_top + n_wildcard + n_diversity
+    if len(stage1_results) <= target_count:
         # Not enough responses for full curation, return all
         return stage1_results
 
-    # Build model -> average rank mapping from Stage 2
-    defaultdict(list)
+    global_label_to_model = {
+        f"Response {chr(65 + index)}": result["model"]
+        for index, result in enumerate(stage1_results)
+    }
+    aggregate_rankings = calculate_aggregate_rankings(stage2_results, global_label_to_model)
+    by_model = {result["model"]: result for result in stage1_results}
 
-    for ranking in stage2_results:
-        parsed = ranking.get("parsed_ranking", [])
-        for _position, _label in enumerate(parsed, start=1):
-            # Extract model name from label (e.g., "Response A" -> find which model)
-            # This requires label_to_model mapping, but we don't have it here.
-            # Simpler approach: use aggregate_rankings if available
-            pass
+    if not aggregate_rankings:
+        return stage1_results[:target_count]
 
-    # Fallback: if we have aggregate_rankings in metadata, use those
-    # For now, use a simpler heuristic-based approach
+    ranked_models = [entry["model"] for entry in aggregate_rankings if entry["model"] in by_model]
+    selected_models: list[str] = []
 
-    # Sort by response length as a proxy for thoroughness (heuristic)
-    # In production, this should use actual evaluator scores
-    sorted_results = sorted(
-        stage1_results,
-        key=lambda r: len(r.get("response", "")),
-        reverse=True,
-    )
+    for model in ranked_models:
+        if model not in selected_models:
+            selected_models.append(model)
+        if len(selected_models) == n_top:
+            break
 
-    # Top N
-    top = sorted_results[:n_top]
-    top_models = {r["model"] for r in top}
+    top_models = set(selected_models)
 
-    # Wildcard: pick from remaining that has most different style
-    remaining = [r for r in sorted_results[n_top:] if r["model"] not in top_models]
+    # Wildcard: highest disagreement among non-consensus responses.
+    disagreement_scores: list[tuple[float, float, str]] = []
+    for entry in aggregate_rankings:
+        model = entry["model"]
+        if model in top_models or model not in by_model:
+            continue
+        positions = entry.get("positions", [])
+        spread = (max(positions) - min(positions)) if positions else 0
+        disagreement_scores.append((float(spread), -float(entry["average_rank"]), model))
 
-    # Diversity pick: best from a model not in top
-    diversity_candidates = [r for r in remaining if r["model"] not in top_models]
-    diversity = diversity_candidates[:1] if diversity_candidates else []
+    wildcard_models = [
+        model for *_unused, model in sorted(disagreement_scores, reverse=True)[:n_wildcard]
+        if model not in selected_models
+    ]
+    selected_models.extend(wildcard_models)
 
-    # Wildcard: pick the longest remaining (heuristic for most thorough dissent)
-    wildcard_candidates = [r for r in remaining if r not in diversity]
-    wildcard = wildcard_candidates[:1] if wildcard_candidates else []
+    # Diversity: next best model not already selected.
+    for model in ranked_models:
+        if model not in selected_models:
+            selected_models.append(model)
+        if len(selected_models) == target_count:
+            break
 
-    return top + diversity + wildcard
+    # Fill from original order only if sparse evaluator coverage left gaps.
+    for result in stage1_results:
+        model = result["model"]
+        if model not in selected_models:
+            selected_models.append(model)
+        if len(selected_models) == target_count:
+            break
+
+    return [by_model[model] for model in selected_models[:target_count]]
 
 
 from .cerebras import query_cerebras_model
@@ -270,12 +308,15 @@ async def query_single_model(
     non-PHI/deidentified only; this service does not perform PHI detection.
     """
     try:
-        result = await _query_primary(
-            model_id,
-            messages,
-            max_tokens,
-            temperature,
-            reasoning_effort=reasoning_effort,
+        result = await asyncio.wait_for(
+            _query_primary(
+                model_id,
+                messages,
+                max_tokens,
+                temperature,
+                reasoning_effort=reasoning_effort,
+            ),
+            timeout=PER_MODEL_TIMEOUT_SECONDS,
         )
         if result and result.get("content"):
             return result
@@ -294,12 +335,15 @@ async def query_single_model(
     if or_model:
         logger.info("Falling back to OpenRouter for %s -> %s", model_id, or_model)
         try:
-            return await query_openrouter_model(
-                or_model,
-                messages,
-                max_tokens,
-                temperature,
-                reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
+            return await asyncio.wait_for(
+                query_openrouter_model(
+                    or_model,
+                    messages,
+                    max_tokens,
+                    temperature,
+                    reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
+                ),
+                timeout=PER_MODEL_TIMEOUT_SECONDS,
             )
         except Exception as e:
             logger.error("OpenRouter fallback also failed for %s: %s", model_id, e)
@@ -712,7 +756,21 @@ Now provide your evaluation and ranking:"""
         evaluator_tasks.append((evaluator, task, evaluator_label_to_model))
 
     # Execute evaluator queries in parallel
-    responses = await asyncio.gather(*[task for _, task, _ in evaluator_tasks])
+    async def _bounded_evaluator_query(task):
+        try:
+            return await asyncio.wait_for(
+                task, timeout=STAGE2_EVALUATOR_TIMEOUT_SECONDS
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                "Stage 2 evaluator timed out after %.0fs",
+                STAGE2_EVALUATOR_TIMEOUT_SECONDS,
+            )
+            return None
+
+    responses = await asyncio.gather(
+        *[_bounded_evaluator_query(task) for _, task, _ in evaluator_tasks]
+    )
 
     # Format results
     stage2_results = []
@@ -806,7 +864,15 @@ Provide a clear, well-reasoned final answer that represents the council's collec
     messages = [{"role": "user", "content": chairman_prompt}]
 
     # Query the chairman model
-    response = await query_single_model(chairman, messages)
+    try:
+        response = await asyncio.wait_for(
+            query_single_model(chairman, messages), timeout=CHAIRMAN_TIMEOUT_SECONDS
+        )
+    except asyncio.TimeoutError:
+        logger.error(
+            "Chairman model %s timed out after %.0fs", chairman, CHAIRMAN_TIMEOUT_SECONDS
+        )
+        response = None
 
     if response is None:
         # Fallback if chairman fails
@@ -878,14 +944,16 @@ def calculate_aggregate_rankings(
     model_positions: dict[str, list[int]] = defaultdict(list)
 
     for ranking in stage2_results:
-        ranking_text = ranking["ranking"]
+        evaluator_label_to_model = ranking.get("label_to_model") or label_to_model
 
-        # Parse the ranking from the structured format
-        parsed_ranking = parse_ranking_from_text(ranking_text)
+        # Use already-parsed ranking when present, otherwise parse structured text.
+        parsed_ranking = ranking.get("parsed_ranking") or parse_ranking_from_text(
+            ranking.get("ranking", "")
+        )
 
         for position, label in enumerate(parsed_ranking, start=1):
-            if label in label_to_model:
-                model_name = label_to_model[label]
+            if label in evaluator_label_to_model:
+                model_name = evaluator_label_to_model[label]
                 model_positions[model_name].append(position)
 
     # Calculate average position for each model
@@ -898,6 +966,7 @@ def calculate_aggregate_rankings(
                     "model": model,
                     "average_rank": round(avg_rank, 2),
                     "rankings_count": len(positions),
+                    "positions": positions,
                 }
             )
 
@@ -1018,7 +1087,9 @@ async def _query_single_with_retry(
 
     for attempt in range(max_retries + 1):
         try:
-            result = await _try_query()
+            result = await asyncio.wait_for(
+                _try_query(), timeout=PER_MODEL_TIMEOUT_SECONDS
+            )
             if result and result.get("content"):
                 return {
                     "model": model_id,
@@ -1055,8 +1126,9 @@ async def _query_single_with_retry(
         or_model = get_openrouter_fallback(model_id)
         if or_model:
             try:
-                result = await query_openrouter_model(
-                    or_model, messages, max_tokens, temperature
+                result = await asyncio.wait_for(
+                    query_openrouter_model(or_model, messages, max_tokens, temperature),
+                    timeout=PER_MODEL_TIMEOUT_SECONDS,
                 )
                 if result and result.get("content"):
                     return {
@@ -1157,72 +1229,35 @@ async def stream_council(
     aggregate_rankings: list[dict[str, Any]] = []
 
     if not final_only:
-        yield {"event": "stage_start", "stage": 2, "models": models}
-        logger.info("Stream Stage 2: querying %d models for rankings", len(models))
-
-        labels = [chr(65 + i) for i in range(len(stage1_results))]
-        label_to_model = {
-            f"Response {label}": result["model"]
-            for label, result in zip(labels, stage1_results, strict=False)
-        }
-        responses_text = "\n\n".join(
-            f"Response {label}:\n{result['response']}"
-            for label, result in zip(labels, stage1_results, strict=False)
+        evaluators = get_evaluator_models(models) or models
+        yield {"event": "stage_start", "stage": 2, "models": evaluators}
+        logger.info(
+            "Stream Stage 2: querying %d evaluator models for rankings",
+            len(evaluators),
         )
-        ranking_prompt = f"""You are evaluating different responses to the following question:
 
-Question: {user_query}
+        stage2_results, label_to_model = await stage2_collect_rankings(
+            user_query, stage1_results, models
+        )
 
-Here are the responses from different models (anonymized):
+        responded_evaluators = {result["model"] for result in stage2_results}
+        for ranked, result in enumerate(stage2_results, start=1):
+            yield {
+                "event": "model_response",
+                "stage": 2,
+                "model": result["model"],
+                "parsed_ranking": result.get("parsed_ranking", []),
+                "provider": result.get("provider", "unknown"),
+                "progress": f"{ranked}/{len(evaluators)}",
+            }
 
-{responses_text}
-
-Your task:
-1. First, evaluate each response individually. For each response, explain what it does well and what it does poorly.
-2. Then, at the very end of your response, provide a final ranking.
-
-IMPORTANT: Your final ranking MUST be formatted EXACTLY as follows:
-- Start with the line "FINAL RANKING:" (all caps, with colon)
-- Then list the responses from best to worst as a numbered list
-- Each line should be: number, period, space, then ONLY the response label (e.g., "1. Response A")
-- Do not add any other text or explanations in the ranking section
-
-Now provide your evaluation and ranking:"""
-
-        ranking_messages = [{"role": "user", "content": ranking_prompt}]
-        ranking_tasks = {
-            asyncio.create_task(_query_single_with_retry(m, ranking_messages)): m
-            for m in models
-        }
-
-        ranked = 0
-        for coro in asyncio.as_completed(ranking_tasks.keys()):
-            result = await coro
-            ranked += 1
-            if result.get("response"):
-                parsed = parse_ranking_from_text(result["response"])
-                stage2_entry = {
-                    "model": result["model"],
-                    "ranking": result["response"],
-                    "parsed_ranking": parsed,
-                    "usage": result.get("usage", {}),
-                    "provider": result.get("provider", "unknown"),
-                }
-                stage2_results.append(stage2_entry)
-                yield {
-                    "event": "model_response",
-                    "stage": 2,
-                    "model": result["model"],
-                    "parsed_ranking": parsed,
-                    "provider": result["provider"],
-                    "progress": f"{ranked}/{len(models)}",
-                }
-            else:
+        for evaluator in evaluators:
+            if evaluator not in responded_evaluators:
                 yield {
                     "event": "model_failed",
                     "stage": 2,
-                    "model": result["model"],
-                    "progress": f"{ranked}/{len(models)}",
+                    "model": evaluator,
+                    "progress": f"{len(stage2_results)}/{len(evaluators)}",
                 }
 
         aggregate_rankings = calculate_aggregate_rankings(
@@ -1231,7 +1266,7 @@ Now provide your evaluation and ranking:"""
         yield {
             "event": "stage_complete",
             "stage": 2,
-            "count": f"{len(stage2_results)}/{len(models)}",
+            "count": f"{len(stage2_results)}/{len(evaluators)}",
         }
 
     # --- Stage 3: Chairman synthesis ---
