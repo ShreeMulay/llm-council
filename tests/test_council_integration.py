@@ -11,10 +11,10 @@ from backend.council import run_full_council
 MOCK_RESPONSES = {
     "openai/gpt-5.5": "GPT-5.5 response: Quantum computing uses qubits.",
     "anthropic/claude-fable-5": "Fable 5 response: Quantum computing leverages superposition and entanglement.",
-    "z-ai/glm-5.2": "GLM-5.2 response: Quantum computing is a paradigm shift in computation.",
+    "fireworks/glm-5.2": "Fireworks GLM-5.2 response: Quantum computing is a paradigm shift in computation.",
     "google/gemini-3.1-pro-preview": "Gemini 3.1 response: Quantum computing enables exponential speedup for certain problems.",
     "x-ai/grok-4.3": "Grok 4.3 response: Quantum computing is the future of AI.",
-    "fireworks/kimi-k2.6": "Kimi K2.6 response: Quantum computing requires cryogenic temperatures.",
+    "fireworks/kimi-k2.7-code": "Kimi K2.7 Code response: Quantum computing requires cryogenic temperatures.",
     "deepseek/deepseek-v4-pro": "DeepSeek V4 response: Quantum computing uses quantum gates.",
     "meta-llama/llama-4-maverick": "Llama 4 response: Quantum computing is still experimental.",
     "qwen/qwen3.7-max": "Qwen 3.7 Max response: Quantum computing has applications in cryptography.",
@@ -45,12 +45,14 @@ def mock_all_providers():
         patch("backend.council.query_fireworks_model", side_effect=mock) as fireworks_mock,
         patch("backend.council.query_xai_model", side_effect=mock) as xai_mock,
         patch("backend.council.query_gemini_model", side_effect=mock) as gemini_mock,
+        patch("backend.council.query_vertex_anthropic_model", side_effect=mock) as vertex_mock,
         patch("backend.council.query_openrouter_model", side_effect=mock) as or_mock,
     ):
         yield {
             "fireworks": fireworks_mock,
             "xai": xai_mock,
             "gemini": gemini_mock,
+            "vertex": vertex_mock,
             "openrouter": or_mock,
         }
 
@@ -139,8 +141,8 @@ class TestFullCouncilFlow:
 
         # GLM and Kimi should be missing when both primary and OpenRouter paths fail.
         models_responded = {r["model"] for r in stage1}
-        assert "z-ai/glm-5.2" not in models_responded
-        assert "fireworks/kimi-k2.6" not in models_responded
+        assert "fireworks/glm-5.2" not in models_responded
+        assert "fireworks/kimi-k2.7-code" not in models_responded
         # Stage 2 and 3 should still proceed with remaining models
         assert len(stage2) > 0
         assert stage3["response"]

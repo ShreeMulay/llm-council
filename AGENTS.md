@@ -17,7 +17,7 @@ uv run python -m backend.main
 | # | Model | Provider | Role | Tier | Special Settings |
 |---|-------|----------|------|------|------------------|
 | 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
-| 2 | Claude Fable 5 | OpenRouter | Lead Coder + **Chairman** | Strong | `reasoning_effort: high`; non-PHI unless routed through a verified BAA-safe path |
+| 2 | Claude Fable 5 | Vertex AI Anthropic | Lead Coder + **Chairman** | Strong | `output_config.effort: high`; PHI-eligible only through covered Google/Vertex BAA route; OpenRouter fallback is non-PHI/deidentified only |
 | 3 | Fireworks GLM-5.2 xHigh | Fireworks Direct | Tool Specialist | Medium | Promoted by 2026-07-04 benchmark; `reasoning_effort: xhigh` |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
 | 5 | Grok 4.3 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
@@ -42,8 +42,8 @@ Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5,
 
 ### Chairman Selection
 
-**Claude Fable 5** serves as chairman with high reasoning effort.
-Safety: do not send PHI unless this model is routed through a verified BAA-safe path.
+**Claude Fable 5** serves as chairman with high reasoning effort through Vertex AI Anthropic.
+Safety: Fable via Vertex AI is PHI-eligible only when running in covered Google Cloud projects/services under BAA. Fable via OpenRouter fallback is not PHI-safe and must be non-PHI/deidentified only.
 
 ## API Endpoints
 
@@ -88,11 +88,13 @@ MCP Config:
 
 ## API Keys & OAuth
 
-**OAuth (loaded from `~/.local/share/opencode/auth.json`):**
-- `anthropic` - Legacy (Anthropic OAuth broken, all Claude models route through OpenRouter)
+**Google Cloud ADC / service account:**
+- `VERTEX_PROJECT_ID` / `GOOGLE_CLOUD_PROJECT` / `GCP_PROJECT` - Project for Claude Fable 5 via Vertex AI Anthropic
+- `VERTEX_LOCATION` / `GOOGLE_CLOUD_LOCATION` - Vertex location (default `global`)
+- `REQUIRE_VERTEX_ANTHROPIC` - Set `true` in covered deployments to refuse non-BAA OpenRouter fallback for Vertex-routed Fable
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Fable 5, Claude Opus 4.8 compatibility, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, and fallbacks
+- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Fable 5 non-PHI fallback, Claude Opus 4.8 compatibility, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, and fallbacks
 - `FIREWORKS_API_KEY` - For default Fireworks GLM-5.2 xHigh and Kimi K2.7 Code routing, plus explicit legacy Kimi K2.6
 - `GROK_API_KEY` - For Grok 4.3 via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
@@ -112,7 +114,7 @@ Use aliases in `/council` command:
 - `deepseek` -> deepseek/deepseek-v4-pro
 - `llama` -> meta-llama/llama-4-maverick
 - `qwen` -> qwen/qwen3.7-max
-- `fable` -> anthropic/claude-fable-5 (default chairman/member; non-PHI unless routed through a verified BAA-safe path)
+- `fable` -> anthropic/claude-fable-5 (default chairman/member via Vertex AI; OpenRouter fallback is non-PHI/deidentified only)
 - `sonnet` -> anthropic/claude-sonnet-5
 - `minimax` -> minimax/minimax-m3 (explicit challenger only; Llama remains default)
 - `flash` -> google/gemini-3.5-flash

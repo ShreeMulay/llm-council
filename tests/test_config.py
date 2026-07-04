@@ -8,10 +8,14 @@ from backend.config import (
     EVALUATOR_PRIORITY,
     FIREWORKS_MODEL_IDS,
     MODEL_ALIASES,
+    VERTEX_ANTHROPIC_MODEL_IDS,
     get_model_reasoning_effort,
     get_openrouter_fallback,
+    get_vertex_anthropic_model_id,
     is_fireworks_model,
     is_gemini_direct_model,
+    is_vertex_anthropic_model,
+    requires_vertex_anthropic,
     resolve_model_alias,
 )
 
@@ -130,6 +134,27 @@ class TestIsFireworksModel:
     def test_non_fireworks(self):
         assert is_fireworks_model("openai/gpt-5.5") is False
         assert is_fireworks_model("anthropic/claude-opus-4.8") is False
+
+
+class TestVertexAnthropicRouting:
+    """Test Anthropic-on-Vertex primary routing metadata."""
+
+    def test_fable_routes_to_vertex_anthropic_primary(self):
+        assert is_vertex_anthropic_model("anthropic/claude-fable-5") is True
+        assert get_vertex_anthropic_model_id("anthropic/claude-fable-5") == "claude-fable-5"
+        assert "anthropic/claude-fable-5" in VERTEX_ANTHROPIC_MODEL_IDS
+
+    def test_vertex_requirement_is_disabled_by_default(self):
+        assert requires_vertex_anthropic("anthropic/claude-fable-5") is False
+
+    def test_vertex_requirement_only_applies_to_vertex_models(self, monkeypatch):
+        monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+        assert requires_vertex_anthropic("anthropic/claude-fable-5") is True
+        assert requires_vertex_anthropic("anthropic/claude-opus-4.8") is False
+
+    def test_opus_does_not_route_to_vertex_anthropic_primary(self):
+        assert is_vertex_anthropic_model("anthropic/claude-opus-4.8") is False
+        assert get_vertex_anthropic_model_id("anthropic/claude-opus-4.8") is None
 
 
 class TestDefaultCouncilModels:
@@ -324,7 +349,7 @@ class TestOpenRouterFallbackMap:
     def test_legacy_qwen_3_5_keeps_explicit_fallback(self):
         assert get_openrouter_fallback("qwen/qwen3.5-122b-a10b") == "qwen/qwen3.5-122b-a10b"
 
-    def test_fable_routes_to_openrouter_id(self):
+    def test_fable_keeps_non_phi_openrouter_fallback_id(self):
         assert get_openrouter_fallback("anthropic/claude-fable-5") == "anthropic/claude-fable-5"
 
 

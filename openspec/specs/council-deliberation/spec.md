@@ -92,6 +92,17 @@ The system SHALL route queries to appropriate API providers.
 - **WHEN** querying model
 - **THEN** it uses OpenRouter API endpoint
 - **AND** uses OPENROUTER_API_KEY for authentication
+- **AND** OpenRouter fallback for Fable is treated as non-PHI/deidentified only
+
+### Scenario: Route Claude Fable 5 to Vertex AI Anthropic
+
+- **GIVEN** model ID is "anthropic/claude-fable-5"
+- **WHEN** querying model
+- **THEN** it uses Anthropic-on-Vertex as the primary provider
+- **AND** maps to Vertex model ID "claude-fable-5"
+- **AND** uses ADC/service-account auth without JSON keys
+- **AND** sends high effort with omitted adaptive thinking when supported
+- **AND** is PHI-eligible only when running in covered Google Cloud projects/services under BAA
 
 ### Scenario: Route Kimi K2.7 Code to Fireworks Direct
 
@@ -121,7 +132,7 @@ The system SHALL route queries to appropriate API providers.
 ```python
 DEFAULT_COUNCIL_MODELS = [
     "openai/gpt-5.5",                 # OpenRouter
-    "anthropic/claude-fable-5",       # OpenRouter + chairman
+    "anthropic/claude-fable-5",       # Vertex AI Anthropic + chairman
     "fireworks/glm-5.2",              # Fireworks direct + xHigh reasoning
     "google/gemini-3.1-pro-preview",  # OpenRouter
     "x-ai/grok-4.3",                  # xAI direct
@@ -134,7 +145,7 @@ DEFAULT_COUNCIL_MODELS = [
 DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
 ```
 
-`anthropic/claude-fable-5` SHALL be the default production Anthropic council member, lead evaluator, and chairman with `reasoning_effort="high"`. Fable MUST NOT be used for PHI unless routed through a verified BAA-safe path.
+`anthropic/claude-fable-5` SHALL be the default production Anthropic council member, lead evaluator, and chairman through Vertex AI Anthropic with high effort. Fable via Vertex AI is PHI-eligible only when running in covered Google Cloud projects/services under BAA. Fable via OpenRouter fallback is non-PHI/deidentified only.
 
 Legacy explicit IDs such as `anthropic/claude-opus-4.8`, `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through aliases/fallback maps for backward compatibility, but MUST NOT be default production roster members.
 
