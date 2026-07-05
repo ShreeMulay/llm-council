@@ -68,6 +68,22 @@ steps:
       - event: pull_request
       - event: manual
 
+  # Advisory AI PR review via host-side broker. Non-blocking by design.
+  - name: ai-review
+    image: curlimages/curl:8.11.1
+    failure: ignore
+    environment:
+      REVIEW_BROKER_KEY:
+        from_secret: review_broker_key
+    commands:
+      - |
+        curl -fsS --max-time 1200 -X POST http://172.17.0.1:23459/review \
+          -H "Authorization: Bearer $${REVIEW_BROKER_KEY}" \
+          -H "Content-Type: application/json" \
+          -d "{\"repo\":\"$${CI_REPO}\",\"pr_number\":$${CI_COMMIT_PULL_REQUEST}}"
+    when:
+      - event: pull_request
+
   - name: deploy-pages
     image: alpine/git
     environment:
