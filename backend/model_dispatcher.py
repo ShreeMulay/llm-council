@@ -119,7 +119,11 @@ class ModelDispatcher:
         try:
             record = self.registry.model(request.model_id)
         except KeyError:
-            return (_legacy_route(request.model_id, "vertex" if strict_vertex else request.provider),)
+            if strict_vertex:
+                raise ValueError(
+                    f"Strict Vertex Anthropic policy requires a canonical registry record for {request.model_id}"
+                ) from None
+            return (_legacy_route(request.model_id, request.provider),)
 
         if strict_vertex:
             vertex_routes = tuple(

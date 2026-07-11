@@ -137,6 +137,32 @@ def test_strict_dispatch_fails_closed_for_invalid_vertex_routes(vertex_count):
         dispatcher.capture(DispatchRequest(fable.logical_id, MESSAGES, provider="openrouter"))
 
 
+@pytest.mark.asyncio
+async def test_deployment_strict_dispatch_fails_closed_for_missing_fable_record(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    calls = []
+
+    async def forbidden_adapter(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"content": "unsafe"}
+
+    dispatcher = ModelDispatcher(
+        adapters={"vertex": forbidden_adapter, "openrouter": forbidden_adapter}
+    )
+    fable_id = "anthropic/claude-fable-5"
+    dispatcher.registry = replace(
+        dispatcher.registry,
+        models=tuple(
+            model for model in dispatcher.registry.models if model.logical_id != fable_id
+        ),
+    )
+
+    with pytest.raises(ValueError, match="requires a canonical registry record"):
+        await dispatcher.query(DispatchRequest(fable_id, MESSAGES, provider="openrouter"))
+
+    assert calls == []
+
+
 def test_non_strict_explicit_openrouter_remains_available(monkeypatch):
     monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", False)
     dispatcher = ModelDispatcher(require_vertex_anthropic=False)
