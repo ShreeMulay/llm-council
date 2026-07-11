@@ -68,7 +68,9 @@ async def test_stream_without_explicit_plan_executes_captured_operations(monkeyp
 
 @pytest.mark.asyncio
 async def test_dispatcher_sync_and_stream_stage1_terminal_fold_equivalence(monkeypatch):
-    """Real dispatch orchestration preserves failures/provenance and plan seat order."""
+    """Cold sync and stream runs preserve terminal semantics in plan seat order."""
+    import asyncio
+
     plan = _plan(compact=True)
     route_owner = {
         route.provider_model_id: (operation.logical_id, route.route_id)
@@ -77,48 +79,113 @@ async def test_dispatcher_sync_and_stream_stage1_terminal_fold_equivalence(monke
     }
     fallback_model = next(op.logical_id for op in plan.stage1 if len(op.routes) > 1)
     failure_model = plan.stage1[-1].logical_id
-    completion_order = []
+    success_model = next(
+        op.logical_id
+        for op in plan.stage1
+        if op.logical_id not in {fallback_model, failure_model}
+    )
+    operations = {op.logical_id: op for op in plan.stage1}
+    seat_order = [op.logical_id for op in plan.stage1]
 
-    async def adapter(provider_model_id, _messages, **_settings):
-        model, route_id = route_owner[provider_model_id]
-        operation = next(op for op in plan.stage1 if op.logical_id == model)
-        if model == failure_model:
-            return None
-        if model == fallback_model and route_id == operation.routes[0].route_id:
-            return None
-        delay = 0.001 * (len(plan.stage1) - [op.logical_id for op in plan.stage1].index(model))
-        import asyncio
-        await asyncio.sleep(delay)
-        completion_order.append(model)
-        return {"content": f"answer:{model}", "usage": {"total_tokens": len(model)}}
+    def dispatcher_and_logs():
+        invocations = []
+        completions = []
+        invocation_counts = {}
 
-    providers = {route.provider for op in plan.stage1 for route in op.routes}
-    dispatcher = ModelDispatcher(adapters=dict.fromkeys(providers, adapter))
-    monkeypatch.setattr(council, "_dispatcher", lambda: dispatcher)
+        async def no_backoff(_delay):
+            return None
+
+        async def adapter(provider_model_id, _messages, **_settings):
+            model, route_id = route_owner[provider_model_id]
+            operation = operations[model]
+            invocations.append((model, route_id))
+            invocation_counts[model] = invocation_counts.get(model, 0) + 1
+            await asyncio.sleep(0.003 * (len(plan.stage1) - seat_order.index(model)))
+            is_primary_fallback_failure = (
+                model == fallback_model and route_id == operation.routes[0].route_id
+            )
+            is_total_failure = model == failure_model
+            if is_primary_fallback_failure or is_total_failure:
+                total_attempts = len(operation.routes) * (operation.retry.max_retries + 1)
+                if is_total_failure and invocation_counts[model] == total_attempts:
+                    completions.append(model)
+                return None
+            completions.append(model)
+            return {
+                "content": f"answer:{model}",
+                "usage": {"total_tokens": len(model)},
+            }
+
+        providers = {route.provider for op in plan.stage1 for route in op.routes}
+        return (
+            ModelDispatcher(adapters=dict.fromkeys(providers, adapter), sleep=no_backoff),
+            invocations,
+            completions,
+        )
+
+    active_dispatcher, sync_invocations, sync_completions = dispatcher_and_logs()
+    monkeypatch.setattr(council, "_dispatcher", lambda: active_dispatcher)
     monkeypatch.setattr(council, "build_execution_plan", lambda *_args, **_kwargs: plan)
     monkeypatch.setattr(council, "stage3_synthesize_final", AsyncMock(return_value={"model": plan.chairman.logical_id, "response": "done"}))
 
-    cached_op = plan.stage1[0]
-    cached = await dispatcher.execute(cached_op)
     council._stage1_cache.clear()
-    council._cache_response(cached_op, "planned question", cached)
-
     sync_stage1, _, _, sync_metadata = await council.run_full_council(
         "planned question", final_only=True
     )
+
+    active_dispatcher, stream_invocations, stream_completions = dispatcher_and_logs()
     council._stage1_cache.clear()
-    council._cache_response(cached_op, "planned question", cached)
     events = [event async for event in council.stream_council(
         "planned question", final_only=True
     )]
     complete = events[-1]
 
-    fields = ("model", "response", "route_id", "fallback_used", "provider", "usage", "error", "terminal_status")
-    def fold(results):
-        return [{field: result.get(field) for field in fields} for result in results]
-    assert fold(sync_stage1) == fold(complete["stage1"])
-    assert [result["model"] for result in sync_stage1] == [op.logical_id for op in plan.stage1]
-    assert completion_order != [op.logical_id for op in plan.stage1 if op.logical_id != cached_op.logical_id]
+    assert sync_invocations
+    assert stream_invocations
+    for completions in (sync_completions, stream_completions):
+        assert sorted(completions) == sorted(seat_order)
+        assert completions != seat_order
+    for invocations in (sync_invocations, stream_invocations):
+        assert (success_model, operations[success_model].routes[0].route_id) in invocations
+        attempts = operations[fallback_model].retry.max_retries + 1
+        assert [route_id for model, route_id in invocations if model == fallback_model] == [
+            *[operations[fallback_model].routes[0].route_id] * attempts,
+            operations[fallback_model].routes[1].route_id,
+        ]
+        attempts = operations[failure_model].retry.max_retries + 1
+        assert [route_id for model, route_id in invocations if model == failure_model] == [
+            route.route_id
+            for route in operations[failure_model].routes
+            for _ in range(attempts)
+        ]
+    assert sync_stage1 == complete["stage1"]
+    assert [result["model"] for result in sync_stage1] == seat_order
+
+    by_model = {result["model"]: result for result in sync_stage1}
+    primary = by_model[success_model]
+    assert primary["terminal_status"] == "succeeded"
+    assert primary["route_id"] == operations[success_model].routes[0].route_id
+    assert primary["fallback_used"] is False
+    assert primary["response"] == f"answer:{success_model}"
+    assert primary["usage"] == {"total_tokens": len(success_model)}
+
+    fallback = by_model[fallback_model]
+    assert fallback["terminal_status"] == "succeeded"
+    assert fallback["route_id"] == operations[fallback_model].routes[1].route_id
+    assert fallback["fallback_used"] is True
+    assert fallback["response"] == f"answer:{fallback_model}"
+    assert fallback["usage"] == {"total_tokens": len(fallback_model)}
+
+    failure = by_model[failure_model]
+    assert failure["terminal_status"] == "failed"
+    assert failure["route_id"] == operations[failure_model].routes[-1].route_id
+    assert failure["fallback_used"] is (len(operations[failure_model].routes) > 1)
+    assert failure["response"] == ""
+    assert failure["usage"] == {}
+    assert failure["error"] == {
+        "code": "provider_exhausted",
+        "message": "All captured routes failed",
+    }
     assert sync_metadata["execution_plan"]["digest"] == complete["metadata"]["execution_plan"]["digest"] == plan.digest
 
 
