@@ -11,7 +11,9 @@
     "build": "tsc",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "cd .. && uv run pytest tests/test_model_registry.py -q",
+    "generate:models": "cd .. && uv run python -m backend.model_registry"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0"

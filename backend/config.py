@@ -3,6 +3,10 @@
 import os
 from pathlib import Path
 
+from .model_registry import load_registry
+
+MODEL_REGISTRY = load_registry()
+
 # Cloud Run detection — K_SERVICE is set automatically by Cloud Run
 IS_CLOUD_RUN = bool(os.getenv("K_SERVICE"))
 
@@ -68,32 +72,16 @@ REQUIRE_VERTEX_ANTHROPIC = os.getenv("REQUIRE_VERTEX_ANTHROPIC", "").lower() in 
 # 7. DeepSeek V4 Pro via OpenRouter (Deep Reasoner)
 # 8. Llama 4 Maverick via OpenRouter (Open-Weights Leader)
 # 9. Qwen 3.7 Max via OpenRouter (Agentic/Tools Expert)
-ALL_MODEL_IDS = [
-    "openai/gpt-5.5",
-    "anthropic/claude-fable-5",
-    "fireworks/glm-5.2",
-    "google/gemini-3.1-pro-preview",
-    "x-ai/grok-4.3",
-    "fireworks/kimi-k2.7-code",
-    "deepseek/deepseek-v4-pro",
-    "meta-llama/llama-4-maverick",
-    "qwen/qwen3.7-max",
-]
+ALL_MODEL_IDS = list(MODEL_REGISTRY.production_roster)
 
 DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
 
 # Core 5 models for compact mode (faster/cheaper)
-COMPACT_COUNCIL_MODELS = [
-    "openai/gpt-5.5",
-    "anthropic/claude-fable-5",
-    "fireworks/glm-5.2",
-    "google/gemini-3.1-pro-preview",
-    "x-ai/grok-4.3",
-]
+COMPACT_COUNCIL_MODELS = list(MODEL_REGISTRY.compact_roster)
 
 # Chairman Model - synthesizes final response
 # Claude Fable 5 for best synthesis capability
-DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
+DEFAULT_CHAIRMAN_MODEL = MODEL_REGISTRY.chairman_logical_id
 
 # Override via environment
 COUNCIL_MODELS = (
@@ -113,29 +101,14 @@ CEREBRAS_MODEL_IDS = [
     "gpt-oss-120b",
 ]
 
-FIREWORKS_MODEL_IDS = [
-    "fireworks/glm-5.2",
-    "fireworks/glm-5.1",
-    "fireworks/glm-5",
-    "fireworks/kimi-k2.6",
-    "fireworks/kimi-k2.7-code",
-]
+FIREWORKS_MODEL_IDS = [model.logical_id for model in MODEL_REGISTRY.models if model.preferred_route.provider == "fireworks"]
 
 MOONSHOT_MODEL_IDS = [
     "moonshot/kimi-k2.5",
     "kimi-k2.5",
 ]
 
-XAI_MODEL_IDS = [
-    "x-ai/grok-4",
-    "x-ai/grok-4-fast",
-    "x-ai/grok-4.1-fast",
-    "x-ai/grok-4.1-fast-reasoning",
-    "x-ai/grok-4.20-0309-reasoning",
-    "x-ai/grok-4.20-0309-non-reasoning",
-    "x-ai/grok-4.20-multi-agent-0309",
-    "x-ai/grok-4.3",
-]
+XAI_MODEL_IDS = [model.logical_id for model in MODEL_REGISTRY.models if model.preferred_route.provider == "xai"]
 
 # Gemini models routed to Google's Gemini Direct API.
 # NOTE: google/gemini-3.1-pro-preview removed Apr 17 2026 — routing via OpenRouter
@@ -152,40 +125,19 @@ GEMINI_DIRECT_MODEL_IDS = [
 
 # Claude models routed to Anthropic-on-Vertex as primary provider.
 VERTEX_ANTHROPIC_MODEL_MAP = {
-    "anthropic/claude-fable-5": "claude-fable-5",
+    model.logical_id: route.provider_model_id
+    for model in MODEL_REGISTRY.models
+    for route in model.routes
+    if route.provider == "vertex"
 }
 VERTEX_ANTHROPIC_MODEL_IDS = list(VERTEX_ANTHROPIC_MODEL_MAP.keys())
 
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
-    "openai/gpt-5.5": "openai/gpt-5.5",
-    "anthropic/claude-opus-4.8": "anthropic/claude-opus-4.8",
-    "anthropic/claude-fable-5": "anthropic/claude-fable-5",
-    "anthropic/claude-sonnet-5": "anthropic/claude-sonnet-5",
-    "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
-    "anthropic/claude-opus-4.6": "anthropic/claude-opus-4-6",
-    "z-ai/glm-5.2": "z-ai/glm-5.2",
-    "fireworks/glm-5.2": "z-ai/glm-5.2",
-    "fireworks/glm-5.1": "z-ai/glm-5.1",
-    "fireworks/glm-5": "z-ai/glm-5",
-    "zai-glm-4.7": "z-ai/glm-4.7",
-    "z-ai/glm-5.1": "z-ai/glm-5.1",
-    "z-ai/glm-5": "z-ai/glm-5",
-    "google/gemini-3-flash": "google/gemini-2.0-flash-001",
-    "google/gemini-3.5-flash": "google/gemini-3.5-flash",
-    "google/gemini-3-pro": "google/gemini-2.5-pro-preview-06-05",
-    "google/gemini-3.1-pro-preview": "google/gemini-3.1-pro-preview",
-    "openai/gpt-5.4": "openai/gpt-5.4",
-    "x-ai/grok-4": "x-ai/grok-4",
-    "x-ai/grok-4.20-0309-reasoning": "x-ai/grok-4.20",
-    "x-ai/grok-4.3": "x-ai/grok-4.3",
-    "fireworks/kimi-k2.6": "moonshotai/kimi-k2.6",
-    "fireworks/kimi-k2.7-code": "moonshotai/kimi-k2.7-code",
-    "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro",
-    "meta-llama/llama-4-maverick": "meta-llama/llama-4-maverick",
-    "minimax/minimax-m3": "minimax/minimax-m3",
-    "qwen/qwen3.7-max": "qwen/qwen3.7-max",
-    "qwen/qwen3.5-122b-a10b": "qwen/qwen3.5-122b-a10b",
+    model.logical_id: route.provider_model_id
+    for model in MODEL_REGISTRY.models
+    for route in model.routes
+    if route.provider == "openrouter"
 }
 
 # OpenAI models (disabled - Codex OAuth uses Responses API, not Chat Completions)
@@ -193,66 +145,21 @@ OPENAI_MODEL_IDS = []
 
 # Model name aliases for convenience (used in /council command)
 MODEL_ALIASES = {
-    "gpt": "openai/gpt-5.5",
-    "opus": "anthropic/claude-opus-4.8",
-    "glm": "fireworks/glm-5.2",
-    "glm-fw": "fireworks/glm-5.2",
-    "glm-zai": "z-ai/glm-5.2",
-    "gemini": "google/gemini-3.1-pro-preview",
-    "pro": "google/gemini-3.1-pro-preview",
-    "grok": "x-ai/grok-4.3",
-    "kimi": "fireworks/kimi-k2.7-code",
-    "kimi26": "fireworks/kimi-k2.6",
-    "deepseek": "deepseek/deepseek-v4-pro",
-    "llama": "meta-llama/llama-4-maverick",
-    "qwen": "qwen/qwen3.7-max",
-    "fable": "anthropic/claude-fable-5",
-    "sonnet": "anthropic/claude-sonnet-5",
-    "minimax": "minimax/minimax-m3",
-    "flash": "google/gemini-3.5-flash",
+    alias: model.logical_id for model in MODEL_REGISTRY.models for alias in model.aliases
 }
 
 # Evaluator priority list — models best at critical evaluation
 # Stage 2 uses top 3 from this list that are present in the active council
-EVALUATOR_PRIORITY = [
-    "anthropic/claude-fable-5",
-    "deepseek/deepseek-v4-pro",
-    "openai/gpt-5.5",
-]
+EVALUATOR_PRIORITY = list(MODEL_REGISTRY.evaluator_priority)
 
 # Tiered truncation allocation — inverse allocation: weaker models get MORE space
 # Strong models are concise; weaker models need more tokens for same quality
-TIERED_TRUNCATION = {
-    "strong": [
-        "anthropic/claude-fable-5",
-        "anthropic/claude-opus-4.8",  # backward compat for explicit Opus usage
-        "openai/gpt-5.5",
-        "deepseek/deepseek-v4-pro",
-    ],
-    "medium": [
-        "google/gemini-3.1-pro-preview",
-        "z-ai/glm-5.2",
-        "fireworks/glm-5.2",
-        "x-ai/grok-4.3",
-        "fireworks/kimi-k2.6",
-        "fireworks/kimi-k2.7-code",
-        "qwen/qwen3.7-max",
-    ],
-    "weak": [
-        "fireworks/glm-5.1",
-        "meta-llama/llama-4-maverick",
-        "qwen/qwen3.5-122b-a10b",
-    ],
-}
+TIERED_TRUNCATION = {tier: [model.logical_id for model in MODEL_REGISTRY.models if model.tier == tier] for tier in MODEL_REGISTRY.truncation_limits}
 
-TRUNCATION_LIMITS = {
-    "strong": 8000,
-    "medium": 10000,
-    "weak": 12000,
-}
+TRUNCATION_LIMITS = dict(MODEL_REGISTRY.truncation_limits)
 
 # Default truncation limit when model tier is unknown
-DEFAULT_TRUNCATION_LIMIT = 12000
+DEFAULT_TRUNCATION_LIMIT = MODEL_REGISTRY.default_truncation_limit
 
 
 def is_cerebras_model(model_id: str) -> bool:
@@ -262,17 +169,17 @@ def is_cerebras_model(model_id: str) -> bool:
 
 def is_fireworks_model(model_id: str) -> bool:
     """Check if a model ID should be routed to Fireworks AI."""
-    return model_id in FIREWORKS_MODEL_IDS or model_id.startswith("fireworks/")
+    return model_id in FIREWORKS_MODEL_IDS
 
 
 def is_moonshot_model(model_id: str) -> bool:
     """Check if a model ID should be routed to Moonshot."""
-    return model_id in MOONSHOT_MODEL_IDS or model_id.startswith("moonshot/")
+    return model_id in MOONSHOT_MODEL_IDS
 
 
 def is_xai_model(model_id: str) -> bool:
     """Check if a model ID should be routed to xAI."""
-    return model_id in XAI_MODEL_IDS or model_id.startswith("x-ai/")
+    return model_id in XAI_MODEL_IDS
 
 
 def is_gemini_direct_model(model_id: str) -> bool:
@@ -342,12 +249,11 @@ def calculate_max_response_chars(model_id: str, num_models: int) -> int:
 # OpenRouter native Anthropic provider (enables thinking, no API error).
 # Models not listed use provider default (no reasoning_effort sent).
 MODEL_REASONING_EFFORT = {
-    "openai/gpt-5.5": "medium",
-    "openai/gpt-5.5-evaluator": "high",
-    "anthropic/claude-fable-5": "high",
-    "anthropic/claude-opus-4.8": "xhigh",
-    "anthropic/claude-opus-4.7": "xhigh",  # backward compat for stored configs
-    "fireworks/glm-5.2": "xhigh",
+    key: effort
+    for model in MODEL_REGISTRY.models
+    for key, effort in ({model.logical_id: model.reasoning.get("default") or model.reasoning.get("member"),
+                         f"{model.logical_id}-evaluator": model.reasoning.get("evaluator")}).items()
+    if effort is not None
 }
 
 

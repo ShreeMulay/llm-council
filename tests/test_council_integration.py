@@ -188,7 +188,7 @@ class TestFullCouncilFlow:
     @pytest.mark.asyncio
     async def test_stage3_uses_curated_responses(self, mock_all_providers):
         """Chairman should receive curated subset, not all 9 responses."""
-        with patch("backend.council.select_top_responses") as mock_select:
+        with patch("backend.council.curate_responses") as mock_select:
             # Return exactly 5 curated responses with required fields
             mock_select.return_value = [
                 {"model": "m1", "response": "r1", "usage": {}, "provider": "mock"},
@@ -203,8 +203,8 @@ class TestFullCouncilFlow:
                 council_models=list(MOCK_RESPONSES.keys()),
             )
 
-            # select_top_responses should be called with all stage1 results
+            # Planner curation should be called with all stage1 results.
             mock_select.assert_called_once()
             call_args = mock_select.call_args[0]
-            assert len(call_args[0]) == 9  # All 9 stage1 responses passed in
+            assert len(call_args[1]) == 9  # All 9 stage1 responses passed in
             assert len(mock_select.return_value) == 5  # Curated to 5

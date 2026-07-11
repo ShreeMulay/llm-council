@@ -69,6 +69,12 @@ def test_execution_plan_is_deeply_immutable_and_digest_stable():
         plan.stage1[0].logical_id = "changed"  # type: ignore[misc]
     with pytest.raises(TypeError):
         plan.limits["max_tokens"] = 1  # type: ignore[index]
+    with pytest.raises((FrozenInstanceError, AttributeError)):
+        plan.stage0.limits.max_results = 1  # type: ignore[misc]
+    with pytest.raises((FrozenInstanceError, AttributeError)):
+        plan.stage1[0].settings.temperature = 0  # type: ignore[misc]
+    with pytest.raises((FrozenInstanceError, AttributeError)):
+        plan.stage1[0].routes[0].provider_model_id = "changed"  # type: ignore[misc]
 
 
 def test_one_logical_route_resolution_contract_is_used_for_every_mode():

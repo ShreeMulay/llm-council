@@ -10,11 +10,13 @@ from pathlib import Path
 import pytest
 
 from backend.model_registry import (
+    REGISTRY_PATH,
     RegistrySnapshot,
     derive_projections,
     load_registry,
     resolve_alias,
     validate_projection_drift,
+    write_generated_projections,
 )
 
 FROZEN_PRODUCTION = (
@@ -28,6 +30,21 @@ FROZEN_PRODUCTION = (
     "meta-llama/llama-4-maverick",
     "qwen/qwen3.7-max",
 )
+
+
+def test_canonical_registry_is_declarative_schema_versioned_json():
+    raw = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+
+    assert REGISTRY_PATH.name == "model_registry.json"
+    assert raw["schema_version"] == 1
+    assert raw["registry_version"]
+    assert raw["defaults"]["production_roster"] == list(FROZEN_PRODUCTION)
+    assert raw["defaults"]["evaluator_priority"] == [
+        "anthropic/claude-fable-5",
+        "deepseek/deepseek-v4-pro",
+        "openai/gpt-5.5",
+    ]
+    assert all("reasoning" in model and "tier" in model for model in raw["models"])
 
 CHALLENGERS = {
     "openai/gpt-5.6-sol",
@@ -213,3 +230,42 @@ def test_registry_rejects_broken_cross_record_invariants(mutation):
     raw.pop("digest")
     with pytest.raises(ValueError):
         RegistrySnapshot.from_dict(raw)
+
+
+def test_config_is_projected_from_registry():
+    from backend import config
+
+    registry = load_registry()
+    assert tuple(config.ALL_MODEL_IDS) == registry.production_roster
+    assert tuple(config.COMPACT_COUNCIL_MODELS) == registry.compact_roster
+    assert registry.chairman_logical_id == config.DEFAULT_CHAIRMAN_MODEL
+    assert {
+        alias: model.logical_id for model in registry.models for alias in model.aliases
+    } == config.MODEL_ALIASES
+
+
+def test_committed_non_python_projections_have_no_drift(tmp_path):
+    root = Path(__file__).parents[1]
+    expected_frontend = root / "frontend/src/generated/model-registry.json"
+    expected_mcp = root / "mcp/src/generated/model-registry.json"
+    write_generated_projections(tmp_path)
+
+    assert expected_frontend.read_bytes() == (tmp_path / "frontend/src/generated/model-registry.json").read_bytes()
+    assert expected_mcp.read_bytes() == (tmp_path / "mcp/src/generated/model-registry.json").read_bytes()
+
+
+def test_generator_checks_every_committed_projection(tmp_path):
+    generated = write_generated_projections(tmp_path)
+    relatives = {path.relative_to(tmp_path).parts[0] for path in generated}
+    assert relatives == {"backend", "frontend", "mcp"}
+
+
+def test_projection_contains_required_public_metadata():
+    projection = derive_projections(load_registry())["api"].to_dict()
+
+    assert projection["default_roster"] == list(FROZEN_PRODUCTION)
+    assert projection["compact_roster"] == list(FROZEN_PRODUCTION[:5])
+    assert projection["eligible_roster"]
+    assert projection["experimental_roster"]
+    model = projection["models"][0]
+    assert {"id", "provider_model_id", "aliases", "label", "capabilities", "lifecycle", "roles"} <= model.keys()

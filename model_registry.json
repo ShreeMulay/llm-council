@@ -1,0 +1,770 @@
+{
+  "defaults": {
+    "chairman": "anthropic/claude-fable-5",
+    "compact_roster": [
+      "openai/gpt-5.5",
+      "anthropic/claude-fable-5",
+      "fireworks/glm-5.2",
+      "google/gemini-3.1-pro-preview",
+      "x-ai/grok-4.3"
+    ],
+    "default_truncation_limit": 12000,
+    "evaluator_priority": [
+      "anthropic/claude-fable-5",
+      "deepseek/deepseek-v4-pro",
+      "openai/gpt-5.5"
+    ],
+    "production_roster": [
+      "openai/gpt-5.5",
+      "anthropic/claude-fable-5",
+      "fireworks/glm-5.2",
+      "google/gemini-3.1-pro-preview",
+      "x-ai/grok-4.3",
+      "fireworks/kimi-k2.7-code",
+      "deepseek/deepseek-v4-pro",
+      "meta-llama/llama-4-maverick",
+      "qwen/qwen3.7-max"
+    ],
+    "truncation_limits": {
+      "medium": 10000,
+      "strong": 8000,
+      "weak": 12000
+    }
+  },
+  "models": [
+    {
+      "aliases": [
+        "gpt"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "GPT-5.5",
+      "family": "openai",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "openai/gpt-5.5",
+      "preferred_route_id": "openrouter:openai/gpt-5.5",
+      "reasoning": {
+        "evaluator": "high",
+        "member": "medium"
+      },
+      "roles": [
+        "member",
+        "evaluator"
+      ],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "openai/gpt-5.5",
+          "route_id": "openrouter:openai/gpt-5.5"
+        }
+      ],
+      "seats": [
+        1
+      ],
+      "tier": "strong"
+    },
+    {
+      "aliases": [
+        "fable"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Claude Fable 5",
+      "family": "anthropic",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "anthropic/claude-fable-5",
+      "preferred_route_id": "vertex:anthropic/claude-fable-5",
+      "reasoning": {
+        "default": "high"
+      },
+      "roles": [
+        "member",
+        "evaluator",
+        "chairman"
+      ],
+      "routes": [
+        {
+          "adapter": "vertex_adapter",
+          "provider": "vertex",
+          "provider_model_id": "claude-fable-5",
+          "route_id": "vertex:anthropic/claude-fable-5"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "anthropic/claude-fable-5",
+          "route_id": "openrouter:anthropic/claude-fable-5"
+        }
+      ],
+      "seats": [
+        2
+      ],
+      "tier": "strong"
+    },
+    {
+      "aliases": [
+        "glm",
+        "glm-fw"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Fireworks GLM-5.2 xHigh",
+      "family": "fireworks",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "fireworks/glm-5.2",
+      "preferred_route_id": "fireworks:fireworks/glm-5.2",
+      "reasoning": {
+        "default": "xhigh"
+      },
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "fireworks_adapter",
+          "provider": "fireworks",
+          "provider_model_id": "accounts/fireworks/models/glm-5p2",
+          "route_id": "fireworks:fireworks/glm-5.2"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "z-ai/glm-5.2",
+          "route_id": "openrouter:fireworks/glm-5.2"
+        }
+      ],
+      "seats": [
+        3
+      ],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "gemini",
+        "pro"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Gemini 3.1 Pro",
+      "family": "google",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "google/gemini-3.1-pro-preview",
+      "preferred_route_id": "openrouter:google/gemini-3.1-pro-preview",
+      "reasoning": {},
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "google/gemini-3.1-pro-preview",
+          "route_id": "openrouter:google/gemini-3.1-pro-preview"
+        }
+      ],
+      "seats": [
+        4
+      ],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "grok"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Grok 4.3",
+      "family": "x-ai",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "x-ai/grok-4.3",
+      "preferred_route_id": "xai:x-ai/grok-4.3",
+      "reasoning": {},
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "xai_adapter",
+          "provider": "xai",
+          "provider_model_id": "grok-4.3",
+          "route_id": "xai:x-ai/grok-4.3"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "x-ai/grok-4.3",
+          "route_id": "openrouter:x-ai/grok-4.3"
+        }
+      ],
+      "seats": [
+        5
+      ],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "kimi"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Kimi K2.7 Code",
+      "family": "fireworks",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "fireworks/kimi-k2.7-code",
+      "preferred_route_id": "fireworks:fireworks/kimi-k2.7-code",
+      "reasoning": {},
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "fireworks_adapter",
+          "provider": "fireworks",
+          "provider_model_id": "accounts/fireworks/models/kimi-k2p7-code",
+          "route_id": "fireworks:fireworks/kimi-k2.7-code"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "moonshotai/kimi-k2.7-code",
+          "route_id": "openrouter:fireworks/kimi-k2.7-code"
+        }
+      ],
+      "seats": [
+        6
+      ],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "deepseek"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "DeepSeek V4 Pro",
+      "family": "deepseek",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "deepseek/deepseek-v4-pro",
+      "preferred_route_id": "openrouter:deepseek/deepseek-v4-pro",
+      "reasoning": {},
+      "roles": [
+        "member",
+        "evaluator"
+      ],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "deepseek/deepseek-v4-pro",
+          "route_id": "openrouter:deepseek/deepseek-v4-pro"
+        }
+      ],
+      "seats": [
+        7
+      ],
+      "tier": "strong"
+    },
+    {
+      "aliases": [
+        "llama"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Llama 4 Maverick",
+      "family": "meta-llama",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "meta-llama/llama-4-maverick",
+      "preferred_route_id": "openrouter:meta-llama/llama-4-maverick",
+      "reasoning": {},
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "meta-llama/llama-4-maverick",
+          "route_id": "openrouter:meta-llama/llama-4-maverick"
+        }
+      ],
+      "seats": [
+        8
+      ],
+      "tier": "weak"
+    },
+    {
+      "aliases": [
+        "qwen"
+      ],
+      "capabilities": [
+        "text",
+        "reasoning"
+      ],
+      "challenger": false,
+      "display_name": "Qwen 3.7 Max",
+      "family": "qwen",
+      "legacy": false,
+      "lifecycle": "production",
+      "logical_id": "qwen/qwen3.7-max",
+      "preferred_route_id": "openrouter:qwen/qwen3.7-max",
+      "reasoning": {},
+      "roles": [
+        "member"
+      ],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "qwen/qwen3.7-max",
+          "route_id": "openrouter:qwen/qwen3.7-max"
+        }
+      ],
+      "seats": [
+        9
+      ],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "gpt-5.6-sol",
+      "family": "openai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "openai/gpt-5.6-sol",
+      "preferred_route_id": "challenger:openai/gpt-5.6-sol",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "openai/gpt-5.6-sol",
+          "route_id": "challenger:openai/gpt-5.6-sol"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "gpt-5.6-terra",
+      "family": "openai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "openai/gpt-5.6-terra",
+      "preferred_route_id": "challenger:openai/gpt-5.6-terra",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "openai/gpt-5.6-terra",
+          "route_id": "challenger:openai/gpt-5.6-terra"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "gpt-5.6-luna",
+      "family": "openai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "openai/gpt-5.6-luna",
+      "preferred_route_id": "challenger:openai/gpt-5.6-luna",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "openai/gpt-5.6-luna",
+          "route_id": "challenger:openai/gpt-5.6-luna"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "sonnet"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "claude-sonnet-5",
+      "family": "anthropic",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "anthropic/claude-sonnet-5",
+      "preferred_route_id": "challenger:anthropic/claude-sonnet-5",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "anthropic/claude-sonnet-5",
+          "route_id": "challenger:anthropic/claude-sonnet-5"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "opus"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "claude-opus-4.8",
+      "family": "anthropic",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "anthropic/claude-opus-4.8",
+      "preferred_route_id": "challenger:anthropic/claude-opus-4.8",
+      "reasoning": {
+        "default": "xhigh"
+      },
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "anthropic/claude-opus-4.8",
+          "route_id": "challenger:anthropic/claude-opus-4.8"
+        }
+      ],
+      "seats": [],
+      "tier": "strong"
+    },
+    {
+      "aliases": [
+        "flash"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "gemini-3.5-flash",
+      "family": "google",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "google/gemini-3.5-flash",
+      "preferred_route_id": "challenger:google/gemini-3.5-flash",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "google/gemini-3.5-flash",
+          "route_id": "challenger:google/gemini-3.5-flash"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "grok-4.5",
+      "family": "x-ai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "x-ai/grok-4.5",
+      "preferred_route_id": "challenger:x-ai/grok-4.5",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "x-ai/grok-4.5",
+          "route_id": "challenger:x-ai/grok-4.5"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "deepseek-v4-flash",
+      "family": "deepseek",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "deepseek/deepseek-v4-flash",
+      "preferred_route_id": "challenger:deepseek/deepseek-v4-flash",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "deepseek/deepseek-v4-flash",
+          "route_id": "challenger:deepseek/deepseek-v4-flash"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "minimax"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "minimax-m3",
+      "family": "minimax",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "minimax/minimax-m3",
+      "preferred_route_id": "challenger:minimax/minimax-m3",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "minimax/minimax-m3",
+          "route_id": "challenger:minimax/minimax-m3"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "mistral-large-3",
+      "family": "mistralai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "mistralai/mistral-large-3",
+      "preferred_route_id": "challenger:mistralai/mistral-large-3",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "mistralai/mistral-large-3",
+          "route_id": "challenger:mistralai/mistral-large-3"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "glm-zai"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "glm-5.2",
+      "family": "z-ai",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "z-ai/glm-5.2",
+      "preferred_route_id": "challenger:z-ai/glm-5.2",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "z-ai/glm-5.2",
+          "route_id": "challenger:z-ai/glm-5.2"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [
+        "kimi26"
+      ],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": true,
+      "display_name": "kimi-k2.6",
+      "family": "fireworks",
+      "legacy": true,
+      "lifecycle": "experimental",
+      "logical_id": "fireworks/kimi-k2.6",
+      "preferred_route_id": "fireworks:fireworks/kimi-k2.6",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "fireworks_adapter",
+          "provider": "fireworks",
+          "provider_model_id": "accounts/fireworks/models/kimi-k2p6",
+          "route_id": "fireworks:fireworks/kimi-k2.6"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "fireworks/kimi-k2.6",
+          "route_id": "challenger:fireworks/kimi-k2.6"
+        }
+      ],
+      "seats": [],
+      "tier": "medium"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": false,
+      "display_name": "glm-5.1",
+      "family": "fireworks",
+      "legacy": true,
+      "lifecycle": "legacy",
+      "logical_id": "fireworks/glm-5.1",
+      "preferred_route_id": "fireworks:fireworks/glm-5.1",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "fireworks_adapter",
+          "provider": "fireworks",
+          "provider_model_id": "fireworks/glm-5.1",
+          "route_id": "fireworks:fireworks/glm-5.1"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "z-ai/glm-5.1",
+          "route_id": "openrouter:fireworks/glm-5.1"
+        }
+      ],
+      "seats": [],
+      "tier": "weak"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": false,
+      "display_name": "glm-5",
+      "family": "fireworks",
+      "legacy": true,
+      "lifecycle": "legacy",
+      "logical_id": "fireworks/glm-5",
+      "preferred_route_id": "fireworks:fireworks/glm-5",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "fireworks_adapter",
+          "provider": "fireworks",
+          "provider_model_id": "fireworks/glm-5",
+          "route_id": "fireworks:fireworks/glm-5"
+        },
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "z-ai/glm-5",
+          "route_id": "openrouter:fireworks/glm-5"
+        }
+      ],
+      "seats": [],
+      "tier": "weak"
+    },
+    {
+      "aliases": [],
+      "capabilities": [
+        "text"
+      ],
+      "challenger": false,
+      "display_name": "qwen3.5-122b-a10b",
+      "family": "qwen",
+      "legacy": true,
+      "lifecycle": "legacy",
+      "logical_id": "qwen/qwen3.5-122b-a10b",
+      "preferred_route_id": "openrouter:qwen/qwen3.5-122b-a10b",
+      "reasoning": {},
+      "roles": [],
+      "routes": [
+        {
+          "adapter": "openrouter_adapter",
+          "provider": "openrouter",
+          "provider_model_id": "qwen/qwen3.5-122b-a10b",
+          "route_id": "openrouter:qwen/qwen3.5-122b-a10b"
+        }
+      ],
+      "seats": [],
+      "tier": "weak"
+    }
+  ],
+  "registry_version": "2026.07.11",
+  "schema_version": 1
+}

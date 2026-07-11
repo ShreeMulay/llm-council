@@ -40,7 +40,7 @@ async def test_fireworks_glm_5_2_primary_passes_xhigh_reasoning_effort(monkeypat
     )
 
     assert result is not None
-    assert calls[0]["model_id"] == "fireworks/glm-5.2"
+    assert calls[0]["model_id"] == "accounts/fireworks/models/glm-5p2"
     assert calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
 
 
@@ -141,7 +141,7 @@ async def test_vertex_reasoning_override_routes_to_vertex_client(monkeypatch):
 
     assert result is not None
     assert result["content"] == "vertex ok"
-    assert calls[0]["model_id"] == "anthropic/claude-fable-5"
+    assert calls[0]["model_id"] == "claude-fable-5"
     assert calls[0]["kwargs"] == {
         "max_tokens": 2048,
         "temperature": 0.1,

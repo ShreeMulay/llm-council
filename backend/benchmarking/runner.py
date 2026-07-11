@@ -238,29 +238,18 @@ async def _live_provider_response(
 
     messages = [{"role": "user", "content": str(prompt.get("prompt", ""))}]
     started = time.perf_counter()
-    if variant.provider == "openrouter":
-        from backend.openrouter import query_model
+    from backend.model_dispatcher import DispatchRequest, query_model
 
-        response = await query_model(
-            variant.model_id,
-            messages,
-            max_tokens=config.max_tokens,
-            temperature=config.temperature,
-            reasoning_effort=variant.reasoning_effort,
-            allow_fallbacks=False,
-        )
-    elif variant.provider == "fireworks":
-        from backend.fireworks_client import query_fireworks_model
-
-        response = await query_fireworks_model(
-            variant.model_id,
-            messages,
-            max_tokens=config.max_tokens,
-            temperature=config.temperature,
-            reasoning_effort=variant.reasoning_effort,
-        )
-    else:
-        response = {"content": "", "usage": {}, "error": f"unsupported provider {variant.provider}"}
+    response = await query_model(DispatchRequest(
+        variant.model_id,
+        messages,
+        max_tokens=config.max_tokens,
+        temperature=config.temperature,
+        reasoning_effort=variant.reasoning_effort,
+        timeout=config.probe_timeout_seconds,
+        allow_fallbacks=False,
+        provider=variant.provider,
+    ))
 
     latency = time.perf_counter() - started
     if response is None:

@@ -8,7 +8,8 @@
     "build": "vite build",
     "test": "node src/api.sse.test.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "generate:models": "cd .. && uv run python -m backend.model_registry"
   },
   "dependencies": {
     "react": "^19.2.0",

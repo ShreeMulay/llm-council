@@ -5,9 +5,8 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from types import MappingProxyType
-from typing import Any
+from dataclasses import asdict, dataclass
+from typing import Any, Literal
 
 from .model_registry import ModelRecord, ModelRoute, RegistrySnapshot
 
@@ -52,11 +51,102 @@ class RouteResolution:
 
 
 @dataclass(frozen=True)
+class RequestSettings:
+    max_tokens: int
+    temperature: float
+    reasoning_effort: str | None = None
+    allow_provider_fallbacks: bool = True
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+
+@dataclass(frozen=True)
+class RetryPolicy:
+    timeout_seconds: float
+    max_retries: int
+    backoff_base_seconds: float
+
+
+@dataclass(frozen=True)
 class PlanOperation:
     logical_id: str
-    route: RouteResolution
-    normalized_request: tuple[tuple[str, Any], ...]
+    routes: tuple[RouteResolution, ...]
+    messages: tuple[tuple[str, str], ...]
+    settings: RequestSettings
+    retry: RetryPolicy
     dispatcher_contract: str
+
+    @property
+    def route(self) -> RouteResolution:
+        """Compatibility view of the captured primary route."""
+        return self.routes[0]
+
+    @property
+    def normalized_request(self) -> tuple[tuple[str, tuple[tuple[str, str], ...]], ...]:
+        return (("messages", self.messages),)
+
+
+@dataclass(frozen=True)
+class Stage0Limits:
+    max_requests: int = 1
+    max_results: int = 5
+    max_chars: int = 8_000
+    timeout_seconds: float = 10.0
+    max_bytes: int = 1_000_000
+    max_spend: float = 1.0
+
+
+@dataclass(frozen=True)
+class Stage0Plan:
+    mode: Literal["disabled", "explicit", "classifier"]
+    classifier_threshold: float
+    classifier_score: float | None
+    planned: bool
+    gating_reason: str
+    target_kind: Literal["url", "search"]
+    target_digest: str
+    policy: str
+    limits: Stage0Limits
+    decision: str
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+
+@dataclass(frozen=True)
+class CouncilRoles:
+    by_model: tuple[tuple[str, tuple[str, ...]], ...]
+
+    def __getitem__(self, model: str) -> tuple[str, ...]:
+        return dict(self.by_model)[model]
+
+
+@dataclass(frozen=True)
+class CouncilRoutes:
+    by_model: tuple[tuple[str, tuple[RouteResolution, ...]], ...]
+
+    def __getitem__(self, model: str) -> tuple[RouteResolution, ...]:
+        return dict(self.by_model)[model]
+
+
+@dataclass(frozen=True)
+class CurationPolicy:
+    top_consensus: int = 3
+    wildcards: int = 1
+    diversity_picks: int = 1
+    maximum: int = 5
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
+
+
+@dataclass(frozen=True)
+class PlanLimits:
+    max_tokens: int
+
+    def __getitem__(self, key: str):
+        return getattr(self, key)
 
 
 @dataclass(frozen=True)
@@ -64,16 +154,16 @@ class ExecutionPlan:
     registry_version: str
     registry_digest: str
     projection_digest: str
-    stage0: Mapping[str, Any]
+    stage0: Stage0Plan
     stage1: tuple[PlanOperation, ...]
     evaluators: tuple[PlanOperation, ...]
     chairman: PlanOperation
-    roles: Mapping[str, tuple[str, ...]]
-    routes: Mapping[str, tuple[RouteResolution, ...]]
+    roles: CouncilRoles
+    routes: CouncilRoutes
     messages: tuple[tuple[str, str], ...]
-    settings: Mapping[str, Any]
-    limits: Mapping[str, int]
-    curation_constraints: Mapping[str, int]
+    settings: RequestSettings
+    limits: PlanLimits
+    curation_constraints: CurationPolicy
     digest: str
 
 
@@ -128,26 +218,104 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     if len(model_ids) != len(set(model_ids)):
         raise ValueError("execution plan cannot contain duplicate models")
     messages = tuple(filter(None, ((("system", str(request["system"])) if request.get("system") else None), ("user", str(request.get("query", ""))))))
-    normalized = (("messages", messages),)
-    policy = str(request.get("route_policy", "primary"))
-    operations = tuple(PlanOperation(model_id, resolve_logical_route(registry, model_id, policy), normalized, "provider-neutral-dispatch/v1") for model_id in model_ids)
+    if request.get("route_policy", "primary") != "primary":
+        raise ValueError(f"unsupported route policy: {request['route_policy']}")
+    settings = RequestSettings(int(request.get("max_tokens", 8192)), float(request.get("temperature", 0.7)))
+    retry = RetryPolicy(float(request.get("timeout", 180)), int(request.get("max_retries", 2)), float(request.get("backoff_base", 1.5)))
+    def operation(model_id: str, *, reasoning: str | None = None) -> PlanOperation:
+        record = registry.model(model_id)
+        ordered = (record.preferred_route,) + tuple(route for route in record.routes if route != record.preferred_route)
+        routes = tuple(RouteResolution(model_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in ordered)
+        operation_settings = RequestSettings(settings.max_tokens, settings.temperature, reasoning, settings.allow_provider_fallbacks)
+        return PlanOperation(model_id, routes, messages, operation_settings, retry, "provider-neutral-dispatch/v2")
+    operations = tuple(operation(model_id) for model_id in model_ids)
     by_id = {operation.logical_id: operation for operation in operations}
-    evaluators = tuple(by_id[item] for item in ("anthropic/claude-fable-5", "deepseek/deepseek-v4-pro", "openai/gpt-5.5") if item in by_id)
-    chairman = by_id.get(registry.chairman_logical_id)
+    evaluators = tuple(operation(item, reasoning=registry.model(item).reasoning.get("evaluator")) for item in registry.evaluator_priority if item in by_id)
+    chairman_id = str(request.get("chairman") or registry.chairman_logical_id)
+    chairman = by_id.get(chairman_id)
     if chairman is None:
-        chairman = PlanOperation(registry.chairman_logical_id, resolve_logical_route(registry, registry.chairman_logical_id, policy), normalized, "provider-neutral-dispatch/v1")
+        chairman = operation(chairman_id)
     all_ids = tuple(dict.fromkeys((*model_ids, *(item.logical_id for item in evaluators), chairman.logical_id)))
-    routes = {
+    routes_dict = {
         logical_id: tuple(RouteResolution(logical_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in registry.model(logical_id).routes)
         for logical_id in all_ids
     }
-    roles = {logical_id: registry.model(logical_id).roles for logical_id in all_ids}
-    stage0_dict = {"decision": "explicit" if request.get("models") else "compact" if request.get("compact") else "full", "mode": str(request.get("mode", "sync")), "model_count": len(model_ids)}
-    settings_dict = {"temperature": float(request.get("temperature", 0.7)), "route_policy": policy}
-    limits_dict = {"max_tokens": int(request.get("max_tokens", 8192))}
-    curation_dict = {"top_consensus": 3, "wildcards": 1, "diversity_picks": 1, "maximum": 5}
-    projection = {"surface": "backend", "registry_version": registry.version, "logical_ids": all_ids, "routes": {key: [route.route_id for route in value] for key, value in routes.items()}}
+    roles = CouncilRoles(tuple((logical_id, tuple(registry.model(logical_id).roles)) for logical_id in all_ids))
+    stage0_mode = str(request.get("parallel_mode", "disabled"))
+    threshold = float(request.get("parallel_classifier_threshold", 0.8))
+    score = request.get("parallel_classifier_score")
+    score = float(score) if score is not None else None
+    planned = stage0_mode == "explicit" or (stage0_mode == "classifier" and score is not None and score >= threshold)
+    reason = "explicit_request" if stage0_mode == "explicit" else "classifier_threshold" if planned else "below_threshold" if stage0_mode == "classifier" else "disabled"
+    query = str(request.get("query", ""))
+    import re
+    url_match = re.search(r"https?://[^\s<>\"']+", query, re.I)
+    target = url_match.group(0).rstrip(".,;!?)") if url_match else query
+    decision = "explicit" if request.get("models") else "compact" if request.get("compact") else "full"
+    stage0 = Stage0Plan(stage0_mode, threshold, score, planned, reason, "url" if url_match else "search", hashlib.sha256(target.encode()).hexdigest(), "parallel-bounded/v1", Stage0Limits(), decision)
+    curation = CurationPolicy()
+    projection = {"surface": "backend", "registry_version": registry.version, "logical_ids": all_ids, "routes": {key: [route.route_id for route in value] for key, value in routes_dict.items()}}
     projection_digest = hashlib.sha256(json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    payload = {"registry_version": registry.version, "registry_digest": registry.digest, "projection_digest": projection_digest, "stage0": stage0_dict, "models": model_ids, "routes": projection["routes"], "messages": messages, "settings": settings_dict, "limits": limits_dict, "curation": curation_dict}
+    payload = {"registry_version": registry.version, "registry_digest": registry.digest, "projection_digest": projection_digest, "stage0": asdict(stage0), "models": model_ids, "routes": projection["routes"], "messages": messages, "settings": asdict(settings), "limits": {"max_tokens": settings.max_tokens}, "curation": asdict(curation)}
     digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    return ExecutionPlan(registry.version, registry.digest, projection_digest, MappingProxyType(stage0_dict), operations, evaluators, chairman, MappingProxyType(roles), MappingProxyType(routes), messages, MappingProxyType(settings_dict), MappingProxyType(limits_dict), MappingProxyType(curation_dict), digest)
+    return ExecutionPlan(registry.version, registry.digest, projection_digest, stage0, operations, evaluators, chairman, roles, CouncilRoutes(tuple(routes_dict.items())), messages, settings, PlanLimits(settings.max_tokens), curation, digest)
+
+
+def curate_responses(
+    plan: ExecutionPlan,
+    responses: Sequence[Mapping[str, Any]],
+    aggregate_rankings: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Deterministically curate scored responses while adding route diversity."""
+    maximum = plan.curation_constraints.maximum
+    if len(responses) <= maximum:
+        return [dict(item) for item in responses]
+
+    by_model = {str(item["model"]): dict(item) for item in responses}
+    plan_order = {operation.logical_id: index for index, operation in enumerate(plan.stage1)}
+    ranked = sorted(
+        (item for item in aggregate_rankings if item.get("model") in by_model),
+        key=lambda item: (float(item["average_rank"]), plan_order.get(str(item["model"]), 10_000)),
+    )
+    ranked_ids = [str(item["model"]) for item in ranked]
+    ranked_ids.extend(
+        operation.logical_id
+        for operation in plan.stage1
+        if operation.logical_id in by_model and operation.logical_id not in ranked_ids
+    )
+    consensus_count = plan.curation_constraints.top_consensus
+    selected = ranked_ids[:consensus_count]
+
+    remaining_rankings = [item for item in ranked if item["model"] not in selected]
+    for _ in range(plan.curation_constraints.wildcards):
+        if not remaining_rankings:
+            break
+        wildcard = max(
+            remaining_rankings,
+            key=lambda item: (
+                max(item.get("positions", [0])) - min(item.get("positions", [0])),
+                -float(item["average_rank"]),
+                -plan_order.get(str(item["model"]), 10_000),
+            ),
+        )
+        selected.append(str(wildcard["model"]))
+        remaining_rankings.remove(wildcard)
+
+    operations = {operation.logical_id: operation for operation in plan.stage1}
+    for _ in range(plan.curation_constraints.diversity_picks):
+        candidates = [model for model in ranked_ids if model not in selected]
+        if not candidates:
+            break
+        selected_providers = {operations[model].route.provider for model in selected}
+        pick = min(
+            candidates,
+            key=lambda model: (
+                operations[model].route.provider in selected_providers,
+                ranked_ids.index(model),
+                plan_order.get(model, 10_000),
+            ),
+        )
+        selected.append(pick)
+
+    selected.extend(model for model in ranked_ids if model not in selected)
+    return [by_model[model] for model in selected[:maximum]]

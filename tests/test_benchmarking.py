@@ -550,7 +550,7 @@ async def test_live_fireworks_variant_passes_reasoning_effort(monkeypatch):
     )
 
     assert response["content"] == "ok"
-    assert calls[0]["model_id"] == "fireworks/glm-5.2"
+    assert calls[0]["model_id"] == "accounts/fireworks/models/glm-5p2"
     assert calls[0]["kwargs"]["reasoning_effort"] == "xhigh"
 
 
