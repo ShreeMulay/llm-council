@@ -131,6 +131,7 @@ VERTEX_ANTHROPIC_MODEL_MAP = {
     if route.provider == "vertex"
 }
 VERTEX_ANTHROPIC_MODEL_IDS = list(VERTEX_ANTHROPIC_MODEL_MAP.keys())
+VERTEX_ANTHROPIC_PROVIDER_MODEL_IDS = frozenset(VERTEX_ANTHROPIC_MODEL_MAP.values())
 
 # OpenRouter fallback model ID mapping (council ID -> OpenRouter ID)
 OPENROUTER_FALLBACK_MAP = {
@@ -198,8 +199,13 @@ def requires_vertex_anthropic(model_id: str) -> bool:
 
 
 def get_vertex_anthropic_model_id(model_id: str) -> str | None:
-    """Get the Vertex Anthropic model ID for a council model ID."""
-    return VERTEX_ANTHROPIC_MODEL_MAP.get(model_id)
+    """Resolve a logical ID or validate an exact canonical Vertex provider ID."""
+    mapped = VERTEX_ANTHROPIC_MODEL_MAP.get(model_id)
+    if mapped is not None:
+        return mapped
+    if model_id in VERTEX_ANTHROPIC_PROVIDER_MODEL_IDS:
+        return model_id
+    return None
 
 
 def get_openrouter_fallback(model_id: str) -> str | None:

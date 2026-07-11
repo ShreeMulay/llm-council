@@ -2,6 +2,7 @@
 
 import pytest
 
+from backend.model_dispatcher import DispatchRequest, ModelDispatcher
 from backend.vertex_anthropic_client import query_vertex_anthropic_model
 
 
@@ -18,6 +19,79 @@ class FakeUsage:
 class FakeResponse:
     content = [FakeTextBlock("vertex answer")]
     usage = FakeUsage()
+
+
+@pytest.mark.asyncio
+async def test_dispatcher_capture_execute_passes_exact_vertex_provider_id(monkeypatch):
+    calls = []
+
+    class FakeMessages:
+        def create(self, **payload):
+            calls.append(payload)
+            return FakeResponse()
+
+    class FakeAnthropicVertex:
+        def __init__(self, *args, **kwargs):
+            self.messages = FakeMessages()
+
+    monkeypatch.setattr("backend.vertex_anthropic_client.AnthropicVertex", FakeAnthropicVertex)
+    monkeypatch.setattr("backend.vertex_anthropic_client.VERTEX_PROJECT_ID", "covered-project")
+    monkeypatch.setattr("backend.vertex_anthropic_client._VERTEX_CLIENT_CACHE", {})
+    dispatcher = ModelDispatcher(
+        adapters={"vertex": query_vertex_anthropic_model}, require_vertex_anthropic=True
+    )
+
+    operation = dispatcher.capture(
+        DispatchRequest("anthropic/claude-fable-5", [{"role": "user", "content": "test"}])
+    )
+    result = await dispatcher.execute(operation)
+
+    assert operation.routes[0].provider_model_id == "claude-fable-5"
+    assert calls[0]["model"] == "claude-fable-5"
+    assert result["model"] == "anthropic/claude-fable-5"
+    assert result["raw_model"] == "claude-fable-5"
+
+
+@pytest.mark.asyncio
+async def test_vertex_accepts_exact_registered_provider_model_id(monkeypatch):
+    calls = []
+
+    class FakeMessages:
+        def create(self, **payload):
+            calls.append(payload)
+            return FakeResponse()
+
+    class FakeAnthropicVertex:
+        def __init__(self, *args, **kwargs):
+            self.messages = FakeMessages()
+
+    monkeypatch.setattr("backend.vertex_anthropic_client.AnthropicVertex", FakeAnthropicVertex)
+    monkeypatch.setattr("backend.vertex_anthropic_client.VERTEX_PROJECT_ID", "covered-project")
+    monkeypatch.setattr("backend.vertex_anthropic_client._VERTEX_CLIENT_CACHE", {})
+
+    result = await query_vertex_anthropic_model(
+        "claude-fable-5", [{"role": "user", "content": "test"}]
+    )
+
+    assert calls[0]["model"] == "claude-fable-5"
+    assert result["raw_model"] == "claude-fable-5"
+
+
+@pytest.mark.asyncio
+async def test_vertex_rejects_unknown_model_id_without_sdk_call(monkeypatch):
+    class FailIfConstructed:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("client must not be constructed for an unknown model")
+
+    monkeypatch.setattr("backend.vertex_anthropic_client.AnthropicVertex", FailIfConstructed)
+    monkeypatch.setattr("backend.vertex_anthropic_client.VERTEX_PROJECT_ID", "covered-project")
+    monkeypatch.setattr("backend.vertex_anthropic_client._VERTEX_CLIENT_CACHE", {})
+
+    result = await query_vertex_anthropic_model(
+        "claude-not-registered", [{"role": "user", "content": "test"}]
+    )
+
+    assert result is None
 
 
 @pytest.mark.asyncio
