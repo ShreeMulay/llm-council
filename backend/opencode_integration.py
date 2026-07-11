@@ -149,7 +149,7 @@ async def handle_council_command(
         enabled=tool_context,
     )
     plan = build_execution_plan(load_registry(), {
-        "query": augmented_query, "models": council_models, "compact": compact,
+        "query": query, "models": council_models, "compact": compact,
         "chairman": chairman_model, "mode": "sync",
         "parallel_mode": parallel_mode,
         "parallel_classifier_score": parallel_classifier_score,

@@ -1,6 +1,6 @@
 """Contract tests for provider-neutral deterministic execution planning."""
 
-from dataclasses import FrozenInstanceError, replace
+from dataclasses import FrozenInstanceError, fields, replace
 
 import pytest
 
@@ -9,6 +9,7 @@ from backend.execution_planning import (
     PlanningConstraintError,
     build_execution_plan,
     curate_roster,
+    execution_plan_digest,
     resolve_logical_route,
 )
 from backend.model_registry import load_registry
@@ -155,3 +156,44 @@ def test_backtracking_solver_avoids_duplicate_model_across_multi_seat_records():
     constraints = DiversityConstraints(2, 1, 2, 2, 2, (1, 2))
     selected = curate_roster(candidates, constraints, registry.version)
     assert len({member.logical_id for member in selected}) == 2
+
+
+def test_execution_plan_digest_is_deterministic_for_identical_construction():
+    registry = load_registry()
+    request = {
+        "query": "https://example.com/a/../evidence?q=1",
+        "compact": True,
+        "parallel_mode": "explicit",
+        "timeout": 17,
+        "max_retries": 4,
+        "backoff_base": 0.25,
+    }
+
+    assert build_execution_plan(registry, request).digest == build_execution_plan(registry, dict(request)).digest
+
+
+@pytest.mark.parametrize(
+    ("field", "mutate"),
+    [
+        ("registry_version", lambda p: replace(p, registry_version=p.registry_version + "-changed")),
+        ("registry_digest", lambda p: replace(p, registry_digest="1" * 64)),
+        ("projection_digest", lambda p: replace(p, projection_digest="2" * 64)),
+        ("roster_mode", lambda p: replace(p, roster_mode="changed")),
+        ("roster_version", lambda p: replace(p, roster_version=p.roster_version + "-changed")),
+        ("stage0", lambda p: replace(p, stage0=replace(p.stage0, classifier_threshold=p.stage0.classifier_threshold + 0.01))),
+        ("stage1", lambda p: replace(p, stage1=(replace(p.stage1[0], dispatcher_contract="changed"), *p.stage1[1:]))),
+        ("evaluators", lambda p: replace(p, evaluators=(replace(p.evaluators[0], logical_id="changed"), *p.evaluators[1:]))),
+        ("chairman", lambda p: replace(p, chairman=replace(p.chairman, retry=replace(p.chairman.retry, max_retries=99)))),
+        ("roles", lambda p: replace(p, roles=replace(p.roles, by_model=(("changed", ("member",)),)))),
+        ("routes", lambda p: replace(p, routes=replace(p.routes, by_model=(("changed", p.stage1[0].routes),)))),
+        ("messages", lambda p: replace(p, messages=(("user", "changed"),))),
+        ("settings", lambda p: replace(p, settings=replace(p.settings, temperature=0.123))),
+        ("limits", lambda p: replace(p, limits=replace(p.limits, max_tokens=1))),
+        ("curation_constraints", lambda p: replace(p, curation_constraints=replace(p.curation_constraints, maximum=4))),
+    ],
+)
+def test_every_authoritative_execution_plan_section_changes_digest(field, mutate):
+    plan = build_execution_plan(load_registry(), {"query": "digest all authority", "compact": True})
+    changed = mutate(plan)
+    assert field in {item.name for item in fields(plan)}
+    assert execution_plan_digest(changed) != plan.digest

@@ -446,7 +446,7 @@ async def council_stream(request: CouncilRequest):
     execution_plan = build_execution_plan(
         load_registry(),
         {
-            "query": augmented_query,
+            "query": request.query,
             "models": council_models,
             "compact": request.compact,
             "chairman": chairman_model,
@@ -751,7 +751,7 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
     # Run the 3-stage council process
     execution_plan = build_execution_plan(
         load_registry(),
-        {"query": augmented_content, "models": council_models, "compact": request.compact},
+        {"query": request.content, "models": council_models, "compact": request.compact},
     )
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
         augmented_content,
@@ -825,7 +825,7 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
             execution_plan = build_execution_plan(
                 load_registry(),
                 {
-                    "query": augmented_content,
+                    "query": request.content,
                     "models": council_models,
                     "compact": request.compact,
                     "mode": "stream",

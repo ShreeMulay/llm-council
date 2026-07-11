@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Mapping, Sequence
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from typing import Any, Literal
+from urllib.parse import urlsplit, urlunsplit
 
 from .model_registry import ModelRecord, ModelRoute, RegistrySnapshot
 
@@ -105,7 +106,9 @@ class Stage0Plan:
     planned: bool
     gating_reason: str
     target_kind: Literal["url", "search"]
+    target: str
     target_digest: str
+    query_digest: str
     policy: str
     limits: Stage0Limits
     decision: str
@@ -154,6 +157,8 @@ class ExecutionPlan:
     registry_version: str
     registry_digest: str
     projection_digest: str
+    roster_mode: str
+    roster_version: str
     stage0: Stage0Plan
     stage1: tuple[PlanOperation, ...]
     evaluators: tuple[PlanOperation, ...]
@@ -165,6 +170,33 @@ class ExecutionPlan:
     limits: PlanLimits
     curation_constraints: CurationPolicy
     digest: str
+
+
+def execution_plan_digest(plan: ExecutionPlan) -> str:
+    """Hash the canonical serialization of all plan authority except its digest."""
+    payload = asdict(plan)
+    payload.pop("digest", None)
+    serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(serialized.encode()).hexdigest()
+
+
+def _canonical_planned_url(value: str) -> str:
+    parts = urlsplit(value)
+    scheme = parts.scheme.lower()
+    host = (parts.hostname or "").lower()
+    if not host or scheme not in {"http", "https"}:
+        return value
+    port = parts.port
+    netloc = host if port is None else f"{host}:{port}"
+    path_parts: list[str] = []
+    for part in parts.path.split("/"):
+        if part == "..":
+            if path_parts:
+                path_parts.pop()
+        elif part not in {"", "."}:
+            path_parts.append(part)
+    path = "/" + "/".join(path_parts) if parts.path else ""
+    return urlunsplit((scheme, netloc, path, parts.query, ""))
 
 
 def curate_roster(candidates: Sequence[ModelRecord], constraints: DiversityConstraints, registry_version: str) -> tuple[CuratedMember, ...]:
@@ -250,15 +282,15 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     query = str(request.get("query", ""))
     import re
     url_match = re.search(r"https?://[^\s<>\"']+", query, re.I)
-    target = url_match.group(0).rstrip(".,;!?)") if url_match else query
+    target = _canonical_planned_url(url_match.group(0).rstrip(".,;!?)")) if url_match else query
     decision = "explicit" if request.get("models") else "compact" if request.get("compact") else "full"
-    stage0 = Stage0Plan(stage0_mode, threshold, score, planned, reason, "url" if url_match else "search", hashlib.sha256(target.encode()).hexdigest(), "parallel-bounded/v1", Stage0Limits(), decision)
+    stage0 = Stage0Plan(stage0_mode, threshold, score, planned, reason, "url" if url_match else "search", target, hashlib.sha256(target.encode()).hexdigest(), hashlib.sha256(query.encode()).hexdigest(), "parallel-bounded/v1", Stage0Limits(), decision)
     curation = CurationPolicy()
     projection = {"surface": "backend", "registry_version": registry.version, "logical_ids": all_ids, "routes": {key: [route.route_id for route in value] for key, value in routes_dict.items()}}
     projection_digest = hashlib.sha256(json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    payload = {"registry_version": registry.version, "registry_digest": registry.digest, "projection_digest": projection_digest, "stage0": asdict(stage0), "models": model_ids, "routes": projection["routes"], "messages": messages, "settings": asdict(settings), "limits": {"max_tokens": settings.max_tokens}, "curation": asdict(curation)}
-    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-    return ExecutionPlan(registry.version, registry.digest, projection_digest, stage0, operations, evaluators, chairman, roles, CouncilRoutes(tuple(routes_dict.items())), messages, settings, PlanLimits(settings.max_tokens), curation, digest)
+    roster_mode = "explicit" if request.get("models") else "compact" if request.get("compact") else "production"
+    plan = ExecutionPlan(registry.version, registry.digest, projection_digest, roster_mode, registry.version, stage0, operations, evaluators, chairman, roles, CouncilRoutes(tuple(routes_dict.items())), messages, settings, PlanLimits(settings.max_tokens), curation, "")
+    return replace(plan, digest=execution_plan_digest(plan))
 
 
 def curate_responses(

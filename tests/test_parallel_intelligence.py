@@ -9,6 +9,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+from backend.execution_planning import build_execution_plan
+from backend.model_registry import load_registry
 from backend.parallel_intelligence import (
     ParallelLimits,
     ParallelMonitor,
@@ -38,6 +40,51 @@ def limits():
         max_bytes=1024,
         max_spend=0.25,
     )
+
+
+@pytest.mark.asyncio
+async def test_captured_stage0_is_the_only_execution_authority(parallel_client):
+    query = "planned search"
+    plan = build_execution_plan(load_registry(), {
+        "query": query,
+        "compact": True,
+        "parallel_mode": "explicit",
+    })
+    parallel_client.search.return_value = [{"source_id": "s", "url": "https://example.com", "text": "ok"}]
+    stage0 = ParallelStage0(
+        parallel_client,
+        policy=Stage0Policy(mode="disabled"),
+        limits=ParallelLimits(max_requests=1, max_results=1, max_bytes=1, max_spend=0.001),
+        resolver=lambda _host: ["93.184.216.34"],
+    )
+
+    result = await stage0.run(query, classifier_score=0, execution_plan=plan)
+
+    parallel_client.search.assert_awaited_once_with(
+        query,
+        max_results=plan.stage0.limits.max_results,
+        timeout=plan.stage0.limits.timeout_seconds,
+        max_bytes=plan.stage0.limits.max_bytes,
+        max_spend=plan.stage0.limits.max_spend,
+    )
+    assert result.metadata["planned"] is True
+
+
+@pytest.mark.asyncio
+async def test_stage0_query_digest_mismatch_makes_no_retrieval_and_fails_open(parallel_client, limits):
+    plan = build_execution_plan(load_registry(), {
+        "query": "original planned query",
+        "compact": True,
+        "parallel_mode": "explicit",
+    })
+    stage0 = ParallelStage0(parallel_client, policy=Stage0Policy(mode="explicit"), limits=limits)
+
+    result = await stage0.run("legacy replacement query", execution_plan=plan)
+
+    parallel_client.search.assert_not_awaited()
+    parallel_client.fetch_trusted.assert_not_awaited()
+    assert result.query == "original planned query"
+    assert result.metadata["warnings"] == [{"code": "parallel_plan_input_mismatch", "stage": "stage0"}]
 
 
 @pytest.mark.asyncio

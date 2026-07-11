@@ -324,7 +324,24 @@ class ParallelStage0:
         execution_plan: Any = None,
     ) -> Stage0Result:
         plan = copy.deepcopy(execution_plan)
-        planned, reason = self._gate(classifier_score)
+        stage0_plan = getattr(plan, "stage0", None)
+        limits = stage0_plan.limits if stage0_plan is not None else self.limits
+        if stage0_plan is not None:
+            planned, reason = stage0_plan.planned, stage0_plan.gating_reason
+            planned_query = next((value for role, value in plan.messages if role == "user"), "")
+            caller_target = _canonical_url(_explicit_url(query)) if _explicit_url(query) else query
+            query_matches = hashlib.sha256(query.encode()).hexdigest() == stage0_plan.query_digest
+            target_matches = caller_target is not None and hashlib.sha256(caller_target.encode()).hexdigest() == stage0_plan.target_digest
+            if not query_matches or not target_matches:
+                metadata = {"planned": planned, "gate_reason": reason, "request_count": 0, "sources": []}
+                return self._failed_open(planned_query, metadata, plan, "parallel_plan_input_mismatch")
+            query = planned_query
+            requested_url = stage0_plan.target if stage0_plan.target_kind == "url" else None
+            retrieval_target = stage0_plan.target
+        else:
+            planned, reason = self._gate(classifier_score)
+            requested_url = _explicit_url(query)
+            retrieval_target = query
         metadata: dict[str, Any] = {
             "planned": planned,
             "gate_reason": reason,
@@ -334,7 +351,6 @@ class ParallelStage0:
         if not planned:
             return Stage0Result(query, None, metadata, plan, EvidenceExecutionRecord(hashlib.sha256(query.encode()).hexdigest(), None, ()))
 
-        requested_url = _explicit_url(query)
         metadata["estimated_spend_usd"] = (
             EXTRACT_PLANNED_USD if requested_url else SEARCH_PLANNED_USD
         )
@@ -346,7 +362,7 @@ class ParallelStage0:
             if not callable(getattr(self.client, "fetch_trusted", None)):
                 return self._failed_open(query, metadata, plan, "parallel_untrusted_transport")
         try:
-            if self.limits.max_requests < 1:
+            if limits.max_requests < 1:
                 raw: list[dict[str, Any]] = []
             elif requested_url:
                 metadata["request_count"] = 1
@@ -355,23 +371,23 @@ class ParallelStage0:
                         requested_url,
                         resolved_addresses=resolved_addresses,
                         validate_redirect=self._url_is_safe,
-                        timeout=self.limits.timeout_seconds,
-                        max_bytes=self.limits.max_bytes,
-                        max_spend=self.limits.max_spend,
+                        timeout=limits.timeout_seconds,
+                        max_bytes=limits.max_bytes,
+                        max_spend=limits.max_spend,
                     ),
-                    timeout=self.limits.timeout_seconds,
+                    timeout=limits.timeout_seconds,
                 )
             else:
                 metadata["request_count"] = 1
                 raw = await asyncio.wait_for(
                     self.client.search(
-                        query,
-                        max_results=self.limits.max_results,
-                        timeout=self.limits.timeout_seconds,
-                        max_bytes=self.limits.max_bytes,
-                        max_spend=self.limits.max_spend,
+                        retrieval_target,
+                        max_results=limits.max_results,
+                        timeout=limits.timeout_seconds,
+                        max_bytes=limits.max_bytes,
+                        max_spend=limits.max_spend,
                     ),
-                    timeout=self.limits.timeout_seconds,
+                    timeout=limits.timeout_seconds,
                 )
         except TimeoutError:
             return self._failed_open(query, metadata, plan, "parallel_timeout")
@@ -379,7 +395,7 @@ class ParallelStage0:
             return self._failed_open(query, metadata, plan, "parallel_retrieval_failed")
 
         sources, texts, accepted_bytes, accepted_spend = await self._safe_sources(
-            raw or [], requested_url, trusted_fetch=bool(requested_url)
+            raw or [], requested_url, trusted_fetch=bool(requested_url), limits=limits
         )
         metadata["sources"] = sources
         metadata["accepted_bytes"] = accepted_bytes
@@ -389,7 +405,7 @@ class ParallelStage0:
         metadata.update(provenance_status="available", trust="untrusted_evidence")
         provenance = tuple((str(source.get("source_id", "")), str(source.get("canonical_url", ""))) for source in sources)
         raw_payload = json.dumps(texts, ensure_ascii=False, separators=(",", ":")).encode()
-        cap = min(EVIDENCE_BUNDLE_MAX_BYTES, self.limits.max_bytes)
+        cap = min(EVIDENCE_BUNDLE_MAX_BYTES, limits.max_bytes)
         # Base64 cannot contain prompt/XML/JSON closing delimiters or role syntax.
         encoded = base64.b64encode(raw_payload).decode("ascii")
         encoded = encoded[: max(0, cap - 512)]
@@ -419,7 +435,9 @@ class ParallelStage0:
         requested_url: str | None,
         *,
         trusted_fetch: bool = False,
+        limits: Any = None,
     ) -> tuple[list[dict[str, Any]], list[str], int, float]:
+        limits = limits or self.limits
         sources: list[dict[str, Any]] = []
         texts: list[str] = []
         seen: set[str] = set()
@@ -438,9 +456,9 @@ class ParallelStage0:
                 item_spend = float(cost)
                 within_budget = (
                     item_bytes >= 0
-                    and accepted_bytes + item_bytes <= self.limits.max_bytes
+                    and accepted_bytes + item_bytes <= limits.max_bytes
                     and item_spend >= 0
-                    and accepted_spend + item_spend <= self.limits.max_spend
+                    and accepted_spend + item_spend <= limits.max_spend
                 )
             except (TypeError, ValueError):
                 within_budget = False
@@ -466,7 +484,7 @@ class ParallelStage0:
                 source["requested_url"] = str(item.get("requested_url", requested_url))
             sources.append(source)
             texts.append(text)
-            if len(sources) >= self.limits.max_results:
+            if len(sources) >= limits.max_results:
                 break
         return sources, texts, accepted_bytes, accepted_spend
 
