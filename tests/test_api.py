@@ -99,6 +99,29 @@ class TestApiAuth:
 
         assert response.status_code == 401
 
+    def test_monitor_ingest_has_dedicated_fail_closed_auth(self):
+        event = {"schema_version":"1.0","event_id":"e1","provider":"p","model":"m","version":"1","source":{"id":"s","url":"https://example.com"},"routes":["p/m"],"confidence":0.9}
+        with patch.dict("os.environ", {}, clear=True):
+            assert client.post("/api/parallel/monitor/events", json=event).status_code == 404
+        with patch.dict("os.environ", {"PARALLEL_MONITOR_INGEST_SECRET":"dedicated"}):
+            assert client.post("/api/parallel/monitor/events", json=event, headers={"X-Parallel-Monitor-Secret":"wrong"}).status_code == 401
+
+    def test_monitor_ingest_rejects_oversized_body_before_persistence(self):
+        with patch.dict("os.environ", {"PARALLEL_MONITOR_INGEST_SECRET":"dedicated"}):
+            response = client.post("/api/parallel/monitor/events", content=b"x" * 32769, headers={"X-Parallel-Monitor-Secret":"dedicated","Content-Type":"application/json"})
+        assert response.status_code == 413
+
+    def test_monitor_endpoint_preserves_protected_state_byte_for_byte(self, tmp_path):
+        protected = [tmp_path / name for name in ("registry.json", "lifecycle.jsonl", "deployment.json")]
+        for index, path in enumerate(protected):
+            path.write_bytes(f"protected-{index}\n".encode())
+        before = [path.read_bytes() for path in protected]
+        event = {"schema_version":"1.0","event_id":"endpoint-e1","provider":"p","model":"m","version":"1","source":{"id":"s","url":"https://example.com"},"routes":["p/m"],"confidence":0.9}
+        with patch.dict("os.environ", {"PARALLEL_MONITOR_INGEST_SECRET":"dedicated"}), patch("backend.config.DATA_DIR", tmp_path):
+            response = client.post("/api/parallel/monitor/events", json=event, headers={"X-Parallel-Monitor-Secret":"dedicated"})
+        assert response.status_code == 200
+        assert [path.read_bytes() for path in protected] == before
+
     @patch("backend.main.stream_council")
     @patch("backend.main.augment_query_with_tool_context")
     def test_council_stream_errors_are_generic(self, mock_augment, mock_stream):

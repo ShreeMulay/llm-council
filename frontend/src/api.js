@@ -1,6 +1,7 @@
 /**
  * API client for the LLM Council backend.
  */
+import modelRegistry from './generated/model-registry.json' with { type: 'json' };
 
 export const API_BASE = import.meta.env?.VITE_API_BASE || 'http://localhost:8800';
 
@@ -164,17 +165,10 @@ export const MODEL_INFO = {
 };
 
 // All default production model IDs in order (Opus remains in MODEL_INFO for backcompat)
-export const ALL_MODEL_IDS = [
-  'gpt-5.5',
-  'fable',
-  'glm',
-  'gemini',
-  'grok',
-  'kimi',
-  'deepseek',
-  'llama',
-  'qwen',
-];
+export const ALL_MODEL_IDS = modelRegistry.default_roster.map((modelId) => {
+  const model = modelRegistry.models.find((item) => item.id === modelId);
+  return model?.aliases[0] || modelId;
+});
 
 // Default active models (all 9)
 export const DEFAULT_ACTIVE_MODELS = ALL_MODEL_IDS;
@@ -189,7 +183,10 @@ export const MODEL_PRESETS = {
   compact: {
     name: 'Compact',
     icon: '⚡',
-    models: ['gpt-5.5', 'fable', 'glm', 'gemini', 'grok'],
+    models: modelRegistry.compact_roster.map((modelId) => {
+      const model = modelRegistry.models.find((item) => item.id === modelId);
+      return model?.aliases[0] || modelId;
+    }),
   },
   speed: {
     name: 'Speed',

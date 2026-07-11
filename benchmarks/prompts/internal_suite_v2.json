@@ -1,0 +1,1143 @@
+{
+  "schema_version": "1.0.0",
+  "suite_id": "internal_suite",
+  "version": "2.0.0",
+  "description": "Curated public/non-PHI acceptance suite for model-council modernization.",
+  "content_policy": {
+    "classification": "public_non_phi",
+    "contains_phi": false,
+    "contains_secrets": false,
+    "attested_by": "llm-council-benchmark-maintainers"
+  },
+  "strata": {
+    "architecture": {
+      "minimum": 6
+    },
+    "coding": {
+      "minimum": 6
+    },
+    "concise_synthesis": {
+      "minimum": 6
+    },
+    "debugging": {
+      "minimum": 6
+    },
+    "factual_current_evidence": {
+      "minimum": 6
+    },
+    "long_context": {
+      "minimum": 6
+    },
+    "multilingual": {
+      "minimum": 6
+    },
+    "operations": {
+      "minimum": 6
+    },
+    "structured_output": {
+      "minimum": 6
+    },
+    "tool_choice": {
+      "minimum": 6
+    }
+  },
+  "prompts": [
+    {
+      "id": "coding-001",
+      "stratum": "coding",
+      "title": "Coding 1",
+      "prompt": "Implement a Python function that groups strings by normalized lowercase value while preserving first-seen group order. Return code only.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "python_ast_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "55860cc6867254f01541f72aa24030d3d109e558d92ed8a83469fdd8923a96dc"
+    },
+    {
+      "id": "coding-002",
+      "stratum": "coding",
+      "title": "Coding 2",
+      "prompt": "Write a TypeScript function that parses an unknown value into a non-empty array of unique strings without using type assertions. Return code only.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "typescript_ast_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "79fa1793a319b3d90829a7e8522cbf76a4bdbe983b2fcc0311b3e0095ab1f77f"
+    },
+    {
+      "id": "coding-003",
+      "stratum": "coding",
+      "title": "Coding 3",
+      "prompt": "Implement an LRU cache in Python with get and put operations and capacity validation. Return one self-contained code block.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "python_ast_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "2e1fd0bb20c58dab417cedf231d9e7a045cefdfb5791feddc3cef1505008fafc"
+    },
+    {
+      "id": "coding-004",
+      "stratum": "coding",
+      "title": "Coding 4",
+      "prompt": "Write a SQL query for tables orders(id, customer_id, created_at) and customers(id, name) returning each customer and their latest order date, including customers with no orders.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "sql_result_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "f58adb824544b5a1a02d20e20581f078c491067b10341f576352d8b72568a48d"
+    },
+    {
+      "id": "coding-005",
+      "stratum": "coding",
+      "title": "Coding 5",
+      "prompt": "Implement a pure Python function that merges overlapping integer intervals and returns sorted disjoint intervals. Return code only.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "python_property_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "02761692d7b82d03b26550293dfc7e3c05027beb38e956f1dfddc4d748a9b7ec"
+    },
+    {
+      "id": "coding-006",
+      "stratum": "coding",
+      "title": "Coding 6",
+      "prompt": "Write a Bash function that accepts a file path, refuses symlinks, and prints its SHA-256 digest with safe quoting. Return code only.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "shell_static_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "db52da25bff9161459638a3b2785c02f898f4f2c5a7dcea80b5bb781aa3a6067"
+    },
+    {
+      "id": "debugging-001",
+      "stratum": "debugging",
+      "title": "Debugging 1",
+      "prompt": "A Python service uses a mutable dictionary as a default argument and requests leak state across calls. Identify the defect, provide a minimal fix, and add one regression test.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "667ae6f66e5bbe14a9fea3c90711b1bf12400427f1e12e6193b9e8b917ba5f42"
+    },
+    {
+      "id": "debugging-002",
+      "stratum": "debugging",
+      "title": "Debugging 2",
+      "prompt": "An async worker retries after a timeout while the first attempt may still finish, creating duplicate writes. Diagnose the race and propose cancellation plus idempotency controls.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "cf70e8eddb33caee526a3c91d4883044b0e22de9a10d108ddb24481656b55240"
+    },
+    {
+      "id": "debugging-003",
+      "stratum": "debugging",
+      "title": "Debugging 3",
+      "prompt": "A React list renders stale row state after sorting because array indexes are keys. Explain the mechanism and give the smallest safe correction.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "001370e88881d9023fc2e73034b517e3f955acfca2e15cd3c7fd9e8c0e0157ea"
+    },
+    {
+      "id": "debugging-004",
+      "stratum": "debugging",
+      "title": "Debugging 4",
+      "prompt": "A SQL LEFT JOIN unexpectedly omits rows when a condition on the right table appears in WHERE. Diagnose and rewrite the query pattern.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "5d74c7b0874345341740ab60cfdf562a8b88f722aae789b825bcadad63dd3022"
+    },
+    {
+      "id": "debugging-005",
+      "stratum": "debugging",
+      "title": "Debugging 5",
+      "prompt": "A container passes health checks locally but fails in orchestration because the server binds to 127.0.0.1. Explain and correct the configuration.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "b5802fc7dbd44368bec73e4fc0440d18fd9b65f7b83fc64b0f527d9d27819e7b"
+    },
+    {
+      "id": "debugging-006",
+      "stratum": "debugging",
+      "title": "Debugging 6",
+      "prompt": "A cache occasionally returns values for the wrong tenant because keys contain only resource ID. Identify the isolation flaw and outline a regression test.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "2fb167fd9ee0b93907214eb61d4232a88e8336e58e092158430c07ca1ab1612e"
+    },
+    {
+      "id": "architecture-001",
+      "stratum": "architecture",
+      "title": "Architecture 1",
+      "prompt": "Design a public, non-sensitive benchmark artifact pipeline with preflight validation, append-only attempts, resumability, and content-addressed outputs. State boundaries and failure modes.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "1176c197d3a7aa8d801cf9d1af7facad17d9728a9db8f71fca234d65d47dbf33"
+    },
+    {
+      "id": "architecture-002",
+      "stratum": "architecture",
+      "title": "Architecture 2",
+      "prompt": "Design an event ingestion service that tolerates duplicate delivery and out-of-order events without requiring exactly-once transport.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "2d42b58dd28479b399d7ef0f5e6ce423ee17d3a193e56116e886b3a6f7852c3a"
+    },
+    {
+      "id": "architecture-003",
+      "stratum": "architecture",
+      "title": "Architecture 3",
+      "prompt": "Propose a migration from one shared database to tenant-isolated schemas with rollback, observability, and bounded downtime.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "ccb8b8d851ca4c658d89cd725a704738393569977331473a5629110b5f231b1d"
+    },
+    {
+      "id": "architecture-004",
+      "stratum": "architecture",
+      "title": "Architecture 4",
+      "prompt": "Design a provider-neutral model dispatch layer where routing policy is separate from stable model identity. Include adapter contracts.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "e86031fff2bf3f01fd394e501a79ca82473f66e01e232066bc555a7cd4ea9f65"
+    },
+    {
+      "id": "architecture-005",
+      "stratum": "architecture",
+      "title": "Architecture 5",
+      "prompt": "Design a small document processing system with object storage, a queue, workers, and deterministic status transitions. Address poison messages.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "2f8b388248c419fe53a3acc0c4e093cb2c0cb4e62e3ecfb93a3dbe3db657bece"
+    },
+    {
+      "id": "architecture-006",
+      "stratum": "architecture",
+      "title": "Architecture 6",
+      "prompt": "Compare modular monolith and microservices for a six-person team launching an internal workflow product. Recommend one with explicit reversal triggers.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "9f4d65f4c11b625b54917ae8dcf7eae5ac09b28e3adcd0703554fc2b970f6490"
+    },
+    {
+      "id": "operations-001",
+      "stratum": "operations",
+      "title": "Operations 1",
+      "prompt": "Create a blameless incident response checklist for a public website latency spike. Include owner roles, communication cadence, and exit criteria.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "c40c05861e9b7efe7f041f1a1edc079e465fd5b24b5f0f7db4a46e6a579452e8"
+    },
+    {
+      "id": "operations-002",
+      "stratum": "operations",
+      "title": "Operations 2",
+      "prompt": "Draft a rollout plan for rotating an API credential across ten services without exposing the credential or causing downtime.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "7d50634cdcd006d298a5b07fcc46c09ff1f37d959a2d40b3f9a19a39d6871789"
+    },
+    {
+      "id": "operations-003",
+      "stratum": "operations",
+      "title": "Operations 3",
+      "prompt": "Define an SLO and error-budget policy for a business-hours internal application, including measurable alert thresholds.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "d51e324a55e8d3fa82be5be1a99f4a6be6d725183667f6b9a594eefbbff37f3a"
+    },
+    {
+      "id": "operations-004",
+      "stratum": "operations",
+      "title": "Operations 4",
+      "prompt": "Create a capacity review process for a queue whose arrival rate doubles seasonally. Include leading indicators and decision thresholds.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "9cf6322d6e1563703f0d0f18a59b15b08f7a5f7f959ab85f6ccebe28451b82ad"
+    },
+    {
+      "id": "operations-005",
+      "stratum": "operations",
+      "title": "Operations 5",
+      "prompt": "Write a concise runbook for restoring a corrupted cache from its source of truth while preventing a thundering herd.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "aaa2c39c6f73c6d106573b98e7b89cc6f1dbe3a56b7a0b3332ed28bd51774706"
+    },
+    {
+      "id": "operations-006",
+      "stratum": "operations",
+      "title": "Operations 6",
+      "prompt": "Propose three measurable interventions to reduce missed handoffs between support shifts, with a two-week experiment design.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "f89ab261f25b5331cde5e98b9b5f68e380479c84e2be0c17ba035c92f93d3b1c"
+    },
+    {
+      "id": "structured-output-001",
+      "stratum": "structured_output",
+      "title": "Structured Output 1",
+      "prompt": "Return only JSON matching {\"items\":[{\"id\":string,\"priority\":\"low\"|\"high\"}]}. Include exactly two items with IDs A and B, in that order.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "json_schema_exact",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "3e7b5c1422bafe9a4d1353263cf32d5f6e6e19f895ca83f7208b9ae6bf7f74dd"
+    },
+    {
+      "id": "structured-output-002",
+      "stratum": "structured_output",
+      "title": "Structured Output 2",
+      "prompt": "Return only CSV with header name,count and rows alpha,2 then beta,3. Quote no fields.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "csv_exact",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "36f2bc66b26d429aa30c9f7693f191ab3d0200870fa97510cb4908d58b3d5317"
+    },
+    {
+      "id": "structured-output-003",
+      "stratum": "structured_output",
+      "title": "Structured Output 3",
+      "prompt": "Return only YAML containing version: 1 and enabled: true, with keys in that order.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "yaml_exact",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "954d60ab58519d3c6799d4e54586b615711ae51d52fc47d2e0f4ad2f396b0b14"
+    },
+    {
+      "id": "structured-output-004",
+      "stratum": "structured_output",
+      "title": "Structured Output 4",
+      "prompt": "Return only a JSON array containing the integers 1 through 5 in ascending order.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "json_exact",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "b9c284d3ccb0f01c5072739fd986b24c3348dcfdf3c57a2c854c9fbe4db340af"
+    },
+    {
+      "id": "structured-output-005",
+      "stratum": "structured_output",
+      "title": "Structured Output 5",
+      "prompt": "Return exactly three Markdown checklist lines for plan, execute, verify, in that order, with no heading.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "text_exact_lines",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "fb9195194044222594811b3876546d48478ac42f6bf2246e673e97fae7066e0a"
+    },
+    {
+      "id": "structured-output-006",
+      "stratum": "structured_output",
+      "title": "Structured Output 6",
+      "prompt": "Return only XML with root result and child status whose text is ok. Include no declaration.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "xml_exact",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "b5c5a561697b4024ef6e43893b3987d4c1cc60dc78590c5af6bf6cd97e79930b"
+    },
+    {
+      "id": "factual-current-evidence-001",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 1",
+      "prompt": "Explain how you would verify the current stable Python release using primary sources. Separate confirmed facts from facts requiring live lookup and cite source URLs only if actually retrieved.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "3f20dd3781be40677ea33c96626358a020892bc39743e5eb93b3c096369b6296"
+    },
+    {
+      "id": "factual-current-evidence-002",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 2",
+      "prompt": "Assess a claim that a named cloud service changed pricing this month. Describe the evidence needed, freshness checks, and how to report inability to browse.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "aef2745171a36696e4aad54095cc032b3b9fbdfef174a74d92e758540116ade3"
+    },
+    {
+      "id": "factual-current-evidence-003",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 3",
+      "prompt": "Create a source hierarchy for verifying a newly announced software security advisory, prioritizing vendor and registry evidence over commentary.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "90dbd7f240f520b6741c829ff30aa5e2be4127c9dccce783899687c39d225c62"
+    },
+    {
+      "id": "factual-current-evidence-004",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 4",
+      "prompt": "Given conflicting publication dates on two public pages, explain how to establish which policy is currently effective without inventing a date.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "b90c389fef19878005946f2149d0ff7e37e2a03d4b24b606320301dc5d9cf231"
+    },
+    {
+      "id": "factual-current-evidence-005",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 5",
+      "prompt": "Outline a reproducible method to verify whether an open-source package is actively maintained as of the evaluation date.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "fe85f8a0020dbfa3a9b0a7a032dfda357629df54e4c7e42a3750a41c9edcc31d"
+    },
+    {
+      "id": "factual-current-evidence-006",
+      "stratum": "factual_current_evidence",
+      "title": "Factual Current Evidence 6",
+      "prompt": "Write a short evidence note template for a current-events answer with retrieval timestamp, claim, source, direct support, and uncertainty.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "384ce7758a915292823875906615df2cd7b2cacda6973fbdaf7c1432fa985d3e"
+    },
+    {
+      "id": "long-context-001",
+      "stratum": "long_context",
+      "title": "Long Context 1",
+      "prompt": "Synthesize these project notes into decisions, risks, and actions: mock CI is required; live calls need a budget cap; artifacts are append-only; security forbids secrets; operators need resumability; leadership needs per-stratum evidence; launch is Friday; the owner is unavailable Thursday.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "ab5dfd914c5febf364238271872056950aa7ca6791081887af3223804c123943"
+    },
+    {
+      "id": "long-context-002",
+      "stratum": "long_context",
+      "title": "Long Context 2",
+      "prompt": "From this fictional incident timeline, identify root contributors and follow-ups: 09:00 deploy; 09:07 errors rise; 09:10 rollback starts; 09:18 rollback stalls on migration lock; 09:25 lock cleared; 09:31 recovery; alert fired at 09:16; runbook omitted lock handling.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "25131835e655269a097d764594a5290d6465f7e8ea659c477c0b24dcae15ea09"
+    },
+    {
+      "id": "long-context-003",
+      "stratum": "long_context",
+      "title": "Long Context 3",
+      "prompt": "Summarize the constraints in priority order: preserve API compatibility; no data loss; maintenance window 30 minutes; team has two engineers; rollback under five minutes; historical exports may complete later; compliance review is required before launch.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "41e25a5d1b2d01256bf61dc7d5ef23ac7d55bb03fa4ee64bf1feec0928c1135e"
+    },
+    {
+      "id": "long-context-004",
+      "stratum": "long_context",
+      "title": "Long Context 4",
+      "prompt": "Turn these meeting fragments into a decision log: Alice favors queueing; Ben worries about delay; metrics show peaks at 4x baseline; current requests time out after 20 seconds; team agrees to a bounded queue; open question is retry ownership; review in two weeks.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "26aab31d8f65bd8e590dd38e0109fe7ca6fdd2ece07923fd3e40810ee0e33198"
+    },
+    {
+      "id": "long-context-005",
+      "stratum": "long_context",
+      "title": "Long Context 5",
+      "prompt": "Reconcile these requirements: users want instant exports; large exports take 15 minutes; web requests cap at 60 seconds; email delivery is unavailable; object links expire after 24 hours; the UI can poll; audit records must persist for one year.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "96718f044f7e0976a1b8fc5bab9298256f379712ccc0fe953ecc5e119ac5c3ed"
+    },
+    {
+      "id": "long-context-006",
+      "stratum": "long_context",
+      "title": "Long Context 6",
+      "prompt": "Extract dependencies and critical path: schema approval precedes migration code; migration code precedes dry run; security review can run with testing; production deploy requires dry run and security approval; documentation can finish after deploy.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "a524629f9dfde14e79df28ce8cfd952c19e63c1608fa6fcf994ae7954650a747"
+    },
+    {
+      "id": "multilingual-001",
+      "stratum": "multilingual",
+      "title": "Multilingual 1",
+      "prompt": "Responde en español con exactamente tres viñetas que expliquen latencia, rendimiento y disponibilidad en sistemas.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "language_and_line_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "9a14d91762e87a21f2aeace054ff01c63c3d388cdf457c26d92eb26253573753"
+    },
+    {
+      "id": "multilingual-002",
+      "stratum": "multilingual",
+      "title": "Multilingual 2",
+      "prompt": "Répondez en français en deux phrases maximum : expliquez pourquoi les sauvegardes doivent être testées.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "language_and_sentence_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "35174d9446ff3d3645b6141488ac98420a18937e858a064004bb2ca0dd2b221d"
+    },
+    {
+      "id": "multilingual-003",
+      "stratum": "multilingual",
+      "title": "Multilingual 3",
+      "prompt": "日本語で、障害報告の非難しない要約を三文以内で書いてください。個人名は使わないでください。",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "language_and_sentence_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "0335eadf3b6f2bec674e98a6f0a33696e880b068d8511cc769bf2a90a3b3279c"
+    },
+    {
+      "id": "multilingual-004",
+      "stratum": "multilingual",
+      "title": "Multilingual 4",
+      "prompt": "Erkläre auf Deutsch in höchstens vier Stichpunkten den Unterschied zwischen Authentifizierung und Autorisierung.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "language_and_line_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "de2c5da3335712f380d1ffbe89f68299cebb7b7511f1bc6c2c3fea959961c215"
+    },
+    {
+      "id": "multilingual-005",
+      "stratum": "multilingual",
+      "title": "Multilingual 5",
+      "prompt": "Responda em português com um objeto JSON válido contendo as chaves risco e mitigacao, ambas com valores de texto.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "json_language_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "4b5b5bef334f91a7e7a1f257b956025fe37202d8974dcc8bddc921d0673ce1af"
+    },
+    {
+      "id": "multilingual-006",
+      "stratum": "multilingual",
+      "title": "Multilingual 6",
+      "prompt": "اكتب بالعربية جملتين موجزتين تشرحان أهمية التحقق من صحة المدخلات، دون استخدام مصطلحات إنجليزية.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "language_and_sentence_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "addb434fbc575eaadd5a7247e4c4f11852923e114cb8e934431503fbe39a0743"
+    },
+    {
+      "id": "tool-choice-001",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 1",
+      "prompt": "You need the exact installed version of a local Python package. Choose between inspecting the environment, web search, or guessing; state the single best tool action and why.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "c76ae43b01e6bb9d43f758d196573263e409a192a1f4c3566d91397f0a8f5bc4"
+    },
+    {
+      "id": "tool-choice-002",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 2",
+      "prompt": "You must summarize a user-provided local PDF. Choose the first tool action and explain why broad web search is inappropriate.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "561258c43ba4dad30d5985b0059eebced0c30cb52ba4fb0a4bc1ca62e46e018f"
+    },
+    {
+      "id": "tool-choice-003",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 3",
+      "prompt": "A question asks for today’s official exchange rate. Choose a retrieval approach, preferred source type, and freshness check.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "be608f089087ee752fe75adaf7151ee63cb2d58e7f2bb3685781358ef3fc843f"
+    },
+    {
+      "id": "tool-choice-004",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 4",
+      "prompt": "You need to rename the same API symbol across a large typed codebase. Choose between text replacement, AST-aware replacement, and manual editing; identify the safest first action.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "bdd3f7f78fa431a82b04039d10b953752ed48ec96f0f611833688d1345a61e07"
+    },
+    {
+      "id": "tool-choice-005",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 5",
+      "prompt": "A production alert reports high CPU but no host is named. Choose the minimum diagnostic query before proposing a fix.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "2fc88008abb79faecbf369328dc3137539939ea85508cd178fbb2c10dc763018"
+    },
+    {
+      "id": "tool-choice-006",
+      "stratum": "tool_choice",
+      "title": "Tool Choice 6",
+      "prompt": "A user gives one explicit documentation URL and asks what it says. Choose direct fetch or broad search and justify the bounded choice.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "subjective",
+        "rubric_version": "1.0.0",
+        "blinded": true,
+        "judge_families": [
+          "reasoning-generalist",
+          "domain-specialist"
+        ]
+      },
+      "checksum": "14c0aa0bf318b23249e7b8b66b02b75fd49cfb2e392e9ef10698fee9d383724f"
+    },
+    {
+      "id": "concise-synthesis-001",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 1",
+      "prompt": "In at most 40 words, synthesize: latency improved 20%; cost rose 5%; failures were unchanged; sample size was small; recommend another trial.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "word_limit_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "d80e9b75b27443743df8d9dc05957f2c83b77542f1fbcccce1abd52cd8cadd42"
+    },
+    {
+      "id": "concise-synthesis-002",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 2",
+      "prompt": "In exactly three bullets, summarize the priorities: prevent data loss, preserve rollback, then optimize speed.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "line_and_content_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "94388a9c50915e734164bc785200fb405e483813739b93f509ecc420ef2fd645"
+    },
+    {
+      "id": "concise-synthesis-003",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 3",
+      "prompt": "Write a one-sentence executive conclusion from: option A is cheaper; option B is faster; reliability is equal; budget is the binding constraint.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "sentence_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "a2f84f001d69d04b5b6a6e2a542dac445e234cd73d3ee6c94497ef029fe3c190"
+    },
+    {
+      "id": "concise-synthesis-004",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 4",
+      "prompt": "In no more than two sentences, summarize: the test passed locally, CI failed on Python 3.10, the code used 3.11-only syntax, and compatibility is required.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "sentence_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "29dd5f166fab0c55e32b7f984cdb5b591d67e33e307709554987ee13c5e65b23"
+    },
+    {
+      "id": "concise-synthesis-005",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 5",
+      "prompt": "Return a five-word headline conveying that evidence is promising but insufficient.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "word_count_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "7478a82b680171a57dfaa972f4f7a39ab596bba6f8465d40c3ab40c13de8df85"
+    },
+    {
+      "id": "concise-synthesis-006",
+      "stratum": "concise_synthesis",
+      "title": "Concise Synthesis 6",
+      "prompt": "In at most 50 words, combine these actions without repetition: validate input, reject invalid records, log safe error codes, retry transient failures, and alert after exhaustion.",
+      "public_non_phi": true,
+      "scoring": {
+        "type": "objective",
+        "validator": {
+          "name": "word_limit_contract",
+          "version": "1.0.0",
+          "inputs": [
+            "prompt",
+            "response"
+          ],
+          "deterministic": true
+        }
+      },
+      "checksum": "6bcd0fb78ca5f6a0feb1e0159c255882cf7818da58aa4c6723142dd1c8075b14"
+    }
+  ],
+  "checksum": {
+    "algorithm": "sha256",
+    "canonicalization": "json-sort-keys-compact",
+    "value": "6453923083df651c8c2bb0d7ae70f7c79c1d030a7283c97d298dfe624a456d7b"
+  }
+}

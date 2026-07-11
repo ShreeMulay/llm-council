@@ -129,7 +129,7 @@ class TestIsFireworksModel:
         assert is_fireworks_model("fireworks/kimi-k2.7-code") is True
 
     def test_fireworks_prefix(self):
-        assert is_fireworks_model("fireworks/any-model") is True
+        assert is_fireworks_model("fireworks/any-model") is False
 
     def test_non_fireworks(self):
         assert is_fireworks_model("openai/gpt-5.5") is False

@@ -70,7 +70,7 @@ class TestFullCouncilFlow:
 
         # Stage 1: all 9 models responded
         assert len(stage1) == 9
-        models_responded = {r["model"] for r in stage1}
+        models_responded = {r["model"] for r in stage1 if r.get("response")}
         assert models_responded == set(MOCK_RESPONSES.keys())
 
         # Stage 2: evaluators ranked responses
@@ -98,7 +98,7 @@ class TestFullCouncilFlow:
 
         # Stage 1: only 5 compact models
         assert len(stage1) == 5
-        models_responded = {r["model"] for r in stage1}
+        models_responded = {r["model"] for r in stage1 if r.get("response")}
         for m in COMPACT_COUNCIL_MODELS:
             assert m in models_responded
 
@@ -139,8 +139,8 @@ class TestFullCouncilFlow:
             council_models=list(MOCK_RESPONSES.keys()),
         )
 
-        # GLM and Kimi should be missing when both primary and OpenRouter paths fail.
-        models_responded = {r["model"] for r in stage1}
+        # Failed seats remain in the terminal projection but are excluded from responses.
+        models_responded = {r["model"] for r in stage1 if r.get("response")}
         assert "fireworks/glm-5.2" not in models_responded
         assert "fireworks/kimi-k2.7-code" not in models_responded
         # Stage 2 and 3 should still proceed with remaining models
@@ -188,7 +188,7 @@ class TestFullCouncilFlow:
     @pytest.mark.asyncio
     async def test_stage3_uses_curated_responses(self, mock_all_providers):
         """Chairman should receive curated subset, not all 9 responses."""
-        with patch("backend.council.select_top_responses") as mock_select:
+        with patch("backend.council.curate_responses") as mock_select:
             # Return exactly 5 curated responses with required fields
             mock_select.return_value = [
                 {"model": "m1", "response": "r1", "usage": {}, "provider": "mock"},
@@ -203,8 +203,8 @@ class TestFullCouncilFlow:
                 council_models=list(MOCK_RESPONSES.keys()),
             )
 
-            # select_top_responses should be called with all stage1 results
+            # Planner curation should be called with all stage1 results.
             mock_select.assert_called_once()
             call_args = mock_select.call_args[0]
-            assert len(call_args[0]) == 9  # All 9 stage1 responses passed in
+            assert len(call_args[1]) == 9  # All 9 stage1 responses passed in
             assert len(mock_select.return_value) == 5  # Curated to 5

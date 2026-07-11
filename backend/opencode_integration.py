@@ -5,6 +5,9 @@ from typing import Any
 
 from .config import CHAIRMAN_MODEL, COUNCIL_MODELS, resolve_model_alias
 from .council import run_full_council
+from .execution_planning import build_execution_plan
+from .model_registry import load_registry
+from .parallel_intelligence import create_parallel_stage0
 from .tool_context import augment_query_with_tool_context
 
 
@@ -112,6 +115,8 @@ async def handle_council_command(
     chairman: str | None = None,
     include_details: bool = True,
     tool_context: bool = True,
+    parallel_mode: str = "disabled",
+    parallel_classifier_score: float | None = None,
 ) -> dict[str, Any]:
     """
     Handle /council command invocation.
@@ -143,6 +148,21 @@ async def handle_council_command(
         query,
         enabled=tool_context,
     )
+    plan = build_execution_plan(load_registry(), {
+        "query": query, "models": council_models, "compact": compact,
+        "chairman": chairman_model, "mode": "sync",
+        "parallel_mode": parallel_mode,
+        "parallel_classifier_score": parallel_classifier_score,
+    })
+    stage0_metadata: dict[str, Any] = {"planned": False, "gate_reason": "disabled"}
+    evidence_bundle = None
+    stage0 = create_parallel_stage0(parallel_mode)
+    if stage0 is not None:
+        result = await stage0.run(
+            query, classifier_score=parallel_classifier_score, execution_plan=plan
+        )
+        stage0_metadata = result.metadata
+        evidence_bundle = result.evidence_bundle
 
     # Run the full council deliberation
     stage1, stage2, stage3, metadata = await run_full_council(
@@ -151,10 +171,13 @@ async def handle_council_command(
         compact=compact,
         council_models=council_models,
         chairman_model=chairman_model,
+        execution_plan=plan,
+        evidence_bundle=evidence_bundle,
     )
     metadata = {
         **metadata,
         "tool_context": tool_context_metadata,
+        "parallel": stage0_metadata,
     }
 
     elapsed = time.time() - start_time
@@ -182,6 +205,8 @@ async def handle_council_command(
             "chairman_model": chairman_model or CHAIRMAN_MODEL,
             "final_only": final_only,
             "tool_context": tool_context,
+            "parallel_mode": parallel_mode,
+            "parallel_classifier_score": parallel_classifier_score,
         },
     }
 
@@ -229,6 +254,14 @@ MCP_TOOL_SCHEMA = {
                 "type": "boolean",
                 "description": "Fetch and inject explicit URL context before deliberation (default true)",
                 "default": True,
+            },
+            "parallel_mode": {
+                "type": "string", "enum": ["disabled", "explicit", "classifier"],
+                "description": "Opt-in Parallel Stage 0 mode (default disabled)", "default": "disabled",
+            },
+            "parallel_classifier_score": {
+                "type": "number", "minimum": 0, "maximum": 1,
+                "description": "Caller-provided classifier score for classifier mode",
             },
         },
         "required": ["query"],

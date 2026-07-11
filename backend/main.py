@@ -1,6 +1,7 @@
 """FastAPI backend for LLM Council with OpenCode integration."""
 
 import contextlib
+import hmac
 import logging
 import os
 
@@ -22,7 +23,7 @@ import json
 import uuid
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -41,6 +42,7 @@ from .config import (
 )
 from .council import (
     calculate_aggregate_rankings,
+    execution_plan_metadata,
     generate_conversation_title,
     run_full_council,
     stage1_collect_responses,
@@ -48,12 +50,15 @@ from .council import (
     stage3_synthesize_final,
     stream_council,
 )
+from .execution_planning import build_execution_plan
 from .model_discovery import get_model_discovery
+from .model_registry import load_registry
 from .opencode_integration import (
     MCP_TOOL_SCHEMA,
     MODEL_ALIASES_HELP,
     handle_council_command,
 )
+from .parallel_intelligence import ParallelMonitor, create_parallel_stage0
 from .tool_context import augment_query_with_tool_context
 from .webhooks import (
     CouncilAsyncRequest,
@@ -116,6 +121,22 @@ class CouncilRequest(BaseModel):
     chairman: str | None = None
     include_details: bool = True
     tool_context: bool = True
+    parallel_mode: str = "disabled"
+    parallel_classifier_score: float | None = None
+
+
+class MonitorEventRequest(BaseModel):
+    """Versioned discovery event; ingestion can only create proposals."""
+
+    model_config = {"extra": "allow"}
+    schema_version: str
+    event_id: str
+    provider: str
+    model: str
+    version: str
+    source: dict[str, Any]
+    routes: list[str]
+    confidence: float
 
 
 class ExportRequest(BaseModel):
@@ -224,8 +245,13 @@ async def get_models(provider: str | None = None, refresh: bool = False):
         refresh: Force refresh from API (bypass cache)
     """
     discovery = get_model_discovery()
-    models = await discovery.get_all_models(provider, force_refresh=refresh)
+    await discovery.get_all_models(provider, force_refresh=refresh)
     cache_info = discovery.get_cache_info()
+    from .model_registry import derive_projections, load_registry
+
+    models = derive_projections(load_registry())["api"].to_dict()["models"]
+    if provider:
+        models = [model for model in models if model["provider"] == provider.lower()]
 
     return {"models": models, "count": len(models), "cache": cache_info}
 
@@ -280,6 +306,8 @@ async def council_deliberation(request: CouncilRequest, format: str | None = Non
         chairman=request.chairman,
         include_details=request.include_details,
         tool_context=request.tool_context,
+        parallel_mode=request.parallel_mode,
+        parallel_classifier_score=request.parallel_classifier_score,
     )
 
     if format == "markdown-raw":
@@ -395,6 +423,8 @@ async def council_stream(request: CouncilRequest):
         request.query,
         enabled=request.tool_context,
     )
+    stage0_metadata: dict[str, Any] = {"planned": False, "gate_reason": "disabled"}
+    evidence_bundle = None
 
     # Resolve model aliases
     council_models = None
@@ -413,6 +443,28 @@ async def council_stream(request: CouncilRequest):
 
         chairman_model = resolve_model_alias(request.chairman)
 
+    execution_plan = build_execution_plan(
+        load_registry(),
+        {
+            "query": request.query,
+            "models": council_models,
+            "compact": request.compact,
+            "chairman": chairman_model,
+            "mode": "stream",
+            "parallel_mode": request.parallel_mode,
+            "parallel_classifier_score": request.parallel_classifier_score,
+        },
+    )
+    stage0 = create_parallel_stage0(request.parallel_mode)
+    if stage0 is not None:
+        stage0_result = await stage0.run(
+            request.query,
+            classifier_score=request.parallel_classifier_score,
+            execution_plan=execution_plan,
+        )
+        stage0_metadata = stage0_result.metadata
+        evidence_bundle = stage0_result.evidence_bundle
+
     async def event_generator():
         try:
             async for event in stream_council(
@@ -420,6 +472,8 @@ async def council_stream(request: CouncilRequest):
                 final_only=request.final_only,
                 council_models=council_models,
                 chairman_model=chairman_model,
+                execution_plan=execution_plan,
+                evidence_bundle=evidence_bundle,
             ):
                 # On complete event, add timing info and format markdown
                 if event.get("event") == "complete":
@@ -435,6 +489,7 @@ async def council_stream(request: CouncilRequest):
                     event["metadata"] = {
                         **event.get("metadata", {}),
                         "tool_context": tool_context_metadata,
+                        "parallel": stage0_metadata,
                     }
                     # Generate markdown for the final result
                     from .opencode_integration import format_council_markdown
@@ -469,6 +524,39 @@ async def council_stream(request: CouncilRequest):
 async def mcp_schema():
     """Return MCP tool schema for registration."""
     return MCP_TOOL_SCHEMA
+
+
+@app.post("/api/parallel/monitor/events")
+async def ingest_parallel_monitor_event(request: Request):
+    """Persist a candidate proposal without touching runtime model state."""
+    from dataclasses import asdict
+
+    from .config import DATA_DIR
+
+    secret = os.environ.get("PARALLEL_MONITOR_INGEST_SECRET")
+    if not secret:
+        raise HTTPException(status_code=404, detail="Not found")
+    supplied = request.headers.get("X-Parallel-Monitor-Secret", "")
+    if not hmac.compare_digest(supplied.encode(), secret.encode()):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        if request.headers.get("content-length") and int(request.headers["content-length"]) > 32_768:
+            raise HTTPException(status_code=413, detail="Request too large")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Invalid content length") from exc
+    body = await request.body()
+    if len(body) > 32_768:
+        raise HTTPException(status_code=413, detail="Request too large")
+    try:
+        event = MonitorEventRequest.model_validate_json(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Invalid event") from exc
+    monitor = ParallelMonitor(proposal_store=DATA_DIR / "parallel" / "candidate-proposals.jsonl")
+    try:
+        proposal = monitor.ingest(event.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return asdict(proposal)
 
 
 # ============================================================================
@@ -661,8 +749,15 @@ async def send_message(conversation_id: str, request: SendMessageRequest):
         council_models = COMPACT_COUNCIL_MODELS
 
     # Run the 3-stage council process
+    execution_plan = build_execution_plan(
+        load_registry(),
+        {"query": request.content, "models": council_models, "compact": request.compact},
+    )
     stage1_results, stage2_results, stage3_result, metadata = await run_full_council(
-        augmented_content, compact=request.compact, council_models=council_models
+        augmented_content,
+        compact=request.compact,
+        council_models=council_models,
+        execution_plan=execution_plan,
     )
     metadata = {
         **metadata,
@@ -727,15 +822,30 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 from backend.config import COMPACT_COUNCIL_MODELS
                 council_models = COMPACT_COUNCIL_MODELS
 
+            execution_plan = build_execution_plan(
+                load_registry(),
+                {
+                    "query": request.content,
+                    "models": council_models,
+                    "compact": request.compact,
+                    "mode": "stream",
+                },
+            )
+
             # Stage 1: Collect responses
             yield f"data: {json.dumps({'type': 'stage1_start'})}\n\n"
-            stage1_results = await stage1_collect_responses(augmented_content, council_models)
+            stage1_results = await stage1_collect_responses(
+                augmented_content, council_models, execution_plan
+            )
             yield f"data: {json.dumps({'type': 'stage1_complete', 'data': stage1_results})}\n\n"
 
             # Stage 2: Collect rankings
             yield f"data: {json.dumps({'type': 'stage2_start'})}\n\n"
             stage2_results, label_to_model = await stage2_collect_rankings(
-                augmented_content, stage1_results, council_models
+                augmented_content,
+                stage1_results,
+                [operation.logical_id for operation in execution_plan.evaluators],
+                execution_plan,
             )
             aggregate_rankings = calculate_aggregate_rankings(
                 stage2_results, label_to_model
@@ -746,13 +856,18 @@ async def send_message_stream(conversation_id: str, request: SendMessageRequest)
                 "compact": request.compact,
                 "models": council_models or COUNCIL_MODELS,
                 "tool_context": tool_context_metadata,
+                "execution_plan": execution_plan_metadata(execution_plan),
             }
             yield f"data: {json.dumps({'type': 'stage2_complete', 'data': stage2_results, 'metadata': metadata})}\n\n"
 
             # Stage 3: Synthesize final answer
             yield f"data: {json.dumps({'type': 'stage3_start'})}\n\n"
             stage3_result = await stage3_synthesize_final(
-                augmented_content, stage1_results, stage2_results
+                augmented_content,
+                stage1_results,
+                stage2_results,
+                execution_plan.chairman.logical_id,
+                execution_plan,
             )
             yield f"data: {json.dumps({'type': 'stage3_complete', 'data': stage3_result})}\n\n"
 

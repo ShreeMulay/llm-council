@@ -10,9 +10,21 @@ import { readFileSync, writeFileSync, unlinkSync, existsSync, openSync, mkdirSyn
 import { tmpdir } from "os";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const modelRegistry = require("./generated/model-registry.json") as {
+  default_roster: string[];
+  compact_roster: string[];
+  chairman: string;
+  models: Array<{ id: string; label: string; aliases: string[] }>;
+};
+const labelFor = (id: string): string => modelRegistry.models.find((model) => model.id === id)?.label ?? id;
+const defaultLabels = modelRegistry.default_roster.map(labelFor).join(", ");
+const compactLabels = modelRegistry.compact_roster.map(labelFor).join(", ");
+const aliases = modelRegistry.models.flatMap((model) => model.aliases);
 
 const BACKEND_URL = process.env.LLM_COUNCIL_URL || "http://localhost:8800";
 const HEALTH_URL = `${BACKEND_URL}/health`;
@@ -218,6 +230,8 @@ interface CouncilRequest {
   models?: string[];
   chairman?: string;
   tool_context?: boolean;
+  parallel_mode?: "disabled" | "explicit" | "classifier";
+  parallel_classifier_score?: number;
 }
 
 interface CouncilResponse {
@@ -248,9 +262,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "llm_council",
         description:
-          "Consult 9 LLMs (GPT-5.5, Fable 5 via Vertex AI Anthropic, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.3, Kimi K2.7 Code, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. " +
-          "3-stage deliberation: 9 individual responses -> 3 evaluators rank with self-exclusion -> chairman synthesizes from curated top-5 (Fable 5 via Vertex AI; OpenRouter fallback is non-PHI/deidentified only). " +
-          "Use for complex questions requiring multiple perspectives. Compact mode (5 models) for faster results.",
+          `Consult ${modelRegistry.default_roster.length} LLMs (${defaultLabels}) for peer-reviewed answers. ` +
+          `3-stage deliberation with ${labelFor(modelRegistry.chairman)} as chairman. ` +
+          `Use for complex questions requiring multiple perspectives. Compact mode (${modelRegistry.compact_roster.length} models: ${compactLabels}) for faster results.`,
         inputSchema: {
           type: "object" as const,
           properties: {
@@ -267,7 +281,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             compact: {
               type: "boolean",
               description:
-                "Use only 5 core models (GPT-5.5, Fable 5 via Vertex AI Anthropic, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.3) for faster/cheaper deliberation",
+                `Use only ${modelRegistry.compact_roster.length} core models (${compactLabels}) for faster/cheaper deliberation`,
               default: false,
             },
             include_details: {
@@ -280,7 +294,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "array",
               items: { type: "string" },
               description:
-                "Optional model aliases/IDs to use instead of the default council (e.g. ['opus','gemini','glm']; challengers/legacy aliases include ['minimax','glm-zai','kimi26'])",
+                `Optional model aliases/IDs to use instead of the default council. Available aliases: ${aliases.join(", ")}`,
             },
             chairman: {
               type: "string",
@@ -291,6 +305,16 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description:
                 "Fetch and inject explicit URL context before deliberation (default true)",
               default: true,
+            },
+            parallel_mode: {
+              type: "string",
+              enum: ["disabled", "explicit", "classifier"],
+              description: "Opt-in Parallel Stage 0 mode (default disabled)",
+              default: "disabled",
+            },
+            parallel_classifier_score: {
+              type: "number", minimum: 0, maximum: 1,
+              description: "Caller-provided classifier score for classifier mode",
             },
           },
           required: ["query"],
@@ -486,6 +510,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const compact = (args?.compact as boolean) ?? false;
   const includeDetails = (args?.include_details as boolean) ?? true;
   const toolContext = (args?.tool_context as boolean) ?? true;
+  const parallelMode = (args?.parallel_mode as CouncilRequest["parallel_mode"]) ?? "disabled";
+  const parallelClassifierScore = args?.parallel_classifier_score as number | undefined;
   const models = args?.models as string[] | undefined;
   const chairman = args?.chairman as string | undefined;
 
@@ -507,6 +533,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     compact,
     include_details: includeDetails,
     tool_context: toolContext,
+    parallel_mode: parallelMode,
+    parallel_classifier_score: parallelClassifierScore,
     models,
     chairman,
   };

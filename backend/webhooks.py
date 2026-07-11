@@ -52,6 +52,8 @@ class CouncilAsyncRequest(BaseModel):
     chairman: str | None = None
     include_details: bool = True
     metadata: dict[str, Any] | None = None  # Pass-through metadata for webhook
+    parallel_mode: str = "disabled"
+    parallel_classifier_score: float | None = None
 
 
 class JobInfo(BaseModel):
@@ -198,6 +200,8 @@ def create_job(request: CouncilAsyncRequest) -> str:
         "chairman": request.chairman,
         "include_details": request.include_details,
         "metadata": request.metadata,
+        "parallel_mode": request.parallel_mode,
+        "parallel_classifier_score": request.parallel_classifier_score,
         "created_at": _utc_now_iso(),
         "started_at": None,
         "completed_at": None,
@@ -349,6 +353,8 @@ async def run_council_async(
             models=job["models"],
             chairman=job["chairman"],
             include_details=job["include_details"],
+            parallel_mode=job.get("parallel_mode", "disabled"),
+            parallel_classifier_score=job.get("parallel_classifier_score"),
         )
 
         update_job(

@@ -2,15 +2,45 @@
 
 import asyncio
 import hashlib
+import json
 import logging
 import random
 import re
 import time
 from collections import defaultdict
 from collections.abc import AsyncGenerator
+from dataclasses import asdict, replace
 from typing import Any
 
+from .execution_planning import ExecutionPlan, build_execution_plan, curate_responses
+from .model_registry import load_registry
+from .parallel_intelligence import EvidenceBundle
+
 logger = logging.getLogger("llm-council.council")
+
+
+def execution_plan_metadata(plan: ExecutionPlan) -> dict[str, Any]:
+    """Return public, secret-free execution provenance."""
+    operations = (*plan.stage1, *plan.evaluators, plan.chairman)
+    unique = {operation.logical_id: operation for operation in operations}
+    return {
+        "digest": plan.digest,
+        "registry_version": plan.registry_version,
+        "registry_digest": plan.registry_digest,
+        "projection_digest": plan.projection_digest,
+        "roster": [operation.logical_id for operation in plan.stage1],
+        "evaluators": [operation.logical_id for operation in plan.evaluators],
+        "chairman": plan.chairman.logical_id,
+        "models": [
+            {
+                "model": model,
+                "roles": list(plan.roles[model]),
+                "provider": operation.route.provider,
+                "route_id": operation.route.route_id,
+            }
+            for model, operation in unique.items()
+        ],
+    }
 
 # Maximum characters per model response when building Stage 2/3 prompts.
 # Prevents context window explosion when individual models produce very long outputs.
@@ -32,18 +62,25 @@ CACHE_TTL_SECONDS = 3600
 STAGE1_CACHE_MAX_ENTRIES = 512
 
 
-def _get_cache_key(model_id: str, prompt: str) -> str:
+def _get_cache_key(model_id: str | Any, prompt: str) -> str:
     """Generate cache key for Stage 1 responses."""
-    return hashlib.sha256(f"{model_id}:{prompt}".encode()).hexdigest()[:16]
+    if isinstance(model_id, str):
+        identity: Any = {"version": 1, "model": model_id}
+    else:
+        operation = asdict(model_id)
+        operation.pop("messages", None)
+        identity = {"version": 2, "operation": operation}
+    payload = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(f"{payload}:{prompt}".encode()).hexdigest()[:16]
 
 
-def _get_cached_response(model_id: str, prompt: str) -> dict[str, Any] | None:
+def _get_cached_response(model_id: str | Any, prompt: str) -> dict[str, Any] | None:
     """Get cached Stage 1 response if available and not expired."""
     key = _get_cache_key(model_id, prompt)
     if key in _stage1_cache:
         response, timestamp = _stage1_cache[key]
         if time.time() - timestamp < CACHE_TTL_SECONDS:
-            logger.info("Cache hit for %s", model_id)
+            logger.info("Stage 1 cache hit")
             return response
         else:
             del _stage1_cache[key]
@@ -67,12 +104,45 @@ def _sweep_stage1_cache(now: float | None = None) -> None:
             del _stage1_cache[key]
 
 
-def _cache_response(model_id: str, prompt: str, response: dict[str, Any]):
+def _cache_response(model_id: str | Any, prompt: str, response: dict[str, Any]):
     """Cache Stage 1 response."""
     _sweep_stage1_cache()
     key = _get_cache_key(model_id, prompt)
     _stage1_cache[key] = (response, time.time())
     _sweep_stage1_cache()
+
+
+def _project_stage1_result(model: str, response: dict[str, Any]) -> dict[str, Any]:
+    """Project one normalized dispatcher terminal result without losing provenance."""
+    return {
+        "model": model,
+        "response": response.get("content", ""),
+        "usage": response.get("usage", {}),
+        "provider": response.get("provider", "unknown"),
+        "route_id": response.get("route_id"),
+        "fallback_used": response.get("fallback_used", False),
+        "error": response.get("error"),
+        "terminal_status": response.get(
+            "terminal_status", "succeeded" if response.get("content") else "failed"
+        ),
+    }
+
+
+def _order_stage1_results(
+    results: list[dict[str, Any]], plan: ExecutionPlan
+) -> list[dict[str, Any]]:
+    """Order terminal Stage 1 projections by the immutable captured seat order."""
+    seat = {operation.logical_id: index for index, operation in enumerate(plan.stage1)}
+    return sorted(results, key=lambda result: seat[result["model"]])
+
+
+async def _execute_stage1_operation(operation, cache_prompt: str) -> dict[str, Any]:
+    """Resolve one planned Stage 1 seat through the shared normalized cache path."""
+    cached = _get_cached_response(operation, cache_prompt)
+    if cached is None:
+        cached = await _dispatcher().execute(operation)
+        _cache_response(operation, cache_prompt, cached)
+    return _project_stage1_result(operation.logical_id, cached)
 
 
 def _truncate_for_prompt(
@@ -224,22 +294,27 @@ from .config import (
     CHAIRMAN_MODEL,
     COUNCIL_MODELS,
     calculate_max_response_chars,
-    get_model_reasoning_effort,
-    get_openrouter_fallback,
-    is_cerebras_model,
-    is_fireworks_model,
-    is_gemini_direct_model,
-    is_moonshot_model,
-    is_vertex_anthropic_model,
-    is_xai_model,
-    requires_vertex_anthropic,
 )
 from .fireworks_client import query_fireworks_model
 from .gemini_client import query_gemini_model
+from .model_dispatcher import DispatchRequest, ModelDispatcher
 from .moonshot_client import query_moonshot_model
 from .openrouter import query_model as query_openrouter_model
 from .vertex_anthropic_client import query_vertex_anthropic_model
 from .xai_client import query_xai_model
+
+
+def _dispatcher() -> ModelDispatcher:
+    """Build a dispatcher with module-local adapters for patch-compatible callers."""
+    return ModelDispatcher(adapters={
+        "openrouter": query_openrouter_model,
+        "vertex": query_vertex_anthropic_model,
+        "fireworks": query_fireworks_model,
+        "cerebras": query_cerebras_model,
+        "moonshot": query_moonshot_model,
+        "xai": query_xai_model,
+        "gemini": query_gemini_model,
+    })
 
 
 async def _query_primary(
@@ -249,36 +324,11 @@ async def _query_primary(
     temperature: float = 0.7,
     reasoning_effort: str | None = None,
 ) -> dict[str, Any] | None:
-    """Query a model via its primary (direct) provider. Returns None on failure."""
-    if is_vertex_anthropic_model(model_id):
-        return await query_vertex_anthropic_model(
-            model_id,
-            messages,
-            max_tokens,
-            temperature,
-            reasoning_effort=reasoning_effort,
-        )
-    elif is_fireworks_model(model_id):
-        return await query_fireworks_model(
-            model_id,
-            messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
-        )
-    elif is_cerebras_model(model_id):
-        return await query_cerebras_model(model_id, messages, max_tokens, temperature)
-    elif is_moonshot_model(model_id):
-        return await query_moonshot_model(model_id, messages, max_tokens, temperature)
-    elif is_xai_model(model_id):
-        return await query_xai_model(model_id, messages, max_tokens, temperature)
-    elif is_gemini_direct_model(model_id):
-        return await query_gemini_model(model_id, messages, max_tokens, temperature)
-    else:
-        # No direct provider — go straight to OpenRouter.
-        # Use the fallback mapping if available (e.g. council ID -> OpenRouter ID)
-        or_model = get_openrouter_fallback(model_id) or model_id
-        return await query_openrouter_model(or_model, messages, max_tokens, temperature)
+    """Query a model via only its exact primary registry route."""
+    return await _dispatcher().query(DispatchRequest(
+        model_id, messages, max_tokens, temperature, reasoning_effort,
+        timeout=PER_MODEL_TIMEOUT_SECONDS, allow_fallbacks=False,
+    ))
 
 
 async def query_single_model(
@@ -295,49 +345,10 @@ async def query_single_model(
     Google Cloud projects/services under BAA. Its OpenRouter fallback is
     non-PHI/deidentified only; this service does not perform PHI detection.
     """
-    try:
-        result = await asyncio.wait_for(
-            _query_primary(
-                model_id,
-                messages,
-                max_tokens,
-                temperature,
-                reasoning_effort=reasoning_effort,
-            ),
-            timeout=PER_MODEL_TIMEOUT_SECONDS,
-        )
-        if result and result.get("content"):
-            return result
-    except Exception as e:
-        logger.warning("Primary provider failed for %s: %s", model_id, e)
-
-    if requires_vertex_anthropic(model_id):
-        logger.error(
-            "Vertex Anthropic primary failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
-            model_id,
-        )
-        return None
-
-    # Fallback to OpenRouter. For Fable this is non-PHI/deidentified only.
-    or_model = get_openrouter_fallback(model_id)
-    if or_model:
-        logger.info("Falling back to OpenRouter for %s -> %s", model_id, or_model)
-        try:
-            return await asyncio.wait_for(
-                query_openrouter_model(
-                    or_model,
-                    messages,
-                    max_tokens,
-                    temperature,
-                    reasoning_effort=reasoning_effort or get_model_reasoning_effort(model_id),
-                ),
-                timeout=PER_MODEL_TIMEOUT_SECONDS,
-            )
-        except Exception as e:
-            logger.error("OpenRouter fallback also failed for %s: %s", model_id, e)
-            return None
-
-    return None
+    return await _dispatcher().query(DispatchRequest(
+        model_id, messages, max_tokens, temperature, reasoning_effort,
+        timeout=PER_MODEL_TIMEOUT_SECONDS,
+    ))
 
 
 async def _query_single_with_reasoning_override(
@@ -355,55 +366,10 @@ async def _query_single_with_reasoning_override(
 
     OpenRouter and Fireworks models support reasoning_effort override.
     """
-    if not reasoning_effort:
-        return await query_single_model(model_id, messages, max_tokens, temperature)
-
-    if is_fireworks_model(model_id):
-        try:
-            result = await query_fireworks_model(
-                model_id,
-                messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                reasoning_effort=reasoning_effort,
-            )
-            if result and result.get("content"):
-                return result
-        except Exception as e:
-            logger.warning("Fireworks reasoning override failed for %s: %s", model_id, e)
-
-    if is_vertex_anthropic_model(model_id):
-        try:
-            result = await query_vertex_anthropic_model(
-                model_id,
-                messages,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                reasoning_effort=reasoning_effort,
-            )
-            if result and result.get("content"):
-                return result
-        except Exception as e:
-            logger.warning("Vertex Anthropic reasoning override failed for %s: %s", model_id, e)
-
-        if requires_vertex_anthropic(model_id):
-            logger.error(
-                "Vertex Anthropic reasoning override failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
-                model_id,
-            )
-            return None
-
-    # For OpenRouter models and fallbacks, pass reasoning_effort directly.
-    # Fable fallback to OpenRouter is non-PHI/deidentified only.
-    or_model = get_openrouter_fallback(model_id) or model_id
-    try:
-        return await query_openrouter_model(
-            or_model, messages, max_tokens, temperature, reasoning_effort=reasoning_effort
-        )
-    except Exception as e:
-        logger.warning("Reasoning override query failed for %s: %s", model_id, e)
-        # Fallback to normal query without override
-        return await query_single_model(model_id, messages, max_tokens, temperature)
+    return await _dispatcher().query(DispatchRequest(
+        model_id, messages, max_tokens, temperature, reasoning_effort,
+        timeout=PER_MODEL_TIMEOUT_SECONDS,
+    ))
 
 
 async def query_models_parallel(
@@ -502,57 +468,6 @@ async def query_models_with_retries(
                 logger.info("Retry %d succeeded for %s", attempt + 1, model)
                 results[model] = result
 
-    # Final fallback: try OpenRouter for any models that still failed.
-    # Fable fallback to OpenRouter is non-PHI/deidentified only.
-    still_failed = [m for m in model_ids if results.get(m) is None]
-    if still_failed:
-        logger.warning(
-            "After %d retries, %d model(s) still failed — trying OpenRouter fallback: %s",
-            max_retries,
-            len(still_failed),
-            still_failed,
-        )
-
-        async def _openrouter_fallback(
-            model: str,
-        ) -> tuple[str, dict[str, Any] | None]:
-            if requires_vertex_anthropic(model):
-                logger.error(
-                    "Skipping OpenRouter fallback for %s because REQUIRE_VERTEX_ANTHROPIC is enabled",
-                    model,
-                )
-                return model, None
-
-            or_model = get_openrouter_fallback(model)
-            if not or_model or or_model == model:
-                return model, None
-            try:
-                result = await query_openrouter_model(
-                    or_model,
-                    messages,
-                    max_tokens,
-                    temperature,
-                    reasoning_effort=get_model_reasoning_effort(model),
-                )
-                if result is not None:
-                    result["provider"] = (
-                        f"{result.get('provider', 'openrouter')}-fallback"
-                    )
-                    logger.info(
-                        "OpenRouter fallback succeeded for %s -> %s", model, or_model
-                    )
-                return model, result
-            except Exception as e:
-                logger.error("OpenRouter fallback failed for %s: %s", model, e)
-                return model, None
-
-        fallback_results = await asyncio.gather(
-            *[_openrouter_fallback(m) for m in still_failed]
-        )
-        for model, result in fallback_results:
-            if result is not None:
-                results[model] = result
-
     # Final status log
     succeeded = [m for m in model_ids if results.get(m) is not None]
     final_failed = [m for m in model_ids if results.get(m) is None]
@@ -567,7 +482,10 @@ async def query_models_with_retries(
 
 
 async def stage1_collect_responses(
-    user_query: str, council_models: list[str] | None = None
+    user_query: str,
+    council_models: list[str] | None = None,
+    execution_plan: ExecutionPlan | None = None,
+    evidence_bundle: EvidenceBundle | None = None,
 ) -> list[dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
@@ -582,51 +500,38 @@ async def stage1_collect_responses(
     Returns:
         List of dicts with 'model', 'response', 'usage' keys
     """
-    models = council_models or COUNCIL_MODELS
+    models = [operation.logical_id for operation in execution_plan.stage1] if execution_plan else (council_models or COUNCIL_MODELS)
     messages = [{"role": "user", "content": user_query}]
+    if evidence_bundle is not None:
+        messages.append({"role": "system", "content": evidence_bundle.message()})
+    cache_prompt = user_query + ("\n" + evidence_bundle.message() if evidence_bundle else "")
 
     logger.info("Stage 1: querying %d models with retries", len(models))
 
-    # Check cache for each model
-    cached_results = {}
-    models_to_query = []
-
-    for model in models:
-        cached = _get_cached_response(model, user_query)
-        if cached:
-            cached_results[model] = cached
-        else:
-            models_to_query.append(model)
-
-    if cached_results:
-        logger.info("Stage 1: %d cache hits, %d models to query", len(cached_results), len(models_to_query))
-
-    # Query uncached models in parallel with automatic retries
-    if models_to_query:
-        responses = await query_models_with_retries(models_to_query, messages)
-
-        # Cache new responses
+    if execution_plan:
+        operations = [
+            replace(op, messages=tuple((m["role"], m["content"]) for m in messages))
+            for op in execution_plan.stage1
+        ]
+        stage1_results = list(await asyncio.gather(*[
+            _execute_stage1_operation(operation, cache_prompt) for operation in operations
+        ]))
+    else:
+        cached = {model: _get_cached_response(model, cache_prompt) for model in models}
+        to_query = [model for model, response in cached.items() if response is None]
+        responses = await query_models_with_retries(to_query, messages) if to_query else {}
         for model, response in responses.items():
             if response is not None:
-                _cache_response(model, user_query, response)
-    else:
-        responses = {}
+                _cache_response(model, cache_prompt, response)
+        responses = {**{model: response for model, response in cached.items() if response is not None}, **responses}
+        stage1_results = []
+        for model in models:
+            response = responses.get(model)
+            if response is not None:
+                stage1_results.append(_project_stage1_result(model, response))
 
-    # Merge cached + new responses
-    all_responses = {**cached_results, **responses}
-
-    # Format results
-    stage1_results = []
-    for model, response in all_responses.items():
-        if response is not None:  # Only include successful responses
-            stage1_results.append(
-                {
-                    "model": model,
-                    "response": response.get("content", ""),
-                    "usage": response.get("usage", {}),
-                    "provider": response.get("provider", "unknown"),
-                }
-            )
+    if execution_plan:
+        stage1_results = _order_stage1_results(stage1_results, execution_plan)
 
     logger.info(
         "Stage 1 complete: %d/%d models responded", len(stage1_results), len(models)
@@ -638,6 +543,7 @@ async def stage2_collect_rankings(
     user_query: str,
     stage1_results: list[dict[str, Any]],
     council_models: list[str] | None = None,
+    execution_plan: ExecutionPlan | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, str]]:
     """
     Stage 2: Each model ranks the anonymized responses.
@@ -653,7 +559,7 @@ async def stage2_collect_rankings(
     models = council_models or COUNCIL_MODELS
 
     # Select evaluator subset (top 3 from priority list present in council)
-    evaluators = get_evaluator_models(models)
+    evaluators = [operation.logical_id for operation in execution_plan.evaluators] if execution_plan else get_evaluator_models(models)
     if not evaluators:
         # Fallback: if no priority evaluators available, use all models
         evaluators = models
@@ -673,6 +579,7 @@ async def stage2_collect_rankings(
     # Build evaluator-specific prompts with self-exclusion and randomized order
     evaluator_tasks = []
 
+    planned_evaluators = {op.logical_id: op for op in execution_plan.evaluators} if execution_plan else {}
     for evaluator in evaluators:
         # Self-exclusion: remove evaluator's own response
         filtered_results = filter_responses_for_evaluator(evaluator, stage1_results)
@@ -732,7 +639,10 @@ Now provide your evaluation and ranking:"""
         messages = [{"role": "user", "content": ranking_prompt}]
 
         # Use high reasoning effort for GPT-5.5 as evaluator
-        if evaluator == "openai/gpt-5.5":
+        if execution_plan:
+            operation = planned_evaluators[evaluator]
+            task = _dispatcher().execute(replace(operation, messages=tuple((item["role"], item["content"]) for item in messages)))
+        elif evaluator == "openai/gpt-5.5":
             # Override with evaluator-specific reasoning effort
             from .config import get_model_reasoning_effort
             reasoning = get_model_reasoning_effort("openai/gpt-5.5-evaluator")
@@ -785,6 +695,7 @@ async def stage3_synthesize_final(
     stage1_results: list[dict[str, Any]],
     stage2_results: list[dict[str, Any]],
     chairman_model: str | None = None,
+    execution_plan: ExecutionPlan | None = None,
 ) -> dict[str, Any]:
     """
     Stage 3: Chairman synthesizes final response.
@@ -798,11 +709,16 @@ async def stage3_synthesize_final(
     Returns:
         Dict with 'model', 'response', 'usage' keys
     """
-    chairman = chairman_model or CHAIRMAN_MODEL
+    chairman = execution_plan.chairman.logical_id if execution_plan else (chairman_model or CHAIRMAN_MODEL)
 
     # Curate top 5 responses for the chairman (prevents context explosion with 9 models)
     # Top 3 by consensus + 1 wildcard (high disagreement) + 1 diversity pick
-    curated_results = select_top_responses(stage1_results, stage2_results)
+    if execution_plan:
+        global_labels = {f"Response {chr(65 + index)}": result["model"] for index, result in enumerate(stage1_results)}
+        aggregate = calculate_aggregate_rankings(stage2_results, global_labels)
+        curated_results = curate_responses(execution_plan, stage1_results, aggregate)
+    else:
+        curated_results = select_top_responses(stage1_results, stage2_results)
 
     logger.info(
         "Stage 3: chairman synthesizing from %d curated responses (of %d total)",
@@ -853,9 +769,11 @@ Provide a clear, well-reasoned final answer that represents the council's collec
 
     # Query the chairman model
     try:
-        response = await asyncio.wait_for(
-            query_single_model(chairman, messages), timeout=CHAIRMAN_TIMEOUT_SECONDS
-        )
+        if execution_plan:
+            operation = replace(execution_plan.chairman, messages=tuple((item["role"], item["content"]) for item in messages))
+            response = await _dispatcher().execute(operation)
+        else:
+            response = await asyncio.wait_for(query_single_model(chairman, messages), timeout=CHAIRMAN_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
         logger.error(
             "Chairman model %s timed out after %.0fs", chairman, CHAIRMAN_TIMEOUT_SECONDS
@@ -970,6 +888,8 @@ async def run_full_council(
     compact: bool = False,
     council_models: list[str] | None = None,
     chairman_model: str | None = None,
+    execution_plan: ExecutionPlan | None = None,
+    evidence_bundle: EvidenceBundle | None = None,
 ) -> tuple[list, list, dict, dict]:
     """
     Run the complete 3-stage council process.
@@ -984,37 +904,56 @@ async def run_full_council(
     Returns:
         Tuple of (stage1_results, stage2_results, stage3_result, metadata)
     """
+    plan = execution_plan or build_execution_plan(load_registry(), {
+        "query": user_query,
+        "compact": compact,
+        "models": council_models,
+        "chairman": chairman_model,
+        "mode": "sync",
+    })
+    council_models = [operation.logical_id for operation in plan.stage1]
+    chairman_model = plan.chairman.logical_id
+
     # Use compact council if requested and no explicit override
     if compact and not council_models:
         from .config import COMPACT_COUNCIL_MODELS
         council_models = COMPACT_COUNCIL_MODELS
 
     # Stage 1: Collect individual responses
-    stage1_results = await stage1_collect_responses(user_query, council_models)
+    stage1_results = await stage1_collect_responses(user_query, council_models, plan, evidence_bundle)
+    successful_stage1 = [result for result in stage1_results if result.get("response")]
 
     # If no models responded successfully, return error
-    if not stage1_results:
+    if not successful_stage1:
+        failure = {
+            "model": chairman_model,
+            "response": "All models failed to respond. Please try again.",
+            "usage": {},
+            "provider": "not_called",
+            "route_id": None,
+            "fallback_used": False,
+            "error": {"code": "stage1_exhausted", "message": "All Stage 1 operations failed"},
+            "terminal_status": "failed",
+        }
         return (
+            stage1_results,
             [],
-            [],
-            {
-                "model": chairman_model or CHAIRMAN_MODEL,
-                "response": "All models failed to respond. Please try again.",
-            },
-            {},
+            failure,
+            {"aggregate_rankings": [], "label_to_model": {}, "final_only": final_only,
+             "compact": compact, "execution_plan": execution_plan_metadata(plan)},
         )
 
     if final_only:
         # Skip Stage 2, just synthesize from Stage 1
         stage3_result = await stage3_synthesize_final(
-            user_query, stage1_results, [], chairman_model
+            user_query, successful_stage1, [], chairman_model, plan
         )
-        metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True, "compact": compact}
+        metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True, "compact": compact, "execution_plan": execution_plan_metadata(plan)}
         return stage1_results, [], stage3_result, metadata
 
     # Stage 2: Collect rankings
     stage2_results, label_to_model = await stage2_collect_rankings(
-        user_query, stage1_results, council_models
+        user_query, successful_stage1, [operation.logical_id for operation in plan.evaluators], plan
     )
 
     # Calculate aggregate rankings
@@ -1022,7 +961,7 @@ async def run_full_council(
 
     # Stage 3: Synthesize final answer
     stage3_result = await stage3_synthesize_final(
-        user_query, stage1_results, stage2_results, chairman_model
+        user_query, successful_stage1, stage2_results, chairman_model, plan
     )
 
     # Prepare metadata
@@ -1031,6 +970,7 @@ async def run_full_council(
         "aggregate_rankings": aggregate_rankings,
         "final_only": False,
         "compact": compact,
+        "execution_plan": execution_plan_metadata(plan),
     }
 
     return stage1_results, stage2_results, stage3_result, metadata
@@ -1054,85 +994,31 @@ async def _query_single_with_retry(
     Returns a dict with model, response, usage, provider keys.
     Always returns a result (with empty response on total failure).
     """
-    # Determine if this model has a direct provider (matching query_models_parallel logic)
-    has_direct_provider = (
-        is_fireworks_model(model_id)
-        or is_cerebras_model(model_id)
-        or is_xai_model(model_id)
-        or is_vertex_anthropic_model(model_id)
-    )
-
-    async def _try_query() -> dict[str, Any] | None:
-        if has_direct_provider:
-            return await _query_primary(model_id, messages, max_tokens, temperature)
-        else:
-            # Route through OpenRouter (same as query_models_parallel's openrouter_raw path)
-            or_model = get_openrouter_fallback(model_id) or model_id
-            return await query_openrouter_model(
-                or_model, messages, max_tokens, temperature
-            )
-
-    for attempt in range(max_retries + 1):
-        try:
-            result = await asyncio.wait_for(
-                _try_query(), timeout=PER_MODEL_TIMEOUT_SECONDS
-            )
-            if result and result.get("content"):
-                return {
-                    "model": model_id,
-                    "response": result.get("content", ""),
-                    "usage": result.get("usage", {}),
-                    "provider": result.get("provider", "unknown"),
-                }
-        except Exception as e:
-            logger.warning(
-                "Attempt %d/%d failed for %s: %s",
-                attempt + 1,
-                max_retries + 1,
-                model_id,
-                e,
-            )
-        if attempt < max_retries:
-            wait = backoff_base * (2**attempt)
-            await asyncio.sleep(wait)
-
-    if requires_vertex_anthropic(model_id):
-        logger.error(
-            "Vertex Anthropic primary failed for %s and REQUIRE_VERTEX_ANTHROPIC is enabled; refusing non-BAA fallback",
-            model_id,
-        )
-        return {
-            "model": model_id,
-            "response": "",
-            "usage": {},
-            "provider": "failed",
-        }
-
-    # Final fallback: OpenRouter (only if we were using a direct provider)
-    if has_direct_provider:
-        or_model = get_openrouter_fallback(model_id)
-        if or_model:
-            try:
-                result = await asyncio.wait_for(
-                    query_openrouter_model(or_model, messages, max_tokens, temperature),
-                    timeout=PER_MODEL_TIMEOUT_SECONDS,
-                )
-                if result and result.get("content"):
-                    return {
-                        "model": model_id,
-                        "response": result.get("content", ""),
-                        "usage": result.get("usage", {}),
-                        "provider": f"{result.get('provider', 'openrouter')}-fallback",
-                    }
-            except Exception as e:
-                logger.error("OpenRouter fallback failed for %s: %s", model_id, e)
-
+    result = await _dispatcher().query(DispatchRequest(
+        model_id,
+        messages,
+        max_tokens,
+        temperature,
+        timeout=PER_MODEL_TIMEOUT_SECONDS,
+        max_retries=max_retries,
+        backoff_base=backoff_base,
+    ))
+    if not result:
+        return {"model": model_id, "response": "", "usage": {}, "provider": "failed"}
     return {
         "model": model_id,
-        "response": "",
-        "usage": {},
-        "provider": "failed",
+        "response": result.get("content", ""),
+        "usage": result.get("usage", {}),
+        "provider": result.get("provider", "unknown"),
     }
+
+
+async def _query_planned_operation(operation):
+    """Run a captured operation and preserve the legacy stream result shape."""
+    result = await _dispatcher().execute(operation)
+    if not result:
+        return {"model": operation.logical_id, "response": "", "usage": {}, "provider": "failed", "route_id": operation.routes[-1].route_id, "fallback_used": len(operation.routes) > 1, "error": {"code": "provider_exhausted", "message": "All captured routes failed"}, "terminal_status": "failed"}
+    return _project_stage1_result(operation.logical_id, result)
 
 
 async def stream_council(
@@ -1140,6 +1026,8 @@ async def stream_council(
     final_only: bool = False,
     council_models: list[str] | None = None,
     chairman_model: str | None = None,
+    execution_plan: ExecutionPlan | None = None,
+    evidence_bundle: EvidenceBundle | None = None,
 ) -> AsyncGenerator[dict[str, Any], None]:
     """
     Stream the council deliberation, yielding events as each model responds.
@@ -1155,25 +1043,35 @@ async def stream_council(
         {"event": "synthesis", "model": "...", "response": "..."}
         {"event": "complete", "stage1": [...], "stage2": [...], "stage3": {...}, "metadata": {...}}
     """
-    models = council_models or COUNCIL_MODELS
-    chairman = chairman_model or CHAIRMAN_MODEL
-    messages = [{"role": "user", "content": user_query}]
+    plan = execution_plan or build_execution_plan(load_registry(), {
+        "query": user_query, "models": council_models, "chairman": chairman_model, "mode": "stream"
+    })
+    models = [operation.logical_id for operation in plan.stage1]
+    chairman = plan.chairman.logical_id
 
     # --- Stage 1: Stream individual responses ---
     yield {"event": "stage_start", "stage": 1, "models": models}
     logger.info("Stream Stage 1: querying %d models", len(models))
 
     stage1_results: list[dict[str, Any]] = []
+    stage1_messages = [{"role": "user", "content": user_query}]
+    if evidence_bundle is not None:
+        stage1_messages.append({"role": "system", "content": evidence_bundle.message()})
+    cache_prompt = user_query + ("\n" + evidence_bundle.message() if evidence_bundle else "")
     tasks = {
-        asyncio.create_task(_query_single_with_retry(m, messages)): m for m in models
+        asyncio.create_task(_execute_stage1_operation(
+            replace(op, messages=tuple((m["role"], m["content"]) for m in stage1_messages)),
+            cache_prompt,
+        )): op.logical_id
+        for op in plan.stage1
     }
 
     responded = 0
     for coro in asyncio.as_completed(tasks.keys()):
         result = await coro
         responded += 1
+        stage1_results.append(result)
         if result.get("response"):
-            stage1_results.append(result)
             yield {
                 "event": "model_response",
                 "stage": 1,
@@ -1203,10 +1101,29 @@ async def stream_council(
         len(models),
     )
 
-    if not stage1_results:
+    successful_stage1 = [result for result in stage1_results if result.get("response")]
+    if not successful_stage1:
         yield {
             "event": "error",
             "message": "All models failed to respond.",
+        }
+        failure = {
+            "model": chairman,
+            "response": "All models failed to respond. Please try again.",
+            "usage": {},
+            "provider": "not_called",
+            "route_id": None,
+            "fallback_used": False,
+            "error": {"code": "stage1_exhausted", "message": "All Stage 1 operations failed"},
+            "terminal_status": "failed",
+        }
+        yield {
+            "event": "complete",
+            "stage1": _order_stage1_results(stage1_results, plan),
+            "stage2": [],
+            "stage3": failure,
+            "metadata": {"label_to_model": {}, "aggregate_rankings": [],
+                         "final_only": final_only, "execution_plan": execution_plan_metadata(plan)},
         }
         return
 
@@ -1216,7 +1133,7 @@ async def stream_council(
     aggregate_rankings: list[dict[str, Any]] = []
 
     if not final_only:
-        evaluators = get_evaluator_models(models) or models
+        evaluators = [operation.logical_id for operation in plan.evaluators]
         yield {"event": "stage_start", "stage": 2, "models": evaluators}
         logger.info(
             "Stream Stage 2: querying %d evaluator models for rankings",
@@ -1224,7 +1141,7 @@ async def stream_council(
         )
 
         stage2_results, label_to_model = await stage2_collect_rankings(
-            user_query, stage1_results, models
+            user_query, successful_stage1, evaluators, plan
         )
 
         responded_evaluators = {result["model"] for result in stage2_results}
@@ -1261,9 +1178,10 @@ async def stream_council(
     logger.info("Stream Stage 3: chairman %s synthesizing", chairman)
 
     stage3_result = await stage3_synthesize_final(
-        user_query, stage1_results, stage2_results, chairman
+        user_query, successful_stage1, stage2_results, chairman, plan
     )
 
+    stage1_results = _order_stage1_results(stage1_results, plan)
     yield {
         "event": "synthesis",
         "model": stage3_result.get("model", chairman),
@@ -1276,6 +1194,7 @@ async def stream_council(
         "label_to_model": label_to_model,
         "aggregate_rankings": aggregate_rankings,
         "final_only": final_only,
+        "execution_plan": execution_plan_metadata(plan),
     }
 
     yield {

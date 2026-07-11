@@ -12,6 +12,7 @@ dependencies = [
     "pydantic>=2.9.0",
     "anthropic[vertex]>=0.64.0",
     "google-auth>=2.35.0",
+    "parallel-web==1.1.0",
 ]
 
 [project.optional-dependencies]
