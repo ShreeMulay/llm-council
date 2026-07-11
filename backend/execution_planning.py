@@ -9,6 +9,7 @@ from dataclasses import asdict, dataclass, replace
 from typing import Any, Literal
 from urllib.parse import urlsplit, urlunsplit
 
+from . import config
 from .model_registry import ModelRecord, ModelRoute, RegistrySnapshot
 
 
@@ -169,6 +170,7 @@ class ExecutionPlan:
     settings: RequestSettings
     limits: PlanLimits
     curation_constraints: CurationPolicy
+    require_vertex_anthropic: bool
     digest: str
 
 
@@ -246,6 +248,12 @@ def resolve_logical_route(registry: RegistrySnapshot, logical_id: str, route_pol
 
 
 def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any]) -> ExecutionPlan:
+    policy_override = request.get("require_vertex_anthropic")
+    if policy_override is not None and not isinstance(policy_override, bool):
+        raise TypeError("require_vertex_anthropic must be a boolean")
+    require_vertex_anthropic = (
+        config.REQUIRE_VERTEX_ANTHROPIC if policy_override is None else policy_override
+    )
     model_ids = tuple(request.get("models") or (registry.compact_roster if request.get("compact") else registry.production_roster))
     if len(model_ids) != len(set(model_ids)):
         raise ValueError("execution plan cannot contain duplicate models")
@@ -254,11 +262,28 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
         raise ValueError(f"unsupported route policy: {request['route_policy']}")
     settings = RequestSettings(int(request.get("max_tokens", 8192)), float(request.get("temperature", 0.7)))
     retry = RetryPolicy(float(request.get("timeout", 180)), int(request.get("max_retries", 2)), float(request.get("backoff_base", 1.5)))
-    def operation(model_id: str, *, reasoning: str | None = None) -> PlanOperation:
+    def captured_routes(model_id: str) -> tuple[ModelRoute, ...]:
         record = registry.model(model_id)
-        ordered = (record.preferred_route,) + tuple(route for route in record.routes if route != record.preferred_route)
+        ordered = (record.preferred_route,) + tuple(
+            route for route in record.routes if route != record.preferred_route
+        )
+        if (
+            require_vertex_anthropic
+            and config.is_vertex_anthropic_model(model_id)
+            and ordered[0].provider == "vertex"
+        ):
+            return ordered[:1]
+        return ordered
+
+    def operation(model_id: str, *, reasoning: str | None = None) -> PlanOperation:
+        ordered = captured_routes(model_id)
         routes = tuple(RouteResolution(model_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in ordered)
-        operation_settings = RequestSettings(settings.max_tokens, settings.temperature, reasoning, settings.allow_provider_fallbacks)
+        operation_settings = RequestSettings(
+            settings.max_tokens,
+            settings.temperature,
+            reasoning,
+            settings.allow_provider_fallbacks and len(routes) > 1,
+        )
         return PlanOperation(model_id, routes, messages, operation_settings, retry, "provider-neutral-dispatch/v2")
     operations = tuple(operation(model_id) for model_id in model_ids)
     by_id = {operation.logical_id: operation for operation in operations}
@@ -269,7 +294,7 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
         chairman = operation(chairman_id)
     all_ids = tuple(dict.fromkeys((*model_ids, *(item.logical_id for item in evaluators), chairman.logical_id)))
     routes_dict = {
-        logical_id: tuple(RouteResolution(logical_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in registry.model(logical_id).routes)
+        logical_id: tuple(RouteResolution(logical_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in captured_routes(logical_id))
         for logical_id in all_ids
     }
     roles = CouncilRoles(tuple((logical_id, tuple(registry.model(logical_id).roles)) for logical_id in all_ids))
@@ -289,7 +314,7 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     projection = {"surface": "backend", "registry_version": registry.version, "logical_ids": all_ids, "routes": {key: [route.route_id for route in value] for key, value in routes_dict.items()}}
     projection_digest = hashlib.sha256(json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
     roster_mode = "explicit" if request.get("models") else "compact" if request.get("compact") else "production"
-    plan = ExecutionPlan(registry.version, registry.digest, projection_digest, roster_mode, registry.version, stage0, operations, evaluators, chairman, roles, CouncilRoutes(tuple(routes_dict.items())), messages, settings, PlanLimits(settings.max_tokens), curation, "")
+    plan = ExecutionPlan(registry.version, registry.digest, projection_digest, roster_mode, registry.version, stage0, operations, evaluators, chairman, roles, CouncilRoutes(tuple(routes_dict.items())), messages, settings, PlanLimits(settings.max_tokens), curation, require_vertex_anthropic, "")
     return replace(plan, digest=execution_plan_digest(plan))
 
 

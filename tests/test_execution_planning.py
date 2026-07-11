@@ -172,6 +172,43 @@ def test_execution_plan_digest_is_deterministic_for_identical_construction():
     assert build_execution_plan(registry, request).digest == build_execution_plan(registry, dict(request)).digest
 
 
+def test_strict_vertex_policy_is_captured_for_every_fable_operation(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    plan = build_execution_plan(load_registry(), {"query": "protected", "compact": True})
+
+    fable_operations = [
+        operation
+        for operation in (*plan.stage1, *plan.evaluators, plan.chairman)
+        if operation.logical_id == "anthropic/claude-fable-5"
+    ]
+    assert plan.require_vertex_anthropic is True
+    assert fable_operations
+    assert all([route.provider for route in operation.routes] == ["vertex"] for operation in fable_operations)
+    assert [route.provider for route in plan.routes["anthropic/claude-fable-5"]] == ["vertex"]
+
+
+def test_non_strict_fable_fallback_and_policy_digest_are_captured():
+    registry = load_registry()
+    strict = build_execution_plan(
+        registry, {"query": "same", "compact": True, "require_vertex_anthropic": True}
+    )
+    public = build_execution_plan(
+        registry, {"query": "same", "compact": True, "require_vertex_anthropic": False}
+    )
+
+    assert [route.provider for route in public.routes["anthropic/claude-fable-5"]] == [
+        "vertex", "openrouter"
+    ]
+    assert strict.digest != public.digest
+
+
+def test_vertex_policy_override_must_be_typed_boolean():
+    with pytest.raises(TypeError, match="require_vertex_anthropic"):
+        build_execution_plan(
+            load_registry(), {"query": "invalid", "require_vertex_anthropic": "false"}
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "mutate"),
     [

@@ -250,6 +250,43 @@ async def test_sync_and_stream_total_failure_fold_identically_without_explicit_p
     assert complete["metadata"]["execution_plan"]["digest"] == sync_metadata["execution_plan"]["digest"] == plan.digest
 
 
+@pytest.mark.asyncio
+async def test_strict_fable_failure_is_terminal_without_openrouter_in_sync_and_stream(monkeypatch):
+    plan = build_execution_plan(
+        load_registry(),
+        {
+            "query": "protected",
+            "models": ["anthropic/claude-fable-5"],
+            "require_vertex_anthropic": True,
+            "max_retries": 0,
+        },
+    )
+    calls = {"vertex": 0, "openrouter": 0}
+
+    async def vertex(*_args, **_kwargs):
+        calls["vertex"] += 1
+        return None
+
+    async def openrouter(*_args, **_kwargs):
+        calls["openrouter"] += 1
+        return {"content": "unsafe fallback"}
+
+    dispatcher = ModelDispatcher(adapters={"vertex": vertex, "openrouter": openrouter})
+    monkeypatch.setattr(council, "_dispatcher", lambda: dispatcher)
+    monkeypatch.setattr(council, "build_execution_plan", lambda *_args, **_kwargs: plan)
+    council._stage1_cache.clear()
+
+    sync_stage1, _, _, _ = await council.run_full_council("protected", final_only=True)
+    council._stage1_cache.clear()
+    stream_stage1 = [
+        event async for event in council.stream_council("protected", final_only=True)
+    ][-1]["stage1"]
+
+    assert sync_stage1[0]["terminal_status"] == "failed"
+    assert stream_stage1[0]["terminal_status"] == "failed"
+    assert calls == {"vertex": 2, "openrouter": 0}
+
+
 def test_planner_curation_is_score_first_deterministic_and_provider_diverse():
     plan = _plan()
     responses = [
