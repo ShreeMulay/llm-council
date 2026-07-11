@@ -2,13 +2,14 @@
 
 import asyncio
 import hashlib
+import json
 import logging
 import random
 import re
 import time
 from collections import defaultdict
 from collections.abc import AsyncGenerator
-from dataclasses import replace
+from dataclasses import asdict, replace
 from typing import Any
 
 from .execution_planning import ExecutionPlan, build_execution_plan, curate_responses
@@ -61,18 +62,25 @@ CACHE_TTL_SECONDS = 3600
 STAGE1_CACHE_MAX_ENTRIES = 512
 
 
-def _get_cache_key(model_id: str, prompt: str) -> str:
+def _get_cache_key(model_id: str | Any, prompt: str) -> str:
     """Generate cache key for Stage 1 responses."""
-    return hashlib.sha256(f"{model_id}:{prompt}".encode()).hexdigest()[:16]
+    if isinstance(model_id, str):
+        identity: Any = {"version": 1, "model": model_id}
+    else:
+        operation = asdict(model_id)
+        operation.pop("messages", None)
+        identity = {"version": 2, "operation": operation}
+    payload = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(f"{payload}:{prompt}".encode()).hexdigest()[:16]
 
 
-def _get_cached_response(model_id: str, prompt: str) -> dict[str, Any] | None:
+def _get_cached_response(model_id: str | Any, prompt: str) -> dict[str, Any] | None:
     """Get cached Stage 1 response if available and not expired."""
     key = _get_cache_key(model_id, prompt)
     if key in _stage1_cache:
         response, timestamp = _stage1_cache[key]
         if time.time() - timestamp < CACHE_TTL_SECONDS:
-            logger.info("Cache hit for %s", model_id)
+            logger.info("Stage 1 cache hit")
             return response
         else:
             del _stage1_cache[key]
@@ -96,7 +104,7 @@ def _sweep_stage1_cache(now: float | None = None) -> None:
             del _stage1_cache[key]
 
 
-def _cache_response(model_id: str, prompt: str, response: dict[str, Any]):
+def _cache_response(model_id: str | Any, prompt: str, response: dict[str, Any]):
     """Cache Stage 1 response."""
     _sweep_stage1_cache()
     key = _get_cache_key(model_id, prompt)
@@ -126,6 +134,15 @@ def _order_stage1_results(
     """Order terminal Stage 1 projections by the immutable captured seat order."""
     seat = {operation.logical_id: index for index, operation in enumerate(plan.stage1)}
     return sorted(results, key=lambda result: seat[result["model"]])
+
+
+async def _execute_stage1_operation(operation, cache_prompt: str) -> dict[str, Any]:
+    """Resolve one planned Stage 1 seat through the shared normalized cache path."""
+    cached = _get_cached_response(operation, cache_prompt)
+    if cached is None:
+        cached = await _dispatcher().execute(operation)
+        _cache_response(operation, cache_prompt, cached)
+    return _project_stage1_result(operation.logical_id, cached)
 
 
 def _truncate_for_prompt(
@@ -491,46 +508,27 @@ async def stage1_collect_responses(
 
     logger.info("Stage 1: querying %d models with retries", len(models))
 
-    # Check cache for each model
-    cached_results = {}
-    models_to_query = []
-
-    for model in models:
-        cached = _get_cached_response(model, cache_prompt)
-        if cached:
-            cached_results[model] = cached
-        else:
-            models_to_query.append(model)
-
-    if cached_results:
-        logger.info("Stage 1: %d cache hits, %d models to query", len(cached_results), len(models_to_query))
-
-    # Query uncached models in parallel with automatic retries
-    if models_to_query:
-        if execution_plan:
-            selected = [op for op in execution_plan.stage1 if op.logical_id in models_to_query]
-            selected = [replace(op, messages=tuple((m["role"], m["content"]) for m in messages)) for op in selected]
-            values = await asyncio.gather(*[_dispatcher().execute(op) for op in selected])
-            responses = dict(zip((op.logical_id for op in selected), values, strict=True))
-        else:
-            responses = await query_models_with_retries(models_to_query, messages)
-
-        # Cache new responses
+    if execution_plan:
+        operations = [
+            replace(op, messages=tuple((m["role"], m["content"]) for m in messages))
+            for op in execution_plan.stage1
+        ]
+        stage1_results = list(await asyncio.gather(*[
+            _execute_stage1_operation(operation, cache_prompt) for operation in operations
+        ]))
+    else:
+        cached = {model: _get_cached_response(model, cache_prompt) for model in models}
+        to_query = [model for model, response in cached.items() if response is None]
+        responses = await query_models_with_retries(to_query, messages) if to_query else {}
         for model, response in responses.items():
             if response is not None:
                 _cache_response(model, cache_prompt, response)
-    else:
-        responses = {}
-
-    # Merge cached + new responses
-    all_responses = {**cached_results, **responses}
-
-    # Format results
-    stage1_results = []
-    for model in models:
-        response = all_responses.get(model)
-        if response is not None:
-            stage1_results.append(_project_stage1_result(model, response))
+        responses = {**{model: response for model, response in cached.items() if response is not None}, **responses}
+        stage1_results = []
+        for model in models:
+            response = responses.get(model)
+            if response is not None:
+                stage1_results.append(_project_stage1_result(model, response))
 
     if execution_plan:
         stage1_results = _order_stage1_results(stage1_results, execution_plan)
@@ -927,14 +925,22 @@ async def run_full_council(
 
     # If no models responded successfully, return error
     if not successful_stage1:
+        failure = {
+            "model": chairman_model,
+            "response": "All models failed to respond. Please try again.",
+            "usage": {},
+            "provider": "not_called",
+            "route_id": None,
+            "fallback_used": False,
+            "error": {"code": "stage1_exhausted", "message": "All Stage 1 operations failed"},
+            "terminal_status": "failed",
+        }
         return (
+            stage1_results,
             [],
-            [],
-            {
-                "model": chairman_model or CHAIRMAN_MODEL,
-                "response": "All models failed to respond. Please try again.",
-            },
-            {},
+            failure,
+            {"aggregate_rankings": [], "label_to_model": {}, "final_only": final_only,
+             "compact": compact, "execution_plan": execution_plan_metadata(plan)},
         )
 
     if final_only:
@@ -1037,7 +1043,6 @@ async def stream_council(
         {"event": "synthesis", "model": "...", "response": "..."}
         {"event": "complete", "stage1": [...], "stage2": [...], "stage3": {...}, "metadata": {...}}
     """
-    supplied_plan = execution_plan is not None
     plan = execution_plan or build_execution_plan(load_registry(), {
         "query": user_query, "models": council_models, "chairman": chairman_model, "mode": "stream"
     })
@@ -1052,11 +1057,14 @@ async def stream_council(
     stage1_messages = [{"role": "user", "content": user_query}]
     if evidence_bundle is not None:
         stage1_messages.append({"role": "system", "content": evidence_bundle.message()})
-    tasks = (
-        {asyncio.create_task(_query_planned_operation(replace(op, messages=tuple((m["role"], m["content"]) for m in stage1_messages)))): op.logical_id for op in plan.stage1}
-        if supplied_plan
-        else {asyncio.create_task(_query_single_with_retry(model, stage1_messages)): model for model in models}
-    )
+    cache_prompt = user_query + ("\n" + evidence_bundle.message() if evidence_bundle else "")
+    tasks = {
+        asyncio.create_task(_execute_stage1_operation(
+            replace(op, messages=tuple((m["role"], m["content"]) for m in stage1_messages)),
+            cache_prompt,
+        )): op.logical_id
+        for op in plan.stage1
+    }
 
     responded = 0
     for coro in asyncio.as_completed(tasks.keys()):
@@ -1099,6 +1107,24 @@ async def stream_council(
             "event": "error",
             "message": "All models failed to respond.",
         }
+        failure = {
+            "model": chairman,
+            "response": "All models failed to respond. Please try again.",
+            "usage": {},
+            "provider": "not_called",
+            "route_id": None,
+            "fallback_used": False,
+            "error": {"code": "stage1_exhausted", "message": "All Stage 1 operations failed"},
+            "terminal_status": "failed",
+        }
+        yield {
+            "event": "complete",
+            "stage1": _order_stage1_results(stage1_results, plan),
+            "stage2": [],
+            "stage3": failure,
+            "metadata": {"label_to_model": {}, "aggregate_rankings": [],
+                         "final_only": final_only, "execution_plan": execution_plan_metadata(plan)},
+        }
         return
 
     # --- Stage 2: Peer rankings (if not final_only) ---
@@ -1115,7 +1141,7 @@ async def stream_council(
         )
 
         stage2_results, label_to_model = await stage2_collect_rankings(
-            user_query, successful_stage1, evaluators, plan if supplied_plan else None
+            user_query, successful_stage1, evaluators, plan
         )
 
         responded_evaluators = {result["model"] for result in stage2_results}
@@ -1152,7 +1178,7 @@ async def stream_council(
     logger.info("Stream Stage 3: chairman %s synthesizing", chairman)
 
     stage3_result = await stage3_synthesize_final(
-        user_query, successful_stage1, stage2_results, chairman, plan if supplied_plan else None
+        user_query, successful_stage1, stage2_results, chairman, plan
     )
 
     stage1_results = _order_stage1_results(stage1_results, plan)

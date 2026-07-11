@@ -533,30 +533,25 @@ async def test_stream_stage2_uses_shared_evaluator_semantics(monkeypatch):
         "openai/gpt-5.5",
     ]
 
-    async def fake_stage1_query(model_id, messages, **kwargs):
-        return {
-            "model": model_id,
-            "response": f"stage1 response from {model_id}",
-            "usage": {},
-            "provider": "fake",
-        }
-
     prompts_by_evaluator = {}
 
-    async def fake_query_single_model(model_id, messages, *args, **kwargs):
-        prompts_by_evaluator.setdefault(model_id, []).append(messages[0]["content"])
-        return {
-            "content": "FINAL RANKING:\n1. Response A\n2. Response B",
-            "usage": {},
-            "provider": "fake",
-        }
+    class FakeDispatcher:
+        async def execute(self, operation):
+            prompt = operation.messages[0][1]
+            if prompt == "question":
+                content = f"stage1 response from {operation.logical_id}"
+            else:
+                prompts_by_evaluator.setdefault(operation.logical_id, []).append(prompt)
+                content = "FINAL RANKING:\n1. Response A\n2. Response B"
+            return {
+                "content": content, "usage": {}, "provider": "fake",
+                "route_id": operation.route.route_id, "fallback_used": False,
+                "error": None, "terminal_status": "succeeded",
+            }
 
-    monkeypatch.setattr("backend.council._query_single_with_retry", fake_stage1_query)
-    monkeypatch.setattr(
-        "backend.council._query_single_with_reasoning_override", fake_query_single_model
-    )
-    monkeypatch.setattr("backend.council.query_single_model", fake_query_single_model)
-    monkeypatch.setattr("backend.council.query_vertex_anthropic_model", fake_query_single_model)
+    monkeypatch.setattr("backend.council._dispatcher", FakeDispatcher)
+    from backend import council
+    council._stage1_cache.clear()
     monkeypatch.setattr(
         "backend.council.shuffle_responses_for_evaluator",
         lambda responses: list(reversed(responses)),
