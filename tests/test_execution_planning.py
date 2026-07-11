@@ -202,6 +202,47 @@ def test_non_strict_fable_fallback_and_policy_digest_are_captured():
     assert strict.digest != public.digest
 
 
+@pytest.mark.parametrize(
+    ("deployment_strict", "request_strict", "expected_strict"),
+    [
+        (False, False, False),
+        (False, True, True),
+        (True, False, True),
+        (True, True, True),
+    ],
+)
+def test_vertex_policy_composes_fail_closed(
+    monkeypatch, deployment_strict, request_strict, expected_strict
+):
+    registry = load_registry()
+    monkeypatch.setattr(
+        "backend.config.REQUIRE_VERTEX_ANTHROPIC", deployment_strict
+    )
+    plan = build_execution_plan(
+        registry,
+        {
+            "query": "same protected request",
+            "compact": True,
+            "require_vertex_anthropic": request_strict,
+        },
+    )
+    strict_reference = build_execution_plan(
+        registry,
+        {
+            "query": "same protected request",
+            "compact": True,
+            "require_vertex_anthropic": True,
+        },
+    )
+
+    expected_providers = ["vertex"] if expected_strict else ["vertex", "openrouter"]
+    assert plan.require_vertex_anthropic is expected_strict
+    assert [
+        route.provider for route in plan.routes["anthropic/claude-fable-5"]
+    ] == expected_providers
+    assert (plan.digest == strict_reference.digest) is expected_strict
+
+
 def test_vertex_policy_override_must_be_typed_boolean():
     with pytest.raises(TypeError, match="require_vertex_anthropic"):
         build_execution_plan(

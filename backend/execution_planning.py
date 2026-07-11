@@ -251,9 +251,7 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     policy_override = request.get("require_vertex_anthropic")
     if policy_override is not None and not isinstance(policy_override, bool):
         raise TypeError("require_vertex_anthropic must be a boolean")
-    require_vertex_anthropic = (
-        config.REQUIRE_VERTEX_ANTHROPIC if policy_override is None else policy_override
-    )
+    require_vertex_anthropic = config.REQUIRE_VERTEX_ANTHROPIC or policy_override is True
     model_ids = tuple(request.get("models") or (registry.compact_roster if request.get("compact") else registry.production_roster))
     if len(model_ids) != len(set(model_ids)):
         raise ValueError("execution plan cannot contain duplicate models")
