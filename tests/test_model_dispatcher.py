@@ -5,6 +5,7 @@ from dataclasses import replace
 import pytest
 
 from backend.model_dispatcher import DispatchRequest, ModelDispatcher
+from backend.model_registry import load_registry
 
 MESSAGES = [{"role": "user", "content": "hello"}]
 
@@ -74,6 +75,103 @@ async def test_strict_vertex_never_calls_fallback():
 
     assert result is None
     assert calls == ["vertex"]
+
+
+@pytest.mark.parametrize("constructor_policy", [None, False])
+def test_deployment_strict_policy_ignores_openrouter_override(monkeypatch, constructor_policy):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=constructor_policy)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+    assert operation.routes[0].route_id == "vertex:anthropic/claude-fable-5"
+
+
+def test_constructor_can_strengthen_non_strict_deployment(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", False)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+
+
+def test_strict_dispatch_selects_vertex_when_openrouter_is_preferred():
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+    fable = dispatcher.registry.model("anthropic/claude-fable-5")
+    openrouter = next(route for route in fable.routes if route.provider == "openrouter")
+    dispatcher.registry = dispatcher.registry.with_preferred_route(
+        fable.logical_id, openrouter.route_id
+    )
+
+    operation = dispatcher.capture(DispatchRequest(
+        fable.logical_id, MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+    assert operation.routes[0].route_id == "vertex:anthropic/claude-fable-5"
+
+
+@pytest.mark.parametrize("vertex_count", [0, 2])
+def test_strict_dispatch_fails_closed_for_invalid_vertex_routes(vertex_count):
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    vertex = next(route for route in fable.routes if route.provider == "vertex")
+    non_vertex = tuple(route for route in fable.routes if route.provider != "vertex")
+    dispatcher.registry = replace(
+        registry,
+        models=tuple(
+            replace(model, routes=non_vertex + ((vertex,) * vertex_count))
+            if model == fable else model
+            for model in registry.models
+        ),
+    )
+
+    with pytest.raises(ValueError, match=f"exactly one Vertex route.*found {vertex_count}"):
+        dispatcher.capture(DispatchRequest(fable.logical_id, MESSAGES, provider="openrouter"))
+
+
+@pytest.mark.asyncio
+async def test_deployment_strict_dispatch_fails_closed_for_missing_fable_record(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    calls = []
+
+    async def forbidden_adapter(*args, **kwargs):
+        calls.append((args, kwargs))
+        return {"content": "unsafe"}
+
+    dispatcher = ModelDispatcher(
+        adapters={"vertex": forbidden_adapter, "openrouter": forbidden_adapter}
+    )
+    fable_id = "anthropic/claude-fable-5"
+    dispatcher.registry = replace(
+        dispatcher.registry,
+        models=tuple(
+            model for model in dispatcher.registry.models if model.logical_id != fable_id
+        ),
+    )
+
+    with pytest.raises(ValueError, match="requires a canonical registry record"):
+        await dispatcher.query(DispatchRequest(fable_id, MESSAGES, provider="openrouter"))
+
+    assert calls == []
+
+
+def test_non_strict_explicit_openrouter_remains_available(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", False)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=False)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["openrouter"]
 
 
 @pytest.mark.asyncio

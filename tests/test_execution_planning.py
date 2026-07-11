@@ -172,6 +172,124 @@ def test_execution_plan_digest_is_deterministic_for_identical_construction():
     assert build_execution_plan(registry, request).digest == build_execution_plan(registry, dict(request)).digest
 
 
+def test_strict_vertex_policy_is_captured_for_every_fable_operation(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    plan = build_execution_plan(load_registry(), {"query": "protected", "compact": True})
+
+    fable_operations = [
+        operation
+        for operation in (*plan.stage1, *plan.evaluators, plan.chairman)
+        if operation.logical_id == "anthropic/claude-fable-5"
+    ]
+    assert plan.require_vertex_anthropic is True
+    assert fable_operations
+    assert all([route.provider for route in operation.routes] == ["vertex"] for operation in fable_operations)
+    assert [route.provider for route in plan.routes["anthropic/claude-fable-5"]] == ["vertex"]
+
+
+def test_strict_vertex_selects_explicit_route_when_openrouter_is_preferred():
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    openrouter = next(route for route in fable.routes if route.provider == "openrouter")
+    registry = registry.with_preferred_route(fable.logical_id, openrouter.route_id)
+
+    plan = build_execution_plan(registry, {
+        "query": "protected", "compact": True, "require_vertex_anthropic": True
+    })
+
+    assert [route.provider for route in plan.routes[fable.logical_id]] == ["vertex"]
+    assert [route.route_id for route in plan.routes[fable.logical_id]] == [
+        "vertex:anthropic/claude-fable-5"
+    ]
+
+
+@pytest.mark.parametrize("vertex_count", [0, 2])
+def test_strict_vertex_plan_fails_closed_for_invalid_vertex_routes(vertex_count):
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    vertex = next(route for route in fable.routes if route.provider == "vertex")
+    non_vertex = tuple(route for route in fable.routes if route.provider != "vertex")
+    malformed = replace(
+        registry,
+        models=tuple(
+            replace(model, routes=non_vertex + ((vertex,) * vertex_count))
+            if model == fable else model
+            for model in registry.models
+        ),
+    )
+
+    with pytest.raises(PlanningConstraintError) as error:
+        build_execution_plan(malformed, {
+            "query": "protected", "compact": True, "require_vertex_anthropic": True
+        })
+
+    assert error.value.violations[0].code == "strict_vertex_route"
+    assert f"found {vertex_count}" in str(error.value)
+
+
+def test_non_strict_fable_fallback_and_policy_digest_are_captured():
+    registry = load_registry()
+    strict = build_execution_plan(
+        registry, {"query": "same", "compact": True, "require_vertex_anthropic": True}
+    )
+    public = build_execution_plan(
+        registry, {"query": "same", "compact": True, "require_vertex_anthropic": False}
+    )
+
+    assert [route.provider for route in public.routes["anthropic/claude-fable-5"]] == [
+        "vertex", "openrouter"
+    ]
+    assert strict.digest != public.digest
+
+
+@pytest.mark.parametrize(
+    ("deployment_strict", "request_strict", "expected_strict"),
+    [
+        (False, False, False),
+        (False, True, True),
+        (True, False, True),
+        (True, True, True),
+    ],
+)
+def test_vertex_policy_composes_fail_closed(
+    monkeypatch, deployment_strict, request_strict, expected_strict
+):
+    registry = load_registry()
+    monkeypatch.setattr(
+        "backend.config.REQUIRE_VERTEX_ANTHROPIC", deployment_strict
+    )
+    plan = build_execution_plan(
+        registry,
+        {
+            "query": "same protected request",
+            "compact": True,
+            "require_vertex_anthropic": request_strict,
+        },
+    )
+    strict_reference = build_execution_plan(
+        registry,
+        {
+            "query": "same protected request",
+            "compact": True,
+            "require_vertex_anthropic": True,
+        },
+    )
+
+    expected_providers = ["vertex"] if expected_strict else ["vertex", "openrouter"]
+    assert plan.require_vertex_anthropic is expected_strict
+    assert [
+        route.provider for route in plan.routes["anthropic/claude-fable-5"]
+    ] == expected_providers
+    assert (plan.digest == strict_reference.digest) is expected_strict
+
+
+def test_vertex_policy_override_must_be_typed_boolean():
+    with pytest.raises(TypeError, match="require_vertex_anthropic"):
+        build_execution_plan(
+            load_registry(), {"query": "invalid", "require_vertex_anthropic": "false"}
+        )
+
+
 @pytest.mark.parametrize(
     ("field", "mutate"),
     [
