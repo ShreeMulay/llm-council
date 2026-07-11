@@ -24,6 +24,7 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy application code
 COPY backend/ backend/
+COPY model_registry.json ./model_registry.json
 
 # Create data directories (storage/cache) owned by non-root user
 RUN mkdir -p data/conversations data/cache && chown -R council:council /app

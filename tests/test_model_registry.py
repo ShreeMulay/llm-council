@@ -269,3 +269,9 @@ def test_projection_contains_required_public_metadata():
     assert projection["experimental_roster"]
     model = projection["models"][0]
     assert {"id", "provider_model_id", "aliases", "label", "capabilities", "lifecycle", "roles"} <= model.keys()
+
+
+def test_runtime_container_copies_canonical_registry():
+    dockerfile = (Path(__file__).parents[1] / "Dockerfile").read_text(encoding="utf-8")
+
+    assert "COPY model_registry.json ./model_registry.json" in dockerfile
