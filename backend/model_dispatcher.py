@@ -121,16 +121,18 @@ class ModelDispatcher:
         except KeyError:
             return (_legacy_route(request.model_id, "vertex" if strict_vertex else request.provider),)
 
+        if strict_vertex:
+            vertex_routes = tuple(
+                route for route in record.routes if route.provider == "vertex"
+            )
+            if len(vertex_routes) != 1:
+                raise ValueError(
+                    f"Strict Vertex Anthropic policy requires exactly one Vertex route for {request.model_id}; found {len(vertex_routes)}"
+                )
+            return vertex_routes
         ordered = (record.preferred_route,) + tuple(
             route for route in record.routes if route != record.preferred_route
         )
-        if strict_vertex:
-            vertex_routes = tuple(route for route in ordered if route.provider == "vertex")
-            if not vertex_routes:
-                raise ValueError(
-                    f"Strict Vertex Anthropic policy has no Vertex route for {request.model_id}"
-                )
-            return vertex_routes[:1]
         if request.provider:
             selected = tuple(route for route in ordered if route.provider == request.provider)
             if selected:

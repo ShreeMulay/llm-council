@@ -187,6 +187,46 @@ def test_strict_vertex_policy_is_captured_for_every_fable_operation(monkeypatch)
     assert [route.provider for route in plan.routes["anthropic/claude-fable-5"]] == ["vertex"]
 
 
+def test_strict_vertex_selects_explicit_route_when_openrouter_is_preferred():
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    openrouter = next(route for route in fable.routes if route.provider == "openrouter")
+    registry = registry.with_preferred_route(fable.logical_id, openrouter.route_id)
+
+    plan = build_execution_plan(registry, {
+        "query": "protected", "compact": True, "require_vertex_anthropic": True
+    })
+
+    assert [route.provider for route in plan.routes[fable.logical_id]] == ["vertex"]
+    assert [route.route_id for route in plan.routes[fable.logical_id]] == [
+        "vertex:anthropic/claude-fable-5"
+    ]
+
+
+@pytest.mark.parametrize("vertex_count", [0, 2])
+def test_strict_vertex_plan_fails_closed_for_invalid_vertex_routes(vertex_count):
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    vertex = next(route for route in fable.routes if route.provider == "vertex")
+    non_vertex = tuple(route for route in fable.routes if route.provider != "vertex")
+    malformed = replace(
+        registry,
+        models=tuple(
+            replace(model, routes=non_vertex + ((vertex,) * vertex_count))
+            if model == fable else model
+            for model in registry.models
+        ),
+    )
+
+    with pytest.raises(PlanningConstraintError) as error:
+        build_execution_plan(malformed, {
+            "query": "protected", "compact": True, "require_vertex_anthropic": True
+        })
+
+    assert error.value.violations[0].code == "strict_vertex_route"
+    assert f"found {vertex_count}" in str(error.value)
+
+
 def test_non_strict_fable_fallback_and_policy_digest_are_captured():
     registry = load_registry()
     strict = build_execution_plan(

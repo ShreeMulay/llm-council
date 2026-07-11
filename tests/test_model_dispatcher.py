@@ -5,6 +5,7 @@ from dataclasses import replace
 import pytest
 
 from backend.model_dispatcher import DispatchRequest, ModelDispatcher
+from backend.model_registry import load_registry
 
 MESSAGES = [{"role": "user", "content": "hello"}]
 
@@ -98,6 +99,42 @@ def test_constructor_can_strengthen_non_strict_deployment(monkeypatch):
     ))
 
     assert [route.provider for route in operation.routes] == ["vertex"]
+
+
+def test_strict_dispatch_selects_vertex_when_openrouter_is_preferred():
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+    fable = dispatcher.registry.model("anthropic/claude-fable-5")
+    openrouter = next(route for route in fable.routes if route.provider == "openrouter")
+    dispatcher.registry = dispatcher.registry.with_preferred_route(
+        fable.logical_id, openrouter.route_id
+    )
+
+    operation = dispatcher.capture(DispatchRequest(
+        fable.logical_id, MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+    assert operation.routes[0].route_id == "vertex:anthropic/claude-fable-5"
+
+
+@pytest.mark.parametrize("vertex_count", [0, 2])
+def test_strict_dispatch_fails_closed_for_invalid_vertex_routes(vertex_count):
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+    registry = load_registry()
+    fable = registry.model("anthropic/claude-fable-5")
+    vertex = next(route for route in fable.routes if route.provider == "vertex")
+    non_vertex = tuple(route for route in fable.routes if route.provider != "vertex")
+    dispatcher.registry = replace(
+        registry,
+        models=tuple(
+            replace(model, routes=non_vertex + ((vertex,) * vertex_count))
+            if model == fable else model
+            for model in registry.models
+        ),
+    )
+
+    with pytest.raises(ValueError, match=f"exactly one Vertex route.*found {vertex_count}"):
+        dispatcher.capture(DispatchRequest(fable.logical_id, MESSAGES, provider="openrouter"))
 
 
 def test_non_strict_explicit_openrouter_remains_available(monkeypatch):

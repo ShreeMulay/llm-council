@@ -262,15 +262,19 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     retry = RetryPolicy(float(request.get("timeout", 180)), int(request.get("max_retries", 2)), float(request.get("backoff_base", 1.5)))
     def captured_routes(model_id: str) -> tuple[ModelRoute, ...]:
         record = registry.model(model_id)
+        if require_vertex_anthropic and config.is_vertex_anthropic_model(model_id):
+            vertex_routes = tuple(
+                route for route in record.routes if route.provider == "vertex"
+            )
+            if len(vertex_routes) != 1:
+                raise PlanningConstraintError((ConstraintViolation(
+                    "strict_vertex_route",
+                    f"Strict Vertex Anthropic policy requires exactly one Vertex route for {model_id}; found {len(vertex_routes)}",
+                ),))
+            return vertex_routes
         ordered = (record.preferred_route,) + tuple(
             route for route in record.routes if route != record.preferred_route
         )
-        if (
-            require_vertex_anthropic
-            and config.is_vertex_anthropic_model(model_id)
-            and ordered[0].provider == "vertex"
-        ):
-            return ordered[:1]
         return ordered
 
     def operation(model_id: str, *, reasoning: str | None = None) -> PlanOperation:
