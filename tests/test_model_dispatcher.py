@@ -28,7 +28,7 @@ async def test_dispatches_logical_id_to_exact_primary_route_and_normalizes(monke
     assert result == {
         "content": "ok", "usage": {}, "provider": "fireworks",
         "model": "fireworks/glm-5.2", "route_id": "fireworks:fireworks/glm-5.2",
-        "fallback_used": False,
+        "fallback_used": False, "error": None, "terminal_status": "succeeded",
     }
 
 
@@ -107,13 +107,17 @@ async def test_fallbacks_disabled_uses_only_selected_registered_provider():
         return {"content": "wrong route"}
 
     dispatcher = ModelDispatcher(adapters={"vertex": vertex, "openrouter": openrouter})
-    result = await dispatcher.query(
-        DispatchRequest(
-            "anthropic/claude-fable-5", MESSAGES, allow_fallbacks=False, max_retries=0
-        )
-    )
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, allow_fallbacks=False, max_retries=0
+    ))
+    result = await dispatcher.execute(operation)
 
-    assert result is None
+    assert result == {
+        "content": "", "usage": {}, "provider": "vertex", "model": "anthropic/claude-fable-5",
+        "route_id": "vertex:anthropic/claude-fable-5", "fallback_used": False,
+        "error": {"code": "provider_exhausted", "message": "All captured routes failed"},
+        "terminal_status": "failed",
+    }
     assert calls == ["vertex"]
 
 

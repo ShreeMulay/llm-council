@@ -6,6 +6,7 @@ import pytest
 
 from backend import council
 from backend.execution_planning import build_execution_plan, curate_responses
+from backend.model_dispatcher import ModelDispatcher
 from backend.model_registry import load_registry
 
 
@@ -106,6 +107,61 @@ async def test_mocked_sync_and_stream_fold_to_identical_terminal_result(monkeypa
     assert folded(sync_stage1, sync_stage2, sync_stage3, sync_metadata, "complete") == folded(
         complete["stage1"], complete["stage2"], complete["stage3"], complete["metadata"], complete["event"]
     )
+
+
+@pytest.mark.asyncio
+async def test_dispatcher_sync_and_stream_stage1_terminal_fold_equivalence(monkeypatch):
+    """Real dispatch orchestration preserves failures/provenance and plan seat order."""
+    plan = _plan(compact=True)
+    route_owner = {
+        route.provider_model_id: (operation.logical_id, route.route_id)
+        for operation in plan.stage1
+        for route in operation.routes
+    }
+    fallback_model = next(op.logical_id for op in plan.stage1 if len(op.routes) > 1)
+    failure_model = plan.stage1[-1].logical_id
+    completion_order = []
+
+    async def adapter(provider_model_id, _messages, **_settings):
+        model, route_id = route_owner[provider_model_id]
+        operation = next(op for op in plan.stage1 if op.logical_id == model)
+        if model == failure_model:
+            return None
+        if model == fallback_model and route_id == operation.routes[0].route_id:
+            return None
+        delay = 0.001 * (len(plan.stage1) - [op.logical_id for op in plan.stage1].index(model))
+        import asyncio
+        await asyncio.sleep(delay)
+        completion_order.append(model)
+        return {"content": f"answer:{model}", "usage": {"total_tokens": len(model)}}
+
+    providers = {route.provider for op in plan.stage1 for route in op.routes}
+    dispatcher = ModelDispatcher(adapters=dict.fromkeys(providers, adapter))
+    monkeypatch.setattr(council, "_dispatcher", lambda: dispatcher)
+    monkeypatch.setattr(council, "stage3_synthesize_final", AsyncMock(return_value={"model": plan.chairman.logical_id, "response": "done"}))
+
+    cached_op = plan.stage1[0]
+    cached = await dispatcher.execute(cached_op)
+    council._stage1_cache.clear()
+    council._cache_response(cached_op.logical_id, "planned question", cached)
+
+    sync_stage1, _, _, sync_metadata = await council.run_full_council(
+        "planned question", final_only=True, execution_plan=plan
+    )
+    council._stage1_cache.clear()
+    council._cache_response(cached_op.logical_id, "planned question", cached)
+    events = [event async for event in council.stream_council(
+        "planned question", final_only=True, execution_plan=plan
+    )]
+    complete = events[-1]
+
+    fields = ("model", "response", "route_id", "fallback_used", "provider", "usage", "error", "terminal_status")
+    def fold(results):
+        return [{field: result.get(field) for field in fields} for result in results]
+    assert fold(sync_stage1) == fold(complete["stage1"])
+    assert [result["model"] for result in sync_stage1] == [op.logical_id for op in plan.stage1]
+    assert completion_order != [op.logical_id for op in plan.stage1 if op.logical_id != cached_op.logical_id]
+    assert sync_metadata["execution_plan"]["digest"] == complete["metadata"]["execution_plan"]["digest"] == plan.digest
 
 
 def test_planner_curation_is_score_first_deterministic_and_provider_diverse():

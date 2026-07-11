@@ -49,7 +49,8 @@ class ModelDispatcher:
 
     async def query(self, request: DispatchRequest) -> dict[str, Any] | None:
         operation = self.capture(request)
-        return await self.execute(operation)
+        result = await self.execute(operation)
+        return None if result.get("terminal_status") == "failed" else result
 
     def capture(self, request: DispatchRequest) -> PlanOperation:
         """Resolve a legacy request once at its public boundary."""
@@ -100,7 +101,20 @@ class ModelDispatcher:
                     )
                 if attempt < operation.retry.max_retries:
                     await self.sleep(operation.retry.backoff_base_seconds * (2**attempt))
-        return None
+        route = routes[-1]
+        return {
+            "content": "",
+            "usage": {},
+            "provider": route.provider,
+            "model": operation.logical_id,
+            "route_id": route.route_id,
+            "fallback_used": len(routes) > 1,
+            "error": {
+                "code": "provider_exhausted",
+                "message": "All captured routes failed",
+            },
+            "terminal_status": "failed",
+        }
 
     def _routes(self, request: DispatchRequest) -> tuple[ModelRoute, ...]:
         try:
@@ -213,6 +227,8 @@ def _normalize(
         model=logical_id,
         route_id=route.route_id,
         fallback_used=fallback_used,
+        error=None,
+        terminal_status="succeeded",
     )
     return result
 

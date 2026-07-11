@@ -104,6 +104,30 @@ def _cache_response(model_id: str, prompt: str, response: dict[str, Any]):
     _sweep_stage1_cache()
 
 
+def _project_stage1_result(model: str, response: dict[str, Any]) -> dict[str, Any]:
+    """Project one normalized dispatcher terminal result without losing provenance."""
+    return {
+        "model": model,
+        "response": response.get("content", ""),
+        "usage": response.get("usage", {}),
+        "provider": response.get("provider", "unknown"),
+        "route_id": response.get("route_id"),
+        "fallback_used": response.get("fallback_used", False),
+        "error": response.get("error"),
+        "terminal_status": response.get(
+            "terminal_status", "succeeded" if response.get("content") else "failed"
+        ),
+    }
+
+
+def _order_stage1_results(
+    results: list[dict[str, Any]], plan: ExecutionPlan
+) -> list[dict[str, Any]]:
+    """Order terminal Stage 1 projections by the immutable captured seat order."""
+    seat = {operation.logical_id: index for index, operation in enumerate(plan.stage1)}
+    return sorted(results, key=lambda result: seat[result["model"]])
+
+
 def _truncate_for_prompt(
     text: str, max_chars: int = MAX_RESPONSE_CHARS_FOR_PROMPT
 ) -> str:
@@ -503,16 +527,13 @@ async def stage1_collect_responses(
 
     # Format results
     stage1_results = []
-    for model, response in all_responses.items():
-        if response is not None:  # Only include successful responses
-            stage1_results.append(
-                {
-                    "model": model,
-                    "response": response.get("content", ""),
-                    "usage": response.get("usage", {}),
-                    "provider": response.get("provider", "unknown"),
-                }
-            )
+    for model in models:
+        response = all_responses.get(model)
+        if response is not None:
+            stage1_results.append(_project_stage1_result(model, response))
+
+    if execution_plan:
+        stage1_results = _order_stage1_results(stage1_results, execution_plan)
 
     logger.info(
         "Stage 1 complete: %d/%d models responded", len(stage1_results), len(models)
@@ -902,9 +923,10 @@ async def run_full_council(
 
     # Stage 1: Collect individual responses
     stage1_results = await stage1_collect_responses(user_query, council_models, plan, evidence_bundle)
+    successful_stage1 = [result for result in stage1_results if result.get("response")]
 
     # If no models responded successfully, return error
-    if not stage1_results:
+    if not successful_stage1:
         return (
             [],
             [],
@@ -918,14 +940,14 @@ async def run_full_council(
     if final_only:
         # Skip Stage 2, just synthesize from Stage 1
         stage3_result = await stage3_synthesize_final(
-            user_query, stage1_results, [], chairman_model, plan
+            user_query, successful_stage1, [], chairman_model, plan
         )
         metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True, "compact": compact, "execution_plan": execution_plan_metadata(plan)}
         return stage1_results, [], stage3_result, metadata
 
     # Stage 2: Collect rankings
     stage2_results, label_to_model = await stage2_collect_rankings(
-        user_query, stage1_results, [operation.logical_id for operation in plan.evaluators], plan
+        user_query, successful_stage1, [operation.logical_id for operation in plan.evaluators], plan
     )
 
     # Calculate aggregate rankings
@@ -933,7 +955,7 @@ async def run_full_council(
 
     # Stage 3: Synthesize final answer
     stage3_result = await stage3_synthesize_final(
-        user_query, stage1_results, stage2_results, chairman_model, plan
+        user_query, successful_stage1, stage2_results, chairman_model, plan
     )
 
     # Prepare metadata
@@ -989,15 +1011,8 @@ async def _query_planned_operation(operation):
     """Run a captured operation and preserve the legacy stream result shape."""
     result = await _dispatcher().execute(operation)
     if not result:
-        return {"model": operation.logical_id, "response": "", "usage": {}, "provider": "failed"}
-    return {
-        "model": operation.logical_id,
-        "response": result.get("content", ""),
-        "usage": result.get("usage", {}),
-        "provider": result.get("provider", "unknown"),
-        "route_id": result.get("route_id"),
-        "fallback_used": result.get("fallback_used", False),
-    }
+        return {"model": operation.logical_id, "response": "", "usage": {}, "provider": "failed", "route_id": operation.routes[-1].route_id, "fallback_used": len(operation.routes) > 1, "error": {"code": "provider_exhausted", "message": "All captured routes failed"}, "terminal_status": "failed"}
+    return _project_stage1_result(operation.logical_id, result)
 
 
 async def stream_council(
@@ -1047,8 +1062,8 @@ async def stream_council(
     for coro in asyncio.as_completed(tasks.keys()):
         result = await coro
         responded += 1
+        stage1_results.append(result)
         if result.get("response"):
-            stage1_results.append(result)
             yield {
                 "event": "model_response",
                 "stage": 1,
@@ -1078,7 +1093,8 @@ async def stream_council(
         len(models),
     )
 
-    if not stage1_results:
+    successful_stage1 = [result for result in stage1_results if result.get("response")]
+    if not successful_stage1:
         yield {
             "event": "error",
             "message": "All models failed to respond.",
@@ -1099,7 +1115,7 @@ async def stream_council(
         )
 
         stage2_results, label_to_model = await stage2_collect_rankings(
-            user_query, stage1_results, evaluators, plan if supplied_plan else None
+            user_query, successful_stage1, evaluators, plan if supplied_plan else None
         )
 
         responded_evaluators = {result["model"] for result in stage2_results}
@@ -1136,9 +1152,10 @@ async def stream_council(
     logger.info("Stream Stage 3: chairman %s synthesizing", chairman)
 
     stage3_result = await stage3_synthesize_final(
-        user_query, stage1_results, stage2_results, chairman, plan if supplied_plan else None
+        user_query, successful_stage1, stage2_results, chairman, plan if supplied_plan else None
     )
 
+    stage1_results = _order_stage1_results(stage1_results, plan)
     yield {
         "event": "synthesis",
         "model": stage3_result.get("model", chairman),
