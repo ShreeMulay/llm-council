@@ -76,6 +76,41 @@ async def test_strict_vertex_never_calls_fallback():
     assert calls == ["vertex"]
 
 
+@pytest.mark.parametrize("constructor_policy", [None, False])
+def test_deployment_strict_policy_ignores_openrouter_override(monkeypatch, constructor_policy):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", True)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=constructor_policy)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+    assert operation.routes[0].route_id == "vertex:anthropic/claude-fable-5"
+
+
+def test_constructor_can_strengthen_non_strict_deployment(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", False)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=True)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["vertex"]
+
+
+def test_non_strict_explicit_openrouter_remains_available(monkeypatch):
+    monkeypatch.setattr("backend.config.REQUIRE_VERTEX_ANTHROPIC", False)
+    dispatcher = ModelDispatcher(require_vertex_anthropic=False)
+
+    operation = dispatcher.capture(DispatchRequest(
+        "anthropic/claude-fable-5", MESSAGES, provider="openrouter"
+    ))
+
+    assert [route.provider for route in operation.routes] == ["openrouter"]
+
+
 @pytest.mark.asyncio
 async def test_retries_primary_before_fallback():
     attempts = 0

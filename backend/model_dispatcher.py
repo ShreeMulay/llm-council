@@ -58,8 +58,6 @@ class ModelDispatcher:
             RouteResolution(request.model_id, route.route_id, route.provider, route.provider_model_id, route.adapter)
             for route in self._routes(request)
         )
-        if routes and self._strict_vertex(request.model_id, ModelRoute(routes[0].route_id, routes[0].provider, routes[0].provider_model_id, routes[0].adapter)):
-            routes = routes[:1]
         return PlanOperation(
             request.model_id,
             routes,
@@ -117,14 +115,22 @@ class ModelDispatcher:
         }
 
     def _routes(self, request: DispatchRequest) -> tuple[ModelRoute, ...]:
+        strict_vertex = self._strict_vertex(request.model_id)
         try:
             record = self.registry.model(request.model_id)
         except KeyError:
-            return (_legacy_route(request.model_id, request.provider),)
+            return (_legacy_route(request.model_id, "vertex" if strict_vertex else request.provider),)
 
         ordered = (record.preferred_route,) + tuple(
             route for route in record.routes if route != record.preferred_route
         )
+        if strict_vertex:
+            vertex_routes = tuple(route for route in ordered if route.provider == "vertex")
+            if not vertex_routes:
+                raise ValueError(
+                    f"Strict Vertex Anthropic policy has no Vertex route for {request.model_id}"
+                )
+            return vertex_routes[:1]
         if request.provider:
             selected = tuple(route for route in ordered if route.provider == request.provider)
             if selected:
@@ -140,13 +146,11 @@ class ModelDispatcher:
                 )
         return ordered if request.allow_fallbacks else ordered[:1]
 
-    def _strict_vertex(self, model_id: str, route: ModelRoute) -> bool:
-        strict = (
-            config.requires_vertex_anthropic(model_id)
-            if self.require_vertex_anthropic is None
-            else self.require_vertex_anthropic and config.is_vertex_anthropic_model(model_id)
+    def _strict_vertex(self, model_id: str) -> bool:
+        """Deployment policy is a floor; constructors may only strengthen it."""
+        return config.is_vertex_anthropic_model(model_id) and (
+            config.REQUIRE_VERTEX_ANTHROPIC or self.require_vertex_anthropic is True
         )
-        return strict and route.provider == "vertex"
 
     async def _invoke(self, route: ModelRoute, request: DispatchRequest) -> dict[str, Any] | None:
         adapter = self.adapters.get(route.provider)
