@@ -13,6 +13,6 @@
 - [x] Implement conditional Parallel Search Stage 0 with explicit URL fetch preservation, gating, provenance, caps, failure-open behavior, and injection-safety tests.
 - [x] Implement Parallel Monitor event/schema validation, deduplication, and candidate-proposal-only output with non-mutation tests.
 - [x] Run all local backend, frontend, MCP, benchmark, security, and OpenSpec validation gates.
-- [ ] Deploy shadow and canary, evaluate acceptance gates, rehearse rollback, then deploy production with pinned registry/artifact digests.
-- [ ] Verify the frozen roster and public/non-PHI safety boundary in production smoke checks.
-- [ ] Open and merge the reviewed Forgejo PR after CI passes; archive this change and close `llm-council-s0h` only after deployment acceptance.
+- [x] Deploy shadow and canary, evaluate acceptance gates, rehearse rollback, then deploy production with pinned registry/artifact digests.
+- [x] Verify the frozen roster and public/non-PHI safety boundary in production smoke checks.
+- [x] Open and merge the reviewed Forgejo PR after CI passes; archive this change and close `llm-council-s0h` only after deployment acceptance.
