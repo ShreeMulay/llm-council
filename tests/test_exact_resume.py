@@ -18,6 +18,20 @@ from tests.test_bounded_rollout_red_contract import (
 
 SHA = "a" * 40
 MANIFEST_URI = f"{rollout.RESUME_MANIFEST_ROOT}/approved.json"
+CANDIDATE_DIGEST = f"sha256:{'d' * 64}"
+SERVICE_UID = "123e4567-e89b-42d3-a456-426614174000"
+RECOVERY_COMMON_FIELDS = {
+    "candidate_image_digest",
+    "candidate_revision",
+    "candidate_traffic_percent",
+    "classification",
+    "lock_generation",
+    "prior_revision",
+    "rollout_id",
+    "service_generation",
+    "service_uid",
+    "traffic_matches_snapshot",
+}
 
 
 def digest(value):
@@ -64,12 +78,17 @@ def evidence(boundaries):
         }
         count_name = "paid_attempts" if number == 1 else "cumulative_paid_attempts"
         recovery = {
-            "rollout_id": source_rollout_id,
-            "status": "ALREADY_CONVERGED_NO_TRAFFIC",
-            count_name: number,
-            "traffic_matches_snapshot": True,
+            "candidate_image_digest": CANDIDATE_DIGEST,
+            "candidate_revision": f"{rollout.FIXED_SERVICE}-candidate-{number}",
             "candidate_traffic_percent": 0,
+            "classification": "ALREADY_CONVERGED_NO_TRAFFIC",
+            count_name: number,
+            "lock_generation": str(100 + number),
             "prior_revision": "prior",
+            "rollout_id": source_rollout_id,
+            "service_generation": 70 + number,
+            "service_uid": SERVICE_UID,
+            "traffic_matches_snapshot": True,
         }
         boundaries.generations[(checkpoint_uri, str(number * 10))] = checkpoint
         boundaries.generations[(recovery_uri, str(number * 10 + 1))] = recovery
@@ -274,6 +293,8 @@ def test_resume_attestation_binding_mismatch_is_refused(field, value):
     ("recovery", "paid_attempts", True),
     ("recovery", "candidate_traffic_percent", 0.0),
     ("recovery", "candidate_traffic_percent", False),
+    ("recovery", "service_generation", 71.0),
+    ("recovery", "service_generation", True),
 ])
 def test_resume_source_proof_integer_fields_require_exact_int(object_kind, field, value):
     boundaries = ResumeBoundaries()
@@ -281,6 +302,76 @@ def test_resume_source_proof_integer_fields_require_exact_int(object_kind, field
     source = manifest["sources"][0]
     key = (source[f"{object_kind}_uri"], source[f"{object_kind}_generation"])
     boundaries.generations[key][field] = value
+    ctl = rollout.RolloutController(
+        boundaries=boundaries, rollout_id="new", approved_sha=SHA,
+        mode=rollout.RESUME_MODE, prior_paid_attempts=2,
+        resume_manifest_uri=MANIFEST_URI, resume_manifest_generation="99",
+    )
+    ctl.start_promotion_deadline()
+    with pytest.raises(rollout.ResumeRefusal):
+        ctl.prepare_resume()
+
+
+@pytest.mark.parametrize("source_number,mutation", [
+    (1, lambda r: r.pop("candidate_image_digest")),
+    (1, lambda r: r.update(extra=True)),
+    (1, lambda r: r.update(status="ALREADY_CONVERGED_NO_TRAFFIC")),
+    (1, lambda r: r.update(classification="succeeded")),
+    (1, lambda r: r.update(paid_attempts=2)),
+    (2, lambda r: r.update(cumulative_paid_attempts=1)),
+    (1, lambda r: r.update(traffic_matches_snapshot=1)),
+    (1, lambda r: r.update(candidate_traffic_percent=-1)),
+    (1, lambda r: r.update(rollout_id="old-2")),
+    (1, lambda r: r.update(prior_revision="other")),
+    (1, lambda r: r.update(candidate_revision="other-service-candidate")),
+    (1, lambda r: r.update(candidate_revision="llm-council_candidate")),
+    (1, lambda r: r.update(candidate_image_digest="d" * 64)),
+    (1, lambda r: r.update(candidate_image_digest=f"sha256:{'D' * 64}")),
+    (1, lambda r: r.update(lock_generation=101)),
+    (1, lambda r: r.update(lock_generation="1.0")),
+    (1, lambda r: r.update(service_uid="123E4567-E89B-42D3-A456-426614174000")),
+    (1, lambda r: r.update(service_uid="not-a-uuid")),
+    (1, lambda r: r.update(service_generation=0)),
+])
+def test_resume_recovery_rejects_missing_extra_or_malformed_fields(
+    source_number, mutation
+):
+    boundaries = ResumeBoundaries()
+    manifest = evidence(boundaries)
+    source = manifest["sources"][source_number - 1]
+    key = (source["recovery_uri"], source["recovery_generation"])
+    mutation(boundaries.generations[key])
+    ctl = rollout.RolloutController(
+        boundaries=boundaries, rollout_id="new", approved_sha=SHA,
+        mode=rollout.RESUME_MODE, prior_paid_attempts=2,
+        resume_manifest_uri=MANIFEST_URI, resume_manifest_generation="99",
+    )
+    ctl.start_promotion_deadline()
+    with pytest.raises(rollout.ResumeRefusal):
+        ctl.prepare_resume()
+    assert not any(
+        event[0] in {"build", "deploy-shadow", "paid"}
+        for event in boundaries.events
+    )
+
+
+@pytest.mark.parametrize(
+    "source_number,field",
+    [
+        *((1, field) for field in sorted(RECOVERY_COMMON_FIELDS | {"paid_attempts"})),
+        *((2, field) for field in sorted(
+            RECOVERY_COMMON_FIELDS | {"cumulative_paid_attempts"}
+        )),
+    ],
+)
+def test_resume_recovery_rejects_every_missing_exact_source_field(
+    source_number, field
+):
+    boundaries = ResumeBoundaries()
+    manifest = evidence(boundaries)
+    source = manifest["sources"][source_number - 1]
+    key = (source["recovery_uri"], source["recovery_generation"])
+    boundaries.generations[key].pop(field)
     ctl = rollout.RolloutController(
         boundaries=boundaries, rollout_id="new", approved_sha=SHA,
         mode=rollout.RESUME_MODE, prior_paid_attempts=2,
