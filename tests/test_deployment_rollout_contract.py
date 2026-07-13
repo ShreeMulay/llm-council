@@ -84,6 +84,14 @@ def test_rollout_helper_accepts_project_id_and_workflow_exports_project():
     assert "PROJECT: ${{ env.PROJECT_ID }}" in workflow
 
 
+def test_smoke_verifier_can_import_backend_with_system_python():
+    helper = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
+    smoke_function = helper[helper.index("smoke()") : helper.index("verify_candidate_tag()")]
+
+    assert 'REPO_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)' in helper
+    assert 'PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" python3 "${SMOKE_VERIFIER}"' in smoke_function
+
+
 def test_legacy_flags_are_baseline_only_and_routing_uses_exact_identity_files():
     text = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
     candidate_function = text[text.index("verify_candidate_tag()") : text.index("restore_prior()")]
