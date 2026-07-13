@@ -973,6 +973,105 @@ def test_legacy_fallback_baseline_and_exact_rollback_run_smoke_path():
     assert restored["stream_provenance"] == captured["provenance"]
 
 
+def test_legacy_expected_proof_main_restores_route_unknown_evidence(monkeypatch, tmp_path):
+    payload = legacy_smoke_payload()
+    options = {
+        "samples": 5,
+        "stream_samples": 1,
+        "timeout": 100,
+        "max_latency": 100,
+        "max_tokens": 60_000,
+        "max_cost": 2,
+        "strict_candidate": False,
+        "legacy_baseline": True,
+        "secret_loader": lambda *_args: "key",
+        "poster": lambda *_args: (copy.deepcopy(payload), 10),
+        "stream_poster": lambda *_args: (copy.deepcopy(payload), 10),
+    }
+    captured = run_smoke("https://legacy.example", "project", "secret", **options)
+    proof = tmp_path / "legacy-proof.json"
+    proof.write_text(json.dumps(captured), encoding="utf-8")
+
+    def run_actual(*args, **kwargs):
+        return run_smoke(
+            *args,
+            **kwargs,
+            secret_loader=options["secret_loader"],
+            poster=options["poster"],
+            stream_poster=options["stream_poster"],
+        )
+
+    monkeypatch.setattr("scripts.verify_council_smoke.run_smoke", run_actual)
+
+    assert smoke_main([
+        "https://legacy.example", "--project", "project", "--baseline",
+        "--legacy-baseline", "--expected-proof", str(proof),
+    ]) == 0
+    assert captured["metrics"]["route_success_rate"] is None
+
+
+def test_legacy_expected_proof_main_rejects_changed_provenance(monkeypatch, tmp_path):
+    original = legacy_smoke_payload()
+    captured = run_smoke(
+        "https://legacy.example", "project", "secret", samples=5, stream_samples=1,
+        timeout=100, max_latency=100, max_tokens=60_000, max_cost=2,
+        strict_candidate=False, legacy_baseline=True,
+        secret_loader=lambda *_args: "key",
+        poster=lambda *_args: (copy.deepcopy(original), 10),
+        stream_poster=lambda *_args: (copy.deepcopy(original), 10),
+    )
+    proof = tmp_path / "legacy-proof.json"
+    proof.write_text(json.dumps(captured), encoding="utf-8")
+    changed = copy.deepcopy(original)
+    changed["stage1"][0]["provider"] = "changed-provider"
+
+    def run_actual(*args, **kwargs):
+        return run_smoke(
+            *args,
+            **kwargs,
+            secret_loader=lambda *_args: "key",
+            poster=lambda *_args: (copy.deepcopy(changed), 10),
+            stream_poster=lambda *_args: (copy.deepcopy(changed), 10),
+        )
+
+    monkeypatch.setattr("scripts.verify_council_smoke.run_smoke", run_actual)
+
+    assert smoke_main([
+        "https://legacy.example", "--project", "project", "--baseline",
+        "--legacy-baseline", "--expected-proof", str(proof),
+    ]) == 1
+
+
+def test_candidate_baseline_proof_main_keeps_relative_comparison(monkeypatch, tmp_path):
+    payload = _make_objective_output(smoke_payload())
+    baseline = run_smoke(
+        "https://candidate.example", "project", "secret", samples=5, stream_samples=1,
+        timeout=100, max_latency=100, max_tokens=60_000, max_cost=2,
+        secret_loader=lambda *_args: "key",
+        poster=lambda *_args: (copy.deepcopy(payload), 10),
+        stream_poster=lambda *_args: (copy.deepcopy(payload), 10),
+    )
+    baseline["metrics"]["p95_elapsed_latency_seconds"] = 1
+    baseline["stream_metrics"]["p95_elapsed_latency_seconds"] = 1
+    proof = tmp_path / "candidate-baseline.json"
+    proof.write_text(json.dumps(baseline), encoding="utf-8")
+
+    def run_actual(*args, **kwargs):
+        return run_smoke(
+            *args,
+            **kwargs,
+            secret_loader=lambda *_args: "key",
+            poster=lambda *_args: (copy.deepcopy(payload), 10),
+            stream_poster=lambda *_args: (copy.deepcopy(payload), 10),
+        )
+
+    monkeypatch.setattr("scripts.verify_council_smoke.run_smoke", run_actual)
+
+    assert smoke_main([
+        "https://candidate.example", "--project", "project", "--baseline-proof", str(proof),
+    ]) == 1
+
+
 def test_modern_baseline_still_requires_observed_route_success():
     payload = _make_objective_output(smoke_payload())
     payload["stage1"][0].pop("selected_route_id")
