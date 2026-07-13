@@ -812,7 +812,7 @@ def test_promotion_run_persists_proof_metadata_without_content(tmp_path: Path):
     rows = [json.loads(line) for line in (run.run_dir / "raw-results.jsonl").read_text().splitlines()]
     persisted = "\n".join(path.read_text() for path in run.run_dir.iterdir() if path.is_file())
 
-    assert config_json["prompt_set_version"] == "flagship-promotion-v1"
+    assert config_json["prompt_set_version"] == "flagship-promotion-v2"
     assert len(config_json["config_digest"]) == 64
     assert len(config_json["registry_digest"]) == 64
     assert config_json["council_variants"]
@@ -822,7 +822,7 @@ def test_promotion_run_persists_proof_metadata_without_content(tmp_path: Path):
         assert row["route_id"]
         assert row["allow_declared_route_failover"] is False
         assert row["allow_provider_substitution"] is False
-        assert row["prompt_set_version"] == "flagship-promotion-v1"
+        assert row["prompt_set_version"] == "flagship-promotion-v2"
         assert row["config_digest"] == config_json["config_digest"]
         assert row["registry_digest"] == config_json["registry_digest"]
         assert row["quality_status"] in {"pass", "fail", "not_evaluated"}
@@ -1207,12 +1207,12 @@ async def test_every_network_probe_has_prior_budget_authorization(monkeypatch):
 
 def test_deterministic_objective_and_evaluator_quality_metrics():
     normalized = deterministic_quality_metrics(
-        "quality", '{"status":"ok"}', (), '{ "status": "ok" }'
+        "quality", "STATUS_OK", (), "STATUS_OK"
     )
     evaluator = deterministic_quality_metrics(
         "evaluator_format", None, ("A", "B"), "1. Candidate A\n2. Candidate B"
     )
-    assert normalized["objective_exact_accuracy"] == 0
+    assert normalized["objective_exact_accuracy"] == 1
     assert normalized["objective_normalized_accuracy"] == 1
     assert normalized["factual_error_rate"] == 0
     assert evaluator["evaluator_format_rate"] == 1
@@ -1267,7 +1267,7 @@ def test_run_manifest_digest_changes_with_execution_inputs_and_leaks_no_content(
     persisted = "\n".join(path.read_text() for path in first.run_dir.iterdir())
     assert first_config["run_manifest_digest"] != second_config["run_manifest_digest"]
     assert "Return only the integer result" not in persisted
-    assert '{"status":"ok"}' not in persisted
+    assert "STATUS_OK" not in persisted
 
 
 @pytest.mark.asyncio

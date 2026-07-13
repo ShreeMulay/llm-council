@@ -12,7 +12,7 @@ JULY_2026_PRICING_CAPTURED_AT = "2026-07-04T00:00:00Z"
 DEFAULT_VARIANT_SET = "default"
 JULY_2026_ROSTER_VARIANT_SET = "july-2026-roster"
 FLAGSHIP_PROMOTION_VARIANT_SET = "flagship-promotion-v1"
-FLAGSHIP_PROMPT_SET_VERSION = "flagship-promotion-v1"
+FLAGSHIP_PROMPT_SET_VERSION = "flagship-promotion-v2"
 JULY_2026_PROMOTION_THRESHOLDS = {
     "minimax-vs-llama": {
         "candidate_variant_id": "openrouter-minimax-m3",

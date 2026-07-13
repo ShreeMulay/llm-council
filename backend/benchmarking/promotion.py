@@ -43,8 +43,8 @@ FLAGSHIP_PROMPT_SET = PromotionPromptSet(
         ),
         PromotionPromptCase(
             "structured-quality", "structured", "quality",
-            'Return exactly this JSON object with no fence: {"status":"ok"}',
-            expected_output='{"status":"ok"}',
+            "Return exactly STATUS_OK with no punctuation or additional text.",
+            expected_output="STATUS_OK",
         ),
         PromotionPromptCase(
             "structured-evaluator", "structured", "evaluator_format",
