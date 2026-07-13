@@ -248,11 +248,18 @@ def v2_operation(*, done, response=None):
 
 
 def ambiguous_deploy_state(*, converged):
+    deployed_traffic = v2_service()["traffic"] + [{
+        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        "revision": "llm-council-candidate",
+        "percent": 0,
+    }]
     state = v2_service(
         generation="42",
         observed_generation="42" if converged else "41",
         etag="etag-42",
         reconciling=not converged,
+        traffic=deployed_traffic,
+        traffic_statuses=deployed_traffic,
     )
     state.update(
         latestCreatedRevision="llm-council-candidate",
@@ -505,7 +512,15 @@ def test_initial_service_accepts_canonical_protobuf_json_default_omissions():
     state.pop("reconciling")
 
     assert api().validate_initial_service(state) == state
-    assert api()._normalized_traffic(state["traffic"])[1]["percent"] == 0
+    normalized = api()._normalized_traffic(state["traffic"])
+    assert next(item for item in normalized if item.get("tag") == "stable")["percent"] == 0
+
+
+def test_initial_service_accepts_semantically_equal_reordered_statuses():
+    state = v2_service()
+    state["trafficStatuses"] = list(reversed(state["trafficStatuses"]))
+
+    assert api().validate_initial_service(state) == state
 
 
 @pytest.mark.parametrize("reconciling", [None, True, False, 0, "false", {}, []])
@@ -792,7 +807,13 @@ def test_rollback_proves_exact_tags_health_uid_generation_etag_before_lock_relea
         observed_generation="43",
         etag="etag-43",
         traffic=[
-            {"type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", "revision": "candidate", "percent": 100},
+            {"type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", "revision": "candidate", "percent": 0},
+            {
+                "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+                "revision": "candidate",
+                "percent": 100,
+                "tag": "shadow-rollout-123",
+            },
             {
                 "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
                 "revision": "debug",
@@ -825,6 +846,7 @@ def test_rollback_proves_exact_tags_health_uid_generation_etag_before_lock_relea
     assert restored["reconciling"] is False
     assert restored["etag"] not in {snapshot["etag"], "etag-43"}
     assert restored["traffic"] == snapshot["traffic"]
+    assert all(item["revision"] != "candidate" for item in patch[1]["traffic"])
 
 
 def test_already_restored_terminal_rollback_proves_health_and_cas_lock_without_patch():
@@ -979,6 +1001,200 @@ def test_realistic_v2_long_running_operation_requires_exact_fresh_convergence():
     assert result["observedGeneration"] == result["generation"]
     assert "reconciling" not in result
     assert [{key: value for key, value in item.items() if key != "uri"} for item in result["trafficStatuses"]] == requested
+
+
+def test_live_shadow_traffic_preserves_automatic_and_tagged_candidate_targets():
+    requested = api()._stage_traffic(
+        v2_service(), "candidate", 0, shadow_tag="shadow-rollout-123"
+    )
+
+    assert [item for item in requested if item["revision"] == "candidate"] == [
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "candidate",
+            "percent": 0,
+        },
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "candidate",
+            "percent": 0,
+            "tag": "shadow-rollout-123",
+        },
+    ]
+
+
+@pytest.mark.parametrize(
+    ("percent", "shadow_tag"),
+    [(0, "shadow-rollout-123"), (10, "shadow-rollout-123"),
+     (50, "shadow-rollout-123"), (100, "shadow-rollout-123"), (100, None)],
+    ids=["shadow", "ten", "fifty", "authoritative-100", "final"],
+)
+def test_tagged_positive_prior_is_transformed_in_place_with_exact_stage_total(
+    percent, shadow_tag
+):
+    snapshot = v2_service(traffic=[
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "prior",
+            "percent": 100,
+            "tag": "stable",
+        },
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "debug",
+            "percent": 0,
+            "tag": "unrelated",
+        },
+    ])
+
+    requested = api()._stage_traffic(
+        snapshot, "candidate", percent, shadow_tag=shadow_tag
+    )
+
+    prior_targets = [item for item in requested if item["revision"] == "prior"]
+    assert prior_targets == [{
+        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        "revision": "prior",
+        "percent": 100 - percent,
+        "tag": "stable",
+    }]
+    assert sum(item["percent"] for item in requested) == 100
+    assert len({(item["revision"], item.get("tag")) for item in requested}) == len(requested)
+
+
+@pytest.mark.parametrize(
+    "traffic",
+    [
+        [
+            {"revision": "prior", "percent": 100},
+            {"revision": "prior", "percent": 0},
+        ],
+        [
+            {"revision": "prior", "percent": 100, "tag": "stable"},
+            {"revision": "debug", "percent": 0, "tag": "stable"},
+        ],
+        [
+            {"revision": "prior", "percent": 99},
+            {"revision": "debug", "percent": 0, "tag": "debug"},
+        ],
+    ],
+    ids=["duplicate-revision-tag-identity", "duplicate-tag", "allocation-sum"],
+)
+def test_traffic_normalization_rejects_duplicate_identity_tag_and_non_100_sum(traffic):
+    with pytest.raises(ValueError):
+        api()._normalized_traffic(traffic)
+
+
+def test_shadow_tag_collision_refuses_before_build_service_mutation_or_paid_call():
+    boundaries = V2Boundaries()
+    collision = v2_service()
+    collision["traffic"][2]["tag"] = "shadow-rollout-123"
+    collision["trafficStatuses"][2]["tag"] = "shadow-rollout-123"
+    collision["trafficStatuses"][2]["uri"] = (
+        "https://shadow-rollout-123---service.example"
+    )
+    boundaries.state = collision
+
+    with pytest.raises(api().InitialStateRefusal, match="shadow tag collides"):
+        api().run_rollout(
+            boundaries=boundaries,
+            rollout_id="rollout-123",
+            approved_sha="a" * 40,
+            clock=boundaries.clock,
+        )
+
+    assert not any(
+        event[0] in {"build", "deploy-shadow", "service-patch", "paid"}
+        for event in boundaries.events
+    )
+
+
+def test_live_reordered_candidate_targets_and_statuses_are_accepted():
+    boundaries = V2Boundaries()
+    requested = api()._stage_traffic(
+        v2_service(), "candidate", 10, shadow_tag="shadow-rollout-123"
+    )
+    live_traffic = list(reversed(requested))
+    live_statuses = deepcopy(requested[1:] + requested[:1])
+    for item in live_statuses:
+        if "tag" in item:
+            item["uri"] = f"https://{item['tag']}---service.example"
+    converged = v2_service(
+        generation="42",
+        observed_generation="42",
+        etag="etag-42",
+        traffic=live_traffic,
+        traffic_statuses=live_statuses,
+    )
+    boundaries.state = v2_service()
+    boundaries.operation_polls = [v2_operation(done=True, response=converged)]
+    boundaries.service_polls = [converged]
+
+    assert controller(boundaries).transition_traffic(
+        requested,
+        expected_uid="service-uid",
+        expected_generation="41",
+        expected_etag="etag-41",
+        timeout=120,
+    ) == converged
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda traffic: traffic.pop(0),
+        lambda traffic: traffic.append({
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "other",
+            "percent": 0,
+        }),
+        lambda traffic: traffic[0].update(percent=1),
+        lambda traffic: traffic[1].update(tag="wrong-shadow"),
+    ],
+    ids=["missing", "extra", "wrong-percent", "wrong-tag"],
+)
+def test_live_candidate_target_mismatch_is_rejected(mutate):
+    boundaries = V2Boundaries()
+    requested = api()._stage_traffic(
+        v2_service(), "candidate", 10, shadow_tag="shadow-rollout-123"
+    )
+    actual = deepcopy(requested)
+    mutate(actual)
+    converged = v2_service(
+        generation="42",
+        observed_generation="42",
+        etag="etag-42",
+        traffic=actual,
+        traffic_statuses=actual,
+    )
+    boundaries.state = v2_service()
+    boundaries.operation_polls = [v2_operation(done=True, response=converged)]
+
+    with pytest.raises(api().ConcurrencyRefusal):
+        controller(boundaries).transition_traffic(
+            requested,
+            expected_uid="service-uid",
+            expected_generation="41",
+            expected_etag="etag-41",
+            timeout=120,
+        )
+
+
+def test_final_traffic_is_exact_single_untagged_candidate_target():
+    final = api()._stage_traffic(v2_service(), "candidate", 100, shadow_tag=None)
+
+    assert [item for item in final if item["revision"] == "candidate"] == [{
+        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        "revision": "candidate",
+        "percent": 100,
+    }]
+    prior = [item for item in final if item["revision"] != "candidate"]
+    assert all(item["percent"] == 0 for item in prior)
+    assert {
+        (item["revision"], item.get("tag")) for item in prior
+    } == {
+        (item["revision"], item.get("tag")) for item in v2_service()["traffic"]
+    }
 
 
 @pytest.mark.parametrize(
@@ -1727,7 +1943,9 @@ def test_signal_timeout_and_guarded_exit_restore_exact_snapshot(reason):
     boundaries.state = prior_state()
     rollout = controller(boundaries)
     rollout.snapshot = prior_state()
-    boundaries.state["traffic"] = [{"revision": "candidate", "percent": 50}]
+    boundaries.state["traffic"] = api()._stage_traffic(
+        rollout.snapshot, "candidate", 50, shadow_tag=None
+    )
     rollout.rollout_owned_state = deepcopy(boundaries.state)
     rollout.mutation_armed = True
 
@@ -1893,7 +2111,8 @@ def test_ambiguous_deploy_recovery_polls_exact_reconciling_state_then_restores()
     rollout.terminal_rollback(reason="ambiguous-deploy")
 
     assert [event[0] for event in boundaries.events].count("service-get") == 2
-    assert not any(event[0] == "service-patch" for event in boundaries.events)
+    patch = next(event for event in boundaries.events if event[0] == "service-patch")
+    assert patch[1] == {"traffic": rollout.snapshot["traffic"]}
     assert any(event[0] == "health" for event in boundaries.events)
     assert any(event[0] == "lock-release" for event in boundaries.events)
 

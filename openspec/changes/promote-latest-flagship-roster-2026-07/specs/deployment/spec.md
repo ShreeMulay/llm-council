@@ -119,7 +119,7 @@ The prospective top-level `run_rollout` controller SHALL own the complete rollou
 - **WHEN** an operator selects exact mode `resume-after-prior-v1`
 - **THEN** count MUST equal `2` and an approved-prefix manifest URI plus exact nonzero generation MUST be supplied
 - **AND** the generation-pinned strict manifest MUST name two distinct source rollout IDs and source approved SHAs and reference two generation-pinned strict source attestations
-- **AND** all four checkpoint/recovery references and both attestation references MUST be distinct and use exact fixed-bucket source rollout, completed-attempt 1/2, recovery, and attestation paths
+- **AND** all four checkpoint/recovery references and both attestation references MUST be distinct and use exact fixed-bucket source rollout, completed-attempt 1/2, recovery, and target-SHA-specific `source-attestation-<target-sha>.json` paths
 - **AND** each no-extra-fields attestation MUST bind schema version 1, resume mode, its source rollout ID and approved SHA, the current target SHA, fixed project/region/service, exact checkpoint/recovery URI and generation, expected attempt 1 then 2, service URL hash, complete canonical traffic hash, and expected prior revision
 - **AND** each immutable recovery object MUST use its exact no-extra-fields production schema: candidate image digest, fixed-service candidate revision, zero candidate traffic, classification `ALREADY_CONVERGED_NO_TRAFFIC`, numeric-string lock generation, current prior revision, source rollout ID, canonical service UID, positive exact service generation, true traffic-snapshot match, and exactly `paid_attempts=1` for source 1 or `cumulative_paid_attempts=2` for source 2; a `status` field MUST NOT be accepted
 - **AND** every manifest, checkpoint, recovery, and attestation integer MUST have exact integer type; booleans, floats, fractional values, equality-only values, missing/unknown fields, duplicate IDs/references, and path/content mismatches MUST fail closed
@@ -183,6 +183,12 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **AND** it MUST poll the returned long-running operation to completion and then poll Service until `observedGeneration == generation`, `reconciling == false`, and canonical `trafficStatuses` exactly match
 - **AND** UID MUST remain stable, generation MUST progress as expected, and each accepted transition MUST expose a fresh etag
 - **AND** requested canonical traffic and tags MUST equal both accepted Service `traffic` and URI-normalized `trafficStatuses`
+- **AND** complete traffic targets MUST be strictly type-normalized and sorted by exact routing fields before comparison or hashing, without merging targets, dropping tags, or depending on API response order
+- **AND** target identity MUST be the exact `(revision, tag)` pair, where an absent tag is distinct from every tagged target; identities and nonempty tags MUST each be unique and every complete allocation MUST sum to exactly 100%
+- **AND** each stage MUST transform the snapshot's sole positive prior target in place to the remaining percentage, preserving its exact revision, tag presence, and tag value rather than adding a second prior target
+- **AND** a tagged stage MUST preserve both the automatic untagged candidate target at 0% and a separate tagged candidate target at the requested percentage; final untagged 100% MUST contain exactly one candidate target at 100%
+- **AND** a generated shadow tag colliding with any snapshot tag MUST fail before build, deploy, traffic PATCH, or paid request
+- **AND** planned and terminal restoration MUST restore the exact snapshot and thereby remove both rollout-owned candidate targets
 - **AND** any malformed or error long-running operation, stale or unexpected UID, generation, observed generation, reconciling state, unchanged etag, ownership, canonical traffic, canonical tag, or `trafficStatuses` transition MUST independently fail closed
 - **AND** every PATCH body MUST preserve all unrelated traffic tags and remove only the rollout-owned shadow tag when required
 - **AND** an omitted long-running-operation `done` field MUST mean pending/false, while an explicitly present nonboolean `done` value MUST fail closed

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from copy import deepcopy
 
 import pytest
@@ -34,12 +33,6 @@ RECOVERY_COMMON_FIELDS = {
 }
 
 
-def digest(value):
-    return hashlib.sha256(
-        json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-
-
 class ResumeBoundaries(Boundaries):
     def __init__(self):
         super().__init__()
@@ -56,7 +49,7 @@ class ResumeBoundaries(Boundaries):
 
 
 def evidence(boundaries):
-    traffic_hash = digest(rollout._normalized_traffic(boundaries.state["traffic"]))
+    traffic_hash = rollout._traffic_sha256(boundaries.state["traffic"])
     url_hash = hashlib.sha256(boundaries.service_base_url.encode()).hexdigest()
     sources = []
     for number in (1, 2):
@@ -66,7 +59,9 @@ def evidence(boundaries):
             f"{number:04d}-completed.json"
         )
         recovery_uri = f"{rollout.EVIDENCE_ROOT}/old-{number}/recovery.json"
-        attestation_uri = f"{rollout.EVIDENCE_ROOT}/old-{number}/source-attestation.json"
+        attestation_uri = (
+            f"{rollout.EVIDENCE_ROOT}/old-{number}/source-attestation-{SHA}.json"
+        )
         checkpoint = {
             "rollout_id": source_rollout_id,
             "stage": "prior",
@@ -209,6 +204,35 @@ def test_resume_evidence_is_read_by_generation_and_bound_into_lock():
     assert lock[2]["resume_manifest_generation"] == "99"
     assert lock[2]["target_sha"] == SHA
     assert not any(name in {"build", "deploy-shadow", "paid"} for name in names)
+
+
+def test_resume_attestation_path_is_immutable_and_target_sha_specific():
+    boundaries = ResumeBoundaries()
+    manifest = evidence(boundaries)
+    assert all(
+        source["source_attestation_uri"].endswith(
+            f"/source-attestation-{SHA}.json"
+        )
+        for source in manifest["sources"]
+    )
+
+    manifest["sources"][0]["source_attestation_uri"] = (
+        f"{rollout.EVIDENCE_ROOT}/old-1/source-attestation.json"
+    )
+    boundaries.generations[(MANIFEST_URI, "99")] = manifest
+    ctl = rollout.RolloutController(
+        boundaries=boundaries,
+        rollout_id="new",
+        approved_sha=SHA,
+        mode=rollout.RESUME_MODE,
+        prior_paid_attempts=2,
+        resume_manifest_uri=MANIFEST_URI,
+        resume_manifest_generation="99",
+    )
+    ctl.start_promotion_deadline()
+
+    with pytest.raises(rollout.ResumeRefusal):
+        ctl.prepare_resume()
 
 
 @pytest.mark.parametrize("mutation", [
