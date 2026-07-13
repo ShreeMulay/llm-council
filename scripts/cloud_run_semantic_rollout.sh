@@ -40,6 +40,7 @@ WORK=$(mktemp -d)
 SERVICE_JSON="${WORK}/service.json"
 TRAFFIC_SNAPSHOT="${WORK}/traffic.json"
 PRIOR_IDENTITY="${WORK}/prior-identity.json"
+CANDIDATE_IDENTITY="${WORK}/candidate-identity.json"
 PRIOR_SMOKE="${WORK}/prior-smoke.json"
 trap 'rm -rf "${WORK}"' EXIT
 
@@ -104,16 +105,21 @@ trap rollback ERR
 describe_service "${SERVICE_JSON}"
 python3 scripts/cloud_run_traffic.py snapshot "${SERVICE_JSON}" "${TRAFFIC_SNAPSHOT}"
 PRIOR_URL=$(service_url)
-python3 "${HEALTH_VERIFIER}" "${PRIOR_URL}" --identity-only --identity-out "${PRIOR_IDENTITY}"
-smoke "${PRIOR_URL}" --baseline --proof-out "${PRIOR_SMOKE}"
-PRIOR_REVISIONS=$(python3 - "${PRIOR_IDENTITY}" <<'PY'
+python3 "${HEALTH_VERIFIER}" "${PRIOR_URL}" --identity-only \
+  --allow-legacy-identity-without-artifacts --identity-out "${PRIOR_IDENTITY}"
+LEGACY_BASELINE=$(python3 - "${PRIOR_IDENTITY}" <<'PY'
 import json, sys
-revision = json.load(open(sys.argv[1], encoding="utf-8"))["artifacts"]["application_revision"]
-if not isinstance(revision, str) or not revision:
-    raise SystemExit("baseline application revision is missing")
-print(revision)
+identity = json.load(open(sys.argv[1], encoding="utf-8"))
+print("true" if "artifacts" not in identity else "false")
 PY
 )
+BASELINE_FLAGS=(--baseline)
+RESTORE_HEALTH_FLAGS=(--identity-only)
+if [[ "${LEGACY_BASELINE}" == true ]]; then
+  BASELINE_FLAGS+=(--legacy-baseline)
+  RESTORE_HEALTH_FLAGS+=(--allow-legacy-identity-without-artifacts)
+fi
+smoke "${PRIOR_URL}" "${BASELINE_FLAGS[@]}" --proof-out "${PRIOR_SMOKE}"
 
 revision_prefix=$(printf '%s' "${DEPLOY_REVISION}" | tr '[:upper:]_' '[:lower:]-' | tr -cd 'a-z0-9-' | cut -c1-12)
 suffix="${revision_prefix}-$(date +%s)"
@@ -130,6 +136,9 @@ gcloud run deploy "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --ima
 NEW_REVISION=$(gcloud run services describe "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --format='value(status.latestCreatedRevisionName)')
 SHADOW_URL=$(gcloud run services describe "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --format=json | python3 -c 'import json,sys; tag=sys.argv[1]; print(next(x["url"] for x in json.load(sys.stdin)["status"]["traffic"] if x.get("tag")==tag))' "${SHADOW_TAG}")
 verify_candidate_tag shadow "${SHADOW_URL}"
+# Candidate identity capture occurs only after strict health and smoke verification.
+python3 "${HEALTH_VERIFIER}" "${SHADOW_URL}" --identity-only \
+  --identity-out "${CANDIDATE_IDENTITY}"
 
 PREVIOUS_TRAFFIC=$(python3 scripts/cloud_run_traffic.py revisions "${TRAFFIC_SNAPSHOT}")
 traffic_for() {
@@ -154,15 +163,17 @@ apply_stage() {
   python3 scripts/cloud_run_traffic.py verify-stage "${actual}" "${TRAFFIC_SNAPSHOT}" "${NEW_REVISION}" "${percent}" "${SHADOW_TAG}"
   # Strict candidate semantics always use the tag; the service URL proves staged routing separately.
   verify_candidate_tag "${percent}%" "${SHADOW_URL}"
-  python3 "${ROUTING_VERIFIER}" "${PRIOR_URL}" --candidate "${DEPLOY_REVISION}" \
-    --prior-revisions "${PRIOR_REVISIONS}" --percent "${percent}" --samples "${ROLLOUT_SERVICE_HEALTH_SAMPLES}"
+  python3 "${ROUTING_VERIFIER}" "${PRIOR_URL}" --prior-identity "${PRIOR_IDENTITY}" \
+    --candidate-identity "${CANDIDATE_IDENTITY}" --percent "${percent}" \
+    --samples "${ROLLOUT_SERVICE_HEALTH_SAMPLES}"
 }
 
 # Real rollback rehearsal: candidate receives 10%, is validated, and prior state is restored/revalidated.
 apply_stage 10
 restore_prior
-python3 "${HEALTH_VERIFIER}" "${PRIOR_URL}" --identity-only --expected-identity "${PRIOR_IDENTITY}"
-smoke "${PRIOR_URL}" --baseline --expected-proof "${PRIOR_SMOKE}"
+python3 "${HEALTH_VERIFIER}" "${PRIOR_URL}" "${RESTORE_HEALTH_FLAGS[@]}" \
+  --expected-identity "${PRIOR_IDENTITY}"
+smoke "${PRIOR_URL}" "${BASELINE_FLAGS[@]}" --expected-proof "${PRIOR_SMOKE}"
 
 # Exact restoration intentionally removed the shadow tag; recreate it before restarting progression.
 gcloud run services update-traffic "${SERVICE}" --project="${PROJECT}" --region="${REGION}" \

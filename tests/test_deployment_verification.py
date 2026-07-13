@@ -31,6 +31,9 @@ from scripts.verify_council_smoke import (
     run_smoke,
     verify_payload,
 )
+from scripts.verify_council_smoke import (
+    main as smoke_main,
+)
 from scripts.verify_service_routing import RoutingVerificationError, verify_service_routing
 
 
@@ -444,6 +447,115 @@ def test_baseline_proof_detects_changed_restored_route():
         )
 
 
+def legacy_smoke_payload():
+    payload = _make_objective_output(smoke_payload())
+    payload["stage1"][0]["model"] = "openai/gpt-5.5"
+    for item in [*payload["stage1"], *payload["stage2"], payload["stage3"]]:
+        for field in (
+            "route_id", "selected_route_id", "fallback_used",
+            "allow_declared_route_failover", "allow_provider_substitution",
+            "terminal_status", "usage",
+        ):
+            item.pop(field, None)
+    payload.pop("metadata")
+    return payload
+
+
+def test_legacy_baseline_preserves_available_provenance_without_inventing_route_success():
+    payload = legacy_smoke_payload()
+
+    proof = verify_payload(
+        payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
+        strict_candidate=False, legacy_baseline=True,
+    )
+
+    assert proof["provenance_contract"] == "legacy-unavailable"
+    assert proof["stage1"][0]["model"] == "openai/gpt-5.5"
+    assert proof["stage1"][0]["provider"] is None
+    assert proof["stage1"][0]["configured_route_id"] is None
+    assert proof["stage1"][0]["observed_route_id"] is None
+    metrics = _sample_metrics(payload, 10, legacy_baseline=True)
+    assert metrics["route_success"] is None
+    assert metrics["token_count"] is None
+    verify_payload(
+        copy.deepcopy(payload), 10, max_latency=100, max_tokens=60000, max_cost=2,
+        expected_proof=proof, strict_candidate=False, legacy_baseline=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda item: item.update(error={"code": "failed"}),
+        lambda item: item.update(fallback_used=True),
+        lambda item: item.update(terminal_status="failed"),
+        lambda item: item.update(response=""),
+    ],
+)
+def test_legacy_baseline_rejects_explicit_failure_fallback_error_or_missing_content(mutation):
+    payload = legacy_smoke_payload()
+    mutation(payload["stage1"][0])
+    with pytest.raises(SmokeVerificationError, match="legacy baseline"):
+        verify_payload(
+            payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
+            strict_candidate=False, legacy_baseline=True,
+        )
+
+
+def test_modern_baseline_still_requires_observed_route_success():
+    payload = _make_objective_output(smoke_payload())
+    payload["stage1"][0].pop("selected_route_id")
+    with pytest.raises(SmokeVerificationError, match="route success"):
+        verify_payload(
+            payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
+            strict_candidate=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--baseline"],
+        ["--baseline", "--legacy-baseline"],
+        ["--legacy-baseline", "--proof-out", "proof.json"],
+        ["--baseline", "--proof-out", "proof.json", "--expected-proof", "prior.json"],
+    ],
+)
+def test_baseline_cli_rejects_missing_conflicting_or_unpaired_proof_actions(
+    arguments, monkeypatch
+):
+    def unexpected_run(*_args, **_kwargs):
+        raise AssertionError("invalid baseline invocation must fail before smoke requests")
+
+    monkeypatch.setattr("scripts.verify_council_smoke.run_smoke", unexpected_run)
+
+    assert smoke_main(["https://service", "--project", "project", *arguments]) == 1
+
+
+@pytest.mark.parametrize("action", ["capture", "compare"])
+@pytest.mark.parametrize("legacy", [False, True])
+def test_baseline_cli_allows_exactly_capture_or_rollback_comparison(
+    action, legacy, monkeypatch, tmp_path
+):
+    evidence = {"provenance": {"stage1": []}}
+    monkeypatch.setattr(
+        "scripts.verify_council_smoke.run_smoke", lambda *_args, **_kwargs: evidence
+    )
+    arguments = ["https://service", "--project", "project", "--baseline"]
+    if legacy:
+        arguments.append("--legacy-baseline")
+    proof = tmp_path / "proof.json"
+    if action == "capture":
+        arguments.extend(["--proof-out", str(proof)])
+    else:
+        proof.write_text(json.dumps(evidence), encoding="utf-8")
+        arguments.extend(["--expected-proof", str(proof)])
+
+    assert smoke_main(arguments) == 0
+    if action == "capture":
+        assert json.loads(proof.read_text(encoding="utf-8")) == evidence
+
+
 def evidence(**metrics):
     defaults = {
         "quality_score": 100.0,
@@ -478,33 +590,51 @@ def test_smoke_rejects_insufficient_samples_and_relative_regression():
 
 
 def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_only_at_100():
+    prior = {"status": "healthy", "config": {"roster": "legacy"}}
+    candidate = {
+        "status": "healthy", "config": {"roster": "candidate"},
+        "artifacts": {
+            "application_revision": "candidate", "image_digest": "sha256:value",
+            "registry_digest": "registry", "projection_digests": {"backend": "digest"},
+        },
+    }
     for percent in (10, 50):
-        observed = iter(["prior", "candidate", "prior", "candidate", "prior"])
+        observed = iter([prior, candidate, prior, candidate, prior])
 
         def fetch_mixed(_url, _timeout, values=observed):
             return next(values)
 
         proof = verify_service_routing(
-            "https://service", "candidate", {"prior"}, samples=5, percent=percent,
+            "https://service", prior, candidate, samples=5, percent=percent,
             fetcher=fetch_mixed,
         )
-        assert proof["observed_revision_counts"] == {"candidate": 2, "prior": 3}
+        assert proof["observed_identity_counts"] == {"candidate": 2, "prior": 3}
     proof = verify_service_routing(
-        "https://service", "candidate", {"prior"}, samples=5, percent=100,
-        fetcher=lambda _url, _timeout: "candidate",
+        "https://service", prior, candidate, samples=5, percent=100,
+        fetcher=lambda _url, _timeout: candidate,
     )
-    assert proof["observed_revision_counts"] == {"candidate": 5}
+    assert proof["observed_identity_counts"] == {"candidate": 5}
     with pytest.raises(RoutingVerificationError, match="both"):
         verify_service_routing(
-            "https://service", "candidate", {"prior"}, samples=5, percent=10,
-            fetcher=lambda _url, _timeout: "prior",
+            "https://service", prior, candidate, samples=5, percent=10,
+            fetcher=lambda _url, _timeout: prior,
+        )
+
+    unknown = copy.deepcopy(candidate)
+    unknown["config"]["roster"] = "unknown"
+    with pytest.raises(RoutingVerificationError, match="unknown"):
+        verify_service_routing(
+            "https://service", prior, candidate, samples=5, percent=100,
+            fetcher=lambda _url, _timeout: unknown,
         )
 
 
-def test_rollout_with_mock_gcloud_rehearses_restore_and_reapply(tmp_path):
+@pytest.mark.parametrize("legacy_baseline", [False, True])
+def test_rollout_with_mock_gcloud_rehearses_restore_and_reapply(tmp_path, legacy_baseline):
     root = Path(__file__).parents[1]
     state = tmp_path / "state.json"
     log = tmp_path / "gcloud.log"
+    verify_log = tmp_path / "verify.log"
     state.write_text(json.dumps(service_state()))
     fake_bin = tmp_path / "bin"
     fake_bin.mkdir()
@@ -555,16 +685,21 @@ else:
     gcloud.chmod(0o755)
     health = tmp_path / "health.py"
     health.write_text(
-        """import json, pathlib, sys
+        """import json, os, pathlib, sys
 args=sys.argv[1:]
-if '--identity-out' in args: pathlib.Path(args[args.index('--identity-out')+1]).write_text(json.dumps({'status':'healthy','config':{},'artifacts':{'application_revision':'prior-app'}}))
+with pathlib.Path(os.environ['FAKE_VERIFY_LOG']).open('a') as stream: stream.write('health ' + ' '.join(args) + '\\n')
+if '--identity-out' in args:
+ identity={'status':'healthy','config':{}}
+ if os.environ.get('LEGACY_BASELINE') != '1': identity['artifacts']={'application_revision':'prior-app'}
+ pathlib.Path(args[args.index('--identity-out')+1]).write_text(json.dumps(identity))
 if '--expected-identity' in args: json.loads(pathlib.Path(args[args.index('--expected-identity')+1]).read_text())
 """
     )
     smoke = tmp_path / "smoke.py"
     smoke.write_text(
-        """import json, pathlib, sys
+        """import json, os, pathlib, sys
 args=sys.argv[1:]
+with pathlib.Path(os.environ['FAKE_VERIFY_LOG']).open('a') as stream: stream.write('smoke ' + ' '.join(args) + '\\n')
 proof={'schema_version':2,'sample_count':5,'provenance':{'stage1':[['baseline','route']]},'metrics':{'quality_score':100,'objective_correct_rate':1,'factual_error_rate':0,'evaluator_format_success_rate':1,'route_success_rate':1,'error_rate':0,'p95_elapsed_latency_seconds':1,'p95_reported_latency_seconds':1,'mean_token_count':1,'mean_conservative_cost_usd':0.001}}
 if '--proof-out' in args: pathlib.Path(args[args.index('--proof-out')+1]).write_text(json.dumps(proof))
 if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('--expected-proof')+1]).read_text()) == proof
@@ -577,6 +712,8 @@ if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('-
         "PATH": f"{fake_bin}:{os.environ['PATH']}",
         "FAKE_STATE": str(state),
         "FAKE_LOG": str(log),
+        "FAKE_VERIFY_LOG": str(verify_log),
+        "LEGACY_BASELINE": "1" if legacy_baseline else "0",
         "PROJECT": "test-project",
         "REGION": "test-region",
         "SERVICE": "test-service",
@@ -607,6 +744,20 @@ if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('-
     ]
     assert any("--clear-tags" in line and "stable-a=70,stable-b=30" in line for line in commands)
     assert any("--set-tags=debug=old-debug,stable=stable-b" in line for line in commands)
+    verifier_calls = verify_log.read_text().splitlines()
+    candidate_calls = [line for line in verifier_calls if "https://shadow.example" in line]
+    assert all("--legacy-baseline" not in line for line in candidate_calls)
+    if legacy_baseline:
+        baseline_calls = [line for line in verifier_calls if line.startswith("smoke https://service.example")]
+        assert baseline_calls and all("--legacy-baseline" in line for line in baseline_calls)
+        assert any(
+            line.startswith("health https://service.example")
+            and "--expected-identity" in line
+            and "--allow-legacy-identity-without-artifacts" in line
+            for line in verifier_calls
+        )
+    else:
+        assert all("--legacy-baseline" not in line for line in verifier_calls)
 
 
 def test_rollout_restores_state_when_deploy_fails_after_partial_mutation(tmp_path):

@@ -192,13 +192,27 @@ def verify_deploy_health(
     )
 
 
-def health_identity(payload: dict[str, Any]) -> dict[str, Any]:
+def health_identity(
+    payload: dict[str, Any], *, allow_legacy_identity_without_artifacts: bool = False
+) -> dict[str, Any]:
     """Return only secret-free health/config/artifact identity fields."""
     if payload.get("status") != "healthy":
         raise HealthVerificationError("health status is not healthy")
-    config, artifacts = payload.get("config"), payload.get("artifacts")
-    if not isinstance(config, dict) or not isinstance(artifacts, dict):
+    config = payload.get("config")
+    if not isinstance(config, dict):
         raise HealthVerificationError("health identity is missing")
+    if "artifacts" not in payload and allow_legacy_identity_without_artifacts:
+        return {"status": "healthy", "config": config}
+    artifacts = payload.get("artifacts")
+    if not isinstance(artifacts, dict) or not artifacts:
+        raise HealthVerificationError("health identity is missing")
+    required_artifacts = {
+        "registry_digest", "projection_digests", "application_revision", "image_digest"
+    }
+    if not required_artifacts <= artifacts.keys() or any(
+        artifacts.get(field) in (None, "", {}) for field in required_artifacts
+    ):
+        raise HealthVerificationError("health artifact identity is partial")
     return {"status": "healthy", "config": config, "artifacts": artifacts}
 
 
@@ -212,11 +226,32 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--identity-out")
     parser.add_argument("--expected-identity")
     parser.add_argument("--identity-only", action="store_true")
+    parser.add_argument("--allow-legacy-identity-without-artifacts", action="store_true")
     args = parser.parse_args(argv)
 
     try:
+        identity_actions = bool(args.identity_out) + bool(args.expected_identity)
+        if identity_actions > 1:
+            raise HealthVerificationError(
+                "--identity-out and --expected-identity cannot be used together"
+            )
+        if args.identity_only and identity_actions != 1:
+            raise HealthVerificationError(
+                "--identity-only requires exactly one of --identity-out or --expected-identity"
+            )
+        if args.identity_only and (args.expected_revision or args.expected_image_digest):
+            raise HealthVerificationError(
+                "deployment revision and image expectations are invalid with --identity-only"
+            )
+        if args.allow_legacy_identity_without_artifacts and not args.identity_only:
+            raise HealthVerificationError(
+                "legacy identity allowance is valid only with --identity-only"
+            )
         payload = fetch_health_json(args.url)
-        identity = health_identity(payload)
+        identity = health_identity(
+            payload,
+            allow_legacy_identity_without_artifacts=args.allow_legacy_identity_without_artifacts,
+        )
         if not args.identity_only:
             verify_health_payload(
                 payload,
