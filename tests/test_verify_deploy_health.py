@@ -17,6 +17,8 @@ from scripts.verify_deploy_health import (
     EXPECTED_VERTEX_PROJECT_ID,
     FABLE_MODEL_ID,
     HealthVerificationError,
+    health_identity,
+    main,
     normalize_health_url,
     verify_deploy_health,
     verify_health_payload,
@@ -201,3 +203,55 @@ def test_verify_deploy_health_uses_injected_fetcher_without_network():
     verify_deploy_health("https://service.example.com", fetcher=fetcher)
 
     assert requested_urls == ["https://service.example.com"]
+
+
+def test_legacy_identity_allowance_accepts_only_completely_absent_artifacts():
+    payload = {"status": "healthy", "config": {"council_models": ["legacy"]}}
+
+    assert health_identity(
+        payload, allow_legacy_identity_without_artifacts=True
+    ) == payload
+    with pytest.raises(HealthVerificationError, match="identity"):
+        health_identity(payload)
+
+    for artifacts in (None, {}, {"application_revision": "partial"}):
+        invalid = {**payload, "artifacts": artifacts}
+        with pytest.raises(HealthVerificationError, match="identity"):
+            health_identity(invalid, allow_legacy_identity_without_artifacts=True)
+
+
+def test_legacy_identity_flag_is_valid_only_for_identity_capture(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        "scripts.verify_deploy_health.fetch_health_json",
+        lambda _url: {"status": "healthy", "config": {}},
+    )
+
+    assert main(["https://service", "--allow-legacy-identity-without-artifacts"]) == 1
+    assert main([
+        "https://service", "--identity-only",
+        "--allow-legacy-identity-without-artifacts",
+        "--identity-out", str(tmp_path / "identity.json"),
+    ]) == 0
+
+
+@pytest.mark.parametrize(
+    "arguments",
+    [
+        ["--identity-only"],
+        ["--identity-only", "--identity-out", "capture.json", "--expected-identity", "prior.json"],
+        ["--identity-out", "capture.json", "--expected-identity", "prior.json"],
+        ["--identity-only", "--identity-out", "capture.json", "--expected-revision", "revision"],
+        [
+            "--identity-only", "--expected-identity", "prior.json",
+            "--expected-image-digest", "sha256:digest",
+        ],
+        ["--identity-only", "--allow-legacy-identity-without-artifacts"],
+    ],
+)
+def test_identity_only_rejects_missing_conflicting_or_ignored_actions(arguments, monkeypatch):
+    def unexpected_fetch(_url):
+        raise AssertionError("invalid identity-only invocation must fail before network access")
+
+    monkeypatch.setattr("scripts.verify_deploy_health.fetch_health_json", unexpected_fetch)
+
+    assert main(["https://service", *arguments]) == 1

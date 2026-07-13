@@ -84,6 +84,17 @@ def test_rollout_helper_accepts_project_id_and_workflow_exports_project():
     assert "PROJECT: ${{ env.PROJECT_ID }}" in workflow
 
 
+def test_legacy_flags_are_baseline_only_and_routing_uses_exact_identity_files():
+    text = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
+    candidate_function = text[text.index("verify_candidate_tag()") : text.index("restore_prior()")]
+
+    assert "--legacy-baseline" not in candidate_function
+    assert "--allow-legacy-identity-without-artifacts" in text
+    assert '--prior-identity "${PRIOR_IDENTITY}"' in text
+    assert '--candidate-identity "${CANDIDATE_IDENTITY}"' in text
+    assert "PRIOR_REVISIONS" not in text
+
+
 def test_runtime_image_packages_all_reviewed_registry_projections():
     dockerfile = (ROOT / "Dockerfile").read_text()
     dockerignore = (ROOT / ".dockerignore").read_text()

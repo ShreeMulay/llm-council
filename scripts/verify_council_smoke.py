@@ -203,8 +203,10 @@ def _observed_route(item: dict[str, Any]) -> Any:
     return item.get("selected_route_id")
 
 
-def _provenance_item(item: dict[str, Any]) -> dict[str, Any]:
-    return {
+def _provenance_item(
+    item: dict[str, Any], *, preserve_legacy_fields: bool = False
+) -> dict[str, Any]:
+    proof = {
         "model": item.get("model"),
         "observed_route_id": _observed_route(item),
         "fallback_used": item.get("fallback_used"),
@@ -212,34 +214,62 @@ def _provenance_item(item: dict[str, Any]) -> dict[str, Any]:
         "allow_provider_substitution": item.get("allow_provider_substitution"),
         "terminal_status": item.get("terminal_status"),
     }
+    if preserve_legacy_fields:
+        proof.update(
+            provider=item.get("provider"),
+            configured_route_id=item.get("route_id"),
+        )
+    return proof
 
 
-def smoke_proof(payload: dict[str, Any]) -> dict[str, Any]:
+def smoke_proof(payload: dict[str, Any], *, legacy_baseline: bool = False) -> dict[str, Any]:
     _results(payload)
     plan = payload.get("metadata", {}).get("execution_plan", {})
-    return {
-        "stage1": [_provenance_item(item) for item in payload["stage1"]],
-        "stage2": [_provenance_item(item) for item in payload["stage2"]],
-        "stage3": _provenance_item(payload["stage3"]),
+    proof = {
+        "stage1": [
+            _provenance_item(item, preserve_legacy_fields=legacy_baseline)
+            for item in payload["stage1"]
+        ],
+        "stage2": [
+            _provenance_item(item, preserve_legacy_fields=legacy_baseline)
+            for item in payload["stage2"]
+        ],
+        "stage3": _provenance_item(
+            payload["stage3"], preserve_legacy_fields=legacy_baseline
+        ),
         "plan_models": [[item.get("model"), item.get("route_id")] for item in plan.get("models", [])],
         "registry_digest": plan.get("registry_digest"),
         "settings": plan.get("settings"),
     }
+    if legacy_baseline:
+        proof["provenance_contract"] = "legacy-unavailable"
+    return proof
 
 
 def _percentile(values: list[float], percentile: float) -> float:
     return sorted(values)[max(0, math.ceil(percentile * len(values)) - 1)]
 
 
-def _sample_metrics(payload: dict[str, Any], elapsed: float) -> dict[str, float]:
+def _sample_metrics(
+    payload: dict[str, Any], elapsed: float, *, legacy_baseline: bool = False
+) -> dict[str, float | None]:
     results = _results(payload)
-    successful = [
-        item.get("terminal_status") == "succeeded"
-        and item.get("fallback_used") is False
-        and bool(_observed_route(item))
-        and not item.get("error")
-        for item in results
-    ]
+    if legacy_baseline:
+        successful = [
+            not bool(item.get("fallback_used"))
+            and item.get("terminal_status") in (None, "succeeded")
+            and not item.get("error")
+            and bool(item.get("response") or item.get("ranking"))
+            for item in results
+        ]
+    else:
+        successful = [
+            item.get("terminal_status") == "succeeded"
+            and item.get("fallback_used") is False
+            and bool(_observed_route(item))
+            and not item.get("error")
+            for item in results
+        ]
     errors = sum(
         not ok or not (item.get("response") or item.get("ranking"))
         for ok, item in zip(successful, results, strict=True)
@@ -248,12 +278,20 @@ def _sample_metrics(payload: dict[str, Any], elapsed: float) -> dict[str, float]
     chairman_text = " ".join(chairman_response.split()) if isinstance(chairman_response, str) else ""
     objective_correct = chairman_text == EXPECTED_CHAIRMAN_OUTPUT
     factual_correct = objective_correct
-    evaluator_format = all(bool(item.get("parsed_ranking")) for item in payload["stage2"])
+    evaluator_format = all(
+        bool(item.get("parsed_ranking"))
+        or (legacy_baseline and bool(item.get("ranking")))
+        for item in payload["stage2"]
+    )
     prompt_tokens = 0.0
     completion_tokens = 0.0
     tokens = 0.0
+    usage_available = True
     for item in results:
         usage = item.get("usage")
+        if legacy_baseline and usage is None:
+            usage_available = False
+            continue
         if not isinstance(usage, dict):
             raise SmokeVerificationError("successful council result usage is missing")
         values = tuple(usage.get(key) for key in ("prompt_tokens", "completion_tokens", "total_tokens"))
@@ -279,15 +317,19 @@ def _sample_metrics(payload: dict[str, Any], elapsed: float) -> dict[str, float]
         "objective_correct": float(objective_correct),
         "factual_error": float(not factual_correct),
         "evaluator_format_success": float(evaluator_format),
-        "route_success": sum(successful) / len(results),
+        "route_success": (
+            sum(successful) / len(results)
+            if not legacy_baseline or any(_observed_route(item) for item in results)
+            else None
+        ),
         "error_rate": errors / len(results),
         "elapsed_latency": elapsed,
         "reported_latency": float(reported),
-        "token_count": float(tokens),
-        "conservative_cost_usd": (
+        "token_count": float(tokens) if usage_available else None,
+        "conservative_cost_usd": ((
             prompt_tokens * PROMPT_COST_UPPER_BOUND_PER_MILLION
             + completion_tokens * COMPLETION_COST_UPPER_BOUND_PER_MILLION
-        ) / 1_000_000,
+        ) / 1_000_000) if usage_available else None,
     }
 
 
@@ -347,39 +389,64 @@ def verify_payload(
     max_error_rate: float = 0.0,
     expected_proof: dict[str, Any] | None = None,
     strict_candidate: bool = True,
+    legacy_baseline: bool = False,
 ) -> dict[str, Any]:
     """Verify one sample. Kept as a focused unit-test/API seam."""
-    proof = smoke_proof(payload)
+    proof = smoke_proof(payload, legacy_baseline=legacy_baseline)
     results = _results(payload)
-    if any(item.get("fallback_used") is not False for item in results):
-        raise SmokeVerificationError("fallback success contract failed")
-    if any(item.get("terminal_status") != "succeeded" or item.get("error") for item in results):
-        raise SmokeVerificationError("council contains an unsuccessful result")
+    if legacy_baseline:
+        if any(bool(item.get("fallback_used")) for item in results):
+            raise SmokeVerificationError("legacy baseline contains explicit fallback")
+        if any(item.get("error") for item in results):
+            raise SmokeVerificationError("legacy baseline contains an explicit error")
+        if any(
+            "terminal_status" in item and item.get("terminal_status") != "succeeded"
+            for item in results
+        ):
+            raise SmokeVerificationError("legacy baseline contains an explicit failure")
+        if any(not (item.get("response") or item.get("ranking")) for item in results):
+            raise SmokeVerificationError("legacy baseline result content is missing")
+    else:
+        if any(item.get("fallback_used") is not False for item in results):
+            raise SmokeVerificationError("fallback success contract failed")
+        if any(item.get("terminal_status") != "succeeded" or item.get("error") for item in results):
+            raise SmokeVerificationError("council contains an unsuccessful result")
     if strict_candidate:
         _strict_provenance(payload, proof)
     if expected_proof is not None and proof != expected_proof:
         raise SmokeVerificationError("restored council provenance does not match baseline")
-    metrics = _sample_metrics(payload, elapsed)
-    if metrics["route_success"] < 0.99:
+    metrics = _sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline)
+    if metrics["route_success"] is not None and metrics["route_success"] < 0.99:
         raise SmokeVerificationError("fallback or observed route success fell below 99%")
     if metrics["error_rate"] > max_error_rate:
         raise SmokeVerificationError("council error rate exceeded ceiling")
     if max(metrics["elapsed_latency"], metrics["reported_latency"]) > max_latency:
         raise SmokeVerificationError("council latency exceeded ceiling")
-    if metrics["token_count"] > max_tokens:
+    if metrics["token_count"] is not None and metrics["token_count"] > max_tokens:
         raise SmokeVerificationError("council token count exceeded ceiling")
-    if metrics["conservative_cost_usd"] > max_cost:
+    if metrics["conservative_cost_usd"] is not None and metrics["conservative_cost_usd"] > max_cost:
         raise SmokeVerificationError("council estimated cost exceeded ceiling")
     if metrics["factual_error"] or not metrics["objective_correct"] or not metrics["evaluator_format_success"]:
         raise SmokeVerificationError("council objective/factual/evaluator quality ceiling failed")
     return proof
 
 
-def _aggregate(provenance: dict[str, Any], samples: list[dict[str, float]]) -> dict[str, Any]:
+def _aggregate(
+    provenance: dict[str, Any], samples: list[dict[str, float | None]]
+) -> dict[str, Any]:
     count = len(samples)
 
-    def mean(key: str) -> float:
-        return sum(item[key] for item in samples) / count
+    def mean(key: str) -> float | None:
+        values = [item[key] for item in samples if item[key] is not None]
+        return sum(values) / len(values) if values else None
+
+    def percentile(key: str) -> float | None:
+        values = [item[key] for item in samples if item[key] is not None]
+        return _percentile(values, 0.95) if values else None
+
+    def total(key: str) -> float | None:
+        values = [item[key] for item in samples if item[key] is not None]
+        return sum(values) if values else None
     return {
         "schema_version": 2,
         "sample_count": count,
@@ -391,17 +458,17 @@ def _aggregate(provenance: dict[str, Any], samples: list[dict[str, float]]) -> d
             "evaluator_format_success_rate": mean("evaluator_format_success"),
             "route_success_rate": mean("route_success"),
             "error_rate": mean("error_rate"),
-            "p95_elapsed_latency_seconds": _percentile([item["elapsed_latency"] for item in samples], 0.95),
-            "p95_reported_latency_seconds": _percentile([item["reported_latency"] for item in samples], 0.95),
+            "p95_elapsed_latency_seconds": percentile("elapsed_latency"),
+            "p95_reported_latency_seconds": percentile("reported_latency"),
             "mean_token_count": mean("token_count"),
-            "total_token_count": sum(item["token_count"] for item in samples),
+            "total_token_count": total("token_count"),
             "mean_conservative_cost_usd": mean("conservative_cost_usd"),
-            "total_conservative_cost_usd": sum(item["conservative_cost_usd"] for item in samples),
+            "total_conservative_cost_usd": total("conservative_cost_usd"),
         },
     }
 
 
-def _metrics_aggregate(samples: list[dict[str, float]]) -> dict[str, Any]:
+def _metrics_aggregate(samples: list[dict[str, float | None]]) -> dict[str, Any]:
     return _aggregate({}, samples)["metrics"]
 
 
@@ -432,18 +499,18 @@ def compare_evidence(
     if not required <= current.keys() or not required <= prior.keys() or not required <= stream_current.keys() or not required <= stream_prior.keys():
         raise SmokeVerificationError("deployment evidence is missing required metrics")
     for mode_current, mode_prior in ((current, prior), (stream_current, stream_prior)):
-        if mode_current["quality_score"] < mode_prior["quality_score"] - max_quality_drop:
+        if mode_prior["quality_score"] is not None and mode_current["quality_score"] < mode_prior["quality_score"] - max_quality_drop:
             raise SmokeVerificationError("candidate quality regressed by more than 3 points")
-        if mode_current["factual_error_rate"] > mode_prior["factual_error_rate"]:
+        if mode_prior["factual_error_rate"] is not None and mode_current["factual_error_rate"] > mode_prior["factual_error_rate"]:
             raise SmokeVerificationError("candidate factual error rate regressed")
-        if mode_current["evaluator_format_success_rate"] < mode_prior["evaluator_format_success_rate"]:
+        if mode_prior["evaluator_format_success_rate"] is not None and mode_current["evaluator_format_success_rate"] < mode_prior["evaluator_format_success_rate"]:
             raise SmokeVerificationError("candidate evaluator format regressed")
         if mode_current["route_success_rate"] < min_route_success:
             raise SmokeVerificationError("candidate route success is below 99%")
         for key in ("p95_elapsed_latency_seconds", "p95_reported_latency_seconds"):
-            if mode_current[key] > mode_prior[key] * max_latency_ratio:
+            if mode_prior[key] is not None and mode_current[key] > mode_prior[key] * max_latency_ratio:
                 raise SmokeVerificationError("candidate p95 latency exceeds baseline by more than 20%")
-        if mode_current["mean_conservative_cost_usd"] > mode_prior["mean_conservative_cost_usd"] * max_cost_ratio:
+        if mode_prior["mean_conservative_cost_usd"] is not None and mode_current["mean_conservative_cost_usd"] > mode_prior["mean_conservative_cost_usd"] * max_cost_ratio:
             raise SmokeVerificationError("candidate cost exceeds baseline by more than 25%")
 
 
@@ -466,6 +533,7 @@ def run_smoke(
     max_cost_ratio: float = 1.25,
     min_route_success: float = 0.99,
     strict_candidate: bool = True,
+    legacy_baseline: bool = False,
     secret_loader: Callable[[str, str], str] = load_secret,
     poster: Callable[[str, str, float], tuple[dict[str, Any], float]] = post_council,
     stream_poster: Callable[[str, str, float], tuple[dict[str, Any], float]] | None = None,
@@ -484,11 +552,12 @@ def run_smoke(
         sample_proof = verify_payload(
             payload, elapsed, max_latency=max_latency, max_tokens=max_tokens, max_cost=max_cost,
             max_error_rate=max_error_rate, expected_proof=expected_proof, strict_candidate=strict_candidate,
+            legacy_baseline=legacy_baseline,
         )
         if provenance is not None and sample_proof != provenance:
             raise SmokeVerificationError("sample provenance is inconsistent")
         provenance = sample_proof
-        metric_samples.append(_sample_metrics(payload, elapsed))
+        metric_samples.append(_sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline))
     stream_provenance: dict[str, Any] | None = None
     stream_metric_samples = []
     for _ in range(stream_samples):
@@ -496,13 +565,14 @@ def run_smoke(
         sample_proof = verify_payload(
             payload, elapsed, max_latency=max_latency, max_tokens=max_tokens, max_cost=max_cost,
             max_error_rate=max_error_rate, expected_proof=expected_proof, strict_candidate=strict_candidate,
+            legacy_baseline=legacy_baseline,
         )
         if sample_proof != provenance:
             raise SmokeVerificationError("sync/stream provenance or policy mismatch")
         if stream_provenance is not None and sample_proof != stream_provenance:
             raise SmokeVerificationError("stream sample provenance is inconsistent")
         stream_provenance = sample_proof
-        stream_metric_samples.append(_sample_metrics(payload, elapsed))
+        stream_metric_samples.append(_sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline))
     evidence = _aggregate(provenance or {}, metric_samples)
     evidence.update({
         "schema_version": 3,
@@ -539,8 +609,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-proof")
     parser.add_argument("--baseline-proof")
     parser.add_argument("--baseline", action="store_true")
+    parser.add_argument("--legacy-baseline", action="store_true")
     args = parser.parse_args(argv)
     try:
+        proof_actions = bool(args.proof_out) + bool(args.expected_proof)
+        if (args.baseline or args.legacy_baseline) and proof_actions != 1:
+            raise SmokeVerificationError(
+                "baseline mode requires exactly one of --proof-out or --expected-proof"
+            )
+        if proof_actions > 1:
+            raise SmokeVerificationError(
+                "--proof-out and --expected-proof cannot be used together"
+            )
+        if args.legacy_baseline and not args.baseline:
+            raise SmokeVerificationError("--legacy-baseline is valid only with --baseline")
         expected_evidence = json.loads(Path(args.expected_proof).read_text()) if args.expected_proof else None
         expected_provenance = expected_evidence.get("provenance") if expected_evidence else None
         baseline = json.loads(Path(args.baseline_proof).read_text()) if args.baseline_proof else None
@@ -551,6 +633,7 @@ def main(argv: list[str] | None = None) -> int:
             max_latency=args.max_latency_seconds, max_tokens=args.max_tokens, max_cost=args.max_cost_usd,
             max_error_rate=args.max_error_rate, expected_proof=expected_provenance,
             baseline_evidence=baseline or expected_evidence, strict_candidate=not args.baseline,
+            legacy_baseline=args.legacy_baseline,
             max_quality_drop=args.max_quality_drop, max_latency_ratio=args.max_latency_ratio,
             max_cost_ratio=args.max_cost_ratio, min_route_success=args.min_route_success,
         )
