@@ -413,6 +413,8 @@ def _validated_council_aggregate(
         "latency": response.get("latency_seconds"),
         "cost": response.get("estimated_total_cost_usd"),
         "failure_rate": response.get("failure_rate"),
+        "failed_operations": response.get("failed_operations", []),
+        "missing_usage_operations": response.get("missing_usage_operations", []),
         "judge_agreement": response.get("judge_agreement"),
         "error_status": response.get("error_status"),
     }
@@ -573,6 +575,8 @@ async def _execute_live_promotion_council(
                 "fallback_used": bool(result.get("fallback_used")),
                 "usage": result.get("usage"),
                 "error": bool(result.get("error")),
+                "error_code": (result.get("error") or {}).get("code"),
+                "terminal_status": result.get("terminal_status"),
             }
             return result
 
@@ -590,10 +594,18 @@ async def _execute_live_promotion_council(
     for item in observations:
         if (
             item["observed_route_id"] != item["planned_route_id"]
-            or item["observed_provider"] != item["planned_provider"]
+            or not _provider_matches_route(
+                item["planned_provider"], item["observed_provider"]
+            )
             or item["fallback_used"]
         ):
-            raise ValueError("promotion council operation route mismatch or fallback/substitution")
+            raise ValueError(
+                "promotion council operation route mismatch or fallback/substitution: "
+                f"stage={item['stage']} model={item['model_id']} "
+                f"planned_route={item['planned_route_id']} observed_route={item['observed_route_id']} "
+                f"planned_provider={item['planned_provider']} observed_provider={item['observed_provider']} "
+                f"fallback_used={item['fallback_used']}"
+            )
     proof = metadata["execution_plan"]
     requested_ids = {seat["model_id"] for seat in request.models}
     final_output = ""
@@ -621,9 +633,35 @@ async def _execute_live_promotion_council(
         **metrics,
         "diversity": len({item["observed_provider"] for item in observations}) / max(1, len(request.models)),
         "failure_rate": sum(item["error"] for item in observations) / max(1, len(observations)),
+        "failed_operations": [
+            {
+                "stage": item["stage"],
+                "model_id": item["model_id"],
+                "route_id": item["observed_route_id"],
+                "error_code": item["error_code"],
+                "terminal_status": item["terminal_status"],
+            }
+            for item in observations
+            if item["error"]
+        ],
+        "missing_usage_operations": [
+            {
+                "stage": item["stage"],
+                "model_id": item["model_id"],
+                "route_id": item["observed_route_id"],
+            }
+            for item in observations
+            if item["usage"] is None or item["usage"] == {}
+        ],
         "judge_agreement": _judge_agreement(metadata),
         "error_status": "council_error" if any(item.get("error") for item in [*stage1, *stage2, stage3]) else None,
     }
+
+
+def _provider_matches_route(planned: object, observed: object) -> bool:
+    """Accept only canonical adapter labels for the captured route provider."""
+    aliases = {"vertex": "vertex-anthropic"}
+    return observed == planned or observed == aliases.get(str(planned))
 
 
 # Backward-compatible private hook used by older tests.

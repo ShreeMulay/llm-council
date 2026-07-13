@@ -45,6 +45,7 @@ from backend.benchmarking.runner import (
     _live_provider_response,
     _observed_council_cost,
     _project_council_cost,
+    _provider_matches_route,
     _run_single,
     _run_support_probes_budgeted,
     deterministic_quality_metrics,
@@ -54,6 +55,12 @@ from backend.benchmarking.runner import (
 from backend.fireworks_client import FIREWORKS_MODEL_MAP
 from backend.main import app
 from backend.model_registry import load_registry
+
+
+def test_provider_route_alias_is_narrow_and_explicit():
+    assert _provider_matches_route("vertex", "vertex-anthropic") is True
+    assert _provider_matches_route("openrouter", "openrouter") is True
+    assert _provider_matches_route("openrouter", "vertex-anthropic") is False
 
 
 def test_default_variant_expansion_probe_gates_unsupported_efforts():
@@ -1005,13 +1012,15 @@ def test_live_promotion_cli_constructs_concrete_executor_without_network(
 
     monkeypatch.setattr("backend.benchmarking.__main__.run_benchmark", fake_run)
     monkeypatch.setattr(sys, "argv", [
-        "benchmark", "--mode", "live", "--promotion", "--output-dir", str(tmp_path)
+        "benchmark", "--mode", "live", "--promotion", "--output-dir", str(tmp_path),
+        "--probe-timeout-seconds", "90",
     ])
     from backend.benchmarking.__main__ import main
 
     main()
     assert captured[0].variant_set == FLAGSHIP_PROMOTION_VARIANT_SET
     assert isinstance(captured[0].council_executor, CouncilPromotionExecutor)
+    assert captured[0].probe_timeout_seconds == 90
 
 
 @pytest.mark.asyncio

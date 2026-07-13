@@ -33,6 +33,7 @@ def main() -> None:
             "Exact-route probes are always required for flagship promotion runs."
         ),
     )
+    parser.add_argument("--probe-timeout-seconds", type=float, default=30.0)
     parser.add_argument("--trials", type=int, default=1)
     parser.add_argument("--max-tokens", type=int, default=2048)
     parser.add_argument("--temperature", type=float, default=0.2)
@@ -52,6 +53,7 @@ def main() -> None:
             variant_set=variant_set,
             council_executor=executor,
             probe_gated_variants=args.probe_gated_variants,
+            probe_timeout_seconds=args.probe_timeout_seconds,
             trials=args.trials,
             max_tokens=args.max_tokens,
             temperature=args.temperature,
