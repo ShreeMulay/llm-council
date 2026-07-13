@@ -585,6 +585,7 @@ class RolloutController:
             allowed_condition_types = {
                 "Ready",
                 "ContainerReady",
+                "ContainerHealthy",
                 "Active",
                 "ResourcesAvailable",
                 "MinInstancesProvisioned",
@@ -617,6 +618,17 @@ class RolloutController:
                 raise ValueError
             container_ready = by_type.get("ContainerReady", {})
             if container_ready.get("state") != "CONDITION_SUCCEEDED":
+                raise ValueError
+            container_healthy = by_type.get("ContainerHealthy")
+            if container_healthy is not None and any(
+                container_healthy.get(field) != value
+                for field, value in {
+                    "state": "CONDITION_SUCCEEDED",
+                    "reason": None,
+                    "revisionReason": None,
+                    "severity": None,
+                }.items()
+            ):
                 raise ValueError
 
             retired_exceptions: dict[str, dict[str, Any]] = {
