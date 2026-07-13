@@ -105,16 +105,39 @@ The prospective top-level `run_rollout` controller SHALL own the complete rollou
 - **THEN** no paid attempt SHALL start during that restoration
 - **AND** successful restoration MUST leave the paid gate available for the separately approved final sync and stream attempts
 
-#### Scenario: Carry the absolute paid cap across incident invocations
+#### Scenario: Reject generic paid-count carry-forward
 
-- **GIVEN** an earlier incident invocation already consumed paid attempts
-- **WHEN** an operator starts the explicitly approved continuation
-- **THEN** `ROLLOUT_PRIOR_PAID_ATTEMPTS` and `--prior-paid-attempts` MUST carry the cumulative consumed count, defaulting to `0`
-- **AND** the deploy entry point and controller MUST reject bool, negative, greater-than-six, noncanonical, or malformed values before controller execution
-- **AND** the controller MUST initialize cumulative attempt numbering from that value while retaining six as the absolute cross-run maximum
-- **AND** prior count `1` MUST permit exactly the five planned requests numbered `2` through `6`
-- **AND** any retry MUST consume one remaining number, prevent a seventh paid request, and cause terminal rollback when the remaining planned sequence cannot fit
-- **AND** a later independent rollout with no carry-forward input MUST retain the default count `0`
+- **GIVEN** no exact resume authorization has been supplied
+- **WHEN** an operator starts fresh mode
+- **THEN** `ROLLOUT_PRIOR_PAID_ATTEMPTS` and `--prior-paid-attempts` MUST equal canonical `0`
+- **AND** bool, negative, positive, noncanonical, malformed, or resume-evidence values MUST fail before controller execution
+- **AND** the fresh five-attempt sequence and optional single infrastructure retry MUST retain six as the absolute maximum
+
+#### Scenario: Resume exactly after two proven prior probes
+
+- **GIVEN** two failed pre-traffic runs each completed a successful prior stream probe and proved `ALREADY_CONVERGED_NO_TRAFFIC`
+- **WHEN** an operator selects exact mode `resume-after-prior-v1`
+- **THEN** count MUST equal `2` and an approved-prefix manifest URI plus exact nonzero generation MUST be supplied
+- **AND** the generation-pinned strict manifest MUST name two distinct source rollout IDs and source approved SHAs and reference two generation-pinned strict source attestations
+- **AND** all four checkpoint/recovery references and both attestation references MUST be distinct and use exact fixed-bucket source rollout, completed-attempt 1/2, recovery, and attestation paths
+- **AND** each no-extra-fields attestation MUST bind schema version 1, resume mode, its source rollout ID and approved SHA, the current target SHA, fixed project/region/service, exact checkpoint/recovery URI and generation, expected attempt 1 then 2, service URL hash, complete canonical traffic hash, and expected prior revision
+- **AND** every manifest, checkpoint, recovery, and attestation integer MUST have exact integer type; booleans, floats, fractional values, equality-only values, missing/unknown fields, duplicate IDs/references, and path/content mismatches MUST fail closed
+- **AND** benchmark and lock-absence proof MUST precede evidence and service preflight; lock acquisition MUST bind manifest URI/generation and target SHA; all evidence and service state MUST be revalidated under lock before fresh prior health and build
+- **AND** only prior stream SHALL be skipped, attempts 3-6 SHALL be shadow sync/stream then final sync/stream, infrastructure retry SHALL be disabled, and attempt 7 MUST be impossible
+- **AND** fresh mode MUST remain count `0` and reject all resume fields
+
+#### Scenario: Normalize exact revision resources
+
+- **WHEN** deploy ownership compares latest-created, latest-ready, template, revision-resource, or expected revision values
+- **THEN** it MUST accept a valid short revision ID or the exact full project/region/service revision resource and compare normalized short IDs
+- **AND** any malformed ID or any other slash namespace MUST fail closed
+
+#### Scenario: Refuse production namespace overrides before effects
+
+- **GIVEN** production constants `tke-phi-privacy-engine`, `us-central1`, and `llm-council`
+- **WHEN** an environment, startup, controller boundary, or production adapter supplies any conflicting project, region, or service
+- **THEN** rollout startup MUST fail before benchmark, lock, service, build, or paid boundary calls
+- **AND** revision normalization MUST use only the compiled constants, never boundary attributes
 
 #### Scenario: Permanently close paid gate on terminal rollback
 

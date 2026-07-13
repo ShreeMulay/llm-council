@@ -8,18 +8,29 @@ on:
         required: true
         type: string
       prior_paid_attempts:
-        description: Number of prior paid rollout attempts
+        description: Fixed cumulative paid attempts (0 fresh, 2 approved resume)
         required: true
         default: "0"
         type: choice
         options:
           - "0"
-          - "1"
           - "2"
-          - "3"
-          - "4"
-          - "5"
-          - "6"
+      rollout_mode:
+        description: Exact rollout authorization mode
+        required: true
+        default: fresh
+        type: choice
+        options:
+          - fresh
+          - resume-after-prior-v1
+      resume_manifest_uri:
+        description: Immutable approved GCS resume manifest URI (resume only)
+        required: false
+        type: string
+      resume_manifest_generation:
+        description: Exact GCS resume manifest generation (resume only)
+        required: false
+        type: string
 
 env:
   PROJECT_ID: tke-phi-privacy-engine
@@ -118,4 +129,7 @@ jobs:
           DEPLOY_ENTRYPOINT_MODE: github
           APPROVED_FORGEJO_SHA: ${{ inputs.approved_forgejo_sha }}
           ROLLOUT_PRIOR_PAID_ATTEMPTS: ${{ inputs.prior_paid_attempts }}
+          ROLLOUT_MODE: ${{ inputs.rollout_mode }}
+          ROLLOUT_RESUME_MANIFEST_URI: ${{ inputs.resume_manifest_uri }}
+          ROLLOUT_RESUME_MANIFEST_GENERATION: ${{ inputs.resume_manifest_generation }}
         run: scripts/deploy.sh
