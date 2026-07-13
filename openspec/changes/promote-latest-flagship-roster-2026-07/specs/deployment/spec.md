@@ -161,6 +161,17 @@ Cloud Run control-plane state SHALL be authoritative for percentages while healt
 - **THEN** every sample MUST match either the prior or candidate identity
 - **AND** observing only one of those known identities SHALL be allowed
 - **AND** identity counts MUST NOT be treated as measured traffic percentages
+- **AND** the prior and candidate identities MUST differ before sampling begins
+
+#### Scenario: Temporarily identify a legacy prior revision
+
+- **GIVEN** the retained pre-promotion prior revision predates artifact identity emission
+- **WHEN** prior identity is captured, a partial stage is sampled, or planned or terminal restoration is proven
+- **THEN** a healthy payload with valid config and an entirely absent `artifacts` field MAY identify that prior revision
+- **AND** the allowance MUST be explicit and default-off
+- **AND** unhealthy or malformed payloads and present empty or partial artifacts MUST fail closed
+- **AND** candidate health and final candidate verification MUST remain strict
+- **AND** this allowance MUST be removed after production and every retained rollback target emit the complete artifact identity contract
 
 #### Scenario: Require candidate at 100 percent
 

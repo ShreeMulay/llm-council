@@ -88,8 +88,10 @@ class Boundaries:
         self.events.append(("service-poll", timeout))
         return deepcopy(self.service_polls.pop(0))
 
-    def health(self, url, expected, *, timeout):
-        self.events.append(("health", url, deepcopy(expected), timeout))
+    def health(self, url, expected, *, timeout, allow_legacy_prior=False):
+        self.events.append(
+            ("health", url, deepcopy(expected), allow_legacy_prior, timeout)
+        )
         return deepcopy(self.health_identity)
 
     def observe(self, percent, *, duration, timeout):
@@ -1693,3 +1695,203 @@ def test_gcloud_build_and_rest_calls_reduce_one_shared_adapter_budget(monkeypatc
     boundaries.service_get(timeout=10)
     assert run_timeouts[-1] == 10
     assert url_timeouts == [8]
+
+
+def _gcloud_boundaries():
+    return api().GcloudBoundaries(
+        project="project", region="region", service="service", approved_sha="a" * 40
+    )
+
+
+def _artifact_health(name="candidate"):
+    return {
+        "status": "healthy",
+        "config": {"identity": name},
+        "artifacts": {
+            "registry_digest": "registry",
+            "projection_digests": {"backend": "digest"},
+            "application_revision": name,
+            "image_digest": f"image-{name}",
+        },
+    }
+
+
+def test_gcloud_health_defaults_strict_and_rejects_absent_artifacts(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    monkeypatch.setattr(
+        health,
+        "fetch_health_json",
+        lambda *args, **kwargs: {"status": "healthy", "config": {"identity": "prior"}},
+    )
+
+    with pytest.raises(health.HealthVerificationError):
+        _gcloud_boundaries().health("https://service.example", None, timeout=7)
+
+
+def test_gcloud_health_allows_valid_legacy_status_and_config_only_when_explicit(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    payload = {"status": "healthy", "config": {"identity": "prior"}}
+    monkeypatch.setattr(health, "fetch_health_json", lambda *args, **kwargs: payload)
+
+    assert _gcloud_boundaries().health(
+        "https://service.example", None, timeout=7, allow_legacy_prior=True
+    ) == payload
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"status": "unhealthy", "config": {"identity": "prior"}},
+        {"status": "healthy", "config": None},
+        {"status": "healthy", "config": {"identity": "prior"}, "artifacts": {}},
+        {
+            "status": "healthy",
+            "config": {"identity": "prior"},
+            "artifacts": {"registry_digest": "registry"},
+        },
+    ],
+)
+def test_gcloud_legacy_health_rejects_unhealthy_malformed_empty_and_partial(
+    monkeypatch, payload
+):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    monkeypatch.setattr(health, "fetch_health_json", lambda *args, **kwargs: payload)
+
+    with pytest.raises(health.HealthVerificationError):
+        _gcloud_boundaries().health(
+            "https://service.example", None, timeout=7, allow_legacy_prior=True
+        )
+
+
+def test_stage_sampling_accepts_mixed_legacy_prior_and_strict_candidate(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    prior_payload = {"status": "healthy", "config": {"identity": "prior"}}
+    candidate_payload = _artifact_health()
+    payloads = iter([prior_payload, candidate_payload, prior_payload, candidate_payload, prior_payload])
+    monkeypatch.setattr(health, "fetch_health_json", lambda *args, **kwargs: next(payloads))
+
+    counts = _gcloud_boundaries().sample_stage_identities(
+        "https://service.example",
+        prior_payload,
+        health.health_identity(candidate_payload),
+        percent=50,
+        timeout=7,
+    )
+
+    assert counts == {"prior": 3, "candidate": 2}
+
+
+def test_stage_sampling_rejects_unknown_legacy_identity(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    prior = {"status": "healthy", "config": {"identity": "prior"}}
+    unknown = {"status": "healthy", "config": {"identity": "unknown"}}
+    monkeypatch.setattr(health, "fetch_health_json", lambda *args, **kwargs: unknown)
+
+    with pytest.raises(api().IdentityRefusal, match="unknown service identity"):
+        _gcloud_boundaries().sample_stage_identities(
+            "https://service.example",
+            prior,
+            health.health_identity(_artifact_health()),
+            percent=10,
+            timeout=7,
+        )
+
+
+def test_stage_sampling_rejects_legacy_prior_at_100_percent(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    prior = {"status": "healthy", "config": {"identity": "prior"}}
+    monkeypatch.setattr(health, "fetch_health_json", lambda *args, **kwargs: prior)
+
+    with pytest.raises(api().IdentityRefusal, match="must all be candidate"):
+        _gcloud_boundaries().sample_stage_identities(
+            "https://service.example",
+            prior,
+            health.health_identity(_artifact_health()),
+            percent=100,
+            timeout=7,
+        )
+
+
+def test_candidate_health_remains_strict_when_artifacts_are_absent(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    monkeypatch.setattr(
+        health,
+        "fetch_health_json",
+        lambda *args, **kwargs: {"status": "healthy", "config": {"identity": "prior"}},
+    )
+
+    with pytest.raises(health.HealthVerificationError):
+        _gcloud_boundaries().candidate_health(
+            "https://candidate.example",
+            expected_revision="a" * 40,
+            expected_image_digest="registry/image@sha256:" + "b" * 64,
+            timeout=7,
+        )
+
+
+def test_planned_and_terminal_rollback_proofs_explicitly_allow_legacy_prior():
+    planned_boundaries = V2Boundaries()
+    planned_boundaries.state = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    planned = controller(planned_boundaries)
+    planned.prior_identity = deepcopy(planned_boundaries.health_identity)
+    planned.transition_traffic = lambda *args, **kwargs: deepcopy(planned_boundaries.state)
+    planned.planned_restore(v2_service())
+    planned_health = next(event for event in planned_boundaries.events if event[0] == "health")
+    assert planned_health[3] is True
+
+    rollback_boundaries = V2Boundaries()
+    snapshot = v2_service()
+    restored = v2_service(generation="44", observed_generation="44", etag="etag-44")
+    rollback_boundaries.state = v2_service(
+        generation="43", observed_generation="43", etag="etag-43"
+    )
+    rollback_boundaries.operation_polls = [v2_operation(done=True, response=restored)]
+    rollback_boundaries.service_polls = [restored]
+    rollback = controller(rollback_boundaries, clock=rollback_boundaries.clock)
+    rollback.snapshot = snapshot
+    rollback.prior_identity = deepcopy(rollback_boundaries.health_identity)
+    rollback.lock_generation = "17"
+    rollback.mutation_armed = True
+    rollback.rollout_owned_state = deepcopy(rollback_boundaries.state)
+    rollback.terminal_rollback(reason="proof")
+    rollback_health = next(
+        event for event in rollback_boundaries.events if event[0] == "health"
+    )
+    assert rollback_health[3] is True
+
+
+def test_equal_prior_and_candidate_rejected_before_stage_fetch(monkeypatch):
+    health = importlib.import_module("scripts.verify_deploy_health")
+    identity = {"status": "healthy", "config": {"identity": "same"}}
+    fetched = []
+    monkeypatch.setattr(
+        health, "fetch_health_json", lambda *args, **kwargs: fetched.append(True) or identity
+    )
+
+    with pytest.raises(api().IdentityRefusal, match="must differ"):
+        _gcloud_boundaries().sample_stage_identities(
+            "https://service.example", identity, identity, percent=10, timeout=7
+        )
+    assert fetched == []
+
+
+def test_prior_identity_extraction_failure_prevents_paid_and_mutating_operations():
+    class ExtractionFailureBoundaries(V2Boundaries):
+        def health(self, url, expected, *, timeout, allow_legacy_prior=False):
+            self.events.append(("health", url, expected, allow_legacy_prior, timeout))
+            raise ValueError("identity extraction failed")
+
+    boundaries = ExtractionFailureBoundaries()
+    boundaries.state = v2_service()
+
+    with pytest.raises(ValueError, match="identity extraction failed"):
+        api().run_rollout(
+            boundaries=boundaries,
+            rollout_id="rollout-123",
+            approved_sha="a" * 40,
+            clock=boundaries.clock,
+        )
+
+    names = [event[0] for event in boundaries.events]
+    assert "build" in names
+    assert not any(name in {"paid", "deploy-shadow", "service-patch"} for name in names)
