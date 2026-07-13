@@ -248,11 +248,10 @@ def v2_operation(*, done, response=None):
 
 
 def ambiguous_deploy_state(*, converged):
-    deployed_traffic = v2_service()["traffic"] + [{
-        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
-        "revision": "llm-council-candidate",
-        "percent": 0,
-    }]
+    # Live Cloud Run v2 evidence: --no-traffic preserves the pre-deploy
+    # traffic and statuses exactly. The automatic candidate target appears
+    # only after the subsequent tagged traffic PATCH.
+    deployed_traffic = v2_service()["traffic"]
     state = v2_service(
         generation="42",
         observed_generation="42" if converged else "41",
@@ -1021,6 +1020,71 @@ def test_live_shadow_traffic_preserves_automatic_and_tagged_candidate_targets():
             "tag": "shadow-rollout-123",
         },
     ]
+
+
+def test_live_no_traffic_deploy_preserves_exact_snapshot_without_candidate_target():
+    snapshot = v2_service()
+
+    assert api()._deploy_traffic(snapshot) == api()._normalized_traffic(snapshot["traffic"])
+    assert not any(
+        item["revision"] == "llm-council-candidate"
+        for item in api()._deploy_traffic(snapshot)
+    )
+
+
+def test_deploy_ownership_rejects_candidate_target_before_shadow_tag_patch():
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    rollout.pre_deploy_state = deepcopy(rollout.snapshot)
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    rollout.validate_candidate_revision(candidate_revision_resource())
+    deployed = ambiguous_deploy_state(converged=True)
+    candidate_target = {
+        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        "revision": "llm-council-candidate",
+        "percent": 0,
+    }
+    deployed["traffic"].append(deepcopy(candidate_target))
+    deployed["trafficStatuses"].append(deepcopy(candidate_target))
+
+    assert rollout._deploy_state_ownership_status(deployed) == "contradictory"
+
+
+@pytest.mark.parametrize("missing_tag", [None, "shadow-rollout-123"], ids=["untagged", "tagged"])
+def test_tagged_stage_rejects_missing_either_candidate_target(missing_tag):
+    boundaries = V2Boundaries()
+    initial = v2_service()
+    requested = api()._stage_traffic(
+        initial, "llm-council-candidate", 0, shadow_tag="shadow-rollout-123"
+    )
+    incomplete = [
+        item
+        for item in requested
+        if not (
+            item["revision"] == "llm-council-candidate"
+            and item.get("tag") == missing_tag
+        )
+    ]
+    observed = v2_service(
+        generation="42",
+        observed_generation="42",
+        etag="etag-42",
+        traffic=incomplete,
+        traffic_statuses=incomplete,
+    )
+    boundaries.state = initial
+    boundaries.operation_polls = [v2_operation(done=True, response=observed)]
+    rollout = controller(boundaries)
+
+    with pytest.raises(api().ConcurrencyRefusal, match="traffic transition refused"):
+        rollout.transition_traffic(
+            requested,
+            expected_uid="service-uid",
+            expected_generation="41",
+            expected_etag="etag-41",
+            timeout=120,
+        )
 
 
 @pytest.mark.parametrize(
@@ -2082,7 +2146,7 @@ def test_terminal_rollback_refuses_concurrent_transition_before_patch():
     assert not any(event[0] == "service-patch" for event in boundaries.events)
 
 
-def test_ambiguous_deploy_recovery_polls_exact_reconciling_state_then_restores():
+def test_ambiguous_deploy_recovery_polls_then_noops_when_snapshot_already_restored():
     class RecoveringDeployBoundaries(V2Boundaries):
         def __init__(self):
             super().__init__()
@@ -2096,9 +2160,6 @@ def test_ambiguous_deploy_recovery_polls_exact_reconciling_state_then_restores()
             return deepcopy(self.deploy_reads.pop(0))
 
     boundaries = RecoveringDeployBoundaries()
-    restored = v2_service(generation="43", observed_generation="43", etag="etag-43")
-    boundaries.operation_polls = [v2_operation(done=True, response=restored)]
-    boundaries.service_polls = [restored]
     rollout = controller(boundaries, clock=boundaries.clock, rollback_seconds=300)
     rollout.snapshot = v2_service()
     rollout.pre_deploy_state = deepcopy(rollout.snapshot)
@@ -2111,8 +2172,7 @@ def test_ambiguous_deploy_recovery_polls_exact_reconciling_state_then_restores()
     rollout.terminal_rollback(reason="ambiguous-deploy")
 
     assert [event[0] for event in boundaries.events].count("service-get") == 2
-    patch = next(event for event in boundaries.events if event[0] == "service-patch")
-    assert patch[1] == {"traffic": rollout.snapshot["traffic"]}
+    assert not any(event[0] == "service-patch" for event in boundaries.events)
     assert any(event[0] == "health" for event in boundaries.events)
     assert any(event[0] == "lock-release" for event in boundaries.events)
 

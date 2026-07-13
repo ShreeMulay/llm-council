@@ -1483,11 +1483,11 @@ class RolloutController:
                 and env_values.get("APP_IMAGE_DIGEST") == self.image_digest
                 and _traffic_equal(
                     current.get("traffic"),
-                    _deploy_traffic(snapshot, self._revision(revision)),
+                    _deploy_traffic(snapshot),
                 )
                 and _traffic_equal(
                     current.get("trafficStatuses"),
-                    _deploy_traffic(snapshot, self._revision(revision)),
+                    _deploy_traffic(snapshot),
                 )
             )
             if not exact_rollout_intent:
@@ -1689,16 +1689,9 @@ def _stage_traffic(
     return _normalized_traffic(requested)
 
 
-def _deploy_traffic(snapshot: dict[str, Any], candidate: str) -> list[dict[str, Any]]:
-    """Return exact post-deploy traffic, including Cloud Run's automatic target."""
-    return [
-        *_normalized_traffic(snapshot["traffic"]),
-        {
-            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
-            "revision": candidate,
-            "percent": 0,
-        },
-    ]
+def _deploy_traffic(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
+    """Return exact post-no-traffic-deploy traffic from live Cloud Run v2."""
+    return _normalized_traffic(snapshot["traffic"])
 
 
 def _transition_stage(
