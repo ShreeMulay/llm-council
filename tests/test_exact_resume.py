@@ -490,3 +490,320 @@ def test_resume_infrastructure_failure_is_not_retried():
         ctl.run_paid_attempt(stage="shadow", surface="sync", url="https://service.example")
     assert len([event for event in boundaries.events if event[0] == "paid"]) == 1
     assert ctl.paid_gate_state == "terminally_closed"
+
+
+SHADOW_CONTROLLER_SHA = "b" * 40
+SHADOW_MANIFEST_URI = f"{rollout.SHADOW_RESUME_MANIFEST_ROOT}/incident.json"
+
+
+class ShadowResumeBoundaries(ResumeBoundaries):
+    def __init__(self):
+        super().__init__()
+        self.state.update(
+            uid=rollout.INCIDENT_SERVICE_UID,
+            generation=rollout.INCIDENT_SERVICE_GENERATION,
+            observed_generation=rollout.INCIDENT_SERVICE_GENERATION,
+            etag="incident-etag-87",
+        )
+
+
+def shadow_evidence(boundaries):
+    prior = evidence(boundaries)
+    prior["target_sha"] = rollout.INCIDENT_TARGET_SHA
+    for source in prior["sources"]:
+        old_uri = source["source_attestation_uri"]
+        generation = source["source_attestation_generation"]
+        attestation = boundaries.generations.pop((old_uri, generation))
+        new_uri = old_uri.rsplit("source-attestation-", 1)[0] + (
+            f"source-attestation-{rollout.INCIDENT_TARGET_SHA}.json"
+        )
+        source["source_attestation_uri"] = new_uri
+        attestation["target_sha"] = rollout.INCIDENT_TARGET_SHA
+        boundaries.generations[(new_uri, generation)] = attestation
+    boundaries.generations[(rollout.INCIDENT_PRIOR_MANIFEST_URI,
+                            rollout.INCIDENT_PRIOR_MANIFEST_GENERATION)] = prior
+    boundaries.generations.pop((MANIFEST_URI, "99"))
+
+    url_hash = hashlib.sha256(boundaries.service_base_url.encode()).hexdigest()
+    attempts = []
+    for number, surface, generation in ((3, "sync", "301"), (4, "stream", "401")):
+        prefix = f"{rollout.EVIDENCE_ROOT}/{rollout.INCIDENT_SOURCE_RUN}/attempts/{number:04d}"
+        started_uri = f"{prefix}-started.json"
+        completed_uri = f"{prefix}-completed.json"
+        common = {
+            "rollout_id": rollout.INCIDENT_SOURCE_RUN,
+            "stage": "shadow",
+            "surface": surface,
+            "url_sha256": "e" * 64,
+            "attempt_number": number,
+            "paid_gate_state": "open",
+        }
+        boundaries.generations[(started_uri, generation)] = {
+            **common, "classification": "started"
+        }
+        completed_generation = str(int(generation) + 1)
+        boundaries.generations[(completed_uri, completed_generation)] = {
+            **common, "classification": "succeeded"
+        }
+        attempts.append({
+            "attempt_number": number,
+            "started_uri": started_uri,
+            "started_generation": generation,
+            "completed_uri": completed_uri,
+            "completed_generation": completed_generation,
+        })
+    recovery_uri = f"{rollout.EVIDENCE_ROOT}/{rollout.INCIDENT_SOURCE_RUN}/recovery.json"
+    boundaries.generations[(recovery_uri, rollout.INCIDENT_RECOVERY_GENERATION)] = {
+        "candidate_image_digest": rollout.INCIDENT_CANDIDATE_DIGEST,
+        "candidate_revision": rollout.INCIDENT_CANDIDATE_REVISION,
+        "candidate_traffic_percent": 0,
+        "classification": "ALREADY_CONVERGED_NO_TRAFFIC",
+        "cumulative_paid_attempts": 4,
+        "lock_generation": "1783979116412357",
+        "prior_revision": "prior",
+        "rollout_id": rollout.INCIDENT_SOURCE_RUN,
+        "service_generation": rollout.INCIDENT_SERVICE_GENERATION,
+        "service_uid": rollout.INCIDENT_SERVICE_UID,
+        "traffic_matches_snapshot": True,
+    }
+    manifest = {
+        "schema_version": 1,
+        "mode": rollout.RESUME_AFTER_SHADOW_MODE,
+        "continuation_id": "oracle-p0-incident",
+        "controller_sha": SHADOW_CONTROLLER_SHA,
+        "target_sha": rollout.INCIDENT_TARGET_SHA,
+        "source_run_id": rollout.INCIDENT_SOURCE_RUN,
+        "project": rollout.FIXED_PROJECT,
+        "region": rollout.FIXED_REGION,
+        "service": rollout.FIXED_SERVICE,
+        "cumulative_paid_attempts": 4,
+        "prior_manifest": {
+            "uri": rollout.INCIDENT_PRIOR_MANIFEST_URI,
+            "generation": rollout.INCIDENT_PRIOR_MANIFEST_GENERATION,
+        },
+        "attempts": attempts,
+        "recovery": {
+            "uri": recovery_uri,
+            "generation": rollout.INCIDENT_RECOVERY_GENERATION,
+        },
+        "current_service": {
+            "uid": rollout.INCIDENT_SERVICE_UID,
+            "generation": rollout.INCIDENT_SERVICE_GENERATION,
+            "etag": "incident-etag-87",
+            "service_url_sha256": url_hash,
+            "traffic_sha256": rollout._traffic_sha256(boundaries.state["traffic"]),
+        },
+        "candidate": {
+            "revision": rollout.INCIDENT_CANDIDATE_REVISION,
+            "image_digest": rollout.INCIDENT_CANDIDATE_DIGEST,
+            "target_sha": rollout.INCIDENT_TARGET_SHA,
+        },
+    }
+    boundaries.generations[(SHADOW_MANIFEST_URI, "777")] = manifest
+    return manifest
+
+
+def shadow_controller(boundaries):
+    ctl = rollout.RolloutController(
+        boundaries=boundaries,
+        rollout_id="incident-continuation",
+        approved_sha=SHADOW_CONTROLLER_SHA,
+        mode=rollout.RESUME_AFTER_SHADOW_MODE,
+        prior_paid_attempts=4,
+        resume_manifest_uri=SHADOW_MANIFEST_URI,
+        resume_manifest_generation="777",
+    )
+    ctl.start_promotion_deadline()
+    return ctl
+
+
+def test_shadow_resume_double_reads_then_claims_once_under_lock_and_never_builds():
+    boundaries = ShadowResumeBoundaries()
+    shadow_evidence(boundaries)
+    ctl = shadow_controller(boundaries)
+
+    state, prior = ctl.prepare_shadow_resume()
+
+    assert state["uid"] == rollout.INCIDENT_SERVICE_UID
+    assert prior == "prior"
+    names = [event[0] for event in boundaries.events]
+    lock_index = next(i for i, event in enumerate(boundaries.events)
+                      if event[0] == "gcs-create" and event[1] == rollout.LOCK_OBJECT)
+    claim_index = next(i for i, event in enumerate(boundaries.events)
+                       if event[0] == "gcs-create" and "/claims/" in event[1])
+    assert names[0] == "lock-absent"
+    assert lock_index < claim_index
+    claim = boundaries.events[claim_index]
+    assert claim[3] == 0
+    assert claim[2] == {
+        "mode": rollout.RESUME_AFTER_SHADOW_MODE,
+        "manifest_uri": SHADOW_MANIFEST_URI,
+        "manifest_generation": "777",
+        "controller_sha": SHADOW_CONTROLLER_SHA,
+        "target_sha": rollout.INCIDENT_TARGET_SHA,
+        "continuation_id": "oracle-p0-incident",
+        "cumulative_paid_attempts": 4,
+    }
+    assert not any(name in {"build", "deploy-shadow", "paid", "service-patch"}
+                   for name in names)
+
+
+def test_shadow_resume_replay_refuses_but_permanent_claim_is_not_deleted():
+    boundaries = ShadowResumeBoundaries()
+    shadow_evidence(boundaries)
+    first = shadow_controller(boundaries)
+    first.prepare_shadow_resume()
+    first.handle_terminal("pre-mutation")
+    claim_path = first.continuation_claim
+    assert claim_path in boundaries.objects
+
+    boundaries.objects.pop(rollout.LOCK_OBJECT)
+    boundaries.lock_held = True
+    second = shadow_controller(boundaries)
+    with pytest.raises(rollout.ResumeRefusal, match="already claimed"):
+        second.prepare_shadow_resume()
+    assert claim_path in boundaries.objects
+
+
+@pytest.mark.parametrize("value", [True, 4.0, "4", 3, 5])
+def test_shadow_resume_requires_exact_python_integer_four(value):
+    with pytest.raises(ValueError, match="prior paid attempts"):
+        rollout.validate_resume_inputs(
+            rollout.RESUME_AFTER_SHADOW_MODE, value, SHADOW_MANIFEST_URI, "777"
+        )
+
+
+@pytest.mark.parametrize("location", ["manifest", "attempt", "recovery", "current", "candidate"])
+def test_shadow_resume_strict_no_extra_fields_at_every_manifest_level(location):
+    boundaries = ShadowResumeBoundaries()
+    manifest = shadow_evidence(boundaries)
+    if location == "manifest":
+        manifest["extra"] = True
+    elif location == "attempt":
+        manifest["attempts"][0]["extra"] = True
+    elif location == "recovery":
+        recovery = manifest["recovery"]
+        boundaries.generations[(recovery["uri"], recovery["generation"])]["extra"] = True
+    elif location == "current":
+        manifest["current_service"]["extra"] = True
+    else:
+        manifest["candidate"]["extra"] = True
+
+    with pytest.raises(rollout.ResumeRefusal):
+        shadow_controller(boundaries).prepare_shadow_resume()
+
+
+def test_shadow_resume_attempts_five_and_six_only_and_never_retry():
+    boundaries = ShadowResumeBoundaries()
+    ctl = shadow_controller(boundaries)
+    ctl.run_paid_attempt(stage="final", surface="sync", url="https://service.example")
+    ctl.run_paid_attempt(stage="final", surface="stream", url="https://service.example")
+    assert ctl.attempt_count == 6
+    assert [event[1:3] for event in boundaries.events if event[0] == "paid"] == [
+        ("final", "sync"), ("final", "stream")
+    ]
+    with pytest.raises(rollout.PaidAttemptLimitError):
+        ctl.run_paid_attempt(stage="extra", surface="sync", url="https://service.example")
+
+    failed = shadow_controller(ShadowResumeBoundaries())
+    failed.boundaries.network_outcomes = [rollout.InfrastructureFailure("timeout")]
+    with pytest.raises(rollout.InfrastructureFailure):
+        failed.run_paid_attempt(stage="final", surface="sync", url="https://service.example")
+    assert len([event for event in failed.boundaries.events if event[0] == "paid"]) == 1
+
+
+class ShadowProgressionBoundaries(V2Boundaries):
+    def __init__(self):
+        super().__init__()
+        traffic = v2_service()["traffic"] + [{
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "orphan-zero",
+            "percent": 0,
+        }]
+        self.state = v2_service(
+            generation="87", observed_generation="87", etag="etag-87",
+            uid=rollout.INCIDENT_SERVICE_UID, traffic=traffic,
+            traffic_statuses=traffic,
+        )
+        self.state["uri"] = self.service_base_url
+        self.health_identity = {"revision": "prior", "digest": "old"}
+        self.candidate = {"revision": "candidate", "digest": "new"}
+
+    def service_patch(self, body, *, etag, timeout=None):
+        self.events.append(("service-patch", deepcopy(body), etag, timeout))
+        generation = int(self.state["generation"]) + 1
+        traffic = deepcopy(body["traffic"])
+        self.state.update(
+            generation=str(generation), observedGeneration=str(generation),
+            etag=f"etag-{generation}", reconciling=False, traffic=traffic,
+            trafficStatuses=rollout._expected_traffic_statuses(traffic),
+            latestReadyRevision=rollout.INCIDENT_CANDIDATE_REVISION,
+        )
+        return {
+            "name": f"operations/{generation}", "done": True,
+            "response": deepcopy(self.state),
+        }
+
+    def poll_service(self, *, timeout):
+        self.events.append(("service-poll", timeout))
+        return deepcopy(self.state)
+
+    def revision_get(self, revision, *, timeout=None):
+        self.events.append(("revision-get", revision, timeout))
+        image = (
+            f"us-central1-docker.pkg.dev/{rollout.FIXED_PROJECT}/llm-council/"
+            f"llm-council@{rollout.INCIDENT_CANDIDATE_DIGEST}"
+        )
+        resource = candidate_revision_resource(rollout.INCIDENT_CANDIDATE_REVISION)
+        resource["containers"][0]["image"] = image
+        resource["containers"][0]["env"] = [
+            {"name": "DEPLOY_REVISION", "value": rollout.INCIDENT_TARGET_SHA},
+            {"name": "APP_IMAGE_DIGEST", "value": image},
+        ]
+        return resource
+
+    def tag_url(self, state, tag):
+        del state
+        return f"https://{tag}---service.example"
+
+    def candidate_health(self, url, *, expected_revision, expected_image_digest, timeout):
+        self.events.append((
+            "candidate-health", url, expected_revision, expected_image_digest, timeout
+        ))
+        return deepcopy(self.candidate)
+
+    def sample_stage_identities(self, url, prior, candidate, *, percent, timeout):
+        self.events.append(("sample", url, prior, candidate, percent, timeout))
+        return {"candidate": 5}
+
+
+def test_shadow_resume_progresses_directly_to_tagged_candidate_then_final_untagged():
+    boundaries = ShadowProgressionBoundaries()
+    ctl = shadow_controller(boundaries)
+    ctl.snapshot = deepcopy(boundaries.state)
+    ctl.prior_service_url = boundaries.service_base_url
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.target_sha = rollout.INCIDENT_TARGET_SHA
+    ctl.candidate_revision = rollout.INCIDENT_CANDIDATE_REVISION
+    ctl.expected_candidate_revision = rollout.INCIDENT_CANDIDATE_REVISION
+    ctl.image_digest = (
+        f"us-central1-docker.pkg.dev/{rollout.FIXED_PROJECT}/llm-council/"
+        f"llm-council@{rollout.INCIDENT_CANDIDATE_DIGEST}"
+    )
+
+    rollout._execute_shadow_resume_progression(ctl, prior_revision="prior")
+
+    patches = [event[1]["traffic"] for event in boundaries.events
+               if event[0] == "service-patch"]
+    assert len(patches) == 2
+    assert any(item.get("tag", "").startswith("shadow-") and item["percent"] == 100
+               for item in patches[0])
+    assert not any(item.get("tag", "").startswith("shadow-") for item in patches[1])
+    assert any(item["revision"] == "orphan-zero" and item["percent"] == 0
+               for item in patches[1])
+    assert any(item.get("tag") == "unrelated" for item in patches[1])
+    paid = [event for event in boundaries.events if event[0] == "paid"]
+    assert [event[1:3] for event in paid] == [("final", "sync"), ("final", "stream")]
+    assert boundaries.events.index(next(event for event in boundaries.events
+                                         if event[0] == "sample")) < boundaries.events.index(paid[0])
+    assert not any(event[0] in {"build", "deploy-shadow"} for event in boundaries.events)

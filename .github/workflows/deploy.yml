@@ -8,13 +8,14 @@ on:
         required: true
         type: string
       prior_paid_attempts:
-        description: Fixed cumulative paid attempts (0 fresh, 2 approved resume)
+        description: Fixed cumulative paid attempts (0 fresh, 2 prior resume, 4 shadow resume)
         required: true
         default: "0"
         type: choice
         options:
           - "0"
           - "2"
+          - "4"
       rollout_mode:
         description: Exact rollout authorization mode
         required: true
@@ -23,6 +24,7 @@ on:
         options:
           - fresh
           - resume-after-prior-v1
+          - resume-after-shadow-v1
       resume_manifest_uri:
         description: Immutable approved GCS resume manifest URI (resume only)
         required: false

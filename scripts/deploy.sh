@@ -49,11 +49,22 @@ case "${rollout_mode}" in
       printf '%s\n' 'Refusing resume without exact manifest generation' >&2; exit 2;
     }
     ;;
+  resume-after-shadow-v1)
+    [[ "${prior_paid_attempts}" == 4 ]] || {
+      printf '%s\n' 'Refusing shadow resume without exactly four prior paid attempts' >&2; exit 2;
+    }
+    [[ "${manifest_uri}" =~ ^gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence/resume-after-shadow-v1/[^/?#]+\.json$ ]] || {
+      printf '%s\n' 'Refusing shadow resume manifest outside approved evidence prefix' >&2; exit 2;
+    }
+    [[ "${manifest_generation}" =~ ^[1-9][0-9]*$ ]] || {
+      printf '%s\n' 'Refusing shadow resume without exact manifest generation' >&2; exit 2;
+    }
+    ;;
   *) printf '%s\n' 'Refusing unknown rollout mode' >&2; exit 2 ;;
 esac
 
 args=(--approved-sha "${approved}" --mode "${rollout_mode}" --prior-paid-attempts "${prior_paid_attempts}")
-if [[ "${rollout_mode}" == resume-after-prior-v1 ]]; then
+if [[ "${rollout_mode}" == resume-after-prior-v1 || "${rollout_mode}" == resume-after-shadow-v1 ]]; then
   args+=(--resume-manifest-uri "${manifest_uri}" --resume-manifest-generation "${manifest_generation}")
 fi
 exec uv run python -m scripts.bounded_rollout "${args[@]}"
