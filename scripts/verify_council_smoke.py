@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import subprocess
@@ -13,6 +14,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from pathlib import Path
+from types import MappingProxyType
 from typing import Any
 
 from backend.execution_planning import ExecutionPlan, build_execution_plan
@@ -33,6 +35,56 @@ ALLOWED_STREAM_EVENTS = {
 PROMPT_COST_UPPER_BOUND_PER_MILLION = 50.0
 COMPLETION_COST_UPPER_BOUND_PER_MILLION = 100.0
 APPROVED_LEGACY_FALLBACK_PROVIDER = "openrouter-fallback"
+PRICING_SNAPSHOT_ID = "oracle-approved-rollout-pricing-2026-07-13-v1"
+PRICING_SNAPSHOT_CAPTURED_AT = "2026-07-13"
+PRICING_SNAPSHOT_SOURCE = (
+    "approved OpenSpec/direct provider snapshots plus OpenRouter public catalog"
+)
+MODEL_ROUTE_LIST_PRICING = MappingProxyType({
+    ("openai/gpt-5.5", "openrouter:openai/gpt-5.5"): (5.0, 30.0),
+    ("openai/gpt-5.6-sol", "openrouter:openai/gpt-5.6-sol"): (5.0, 30.0),
+    ("anthropic/claude-fable-5", "vertex:anthropic/claude-fable-5"): (10.0, 50.0),
+    ("fireworks/glm-5.2", "fireworks:fireworks/glm-5.2"): (1.4, 4.4),
+    ("fireworks/glm-5.2", "openrouter:fireworks/glm-5.2"): (1.4, 4.4),
+    ("google/gemini-3.1-pro-preview", "openrouter:google/gemini-3.1-pro-preview"): (2.0, 12.0),
+    ("x-ai/grok-4.3", "xai:x-ai/grok-4.3"): (3.0, 15.0),
+    ("x-ai/grok-4.5", "xai:x-ai/grok-4.5"): (3.0, 15.0),
+})
+
+
+def _pricing_snapshot_digest(
+    table: Any = MODEL_ROUTE_LIST_PRICING,
+    source: str = PRICING_SNAPSHOT_SOURCE,
+    captured_at: str = PRICING_SNAPSHOT_CAPTURED_AT,
+) -> str:
+    canonical = {
+        "captured_at": captured_at,
+        "source": source,
+        "table": [
+            {
+                "model": model,
+                "route_id": route,
+                "input_usd_per_million": prices[0],
+                "output_usd_per_million": prices[1],
+            }
+            for (model, route), prices in sorted(table.items())
+        ],
+    }
+    encoded = json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
+
+
+PRICING_SNAPSHOT_DIGEST = _pricing_snapshot_digest()
+PRICING_SNAPSHOT_METADATA = MappingProxyType({
+    "pricing_snapshot_id": PRICING_SNAPSHOT_ID,
+    "pricing_snapshot_captured_at": PRICING_SNAPSHOT_CAPTURED_AT,
+    "pricing_snapshot_source": PRICING_SNAPSHOT_SOURCE,
+    "pricing_snapshot_digest": PRICING_SNAPSHOT_DIGEST,
+})
+
+LEGACY_ROUTE_PROVIDER_ALIASES = MappingProxyType({
+    "vertex": "vertex-anthropic",
+})
 
 
 def canonical_smoke_plan() -> ExecutionPlan:
@@ -287,20 +339,60 @@ def _sample_metrics(
         or (legacy_baseline and bool(item.get("ranking")))
         for item in payload["stage2"]
     )
-    prompt_tokens = 0.0
-    completion_tokens = 0.0
-    tokens = 0.0
-    usage_available = True
-    for item in results:
+    prompt_tokens = 0
+    completion_tokens = 0
+    tokens = 0
+    list_cost_usd = 0.0
+    plan_models = payload.get("metadata", {}).get("execution_plan", {}).get("models", [])
+    planned_routes: dict[str, set[str]] = {}
+    if legacy_baseline and isinstance(plan_models, list):
+        for planned in plan_models:
+            if not isinstance(planned, dict):
+                continue
+            model, route = planned.get("model"), planned.get("route_id")
+            if isinstance(model, str) and isinstance(route, str) and route:
+                planned_routes.setdefault(model, set()).add(route)
+    stage1_count = len(payload["stage1"])
+    for index, item in enumerate(results):
         usage = item.get("usage")
         model = item.get("model")
+        if not isinstance(model, str) or not model:
+            raise SmokeVerificationError("successful council result model is missing")
+        route = item.get("route_id") if legacy_baseline else _observed_route(item)
+        resolved_legacy_route = legacy_baseline and not route and index >= stage1_count
+        if resolved_legacy_route:
+            routes = planned_routes.get(model, set())
+            if len(routes) != 1:
+                raise SmokeVerificationError(
+                    "legacy model-route mapping is missing or ambiguous"
+                )
+            route = next(iter(routes))
+            provider = item.get("provider")
+            if not isinstance(provider, str) or not provider:
+                raise SmokeVerificationError(
+                    "legacy route-less result provider is missing"
+                )
+            if provider.endswith("-fallback"):
+                raise SmokeVerificationError(
+                    "legacy route-less result fallback provider is not canonical"
+                )
+            route_provider = route.partition(":")[0]
+            canonical_provider = LEGACY_ROUTE_PROVIDER_ALIASES.get(
+                route_provider, route_provider
+            )
+            if provider != canonical_provider:
+                raise SmokeVerificationError(
+                    "legacy route-less result provider does not match resolved route"
+                )
+        if not isinstance(route, str) or not route:
+            raise SmokeVerificationError("successful council result route is missing")
+        prices = MODEL_ROUTE_LIST_PRICING.get((model, route))
+        if prices is None:
+            raise SmokeVerificationError("successful council result model-route price is unknown")
         legacy_xai = legacy_baseline and (
             item.get("provider") == "xai"
             or (isinstance(model, str) and model.startswith("x-ai/grok-"))
         )
-        if legacy_baseline and usage is None and not legacy_xai:
-            usage_available = False
-            continue
         if not isinstance(usage, dict):
             raise SmokeVerificationError("successful council result usage is missing")
         values = tuple(usage.get(key) for key in ("prompt_tokens", "completion_tokens", "total_tokens"))
@@ -321,17 +413,29 @@ def _sample_metrics(
             if any(
                 isinstance(value, bool)
                 or not isinstance(value, (int, float))
-                or not math.isfinite(value)
+                or (isinstance(value, float) and not math.isfinite(value))
                 or value < 0
                 for value in values
             ):
                 raise SmokeVerificationError("successful council result usage is invalid")
             prompt, completion, total = values
-            if not math.isclose(prompt + completion, total, rel_tol=0.0, abs_tol=1e-9):
+            totals_match = (
+                prompt + completion == total
+                if all(isinstance(value, int) for value in values)
+                else math.isclose(prompt + completion, total, rel_tol=0.0, abs_tol=1e-9)
+            )
+            if not totals_match:
                 raise SmokeVerificationError("successful council result usage total is inconsistent")
+        try:
+            operation_cost = (prompt * prices[0] + completion * prices[1]) / 1_000_000
+        except OverflowError as exc:
+            raise SmokeVerificationError("successful council result cost is nonfinite") from exc
+        if not math.isfinite(operation_cost):
+            raise SmokeVerificationError("successful council result cost is nonfinite")
         prompt_tokens += prompt
         completion_tokens += completion
         tokens += total
+        list_cost_usd += operation_cost
     reported = payload.get("timing", {}).get("elapsed_seconds")
     if not isinstance(reported, (int, float)):
         raise SmokeVerificationError("reported latency metric is missing")
@@ -346,11 +450,12 @@ def _sample_metrics(
         "error_rate": errors / len(results),
         "elapsed_latency": elapsed,
         "reported_latency": float(reported),
-        "token_count": float(tokens) if usage_available else None,
-        "conservative_cost_usd": ((
+        "token_count": float(tokens),
+        "conservative_cost_usd": (
             prompt_tokens * PROMPT_COST_UPPER_BOUND_PER_MILLION
             + completion_tokens * COMPLETION_COST_UPPER_BOUND_PER_MILLION
-        ) / 1_000_000) if usage_available else None,
+        ) / 1_000_000,
+        "list_cost_usd": list_cost_usd,
     }
 
 
@@ -491,6 +596,8 @@ def _aggregate(
             "total_token_count": total("token_count"),
             "mean_conservative_cost_usd": mean("conservative_cost_usd"),
             "total_conservative_cost_usd": total("conservative_cost_usd"),
+            "mean_list_cost_usd": mean("list_cost_usd"),
+            "total_list_cost_usd": total("list_cost_usd"),
         },
     }
 
@@ -508,6 +615,12 @@ def compare_evidence(
     max_cost_ratio: float = 1.25,
     min_route_success: float = 0.99,
 ) -> None:
+    snapshot_keys = set(PRICING_SNAPSHOT_METADATA)
+    candidate_snapshot = {key: candidate.get(key) for key in snapshot_keys}
+    baseline_snapshot = {key: baseline.get(key) for key in snapshot_keys}
+    expected_snapshot = dict(PRICING_SNAPSHOT_METADATA)
+    if candidate_snapshot != baseline_snapshot or candidate_snapshot != expected_snapshot:
+        raise SmokeVerificationError("deployment evidence pricing snapshot does not match")
     if candidate.get("sample_count", 0) < MIN_SAMPLES or baseline.get("sample_count", 0) < MIN_SAMPLES:
         raise SmokeVerificationError("insufficient samples in deployment evidence")
     if candidate.get("stream_sample_count", 0) < MIN_STREAM_SAMPLES or baseline.get("stream_sample_count", 0) < MIN_STREAM_SAMPLES:
@@ -520,7 +633,8 @@ def compare_evidence(
     required = {
         "quality_score", "factual_error_rate", "evaluator_format_success_rate", "route_success_rate",
         "error_rate", "p95_elapsed_latency_seconds", "p95_reported_latency_seconds",
-        "mean_token_count", "mean_conservative_cost_usd", "objective_correct_rate",
+        "mean_token_count", "mean_conservative_cost_usd", "mean_list_cost_usd",
+        "objective_correct_rate",
     }
     stream_current, stream_prior = candidate.get("stream_metrics", {}), baseline.get("stream_metrics", {})
     if not required <= current.keys() or not required <= prior.keys() or not required <= stream_current.keys() or not required <= stream_prior.keys():
@@ -537,7 +651,7 @@ def compare_evidence(
         for key in ("p95_elapsed_latency_seconds", "p95_reported_latency_seconds"):
             if mode_prior[key] is not None and mode_current[key] > mode_prior[key] * max_latency_ratio:
                 raise SmokeVerificationError("candidate p95 latency exceeds baseline by more than 20%")
-        if mode_prior["mean_conservative_cost_usd"] is not None and mode_current["mean_conservative_cost_usd"] > mode_prior["mean_conservative_cost_usd"] * max_cost_ratio:
+        if mode_prior["mean_list_cost_usd"] is not None and mode_current["mean_list_cost_usd"] > mode_prior["mean_list_cost_usd"] * max_cost_ratio:
             raise SmokeVerificationError("candidate cost exceeds baseline by more than 25%")
 
 
@@ -611,6 +725,7 @@ def run_smoke(
     evidence = _aggregate(provenance or {}, metric_samples)
     evidence.update({
         "schema_version": 3,
+        **PRICING_SNAPSHOT_METADATA,
         "stream_sample_count": len(stream_metric_samples),
         "stream_provenance": stream_provenance or {},
         "stream_metrics": _metrics_aggregate(stream_metric_samples),
