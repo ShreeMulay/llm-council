@@ -522,6 +522,98 @@ def test_initial_service_accepts_semantically_equal_reordered_statuses():
     assert api().validate_initial_service(state) == state
 
 
+def _live_tagged_stage(percent=0):
+    snapshot = v2_service(traffic=[
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "prior",
+            "percent": 100,
+        },
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "prior",
+            "percent": 0,
+            "tag": "stable",
+        },
+    ])
+    traffic = api()._stage_traffic(
+        snapshot, "candidate", percent, shadow_tag="shadow-rollout-123"
+    )
+    statuses = [
+        deepcopy(item)
+        for item in traffic
+        if not (item["percent"] == 0 and "tag" not in item)
+    ]
+    for item in statuses:
+        if "tag" in item:
+            item["uri"] = f"https://{item['tag']}---service.example"
+    return traffic, statuses
+
+
+def test_expected_traffic_statuses_removes_only_untagged_zero_without_merging():
+    traffic, statuses = _live_tagged_stage()
+
+    assert len(traffic) == 4
+    assert len(statuses) == 3
+    assert api()._expected_traffic_statuses(list(reversed(traffic))) == api()._normalized_traffic(
+        statuses
+    )
+    assert any(
+        item["revision"] == "candidate"
+        and item["percent"] == 0
+        and item.get("tag") == "shadow-rollout-123"
+        for item in api()._expected_traffic_statuses(traffic)
+    )
+
+
+@pytest.mark.parametrize(
+    "malformed",
+    [
+        [{"revision": "prior", "percent": 100}, {"revision": "candidate", "percent": None}],
+        [{"revision": "prior", "percent": 100}, {"revision": "candidate", "percent": 0, "tag": ""}],
+        [{"revision": "prior", "percent": 99}, {"revision": "candidate", "percent": 0}],
+    ],
+)
+def test_expected_traffic_statuses_normalizes_strictly_before_projection(malformed):
+    with pytest.raises(ValueError):
+        api()._expected_traffic_statuses(malformed)
+
+
+def test_initial_service_accepts_live_tagged_stage_status_projection():
+    traffic, statuses = _live_tagged_stage()
+    state = v2_service(traffic=traffic, traffic_statuses=list(reversed(statuses)))
+
+    assert api().validate_initial_service(state) == state
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda statuses: statuses.pop(
+            next(index for index, item in enumerate(statuses) if item.get("tag") == "shadow-rollout-123")
+        ),
+        lambda statuses: statuses.append({"revision": "extra", "percent": 0, "tag": "extra"}),
+        lambda statuses: statuses.pop(
+            next(index for index, item in enumerate(statuses) if item["percent"] > 0)
+        ),
+        lambda statuses: next(
+            item for item in statuses if item.get("tag") == "shadow-rollout-123"
+        ).update(tag="wrong-shadow"),
+        lambda statuses: next(item for item in statuses if item["percent"] > 0).update(percent=9),
+        lambda statuses: next(item for item in statuses if item["percent"] > 0).update(
+            revision="wrong-revision"
+        ),
+    ],
+    ids=["missing-tagged", "extra", "positive-omitted", "wrong-tag", "wrong-percent", "wrong-revision"],
+)
+def test_initial_service_rejects_nonprojected_live_statuses(mutate):
+    traffic, statuses = _live_tagged_stage()
+    mutate(statuses)
+
+    with pytest.raises(api().InitialStateRefusal):
+        api().validate_initial_service(v2_service(traffic=traffic, traffic_statuses=statuses))
+
+
 @pytest.mark.parametrize("reconciling", [None, True, False, 0, "false", {}, []])
 def test_initial_service_rejects_true_or_malformed_reconciling(reconciling):
     state = v2_service(reconciling=reconciling)
@@ -807,6 +899,20 @@ def test_rollback_proves_exact_tags_health_uid_generation_etag_before_lock_relea
         etag="etag-43",
         traffic=[
             {"type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", "revision": "candidate", "percent": 0},
+            {
+                "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+                "revision": "candidate",
+                "percent": 100,
+                "tag": "shadow-rollout-123",
+            },
+            {
+                "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+                "revision": "debug",
+                "percent": 0,
+                "tag": "unrelated",
+            },
+        ],
+        traffic_statuses=[
             {
                 "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
                 "revision": "candidate",
@@ -1175,14 +1281,9 @@ def test_shadow_tag_collision_refuses_before_build_service_mutation_or_paid_call
 
 def test_live_reordered_candidate_targets_and_statuses_are_accepted():
     boundaries = V2Boundaries()
-    requested = api()._stage_traffic(
-        v2_service(), "candidate", 10, shadow_tag="shadow-rollout-123"
-    )
+    requested, projected_statuses = _live_tagged_stage(10)
     live_traffic = list(reversed(requested))
-    live_statuses = deepcopy(requested[1:] + requested[:1])
-    for item in live_statuses:
-        if "tag" in item:
-            item["uri"] = f"https://{item['tag']}---service.example"
+    live_statuses = list(reversed(projected_statuses))
     converged = v2_service(
         generation="42",
         observed_generation="42",
@@ -1201,6 +1302,50 @@ def test_live_reordered_candidate_targets_and_statuses_are_accepted():
         expected_etag="etag-41",
         timeout=120,
     ) == converged
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda statuses: statuses.pop(
+            next(index for index, item in enumerate(statuses) if item.get("tag") == "shadow-rollout-123")
+        ),
+        lambda statuses: statuses.append({"revision": "extra", "percent": 0, "tag": "extra"}),
+        lambda statuses: statuses.pop(
+            next(index for index, item in enumerate(statuses) if item["percent"] > 0)
+        ),
+        lambda statuses: next(
+            item for item in statuses if item.get("tag") == "shadow-rollout-123"
+        ).update(tag="wrong-shadow"),
+        lambda statuses: next(item for item in statuses if item["percent"] > 0).update(percent=9),
+        lambda statuses: next(item for item in statuses if item["percent"] > 0).update(
+            revision="wrong-revision"
+        ),
+    ],
+    ids=["missing-tagged", "extra", "positive-omitted", "wrong-tag", "wrong-percent", "wrong-revision"],
+)
+def test_live_transition_rejects_nonprojected_statuses(mutate):
+    boundaries = V2Boundaries()
+    requested, statuses = _live_tagged_stage(10)
+    mutate(statuses)
+    converged = v2_service(
+        generation="42",
+        observed_generation="42",
+        etag="etag-42",
+        traffic=requested,
+        traffic_statuses=statuses,
+    )
+    boundaries.state = v2_service()
+    boundaries.operation_polls = [v2_operation(done=True, response=converged)]
+
+    with pytest.raises(api().ConcurrencyRefusal):
+        controller(boundaries).transition_traffic(
+            requested,
+            expected_uid="service-uid",
+            expected_generation="41",
+            expected_etag="etag-41",
+            timeout=120,
+        )
 
 
 @pytest.mark.parametrize(
@@ -1514,6 +1659,43 @@ def test_rollback_polls_explicit_true_then_accepts_live_omitted_false():
     assert any(event[0] == "lock-release" for event in boundaries.events)
 
 
+def test_post_patch_live_status_projection_is_owned_then_rollback_restores_and_releases_lock():
+    boundaries = V2Boundaries()
+    snapshot = v2_service()
+    requested, statuses = _live_tagged_stage(10)
+    owned = v2_service(
+        generation="42", observed_generation="42", etag="etag-42",
+        traffic=requested, traffic_statuses=statuses,
+    )
+    restored = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries.state = snapshot
+    boundaries.operation_polls = [
+        v2_operation(done=True, response=owned),
+        v2_operation(done=True, response=restored),
+    ]
+    boundaries.service_polls = [owned, restored]
+    boundaries.health_identity = {"revision": "prior", "digest": "old"}
+    rollout = controller(boundaries, clock=boundaries.clock, rollback_seconds=300)
+    rollout.snapshot = snapshot
+    rollout.prior_identity = deepcopy(boundaries.health_identity)
+    rollout.lock_generation = "17"
+    rollout.mutation_armed = True
+
+    assert rollout.transition_traffic(
+        requested,
+        expected_uid="service-uid",
+        expected_generation="41",
+        expected_etag="etag-41",
+        timeout=120,
+    ) == owned
+    boundaries.state = owned
+    rollout.terminal_rollback(reason="post-patch-failure")
+
+    assert [event[0] for event in boundaries.events].count("service-patch") == 2
+    assert ("lock-release", "17") in boundaries.events
+    assert rollout.lock_generation is None
+
+
 def test_rollback_classification_rejects_explicit_null_reconciling():
     rollout = controller(V2Boundaries())
     rollout.snapshot = v2_service()
@@ -1557,6 +1739,24 @@ def test_live_omission_and_explicit_values_drive_deploy_and_current_ownership():
     malformed_owned["reconciling"] = None
     rollout.rollout_owned_state = malformed_owned
     assert rollout._current_state_is_owned(deepcopy(converged)) is False
+
+
+def test_current_ownership_accepts_only_exact_live_status_projection():
+    rollout = controller(V2Boundaries())
+    traffic, statuses = _live_tagged_stage(10)
+    owned = v2_service(traffic=traffic, traffic_statuses=statuses)
+    rollout.rollout_owned_state = deepcopy(owned)
+
+    assert rollout._current_state_is_owned(deepcopy(owned)) is True
+
+    missing_tagged = deepcopy(owned)
+    missing_tagged["trafficStatuses"] = [
+        item
+        for item in missing_tagged["trafficStatuses"]
+        if item.get("tag") != "shadow-rollout-123"
+    ]
+    rollout.rollout_owned_state = deepcopy(missing_tagged)
+    assert rollout._current_state_is_owned(deepcopy(missing_tagged)) is False
 
 
 def test_live_retired_ready_revision_and_converged_service_are_exactly_owned():
