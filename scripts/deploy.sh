@@ -4,13 +4,11 @@
 set -euo pipefail
 
 PROJECT="tke-phi-privacy-engine"
-VERTEX_PROJECT="shree-development"
-VERTEX_LOCATION="global"
-REQUIRE_VERTEX_ANTHROPIC="true"
 REGION="us-central1"
 SERVICE="llm-council"
 REGISTRY="us-central1-docker.pkg.dev/${PROJECT}/llm-council/llm-council"
 TAG=$(git rev-parse --short HEAD)
+DEPLOY_REVISION=$(git rev-parse HEAD)
 
 echo "Deploying llm-council @ ${TAG} to Cloud Run..."
 
@@ -21,29 +19,24 @@ gcloud builds submit \
   --tag="${REGISTRY}:${TAG}" \
   --quiet
 
-# Also tag as latest
-gcloud artifacts docker tags add \
-  "${REGISTRY}:${TAG}" \
-  "${REGISTRY}:latest" \
-  --quiet 2>/dev/null || true
-
-# Deploy
-gcloud run deploy "${SERVICE}" \
-  --project="${PROJECT}" \
-  --region="${REGION}" \
-  --image="${REGISTRY}:${TAG}" \
-  --port=8800 \
-  --timeout=1800 \
-  --memory=512Mi \
-  --cpu=1 \
-  --min-instances=1 \
-  --max-instances=2 \
-  --allow-unauthenticated \
-  --update-env-vars=VERTEX_PROJECT_ID="${VERTEX_PROJECT}",VERTEX_LOCATION="${VERTEX_LOCATION}",REQUIRE_VERTEX_ANTHROPIC="${REQUIRE_VERTEX_ANTHROPIC}" \
-  --set-secrets=OPENROUTER_API_KEY=llm-council-openrouter-key:latest,ANTHROPIC_API_KEY=llm-council-anthropic-key:latest,FIREWORKS_API_KEY=llm-council-fireworks-key:latest,GROK_API_KEY=llm-council-grok-key:latest,COUNCIL_API_KEY=llm-council-api-key:latest \
-  --quiet
-
-# Verify
-URL=$(gcloud run services describe "${SERVICE}" --region="${REGION}" --project="${PROJECT}" --format='value(status.url)')
-python3 scripts/verify_deploy_health.py "${URL}"
-echo "Deployed: ${REGISTRY}:${TAG}"
+DIGEST=$(gcloud artifacts docker images describe "${REGISTRY}:${TAG}" \
+  --project="${PROJECT}" --format='value(image_summary.digest)')
+IMAGE_DIGEST="${REGISTRY}@${DIGEST}"
+ROLLOUT_OBSERVATION_SECONDS="${ROLLOUT_OBSERVATION_SECONDS:-30}"
+ROLLOUT_HEALTH_SAMPLES="${ROLLOUT_HEALTH_SAMPLES:-1}"
+ROLLOUT_SERVICE_HEALTH_SAMPLES="${ROLLOUT_SERVICE_HEALTH_SAMPLES:-50}"
+ROLLOUT_SMOKE_SAMPLES="${ROLLOUT_SMOKE_SAMPLES:-5}"
+COUNCIL_MAX_LATENCY_SECONDS="${COUNCIL_MAX_LATENCY_SECONDS:-480}"
+COUNCIL_MAX_TOKENS="${COUNCIL_MAX_TOKENS:-60000}"
+COUNCIL_MAX_COST_USD="${COUNCIL_MAX_COST_USD:-1.50}"
+COUNCIL_MAX_ERROR_RATE="${COUNCIL_MAX_ERROR_RATE:-0}"
+COUNCIL_MAX_QUALITY_DROP="${COUNCIL_MAX_QUALITY_DROP:-3}"
+COUNCIL_MAX_LATENCY_RATIO="${COUNCIL_MAX_LATENCY_RATIO:-1.20}"
+COUNCIL_MAX_COST_RATIO="${COUNCIL_MAX_COST_RATIO:-1.25}"
+COUNCIL_MIN_ROUTE_SUCCESS="${COUNCIL_MIN_ROUTE_SUCCESS:-0.99}"
+export PROJECT REGION SERVICE IMAGE_DIGEST DEPLOY_REVISION ROLLOUT_OBSERVATION_SECONDS
+export ROLLOUT_HEALTH_SAMPLES ROLLOUT_SERVICE_HEALTH_SAMPLES ROLLOUT_SMOKE_SAMPLES COUNCIL_MAX_LATENCY_SECONDS
+export COUNCIL_MAX_TOKENS COUNCIL_MAX_COST_USD COUNCIL_MAX_ERROR_RATE COUNCIL_MAX_QUALITY_DROP
+export COUNCIL_MAX_LATENCY_RATIO COUNCIL_MAX_COST_RATIO COUNCIL_MIN_ROUTE_SUCCESS
+scripts/cloud_run_semantic_rollout.sh
+echo "Deployed immutable image digest"

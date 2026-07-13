@@ -5,8 +5,6 @@ steps:
       - 'build'
       - '-t'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:$COMMIT_SHA'
-      - '-t'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:latest'
       - '.'
 
   # Push to Artifact Registry
@@ -15,32 +13,7 @@ steps:
       - 'push'
       - 'us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:$COMMIT_SHA'
 
-  - name: 'gcr.io/cloud-builders/docker'
-    args:
-      - 'push'
-      - 'us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:latest'
-
-  # Deploy to Cloud Run
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'run'
-      - 'deploy'
-      - 'llm-council'
-      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:$COMMIT_SHA'
-      - '--region=us-central1'
-      - '--port=8800'
-      - '--timeout=1800'
-      - '--memory=512Mi'
-      - '--cpu=1'
-      - '--min-instances=1'
-      - '--max-instances=2'
-      - '--allow-unauthenticated'
-      - '--update-env-vars=VERTEX_PROJECT_ID=shree-development,VERTEX_LOCATION=global,REQUIRE_VERTEX_ANTHROPIC=true'
-      - '--set-secrets=OPENROUTER_API_KEY=llm-council-openrouter-key:latest,ANTHROPIC_API_KEY=llm-council-anthropic-key:latest,FIREWORKS_API_KEY=llm-council-fireworks-key:latest,GROK_API_KEY=llm-council-grok-key:latest,COUNCIL_API_KEY=llm-council-api-key:latest'
-      - '--quiet'
-
-  # Verify deployed strict Vertex configuration from /health.
+  # Resolve the pushed digest, then use the shared shadow/canary/rollback helper.
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: bash
     args:
@@ -48,8 +21,43 @@ steps:
       - 'pipefail'
       - '-c'
       - >-
-        URL=$$(gcloud run services describe llm-council --region=us-central1 --project=$PROJECT_ID --format='value(status.url)') &&
-        python3 scripts/verify_deploy_health.py "$${URL}"
+        DIGEST=$$(gcloud artifacts docker images describe
+        "us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council:$COMMIT_SHA"
+        --project="$PROJECT_ID" --format='value(image_summary.digest)') &&
+        export PROJECT="$PROJECT_ID" REGION=us-central1 SERVICE=llm-council
+        DEPLOY_REVISION="$COMMIT_SHA"
+        ROLLOUT_OBSERVATION_SECONDS="${_ROLLOUT_OBSERVATION_SECONDS}"
+        ROLLOUT_HEALTH_SAMPLES="${_ROLLOUT_HEALTH_SAMPLES}"
+        ROLLOUT_SERVICE_HEALTH_SAMPLES="${_ROLLOUT_SERVICE_HEALTH_SAMPLES}"
+        ROLLOUT_SMOKE_SAMPLES="${_ROLLOUT_SMOKE_SAMPLES}"
+        COUNCIL_MAX_LATENCY_SECONDS="${_COUNCIL_MAX_LATENCY_SECONDS}"
+        COUNCIL_MAX_TOKENS="${_COUNCIL_MAX_TOKENS}"
+        COUNCIL_MAX_COST_USD="${_COUNCIL_MAX_COST_USD}"
+        COUNCIL_MAX_ERROR_RATE="${_COUNCIL_MAX_ERROR_RATE}"
+        COUNCIL_MAX_QUALITY_DROP="${_COUNCIL_MAX_QUALITY_DROP}"
+        COUNCIL_MAX_LATENCY_RATIO="${_COUNCIL_MAX_LATENCY_RATIO}"
+        COUNCIL_MAX_COST_RATIO="${_COUNCIL_MAX_COST_RATIO}"
+        COUNCIL_MIN_ROUTE_SUCCESS="${_COUNCIL_MIN_ROUTE_SUCCESS}"
+        IMAGE_DIGEST="us-central1-docker.pkg.dev/$PROJECT_ID/llm-council/llm-council@$${DIGEST}" &&
+        export DEPLOY_REVISION IMAGE_DIGEST ROLLOUT_OBSERVATION_SECONDS
+        ROLLOUT_HEALTH_SAMPLES ROLLOUT_SERVICE_HEALTH_SAMPLES ROLLOUT_SMOKE_SAMPLES COUNCIL_MAX_LATENCY_SECONDS
+        COUNCIL_MAX_TOKENS COUNCIL_MAX_COST_USD COUNCIL_MAX_ERROR_RATE COUNCIL_MAX_QUALITY_DROP
+        COUNCIL_MAX_LATENCY_RATIO COUNCIL_MAX_COST_RATIO COUNCIL_MIN_ROUTE_SUCCESS &&
+        scripts/cloud_run_semantic_rollout.sh
+
+substitutions:
+  _ROLLOUT_OBSERVATION_SECONDS: '30'
+  _ROLLOUT_HEALTH_SAMPLES: '1'
+  _ROLLOUT_SERVICE_HEALTH_SAMPLES: '50'
+  _ROLLOUT_SMOKE_SAMPLES: '5'
+  _COUNCIL_MAX_LATENCY_SECONDS: '480'
+  _COUNCIL_MAX_TOKENS: '60000'
+  _COUNCIL_MAX_COST_USD: '1.50'
+  _COUNCIL_MAX_ERROR_RATE: '0'
+  _COUNCIL_MAX_QUALITY_DROP: '3'
+  _COUNCIL_MAX_LATENCY_RATIO: '1.20'
+  _COUNCIL_MAX_COST_RATIO: '1.25'
+  _COUNCIL_MIN_ROUTE_SUCCESS: '0.99'
 
 options:
   logging: CLOUD_LOGGING_ONLY

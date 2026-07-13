@@ -9,11 +9,11 @@ The system SHALL provide a normalized model catalog for the production council r
 - **GIVEN** the `/api/models` endpoint is called without a provider filter
 - **WHEN** the model catalog is returned
 - **THEN** it includes the current 9-model production roster:
-  - `openai/gpt-5.5` via OpenRouter
+  - `openai/gpt-5.6-sol` via OpenRouter
   - `anthropic/claude-fable-5` via Vertex AI Anthropic in `shree-development`
   - `fireworks/glm-5.2` via Fireworks direct
   - `google/gemini-3.1-pro-preview` via OpenRouter
-  - `x-ai/grok-4.3` via xAI direct
+  - `x-ai/grok-4.5` via xAI direct
   - `fireworks/kimi-k2.7-code` via Fireworks direct
   - `deepseek/deepseek-v4-pro` via OpenRouter
   - `meta-llama/llama-4-maverick` via OpenRouter
@@ -38,7 +38,7 @@ The system SHALL dynamically fetch and cache available OpenRouter models when Op
 - **GIVEN** a valid `OPENROUTER_API_KEY`
 - **WHEN** the `/api/models?provider=openrouter` endpoint is called
 - **THEN** it returns array of model objects with:
-  - `id`: Model identifier (for example, `openai/gpt-5.5`)
+  - `id`: Model identifier (for example, `openai/gpt-5.6-sol`)
   - `name`: Human-readable name when provided by OpenRouter
   - `context_length`: Maximum tokens when provided by OpenRouter
   - `pricing.prompt`: Input cost per token when provided by OpenRouter
@@ -73,9 +73,17 @@ The system SHALL include direct-provider production models even when the provide
 
 ### Scenario: Include xAI Direct Entry
 
-- **GIVEN** `x-ai/grok-4.3` is configured
+- **GIVEN** `x-ai/grok-4.5` is configured
 - **WHEN** the catalog is generated
 - **THEN** it is represented as an xAI direct route
+
+### Scenario: Preserve Superseded Flagships as Explicit Routes
+
+- **GIVEN** `openai/gpt-5.5` or `x-ai/grok-4.3` is requested explicitly
+- **WHEN** the catalog resolves the historical model
+- **THEN** the historical ID MAY remain callable through its own route
+- **AND** it MUST NOT be marked as a production, compact, evaluator, or chairman model
+- **AND** it MUST NOT replace or alias the promoted ID silently
 
 ## Requirement: Legacy Cerebras Routes
 

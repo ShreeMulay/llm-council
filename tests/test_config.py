@@ -24,7 +24,7 @@ class TestResolveModelAlias:
     """Test model alias resolution."""
 
     def test_gpt_alias(self):
-        assert resolve_model_alias("gpt") == "openai/gpt-5.5"
+        assert resolve_model_alias("gpt") == "openai/gpt-5.6-sol"
 
     def test_opus_alias(self):
         assert resolve_model_alias("opus") == "anthropic/claude-opus-4.8"
@@ -45,7 +45,7 @@ class TestResolveModelAlias:
         assert resolve_model_alias("pro") == "google/gemini-3.1-pro-preview"
 
     def test_grok_alias(self):
-        assert resolve_model_alias("grok") == "x-ai/grok-4.3"
+        assert resolve_model_alias("grok") == "x-ai/grok-4.5"
 
     def test_kimi_alias(self):
         assert resolve_model_alias("kimi") == "fireworks/kimi-k2.7-code"
@@ -79,23 +79,21 @@ class TestResolveModelAlias:
         assert resolve_model_alias("unknown-model") == "unknown-model"
 
     def test_case_insensitive(self):
-        assert resolve_model_alias("GPT") == "openai/gpt-5.5"
+        assert resolve_model_alias("GPT") == "openai/gpt-5.6-sol"
         assert resolve_model_alias("OpUs") == "anthropic/claude-opus-4.8"
 
     def test_whitespace_stripped(self):
-        assert resolve_model_alias("  gpt  ") == "openai/gpt-5.5"
+        assert resolve_model_alias("  gpt  ") == "openai/gpt-5.6-sol"
 
 
 class TestGetModelReasoningEffort:
     """Test dual-mode reasoning effort for GPT-5.5."""
 
-    def test_gpt_5_5_stage1_medium(self):
-        """GPT-5.5 as responder uses medium reasoning."""
-        assert get_model_reasoning_effort("openai/gpt-5.5") == "medium"
+    def test_gpt_5_6_sol_stage1_medium(self):
+        assert get_model_reasoning_effort("openai/gpt-5.6-sol") == "medium"
 
-    def test_gpt_5_5_evaluator_high(self):
-        """GPT-5.5 as evaluator uses high reasoning."""
-        assert get_model_reasoning_effort("openai/gpt-5.5-evaluator") == "high"
+    def test_gpt_5_6_sol_evaluator_high(self):
+        assert get_model_reasoning_effort("openai/gpt-5.6-sol-evaluator") == "high"
 
     def test_opus_xhigh(self):
         assert get_model_reasoning_effort("anthropic/claude-opus-4.8") == "xhigh"
@@ -163,8 +161,9 @@ class TestDefaultCouncilModels:
     def test_has_9_models(self):
         assert len(DEFAULT_COUNCIL_MODELS) == 9
 
-    def test_includes_gpt_5_5(self):
-        assert "openai/gpt-5.5" in DEFAULT_COUNCIL_MODELS
+    def test_includes_gpt_5_6_sol_and_excludes_legacy_gpt_5_5(self):
+        assert "openai/gpt-5.6-sol" in DEFAULT_COUNCIL_MODELS
+        assert "openai/gpt-5.5" not in DEFAULT_COUNCIL_MODELS
 
     def test_includes_fable_5(self):
         assert "anthropic/claude-fable-5" in DEFAULT_COUNCIL_MODELS
@@ -187,8 +186,9 @@ class TestDefaultCouncilModels:
     def test_includes_gemini_3_1(self):
         assert "google/gemini-3.1-pro-preview" in DEFAULT_COUNCIL_MODELS
 
-    def test_includes_grok_4_20(self):
-        assert "x-ai/grok-4.3" in DEFAULT_COUNCIL_MODELS
+    def test_includes_grok_4_5_and_excludes_legacy_grok_4_3(self):
+        assert "x-ai/grok-4.5" in DEFAULT_COUNCIL_MODELS
+        assert "x-ai/grok-4.3" not in DEFAULT_COUNCIL_MODELS
 
     def test_includes_kimi_k2_7_code(self):
         assert "fireworks/kimi-k2.7-code" in DEFAULT_COUNCIL_MODELS
@@ -261,7 +261,7 @@ class TestEvaluatorPriority:
         assert EVALUATOR_PRIORITY[1] == "deepseek/deepseek-v4-pro"
 
     def test_gpt_third(self):
-        assert EVALUATOR_PRIORITY[2] == "openai/gpt-5.5"
+        assert EVALUATOR_PRIORITY[2] == "openai/gpt-5.6-sol"
 
 
 class TestTieredTruncation:
@@ -272,7 +272,7 @@ class TestTieredTruncation:
         # These functions don't exist yet — they will be added to config.py
         from backend.config import calculate_max_response_chars
         assert calculate_max_response_chars("anthropic/claude-fable-5", 9) == 8000
-        assert calculate_max_response_chars("openai/gpt-5.5", 9) == 8000
+        assert calculate_max_response_chars("openai/gpt-5.6-sol", 9) == 8000
         assert calculate_max_response_chars("deepseek/deepseek-v4-pro", 9) == 8000
 
     def test_legacy_opus_stays_strong_for_backcompat(self):
@@ -284,7 +284,7 @@ class TestTieredTruncation:
         """Medium models get moderate space."""
         from backend.config import calculate_max_response_chars
         assert calculate_max_response_chars("google/gemini-3.1-pro-preview", 9) == 10000
-        assert calculate_max_response_chars("x-ai/grok-4.3", 9) == 10000
+        assert calculate_max_response_chars("x-ai/grok-4.5", 9) == 10000
         assert calculate_max_response_chars("fireworks/kimi-k2.6", 9) == 10000
         assert calculate_max_response_chars("fireworks/kimi-k2.7-code", 9) == 10000
         assert calculate_max_response_chars("fireworks/glm-5.2", 9) == 10000

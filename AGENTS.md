@@ -16,11 +16,11 @@ uv run python -m backend.main
 
 | # | Model | Provider | Role | Tier | Special Settings |
 |---|-------|----------|------|------|------------------|
-| 1 | GPT-5.5 | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
+| 1 | GPT-5.6 Sol | OpenRouter | Anchor/Reasoning | Strong | `reasoning_effort: medium` (Stage 1), `high` (Stage 2 evaluator) |
 | 2 | Claude Fable 5 | Vertex AI Anthropic | Lead Coder + **Chairman** | Strong | `output_config.effort: high`; PHI-eligible only through covered Google/Vertex BAA route; OpenRouter fallback is non-PHI/deidentified only |
 | 3 | Fireworks GLM-5.2 xHigh | Fireworks Direct | Tool Specialist | Medium | Promoted by 2026-07-04 benchmark; `reasoning_effort: xhigh` |
 | 4 | Gemini 3.1 Pro Preview | OpenRouter | Knowledge Generalist | Medium | - |
-| 5 | Grok 4.3 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
+| 5 | Grok 4.5 | xAI Direct | Real-time Intel | Medium | xAI flagship slot |
 | 6 | Kimi K2.7 Code | Fireworks Direct | Long-context/Coding Generalist | Medium | Promoted by 2026-07-04 benchmark over Kimi K2.6 |
 | 7 | DeepSeek V4 Pro | OpenRouter | Code/Math Specialist | Strong | Evaluator priority #2 |
 | 8 | Llama 4 Maverick | OpenRouter | Open-weight Generalist | Weak | - |
@@ -28,12 +28,12 @@ uv run python -m backend.main
 
 ### Compact Mode (5 Models)
 
-Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.5, Fable 5, GLM-5.2, Gemini 3.1 Pro, Grok 4.3.
+Use `compact: true` for faster/cheaper deliberation with core 5 models: GPT-5.6 Sol, Fable 5, GLM-5.2, Gemini 3.1 Pro, Grok 4.5.
 
 ### Deliberation Architecture
 
 **Stage 1** — All 9 models respond in parallel (cached for 1 hour by model+prompt hash)
-**Stage 2** — Top 3 evaluators rank responses (Fable 5-high, DeepSeek V4 Pro, GPT-5.5-high):
+**Stage 2** — Top 3 evaluators rank responses (Fable 5-high, DeepSeek V4 Pro, GPT-5.6 Sol-high):
 - Self-exclusion: evaluators don't rank their own response
 - Randomized order: different label-to-model mapping per evaluator
 - Dynamic truncation: strong models 8K, medium 10K, weak 12K (inverse allocation)
@@ -94,21 +94,21 @@ MCP Config:
 - `REQUIRE_VERTEX_ANTHROPIC` - Set `true` in covered deployments to refuse non-BAA OpenRouter fallback for Vertex-routed Fable
 
 **API Keys (loaded from `~/.bash_secrets`):**
-- `OPENROUTER_API_KEY` - For GPT-5.5, Claude Fable 5 non-PHI fallback, Claude Opus 4.8 compatibility, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, and fallbacks
+- `OPENROUTER_API_KEY` - For GPT-5.6 Sol, Claude Fable 5 non-PHI fallback, Claude Opus 4.8 compatibility, Gemini, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, MiniMax M3 challenger, and fallbacks
 - `FIREWORKS_API_KEY` - For default Fireworks GLM-5.2 xHigh and Kimi K2.7 Code routing, plus explicit legacy Kimi K2.6
-- `GROK_API_KEY` - For Grok 4.3 via xAI Direct
+- `GROK_API_KEY` - For Grok 4.5 via xAI Direct
 - `CEREBRAS_API_KEY` - Legacy
 
 ## Model Aliases
 
 Use aliases in `/council` command:
-- `gpt` -> openai/gpt-5.5
+- `gpt` -> openai/gpt-5.6-sol
 - `opus` -> anthropic/claude-opus-4.8
 - `glm` -> fireworks/glm-5.2 (default Fireworks GLM-5.2 xHigh)
 - `glm-fw` -> fireworks/glm-5.2 (legacy alias for default GLM)
 - `glm-zai` -> z-ai/glm-5.2 (explicit legacy baseline)
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `grok` -> x-ai/grok-4.3
+- `grok` -> x-ai/grok-4.5
 - `kimi` -> fireworks/kimi-k2.7-code
 - `kimi26` -> fireworks/kimi-k2.6 (explicit legacy baseline)
 - `deepseek` -> deepseek/deepseek-v4-pro
@@ -143,6 +143,13 @@ curl -X POST http://localhost:8800/api/council \
   -H "Content-Type: application/json" \
   -d '{"query": "What is quantum computing?"}'
 ```
+
+## Production Deploy Contract
+
+- Cloud Run MUST preserve `VERTEX_PROJECT_ID=shree-development`, `VERTEX_LOCATION=global`, and `REQUIRE_VERTEX_ANTHROPIC=true`.
+- GitHub Actions, Cloud Build, and `scripts/deploy.sh` MUST all run `scripts/verify_deploy_health.py` after deploy.
+- Verification requires the exact ordered nine-seat, compact, evaluator, Fable chairman, Vertex routing, and promoted GPT-5.6 Sol/Grok 4.5 health metadata. An HTTP 200 alone is not success.
+- Deployment output and verification failures MUST NOT expose secret values.
 
 ## OpenSpec
 

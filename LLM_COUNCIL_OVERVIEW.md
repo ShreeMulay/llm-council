@@ -41,10 +41,10 @@ Claude Fable 5, serving as Chairman, reviews all ranked responses and critiques 
 | Member | Role | Specialty |
 |--------|------|-----------|
 | **Claude Fable 5** | **Chairman & Lead Coder** | Default production synthesis, code architecture, and final decision-making with high effort through Vertex AI Anthropic. PHI-eligible only in covered Google Cloud projects/services under BAA; OpenRouter fallback is non-PHI/deidentified only. |
-| **GPT-5.5** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
+| **GPT-5.6 Sol** | **Anchor & Reasoning Specialist** | Deep multi-step reasoning with extended thinking. Logical analysis, first-principles thinking, and systematic problem decomposition. Keeps deliberations grounded. |
 | **Fireworks GLM-5.2 xHigh** | **Tool & Integration Specialist** | Practical implementation, API integration, and workflow automation through Fireworks direct routing with xHigh reasoning. Promoted after the 2026-07-04 benchmark tied z-ai GLM quality while improving latency under the cost gate. |
 | **Gemini 3.1 Pro Preview** | **Knowledge Generalist** | Broad interdisciplinary knowledge, creative connections, and comprehensive context across domains. |
-| **Grok 4.3** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks. |
+| **Grok 4.5** | **Real-time Intelligence** | Current information, rapid prototyping, and pragmatic reality checks. |
 | **Kimi K2.7 Code** | **Long-context/Coding Generalist** | Long-context review, coding/debugging, and synthesis through Fireworks direct routing. Promoted after the 2026-07-04 benchmark beat Kimi K2.6 overall while tying coding/debugging and improving speed. |
 | **DeepSeek V4 Pro** | **Code & Math Specialist** | Rigorous code, math, and structured reasoning; priority evaluator. |
 | **Llama 4 Maverick** | **Open-weight Generalist** | Open-weight perspective for diversity and practical critique. |
@@ -117,6 +117,10 @@ mcp_llm-council_llm_council(query="Your question", final_only=false)
 - **Request Deliverables**: Ask for "code + tests + documentation"
 - **Allow Time**: Complex problems deserve the full 10-minute deliberation
 - **Use Quick Mode**: For simpler questions where speed matters more than depth
+
+### Production Health Contract
+
+Production keeps Fable on the covered Vertex route with `VERTEX_PROJECT_ID=shree-development`, `VERTEX_LOCATION=global`, and `REQUIRE_VERTEX_ANTHROPIC=true`. Every deploy path uses the same semantic health verifier, which checks the exact nine-seat order, compact and evaluator rosters, Fable chairman and Vertex routing, and promoted GPT-5.6 Sol/Grok 4.5 IDs. A reachable endpoint or HTTP 200 by itself does not qualify as a successful deployment.
 
 ---
 

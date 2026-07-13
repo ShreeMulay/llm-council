@@ -61,17 +61,7 @@ REQUIRE_VERTEX_ANTHROPIC = os.getenv("REQUIRE_VERTEX_ANTHROPIC", "").lower() in 
     "on",
 }
 
-# Council Models - 9 models for deliberation
-# Optimized architecture: 9 collect -> 3 evaluate -> top 5 synthesize
-# 1. GPT-5.5 via OpenRouter (Anchor/Fast Thinker, reasoning: medium)
-# 2. Claude Fable 5 via Vertex AI Anthropic (Lead Coder + Chairman, reasoning: high)
-# 3. GLM-5.2 xHigh via Fireworks Direct (Tool Specialist)
-# 4. Gemini 3.1 Pro Preview via OpenRouter (Knowledge Generalist)
-# 5. Grok 4.3 via xAI Direct (Real-time Intel)
-# 6. Kimi K2.7 Code via Fireworks Direct (Long-Context Specialist)
-# 7. DeepSeek V4 Pro via OpenRouter (Deep Reasoner)
-# 8. Llama 4 Maverick via OpenRouter (Open-Weights Leader)
-# 9. Qwen 3.7 Max via OpenRouter (Agentic/Tools Expert)
+# Council roster and role projections come exclusively from the canonical registry.
 ALL_MODEL_IDS = list(MODEL_REGISTRY.production_roster)
 
 DEFAULT_COUNCIL_MODELS = ALL_MODEL_IDS
@@ -247,13 +237,7 @@ def calculate_max_response_chars(model_id: str, num_models: int) -> int:
     return TRUNCATION_LIMITS.get(tier, DEFAULT_TRUNCATION_LIMIT)
 
 
-# Per-model reasoning effort for OpenRouter requests.
-# GPT-5.5 dual-mode: medium for Stage 1 (responder), high for Stage 2 (evaluator)
-# Fable 5 uses high effort as the default chairman/evaluator.
-# Opus 4.8 keeps xhigh for backward-compatible explicit usage.
-# Validated 2026-05-29: reasoning_effort=xhigh is honored by Opus 4.8 via
-# OpenRouter native Anthropic provider (enables thinking, no API error).
-# Models not listed use provider default (no reasoning_effort sent).
+# Per-model reasoning effort projected from registry role settings.
 MODEL_REASONING_EFFORT = {
     key: effort
     for model in MODEL_REGISTRY.models
@@ -266,9 +250,7 @@ MODEL_REASONING_EFFORT = {
 def get_model_reasoning_effort(model_id: str) -> str | None:
     """Get the reasoning effort for a model, or None to use provider default.
 
-    Supports dual-mode for GPT-5.5:
-    - "openai/gpt-5.5" -> medium (Stage 1 responder)
-    - "openai/gpt-5.5-evaluator" -> high (Stage 2 evaluator)
+    Role-specific evaluator lookups use the ``-evaluator`` suffix.
     """
     return MODEL_REASONING_EFFORT.get(model_id)
 

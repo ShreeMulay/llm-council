@@ -1,6 +1,6 @@
 """Integration tests for FastAPI endpoints."""
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -314,6 +314,134 @@ class TestCouncilEndpoint:
         )
 
         assert response.status_code == 422
+
+    @patch("backend.main.handle_council_command")
+    def test_request_policy_false_is_forwarded_exactly(self, mock_handle, mock_council_result):
+        mock_handle.return_value = mock_council_result
+
+        response = client.post(
+            "/api/council",
+            json={
+                "query": "test",
+                "allow_declared_route_failover": False,
+                "allow_provider_substitution": False,
+            },
+        )
+
+        assert response.status_code == 200
+        assert mock_handle.await_args.kwargs["allow_declared_route_failover"] is False
+        assert mock_handle.await_args.kwargs["allow_provider_substitution"] is False
+
+    @patch("backend.main.handle_council_command")
+    def test_request_policy_defaults_preserve_production_behavior(
+        self, mock_handle, mock_council_result
+    ):
+        mock_handle.return_value = mock_council_result
+
+        response = client.post("/api/council", json={"query": "test"})
+
+        assert response.status_code == 200
+        assert mock_handle.await_args.kwargs["allow_declared_route_failover"] is True
+        assert mock_handle.await_args.kwargs["allow_provider_substitution"] is False
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("allow_declared_route_failover", "false"),
+            ("allow_declared_route_failover", 0),
+            ("allow_provider_substitution", "true"),
+            ("allow_provider_substitution", 1),
+        ],
+    )
+    def test_request_policy_rejects_malformed_values(self, field, value):
+        response = client.post("/api/council", json={"query": "test", field: value})
+
+        assert response.status_code == 422
+
+    def test_sync_and_stream_capture_identical_false_request_policy(self):
+        sync_plans = []
+        stream_plans = []
+
+        async def run_full(*_args, **kwargs):
+            sync_plans.append(kwargs["execution_plan"])
+            return ([{"model": "A", "response": "ok"}], [], {"model": "C", "response": "ok"}, {})
+
+        async def stream_full(*_args, **kwargs):
+            stream_plans.append(kwargs["execution_plan"])
+            yield {
+                "event": "complete",
+                "stage1": [],
+                "stage2": [],
+                "stage3": {"model": "C", "response": "ok"},
+                "metadata": {},
+            }
+
+        policy = {
+            "query": "test",
+            "compact": True,
+            "tool_context": False,
+            "allow_declared_route_failover": False,
+            "allow_provider_substitution": False,
+        }
+        with (
+            patch("backend.opencode_integration.run_full_council", side_effect=run_full),
+            patch("backend.main.stream_council", side_effect=stream_full),
+            patch(
+                "backend.opencode_integration.augment_query_with_tool_context",
+                new=AsyncMock(return_value=("test", {"enabled": False})),
+            ),
+            patch(
+                "backend.main.augment_query_with_tool_context",
+                new=AsyncMock(return_value=("test", {"enabled": False})),
+            ),
+        ):
+            sync_response = client.post("/api/council", json=policy)
+            stream_response = client.post("/api/council/stream", json=policy)
+
+        assert sync_response.status_code == stream_response.status_code == 200
+        assert len(sync_plans) == len(stream_plans) == 1
+        for plan in (*sync_plans, *stream_plans):
+            assert plan.settings.allow_declared_route_failover is False
+            assert plan.settings.allow_provider_substitution is False
+            assert all(
+                operation.settings.allow_declared_route_failover is False
+                and operation.settings.allow_provider_substitution is False
+                for operation in (*plan.stage1, *plan.evaluators, plan.chairman)
+            )
+
+    def test_strict_vertex_floor_survives_request_policy_controls(self, monkeypatch):
+        plans = []
+
+        async def run_full(*_args, **kwargs):
+            plans.append(kwargs["execution_plan"])
+            return ([{"model": "A", "response": "ok"}], [], {"model": "C", "response": "ok"}, {})
+
+        monkeypatch.setattr("backend.execution_planning.config.REQUIRE_VERTEX_ANTHROPIC", True)
+        with (
+            patch("backend.opencode_integration.run_full_council", side_effect=run_full),
+            patch(
+                "backend.opencode_integration.augment_query_with_tool_context",
+                new=AsyncMock(return_value=("test", {"enabled": False})),
+            ),
+        ):
+            response = client.post(
+                "/api/council",
+                json={
+                    "query": "test",
+                    "models": ["fable"],
+                    "chairman": "fable",
+                    "allow_declared_route_failover": True,
+                    "allow_provider_substitution": True,
+                },
+            )
+
+        assert response.status_code == 200
+        assert plans[0].require_vertex_anthropic is True
+        assert all(
+            route.provider == "vertex"
+            for operation in (*plans[0].stage1, *plans[0].evaluators, plans[0].chairman)
+            for route in operation.routes
+        )
 
 
 class TestCouncilEndpointWithRealDeliberation:

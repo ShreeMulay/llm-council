@@ -1,0 +1,406 @@
+{
+  "blocked_variants": [],
+  "budget": {
+    "cap_usd": 80.0,
+    "observed_spend_usd": 33.377030999999995,
+    "stop_reason": null,
+    "stopped": false
+  },
+  "config_digest": "13d851bcc611bb3dbc0d56c08ad24c82deb03fadf4270b49a4a6d14dc174ec96",
+  "council_spend_usd": 33.30169999999999,
+  "council_variants": [
+    {
+      "ablated_seat": null,
+      "configuration": "legacy",
+      "roster": [
+        "openai/gpt-5.5",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.3",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "full-council-old"
+    },
+    {
+      "ablated_seat": null,
+      "configuration": "full",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "full-council-new"
+    },
+    {
+      "ablated_seat": "openai/gpt-5.6-sol",
+      "configuration": "removed",
+      "roster": [
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-1"
+    },
+    {
+      "ablated_seat": "anthropic/claude-fable-5",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-2"
+    },
+    {
+      "ablated_seat": "fireworks/glm-5.2",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-3"
+    },
+    {
+      "ablated_seat": "google/gemini-3.1-pro-preview",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-4"
+    },
+    {
+      "ablated_seat": "x-ai/grok-4.5",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-5"
+    },
+    {
+      "ablated_seat": "fireworks/kimi-k2.7-code",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-6"
+    },
+    {
+      "ablated_seat": "deepseek/deepseek-v4-pro",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-7"
+    },
+    {
+      "ablated_seat": "meta-llama/llama-4-maverick",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-removal-8"
+    },
+    {
+      "ablated_seat": "qwen/qwen3.7-max",
+      "configuration": "removed",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick"
+      ],
+      "variant_id": "seat-removal-9"
+    },
+    {
+      "ablated_seat": "openai/gpt-5.6-sol",
+      "configuration": "replacement",
+      "roster": [
+        "openai/gpt-5.5",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.5",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-ablation-gpt"
+    },
+    {
+      "ablated_seat": "x-ai/grok-4.5",
+      "configuration": "replacement",
+      "roster": [
+        "openai/gpt-5.6-sol",
+        "anthropic/claude-fable-5",
+        "fireworks/glm-5.2",
+        "google/gemini-3.1-pro-preview",
+        "x-ai/grok-4.3",
+        "fireworks/kimi-k2.7-code",
+        "deepseek/deepseek-v4-pro",
+        "meta-llama/llama-4-maverick",
+        "qwen/qwen3.7-max"
+      ],
+      "variant_id": "seat-ablation-grok"
+    }
+  ],
+  "created_at": "2026-07-13T15:00:00Z",
+  "mode": "live",
+  "probe_gated_variants": false,
+  "probe_projected_cost_usd": 0.05,
+  "probe_results": [
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "completion_tokens": 5,
+      "key": "promotion:openai/gpt-5.5",
+      "model_id": "openai/gpt-5.5",
+      "observed_cost_usd": 0.001,
+      "projected_cost_usd": 0.05,
+      "prompt_tokens": 10,
+      "provider": "openrouter",
+      "reason": "exact route probe succeeded",
+      "reasoning_effort": "medium",
+      "route_id": "openrouter:openai/gpt-5.5",
+      "supported": true,
+      "usage_complete": true
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "completion_tokens": 5,
+      "key": "promotion:openai/gpt-5.6-sol",
+      "model_id": "openai/gpt-5.6-sol",
+      "observed_cost_usd": 0.001,
+      "projected_cost_usd": 0.05,
+      "prompt_tokens": 10,
+      "provider": "openrouter",
+      "reason": "exact route probe succeeded",
+      "reasoning_effort": "medium",
+      "route_id": "openrouter:openai/gpt-5.6-sol",
+      "supported": true,
+      "usage_complete": true
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "completion_tokens": 126,
+      "key": "promotion:x-ai/grok-4.3",
+      "model_id": "x-ai/grok-4.3",
+      "observed_cost_usd": 0.022350000000000002,
+      "projected_cost_usd": 0.05,
+      "prompt_tokens": 195,
+      "provider": "xai",
+      "reason": "exact route probe succeeded",
+      "reasoning_effort": null,
+      "route_id": "xai:x-ai/grok-4.3",
+      "supported": true,
+      "usage_complete": true
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "completion_tokens": 22,
+      "key": "promotion:x-ai/grok-4.5",
+      "model_id": "x-ai/grok-4.5",
+      "observed_cost_usd": 0.012700000000000001,
+      "projected_cost_usd": 0.05,
+      "prompt_tokens": 210,
+      "provider": "xai",
+      "reason": "exact route probe succeeded",
+      "reasoning_effort": null,
+      "route_id": "xai:x-ai/grok-4.5",
+      "supported": true,
+      "usage_complete": true
+    }
+  ],
+  "probe_spend_usd": 0.03705,
+  "probe_support": {
+    "promotion:openai/gpt-5.5": true,
+    "promotion:openai/gpt-5.6-sol": true,
+    "promotion:x-ai/grok-4.3": true,
+    "promotion:x-ai/grok-4.5": true
+  },
+  "promotion_thresholds": {
+    "cost": {
+      "exception_requires_acceptance": true,
+      "max_baseline_multiplier": 1.25
+    },
+    "evaluator_format_rate": {
+      "min_delta_points": 0.0
+    },
+    "factual_error_rate": {
+      "max_delta_points": 0.0
+    },
+    "full_council_p95_latency": {
+      "max_baseline_multiplier": 1.2
+    },
+    "grok_direct_failover_rate": {
+      "maximum": 0.02
+    },
+    "individual_p95_latency": {
+      "max_baseline_multiplier": 1.5
+    },
+    "objective_accuracy": {
+      "min_delta_points": -2.0
+    },
+    "quality_by_stratum": {
+      "min_delta_points": -5.0
+    },
+    "quality_overall": {
+      "min_delta_points": -3.0
+    },
+    "route_success_rate": {
+      "minimum": 0.99
+    }
+  },
+  "prompt_set_version": "flagship-promotion-v2",
+  "prompt_suite": {
+    "path": "benchmarks/prompts/internal_suite_v1.json",
+    "suite_id": "flagship_promotion",
+    "version": "flagship-promotion-v2"
+  },
+  "registry_digest": "eaeb59a2a69d7781e5e699b9649afdf27968a03f1834187a302cb77c07634783",
+  "run_id": "2026-07-13-flagship-promotion-live-v4",
+  "run_manifest_digest": "13d851bcc611bb3dbc0d56c08ad24c82deb03fadf4270b49a4a6d14dc174ec96",
+  "seed": 20260713,
+  "settings": {
+    "allow_declared_route_failover": false,
+    "allow_provider_substitution": false,
+    "max_tokens": 512,
+    "temperature": 0.0,
+    "trials": 1
+  },
+  "variant_set": "flagship-promotion-v1",
+  "variants": [
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "display_name": "GPT-5.5 baseline",
+      "model_id": "openai/gpt-5.5",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 30.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "medium",
+      "route_id": "openrouter:openai/gpt-5.5",
+      "variant_id": "openrouter-gpt-5.5-medium"
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "display_name": "GPT-5.6 Sol candidate",
+      "model_id": "openai/gpt-5.6-sol",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 5.0,
+        "output_per_million_usd": 30.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "openrouter",
+      "reasoning_effort": "medium",
+      "route_id": "openrouter:openai/gpt-5.6-sol",
+      "variant_id": "openrouter-gpt-5.6-sol-medium"
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "display_name": "Grok 4.3 baseline",
+      "model_id": "x-ai/grok-4.3",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 3.0,
+        "output_per_million_usd": 15.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "xai",
+      "reasoning_effort": null,
+      "route_id": "xai:x-ai/grok-4.3",
+      "variant_id": "xai-grok-4.3"
+    },
+    {
+      "allow_declared_route_failover": false,
+      "allow_provider_substitution": false,
+      "display_name": "Grok 4.5 candidate",
+      "model_id": "x-ai/grok-4.5",
+      "pricing": {
+        "captured_at": "2026-07-04T00:00:00Z",
+        "input_per_million_usd": 3.0,
+        "output_per_million_usd": 15.0,
+        "source": "approved OpenSpec roster-refresh-2026-07 conservative pricing snapshot"
+      },
+      "provider": "xai",
+      "reasoning_effort": null,
+      "route_id": "xai:x-ai/grok-4.5",
+      "variant_id": "xai-grok-4.5"
+    }
+  ]
+}

@@ -214,7 +214,7 @@ class TestGetEvaluatorModels:
         from backend.council import get_evaluator_models
 
         council = [
-            "openai/gpt-5.5",
+            "openai/gpt-5.6-sol",
             "anthropic/claude-fable-5",
             "deepseek/deepseek-v4-pro",
             "z-ai/glm-5.2",
@@ -224,7 +224,7 @@ class TestGetEvaluatorModels:
         assert len(evaluators) == 3
         assert evaluators[0] == "anthropic/claude-fable-5"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
-        assert evaluators[2] == "openai/gpt-5.5"
+        assert evaluators[2] == "openai/gpt-5.6-sol"
 
     def test_excludes_missing_evaluators(self):
         """If an evaluator is not in the council, skip it."""
@@ -238,7 +238,7 @@ class TestGetEvaluatorModels:
         evaluators = get_evaluator_models(council)
 
         assert len(evaluators) == 2
-        assert "openai/gpt-5.5" not in evaluators
+        assert "openai/gpt-5.6-sol" not in evaluators
 
     def test_returns_empty_if_none_available(self):
         """If no priority evaluators are in council, return empty list."""
@@ -254,7 +254,7 @@ class TestGetEvaluatorModels:
         from backend.council import get_evaluator_models
 
         council = [
-            "openai/gpt-5.5",  # priority 3
+            "openai/gpt-5.6-sol",  # priority 3
             "deepseek/deepseek-v4-pro",  # priority 2
             "anthropic/claude-fable-5",  # priority 1
         ]
@@ -262,7 +262,7 @@ class TestGetEvaluatorModels:
 
         assert evaluators[0] == "anthropic/claude-fable-5"
         assert evaluators[1] == "deepseek/deepseek-v4-pro"
-        assert evaluators[2] == "openai/gpt-5.5"
+        assert evaluators[2] == "openai/gpt-5.6-sol"
 
 
 class TestSelfExclusion:
@@ -530,7 +530,7 @@ async def test_stream_stage2_uses_shared_evaluator_semantics(monkeypatch):
     council_models = [
         "anthropic/claude-fable-5",
         "deepseek/deepseek-v4-pro",
-        "openai/gpt-5.5",
+        "openai/gpt-5.6-sol",
     ]
 
     prompts_by_evaluator = {}
@@ -570,6 +570,39 @@ async def test_stream_stage2_uses_shared_evaluator_semantics(monkeypatch):
             for prompt in prompts_by_evaluator[evaluator]
         )
     assert all("label_to_model" in result for result in complete["stage2"])
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("evaluator", "expected_effort"),
+    [
+        ("openai/gpt-5.6-sol", "high"),
+        ("anthropic/claude-fable-5", "high"),
+    ],
+)
+async def test_no_plan_uses_generic_registry_evaluator_effort(
+    monkeypatch, evaluator, expected_effort
+):
+    from backend.council import stage2_collect_rankings
+
+    calls = []
+
+    async def with_effort(model_id, _messages, **kwargs):
+        calls.append((model_id, kwargs.get("reasoning_effort")))
+        return {"content": "FINAL RANKING:\n1. Response A", "usage": {}}
+
+    monkeypatch.setattr("backend.council._query_single_with_reasoning_override", with_effort)
+    rankings, _ = await stage2_collect_rankings(
+        "question",
+        [
+            {"model": evaluator, "response": "self"},
+            {"model": "model-a", "response": "other"},
+        ],
+        [evaluator],
+    )
+
+    assert calls == [(evaluator, expected_effort)]
+    assert rankings[0]["model"] == evaluator
 
 
 @pytest.mark.asyncio

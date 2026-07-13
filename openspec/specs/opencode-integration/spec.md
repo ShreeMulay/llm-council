@@ -55,14 +55,14 @@ The system SHALL expose LLM Council as an MCP tool for conditional invocation.
 
 | Alias | Full Model ID |
 |-------|---------------|
-| `gpt` | openai/gpt-5.5 |
+| `gpt` | openai/gpt-5.6-sol |
 | `opus` | anthropic/claude-opus-4.8 |
 | `glm` | fireworks/glm-5.2 |
 | `glm-fw` | fireworks/glm-5.2 (legacy alias for default Fireworks GLM xHigh) |
 | `glm-zai` | z-ai/glm-5.2 (explicit legacy baseline) |
 | `fable` | anthropic/claude-fable-5 (default production council member/chairman via Vertex AI; OpenRouter fallback non-PHI/deidentified only) |
 | `gemini`, `pro` | google/gemini-3.1-pro-preview |
-| `grok` | x-ai/grok-4.3 |
+| `grok` | x-ai/grok-4.5 |
 | `kimi` | fireworks/kimi-k2.7-code |
 | `kimi26` | fireworks/kimi-k2.6 (explicit legacy baseline) |
 | `deepseek` | deepseek/deepseek-v4-pro |

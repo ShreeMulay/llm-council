@@ -2,6 +2,7 @@
 
 from dataclasses import replace
 
+import httpx
 import pytest
 
 from backend.model_dispatcher import DispatchRequest, ModelDispatcher
@@ -29,7 +30,11 @@ async def test_dispatches_logical_id_to_exact_primary_route_and_normalizes(monke
     assert result == {
         "content": "ok", "usage": {}, "provider": "fireworks",
         "model": "fireworks/glm-5.2", "route_id": "fireworks:fireworks/glm-5.2",
+        "attempted_route_ids": ["fireworks:fireworks/glm-5.2"],
+        "attempts": ({"route_id": "fireworks:fireworks/glm-5.2", "attempt": 1, "status": "succeeded"},),
+        "selected_route_id": "fireworks:fireworks/glm-5.2",
         "fallback_used": False, "error": None, "terminal_status": "succeeded",
+        "fallback_reason": None, "primary_failure_reason": None, "failure_reason": None,
     }
 
 
@@ -53,6 +58,239 @@ async def test_fallback_uses_next_exact_route_and_labels_provider(monkeypatch):
     assert calls[0][1]["reasoning_effort"] == "xhigh"
     assert result["provider"] == "openrouter-fallback"
     assert result["fallback_used"] is True
+
+
+@pytest.mark.asyncio
+async def test_promoted_gpt_5_6_member_executes_exact_openrouter_adapter_boundary():
+    calls = []
+
+    async def openrouter(model_id, messages, **settings):
+        calls.append((model_id, messages, settings))
+        return {"content": "sol"}
+
+    dispatcher = ModelDispatcher(adapters={"openrouter": openrouter})
+    result = await dispatcher.query(DispatchRequest("openai/gpt-5.6-sol", MESSAGES))
+
+    assert calls == [("openai/gpt-5.6-sol", MESSAGES, {
+        "max_tokens": 32768,
+        "temperature": 0.7,
+        "reasoning_effort": "medium",
+        "allow_provider_substitution": False,
+    })]
+    assert result["route_id"] == "openrouter:openai/gpt-5.6-sol"
+    assert result["selected_route_id"] == "openrouter:openai/gpt-5.6-sol"
+    assert result["primary_failure_reason"] is None
+
+
+@pytest.mark.asyncio
+async def test_promoted_gpt_5_6_evaluator_executes_high_effort_at_exact_adapter_boundary():
+    from backend.execution_planning import build_execution_plan
+
+    calls = []
+
+    async def openrouter(model_id, messages, **settings):
+        calls.append((model_id, messages, settings))
+        return {"content": "ranked"}
+
+    plan = build_execution_plan(
+        load_registry(), {"query": "rank", "models": ["openai/gpt-5.6-sol"]}
+    )
+    evaluator = next(
+        operation
+        for operation in plan.evaluators
+        if operation.logical_id == "openai/gpt-5.6-sol"
+    )
+    result = await ModelDispatcher(adapters={"openrouter": openrouter}).execute(evaluator)
+
+    assert calls == [("openai/gpt-5.6-sol", [{"role": "user", "content": "rank"}], {
+        "max_tokens": 8192,
+        "temperature": 0.7,
+        "reasoning_effort": "high",
+        "allow_provider_substitution": False,
+    })]
+    assert result["selected_route_id"] == "openrouter:openai/gpt-5.6-sol"
+
+
+@pytest.mark.asyncio
+async def test_grok_4_5_direct_failure_uses_exact_openrouter_route_without_provider_substitution():
+    calls = []
+
+    async def xai(model_id, _messages, **settings):
+        calls.append(("xai", model_id, settings))
+        return None
+
+    async def openrouter(model_id, _messages, **settings):
+        calls.append(("openrouter", model_id, settings))
+        return {"content": "recovered"}
+
+    dispatcher = ModelDispatcher(adapters={"xai": xai, "openrouter": openrouter})
+    result = await dispatcher.query(DispatchRequest("x-ai/grok-4.5", MESSAGES))
+
+    operation = dispatcher.capture(DispatchRequest("x-ai/grok-4.5", MESSAGES))
+    assert calls == [
+        ("xai", operation.routes[0].provider_model_id, {
+            "max_tokens": 32768, "temperature": 0.7,
+        }),
+        ("openrouter", operation.routes[1].provider_model_id, {
+            "max_tokens": 32768, "temperature": 0.7,
+            "reasoning_effort": operation.settings.reasoning_effort,
+            "allow_provider_substitution": False,
+        }),
+    ]
+    assert result["attempted_route_ids"] == [route.route_id for route in operation.routes]
+    assert result["attempts"] == (
+        {"route_id": "xai:x-ai/grok-4.5", "attempt": 1, "status": "failed", "reason": "empty_response"},
+        {"route_id": "openrouter:x-ai/grok-4.5", "attempt": 1, "status": "succeeded"},
+    )
+    with pytest.raises(TypeError):
+        result["attempts"][0]["reason"] = "raw secret"  # type: ignore[index]
+    assert result["selected_route_id"] == operation.routes[1].route_id
+    assert result["fallback_used"] is True
+    assert result["fallback_reason"] == "empty_response"
+    assert result["primary_failure_reason"] == "empty_response"
+    assert result["failure_reason"] is None
+
+
+@pytest.mark.asyncio
+async def test_grok_4_5_multi_retry_preserves_primary_terminal_reason_on_fallback_success():
+    xai_results = [TimeoutError("private"), None]
+    openrouter_results = [RuntimeError("private"), {"content": "recovered"}]
+
+    async def xai(*_args, **_kwargs):
+        result = xai_results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    async def openrouter(*_args, **_kwargs):
+        result = openrouter_results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    dispatcher = ModelDispatcher(
+        adapters={"xai": xai, "openrouter": openrouter}, sleep=lambda _: _done()
+    )
+    result = await dispatcher.query(DispatchRequest(
+        "x-ai/grok-4.5", MESSAGES, max_retries=1, backoff_base=0
+    ))
+
+    assert result["attempts"] == (
+        {"route_id": "xai:x-ai/grok-4.5", "attempt": 1, "status": "failed", "reason": "timeout"},
+        {"route_id": "xai:x-ai/grok-4.5", "attempt": 2, "status": "failed", "reason": "empty_response"},
+        {"route_id": "openrouter:x-ai/grok-4.5", "attempt": 1, "status": "failed", "reason": "adapter_error"},
+        {"route_id": "openrouter:x-ai/grok-4.5", "attempt": 2, "status": "succeeded"},
+    )
+    assert result["primary_failure_reason"] == "empty_response"
+    assert result["fallback_reason"] == "empty_response"
+    assert result["failure_reason"] is None
+
+
+@pytest.mark.asyncio
+async def test_grok_4_5_multi_retry_exhaustion_separates_primary_and_final_reasons():
+    async def xai(*_args, **_kwargs):
+        raise TimeoutError("private")
+
+    fallback_results = [None, RuntimeError("private")]
+
+    async def openrouter(*_args, **_kwargs):
+        result = fallback_results.pop(0)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    dispatcher = ModelDispatcher(
+        adapters={"xai": xai, "openrouter": openrouter}, sleep=lambda _: _done()
+    )
+    operation = dispatcher.capture(DispatchRequest(
+        "x-ai/grok-4.5", MESSAGES, max_retries=1, backoff_base=0
+    ))
+    result = await dispatcher.execute(operation)
+
+    assert result["primary_failure_reason"] == "timeout"
+    assert result["fallback_reason"] == "timeout"
+    assert result["failure_reason"] == "adapter_error"
+    assert result["attempts"][-1] == {
+        "route_id": "openrouter:x-ai/grok-4.5",
+        "attempt": 2,
+        "status": "failed",
+        "reason": "adapter_error",
+    }
+
+
+@pytest.mark.asyncio
+async def test_declared_route_failover_and_provider_substitution_are_independent():
+    calls = []
+
+    async def adapter(model_id, _messages, **settings):
+        calls.append((model_id, settings))
+        return None
+
+    dispatcher = ModelDispatcher(adapters={"xai": adapter, "openrouter": adapter})
+    operation = dispatcher.capture(DispatchRequest(
+        "x-ai/grok-4.5", MESSAGES,
+        allow_declared_route_failover=False,
+        allow_provider_substitution=True,
+    ))
+    result = await dispatcher.execute(operation)
+
+    assert len(calls) == 1
+    assert result["attempted_route_ids"] == [operation.routes[0].route_id]
+    assert result["selected_route_id"] is None
+    assert result["failure_reason"] == "empty_response"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("error_factory", "reason"),
+    [
+        (lambda: TimeoutError("raw timeout detail"), "timeout"),
+        (
+            lambda: httpx.HTTPStatusError(
+                "raw body with secret",
+                request=httpx.Request("POST", "https://provider.invalid"),
+                response=httpx.Response(503),
+            ),
+            "http_error",
+        ),
+        (lambda: ValueError("unsupported provider secret-provider"), "unsupported_provider"),
+        (lambda: RuntimeError("raw adapter secret"), "adapter_error"),
+    ],
+)
+async def test_attempt_failure_categories_are_normalized_without_raw_details(error_factory, reason):
+    async def failed(*_args, **_kwargs):
+        raise error_factory()
+
+    operation = ModelDispatcher(adapters={"openrouter": failed}).capture(
+        DispatchRequest("legacy/model", MESSAGES, provider="openrouter", allow_fallbacks=False)
+    )
+    result = await ModelDispatcher(adapters={"openrouter": failed}).execute(operation)
+
+    assert result["failure_reason"] == reason
+    assert result["attempts"] == ({
+        "route_id": "openrouter:legacy/model",
+        "attempt": 1,
+        "status": "failed",
+        "reason": reason,
+    },)
+    assert "secret" not in repr(result)
+
+
+@pytest.mark.asyncio
+async def test_legacy_allow_fallbacks_never_enables_openrouter_provider_substitution():
+    seen = []
+
+    async def openrouter(_model_id, _messages, **settings):
+        seen.append(settings)
+        return {"content": "ok"}
+
+    dispatcher = ModelDispatcher(adapters={"openrouter": openrouter})
+    result = await dispatcher.query(DispatchRequest(
+        "legacy/model", MESSAGES, provider="openrouter", allow_fallbacks=True
+    ))
+
+    assert result["content"] == "ok"
+    assert seen[0]["allow_provider_substitution"] is False
 
 
 @pytest.mark.asyncio
@@ -213,6 +451,10 @@ async def test_fallbacks_disabled_uses_only_selected_registered_provider():
     assert result == {
         "content": "", "usage": {}, "provider": "vertex", "model": "anthropic/claude-fable-5",
         "route_id": "vertex:anthropic/claude-fable-5", "fallback_used": False,
+        "attempted_route_ids": ["vertex:anthropic/claude-fable-5"],
+        "attempts": ({"route_id": "vertex:anthropic/claude-fable-5", "attempt": 1, "status": "failed", "reason": "empty_response"},),
+        "selected_route_id": None, "fallback_reason": None,
+        "primary_failure_reason": "empty_response", "failure_reason": "empty_response",
         "error": {"code": "provider_exhausted", "message": "All captured routes failed"},
         "terminal_status": "failed",
     }
@@ -234,6 +476,7 @@ async def test_captured_operation_is_registry_independent_and_parity_safe():
     dispatcher = ModelDispatcher(adapters={"vertex": primary, "openrouter": fallback})
     operation = dispatcher.capture(DispatchRequest("anthropic/claude-fable-5", MESSAGES))
     dispatcher.registry = object()  # execution must not consult this mutated source
+    dispatcher.require_vertex_anthropic = True
 
     first = await dispatcher.execute(operation)
     second = await dispatcher.execute(operation)

@@ -20,6 +20,21 @@ def test_benchmark_no_fallback_payload_sets_allow_fallbacks_false():
     assert payload["reasoning_effort"] == "high"
 
 
+def test_openrouter_provider_substitution_defaults_false_and_legacy_true_is_conservative():
+    default_payload = build_chat_payload("model", [{"role": "user", "content": "x"}])
+    legacy_payload = build_chat_payload(
+        "model", [{"role": "user", "content": "x"}], allow_fallbacks=True
+    )
+    explicit_payload = build_chat_payload(
+        "model", [{"role": "user", "content": "x"}],
+        allow_provider_substitution=True,
+    )
+
+    assert default_payload["provider"]["allow_fallbacks"] is False
+    assert legacy_payload["provider"]["allow_fallbacks"] is False
+    assert explicit_payload["provider"]["allow_fallbacks"] is True
+
+
 @pytest.mark.asyncio
 async def test_query_model_normalizes_null_content_to_empty_string(monkeypatch):
     class FakeResponse:

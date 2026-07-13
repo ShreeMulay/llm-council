@@ -132,11 +132,11 @@ The system SHALL route queries to appropriate API providers.
 
 ```python
 DEFAULT_COUNCIL_MODELS = [
-    "openai/gpt-5.5",                 # OpenRouter
+    "openai/gpt-5.6-sol",             # OpenRouter
     "anthropic/claude-fable-5",       # Vertex AI Anthropic + chairman
     "fireworks/glm-5.2",              # Fireworks direct + xHigh reasoning
     "google/gemini-3.1-pro-preview",  # OpenRouter
-    "x-ai/grok-4.3",                  # xAI direct
+    "x-ai/grok-4.5",                  # xAI direct
     "fireworks/kimi-k2.7-code",       # Fireworks direct
     "deepseek/deepseek-v4-pro",       # OpenRouter
     "meta-llama/llama-4-maverick",    # OpenRouter
@@ -148,7 +148,9 @@ DEFAULT_CHAIRMAN_MODEL = "anthropic/claude-fable-5"
 
 `anthropic/claude-fable-5` SHALL be the default production Anthropic council member, lead evaluator, and chairman through Vertex AI Anthropic with high effort. Fable via Vertex AI is PHI-eligible only when running in covered Google Cloud projects/services under BAA. Fable via OpenRouter fallback is non-PHI/deidentified only.
 
-Legacy explicit IDs such as `anthropic/claude-opus-4.8`, `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through aliases/fallback maps for backward compatibility, but MUST NOT be default production roster members.
+The compact roster SHALL preserve production seats 1 through 5 in order. Evaluator priority SHALL remain `anthropic/claude-fable-5`, `deepseek/deepseek-v4-pro`, and `openai/gpt-5.6-sol` in order.
+
+Legacy explicit IDs such as `openai/gpt-5.5`, `x-ai/grok-4.3`, `anthropic/claude-opus-4.8`, `z-ai/glm-5.2`, `fireworks/kimi-k2.6`, `fireworks/glm-5.1`, and `qwen/qwen3.5-122b-a10b` MAY remain routed through aliases/fallback maps for backward compatibility, but MUST NOT be default production roster members.
 
 ### Legacy Cerebras Model IDs
 

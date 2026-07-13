@@ -1,0 +1,1666 @@
+{
+  "baseline": "full",
+  "budget_truncated": false,
+  "complete": true,
+  "completed_count": 52,
+  "effects": {
+    "anthropic/claude-fable-5": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.37515,
+          "diversity": 0.5,
+          "effect_direction": "decrease",
+          "evaluator_format_rate": 0.0,
+          "factual_error_rate": 1.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.0,
+          "latency": 26.67216830700636,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": -1.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 0.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.09090909090909091,
+          "judge_agreement": 0.0,
+          "latency": 47.20098357205279,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.31565,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.0,
+          "latency": 22.217101190937683,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.2798,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 23.331634206930175,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "deepseek/deepseek-v4-pro": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.37405,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.5,
+          "latency": 16.39361558202654,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": 0.27775000000000005,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2857142857142857,
+          "latency": 16.963531201938167,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.34884999999999994,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 18.600155991036445,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.3318,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.1428571428571429,
+          "latency": 70.57385527295992,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "fireworks/glm-5.2": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.43455000000000005,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 24.574721856974065,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": 0.29815,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.1428571428571429,
+          "latency": 19.76091583701782,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.36899999999999994,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.5357142857142857,
+          "latency": 24.025609011063352,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.32310000000000005,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2142857142857143,
+          "latency": 22.71164026390761,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "fireworks/kimi-k2.7-code": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.42395000000000005,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2142857142857143,
+          "latency": 34.037003946024925,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": 0.34665000000000007,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.5242857142857142,
+          "latency": 73.76587313786149,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.40895000000000004,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 38.32748719397932,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.38920000000000005,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.16714285714285715,
+          "latency": 73.77544607105665,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "google/gemini-3.1-pro-preview": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.0,
+          "latency": 59.0992752101738,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.3571428571428571,
+          "latency": 53.5806451421231,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.40935,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 22.765472915954888,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.35829999999999995,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.3214285714285714,
+          "latency": 30.172018809011206,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "meta-llama/llama-4-maverick": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.4879500000000001,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.0,
+          "latency": 41.33537519397214,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.2142857142857143,
+          "latency": 116.73800754686818,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.42455,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2857142857142857,
+          "latency": 41.802196356933564,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.3718,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.26142857142857145,
+          "latency": 54.56991226808168,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "openai/gpt-5.6-sol": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.09090909090909091,
+          "judge_agreement": 0.0,
+          "latency": 56.61203294992447,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.09090909090909091,
+          "judge_agreement": 0.0,
+          "latency": 44.9983281979803,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.3534,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.19999999999999996,
+          "latency": 34.368451970862225,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.32275,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2142857142857143,
+          "latency": 37.393524640006945,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": 0.41720000000000007,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.0,
+          "latency": 25.424846283858642,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.0,
+          "latency": 46.691325799096376,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.3816,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.0,
+          "latency": 20.10077092703432,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.344,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.375,
+          "latency": 46.92610550113022,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      }
+    },
+    "qwen/qwen3.7-max": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.45235000000000003,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.16666666666666663,
+          "latency": 30.059056205907837,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": 0.34635,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.40428571428571425,
+          "latency": 34.61005060793832,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.4285714285714286,
+          "latency": 51.20287363114767,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.3725,
+          "diversity": 0.5,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.47571428571428576,
+          "latency": 21.81805107719265,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-evaluator": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        },
+        "structured-quality": {
+          "cost": null,
+          "diversity": null,
+          "effect_direction": "unknown",
+          "evaluator_format_rate": null,
+          "factual_error_rate": null,
+          "failure_rate": null,
+          "judge_agreement": null,
+          "latency": null,
+          "limitations": [
+            "no ablation observations",
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": null,
+          "matched_trials": 0,
+          "objective_accuracy": null,
+          "quality": null,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 0
+          }
+        }
+      }
+    },
+    "x-ai/grok-4.5": {
+      "removed": {
+        "reasoning-evaluator": {
+          "cost": 0.41714999999999997,
+          "diversity": 0.375,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.1428571428571429,
+          "latency": 23.075536199845374,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.375,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.08333333333333333,
+          "judge_agreement": 0.16666666666666663,
+          "latency": 84.84263510187156,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.41815,
+          "diversity": 0.375,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.16666666666666663,
+          "latency": 50.081071065040305,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.3627,
+          "diversity": 0.375,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.5,
+          "latency": 43.02361158002168,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      },
+      "replacement": {
+        "reasoning-evaluator": {
+          "cost": null,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.07692307692307693,
+          "judge_agreement": 0.125,
+          "latency": 73.59284127899446,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "reasoning-quality": {
+          "cost": null,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.07692307692307693,
+          "judge_agreement": 0.3125,
+          "latency": 46.47443095385097,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-evaluator": {
+          "cost": 0.47850000000000004,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": 1.0,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.2857142857142857,
+          "latency": 35.69680346804671,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": null,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        },
+        "structured-quality": {
+          "cost": 0.39004999999999995,
+          "diversity": 0.4444444444444444,
+          "effect_direction": "no_change",
+          "evaluator_format_rate": null,
+          "factual_error_rate": 0.0,
+          "failure_rate": 0.0,
+          "judge_agreement": 0.4375,
+          "latency": 20.018907107878476,
+          "limitations": [
+            "fewer than two matched trials"
+          ],
+          "marginal_effect": 0.0,
+          "matched_trials": 1,
+          "objective_accuracy": 1.0,
+          "quality": 1.0,
+          "uncertainty": {
+            "standard_error": null,
+            "trial_count": 1
+          }
+        }
+      }
+    }
+  },
+  "expected_count": 52,
+  "missing_cells": [],
+  "production_mutations": [],
+  "promotion_eligible": true,
+  "promotion_evidence": true,
+  "quality_available": true,
+  "threshold_outcomes": {
+    "cost": {
+      "exception_accepted": false,
+      "passed": true,
+      "threshold": 1.25,
+      "value": 1.1386031167252681
+    },
+    "evaluator_format_rate": {
+      "passed": true,
+      "threshold": 0.0,
+      "value": 0.0
+    },
+    "factual_error_rate": {
+      "passed": true,
+      "threshold": 0.0,
+      "value": 0.0
+    },
+    "full_council_p95_latency": {
+      "passed": true,
+      "threshold": 1.2,
+      "value": 0.6691891762569493
+    },
+    "grok_direct_failover_rate": {
+      "passed": true,
+      "threshold": 0.02,
+      "value": 0.0
+    },
+    "individual_p95_latency": {
+      "passed": true,
+      "threshold": 1.5,
+      "value": 0.8248481902371905
+    },
+    "objective_accuracy": {
+      "passed": true,
+      "threshold": -2.0,
+      "value": 0.0
+    },
+    "quality_by_stratum": {
+      "passed": true,
+      "threshold": -5.0,
+      "value": {
+        "reasoning-evaluator": 0.0,
+        "reasoning-quality": 0.0,
+        "structured-evaluator": 0.0,
+        "structured-quality": 0.0
+      }
+    },
+    "quality_overall": {
+      "passed": true,
+      "threshold": -3.0,
+      "value": 0.0
+    },
+    "route_success_rate": {
+      "passed": true,
+      "threshold": 0.99,
+      "value": 0.9961538461538462
+    }
+  }
+}

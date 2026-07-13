@@ -24,6 +24,8 @@ COPY --from=builder /app/.venv /app/.venv
 
 # Copy application code
 COPY backend/ backend/
+COPY frontend/src/generated/model-registry.json frontend/src/generated/model-registry.json
+COPY mcp/src/generated/model-registry.json mcp/src/generated/model-registry.json
 COPY model_registry.json ./model_registry.json
 
 # Create data directories (storage/cache) owned by non-root user
