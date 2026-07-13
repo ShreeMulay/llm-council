@@ -366,6 +366,63 @@ def test_initial_service_must_be_converged_well_formed_and_one_resolved_prior(mu
         api().validate_initial_service(state)
 
 
+def test_initial_service_accepts_canonical_protobuf_json_default_omissions():
+    traffic = [
+        {"type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", "revision": "prior", "percent": 100},
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": "prior",
+            "tag": "stable",
+        },
+    ]
+    statuses = deepcopy(traffic)
+    statuses[1]["uri"] = "https://stable---service.example"
+    state = v2_service(traffic=traffic, traffic_statuses=statuses)
+    state.pop("reconciling")
+
+    assert api().validate_initial_service(state) == state
+    assert api()._normalized_traffic(state["traffic"])[1]["percent"] == 0
+
+
+@pytest.mark.parametrize("reconciling", [None, True, False, 0, "false", {}, []])
+def test_initial_service_rejects_true_or_malformed_reconciling(reconciling):
+    state = v2_service(reconciling=reconciling)
+
+    if reconciling is False:
+        assert api().validate_initial_service(state) == state
+    else:
+        with pytest.raises(api().InitialStateRefusal):
+            api().validate_initial_service(state)
+
+
+@pytest.mark.parametrize("percent", [None, True, "0", -1, 101, 1.5])
+def test_traffic_rejects_invalid_explicit_percent(percent):
+    state = v2_service()
+    state["traffic"][1]["percent"] = percent
+    state["trafficStatuses"][1]["percent"] = percent
+
+    with pytest.raises(api().InitialStateRefusal):
+        api().validate_initial_service(state)
+
+
+def test_invalid_initial_state_refuses_before_build_mutation_or_paid_call_and_releases_lock():
+    boundaries = Boundaries()
+    boundaries.state = v2_service(reconciling=True)
+
+    with pytest.raises(api().InitialStateRefusal):
+        api().run_rollout(
+            boundaries=boundaries,
+            rollout_id="rollout-123",
+            approved_sha="a" * 40,
+            clock=boundaries.clock,
+        )
+
+    names = [event[0] for event in boundaries.events]
+    assert names == ["benchmark", "gcs-create", "service-get", "lock-release"]
+    assert not any(name in {"build", "service-patch", "deploy-shadow", "paid"} for name in names)
+    assert boundaries.lock_held is False
+
+
 def test_attempt_object_is_immutable_content_free_and_persisted_before_network():
     boundaries = Boundaries()
     rollout = controller(boundaries)
@@ -434,8 +491,8 @@ def test_top_level_run_rollout_owns_non_reorderable_full_sequence():
     required_order = [
         "benchmark",
         "gcs-create",  # lock
+        "service-get",  # validate prior after lock and before expensive build
         "build",
-        "service-get",  # capture prior only after lock and build
         "paid",  # prior stream
         "deploy-shadow",
         "health",
@@ -694,6 +751,7 @@ def test_realistic_v2_long_running_operation_requires_exact_fresh_convergence():
         traffic=requested,
         traffic_statuses=requested,
     )
+    converged.pop("reconciling")
     boundaries.state = initial
     boundaries.operation_polls = [
         v2_operation(done=False),
@@ -719,7 +777,7 @@ def test_realistic_v2_long_running_operation_requires_exact_fresh_convergence():
     assert result["uid"] == initial["uid"]
     assert result["etag"] != initial["etag"]
     assert result["observedGeneration"] == result["generation"]
-    assert result["reconciling"] is False
+    assert "reconciling" not in result
     assert [{key: value for key, value in item.items() if key != "uri"} for item in result["trafficStatuses"]] == requested
 
 
@@ -742,6 +800,30 @@ def test_v2_convergence_refuses_stale_or_unexpected_transition(unexpected):
     with pytest.raises(api().ConcurrencyRefusal):
         rollout.transition_traffic(
             deepcopy(unexpected["traffic"]),
+            expected_uid="service-uid",
+            expected_generation="41",
+            expected_etag="etag-41",
+            timeout=120,
+        )
+
+
+def test_transition_convergence_rejects_explicit_null_reconciling():
+    boundaries = V2Boundaries()
+    requested = _candidate_traffic()
+    malformed = v2_service(
+        generation="42",
+        observed_generation="42",
+        etag="etag-42",
+        reconciling=None,
+        traffic=requested,
+        traffic_statuses=requested,
+    )
+    boundaries.state = v2_service()
+    boundaries.operation_polls = [v2_operation(done=True, response=malformed)]
+
+    with pytest.raises(api().ConcurrencyRefusal):
+        controller(boundaries).transition_traffic(
+            requested,
             expected_uid="service-uid",
             expected_generation="41",
             expected_etag="etag-41",
@@ -918,6 +1000,76 @@ def test_independent_rollback_proof_dimensions_retain_lock_on_failure(dimension)
 
     assert not any(event[0] == "paid" for event in boundaries.events)
     assert not any(event[0] == "lock-release" for event in boundaries.events)
+
+
+def test_rollback_polls_explicit_true_then_accepts_live_omitted_false():
+    boundaries = V2Boundaries()
+    snapshot = v2_service()
+    owner = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    reconciling = v2_service(
+        generation="44", observed_generation="43", etag="etag-44", reconciling=True
+    )
+    restored = v2_service(generation="44", observed_generation="44", etag="etag-44")
+    restored.pop("reconciling")
+    boundaries.state = owner
+    boundaries.operation_polls = [v2_operation(done=True, response=reconciling)]
+    boundaries.service_polls = [reconciling, restored]
+    boundaries.health_identity = {"revision": "prior", "digest": "old"}
+    rollout = controller(boundaries, clock=boundaries.clock, rollback_seconds=300)
+    rollout.snapshot = snapshot
+    rollout.prior_identity = deepcopy(boundaries.health_identity)
+    rollout.lock_generation = "17"
+    rollout.mutation_armed = True
+    rollout.rollout_owned_state = owner
+
+    rollout.terminal_rollback(reason="failure")
+
+    assert [event[0] for event in boundaries.events].count("service-poll") == 2
+    assert any(event[0] == "lock-release" for event in boundaries.events)
+
+
+def test_rollback_classification_rejects_explicit_null_reconciling():
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    owner = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    restored = v2_service(
+        generation="44", observed_generation="44", etag="etag-44", reconciling=None
+    )
+
+    with pytest.raises(api().RollbackProofError):
+        rollout._rollback_state_status(restored, owner, 43)
+
+
+def test_live_omission_and_explicit_values_drive_deploy_and_current_ownership():
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    rollout.pre_deploy_state = deepcopy(rollout.snapshot)
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+
+    converged = ambiguous_deploy_state(converged=True)
+    converged.pop("reconciling")
+    assert rollout._deploy_state_ownership_status(converged) == "owned"
+
+    intermediate = ambiguous_deploy_state(converged=False)
+    assert intermediate["reconciling"] is True
+    assert rollout._deploy_state_ownership_status(intermediate) == "intermediate"
+
+    malformed_deploy = ambiguous_deploy_state(converged=True)
+    malformed_deploy["reconciling"] = None
+    assert rollout._deploy_state_ownership_status(malformed_deploy) == "contradictory"
+
+    rollout.rollout_owned_state = deepcopy(converged)
+    assert rollout._current_state_is_owned(deepcopy(converged)) is True
+
+    malformed_current = deepcopy(converged)
+    malformed_current["reconciling"] = None
+    assert rollout._current_state_is_owned(malformed_current) is False
+
+    malformed_owned = deepcopy(converged)
+    malformed_owned["reconciling"] = None
+    rollout.rollout_owned_state = malformed_owned
+    assert rollout._current_state_is_owned(deepcopy(converged)) is False
 
 
 def test_monotonic_remaining_budget_reaches_every_promotion_boundary():

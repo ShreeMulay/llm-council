@@ -145,6 +145,18 @@ def _integer(value: Any) -> int:
     return int(text)
 
 
+def _normalized_reconciling(state: Any) -> bool:
+    """Normalize only protobuf-JSON omission; reject explicit malformed values."""
+    if not isinstance(state, dict):
+        raise ValueError
+    if "reconciling" not in state:
+        return False
+    value = state["reconciling"]
+    if not isinstance(value, bool):
+        raise ValueError
+    return value
+
+
 def _normalized_traffic(items: Any) -> list[dict[str, Any]]:
     if not isinstance(items, list) or not items:
         raise ValueError
@@ -155,12 +167,14 @@ def _normalized_traffic(items: Any) -> list[dict[str, Any]]:
         allowed = {"type", "revision", "percent", "tag", "uri"}
         if not set(raw) <= allowed:
             raise ValueError
-        revision, percent = raw.get("revision"), raw.get("percent")
+        revision = raw.get("revision")
+        percent = raw.get("percent", 0)
         if not isinstance(revision, str) or not revision:
             raise ValueError
         if isinstance(percent, bool) or not isinstance(percent, int) or not 0 <= percent <= 100:
             raise ValueError
         item = {key: deepcopy(value) for key, value in raw.items() if key != "uri"}
+        item["percent"] = percent
         if "tag" in item and (not isinstance(item["tag"], str) or not item["tag"]):
             raise ValueError
         normalized.append(item)
@@ -177,7 +191,7 @@ def validate_initial_service(state: Any) -> dict[str, Any]:
         observed = _integer(state.get("observedGeneration"))
         if not isinstance(uid, str) or not uid or not isinstance(etag, str) or not etag:
             raise ValueError
-        if observed != generation or state.get("reconciling") is not False:
+        if observed != generation or _normalized_reconciling(state):
             raise ValueError
         traffic = _normalized_traffic(state.get("traffic"))
         statuses = _normalized_traffic(state.get("trafficStatuses"))
@@ -355,7 +369,7 @@ class RolloutController:
                     not uid
                     or not etag
                     or generation != observed
-                    or state.get("reconciling") is not False
+                    or _normalized_reconciling(state)
                     or len(resolved) != 1
                     or resolved[0]["percent"] != 100
                 ):
@@ -585,11 +599,12 @@ class RolloutController:
             traffic = _normalized_traffic(state.get("traffic"))
             if traffic != _normalized_traffic(requested):
                 raise ValueError
-            converged = observed == generation and state.get("reconciling") is False
+            reconciling = _normalized_reconciling(state)
+            converged = observed == generation and not reconciling
             if not converged:
                 if (
                     observed > generation
-                    or state.get("reconciling") is False
+                    or not reconciling
                     or observed == generation
                 ):
                     raise ValueError
@@ -741,11 +756,12 @@ class RolloutController:
             expected = _normalized_traffic(self.snapshot["traffic"])
             if traffic != expected:
                 raise ValueError
-            if observed == generation and restored.get("reconciling") is False:
+            reconciling = _normalized_reconciling(restored)
+            if observed == generation and not reconciling:
                 if _normalized_traffic(restored.get("trafficStatuses")) != expected:
                     raise ValueError
                 return True
-            if observed < generation and restored.get("reconciling") is True:
+            if observed < generation and reconciling:
                 return False
             raise ValueError
         except (KeyError, TypeError, ValueError) as exc:
@@ -841,14 +857,14 @@ class RolloutController:
                 return "contradictory"
             if (
                 observed == generation
-                and current.get("reconciling") is False
+                and not _normalized_reconciling(current)
                 and current.get("latestReadyRevision") == revision
             ):
                 return "owned"
             prior_ready = snapshot.get("latestReadyRevision")
             if (
                 snapshot_generation <= observed < generation
-                and current.get("reconciling") is True
+                and _normalized_reconciling(current)
                 and current.get("latestReadyRevision") in {prior_ready, revision}
             ):
                 return "intermediate"
@@ -878,7 +894,8 @@ class RolloutController:
                 and _integer(current.get("generation")) == _integer(owned.get("generation"))
                 and _integer(current.get(current_observed)) == _integer(current.get("generation"))
                 and _integer(owned.get(owned_observed)) == _integer(owned.get("generation"))
-                and current.get("reconciling") is False
+                and not _normalized_reconciling(current)
+                and not _normalized_reconciling(owned)
                 and _normalized_traffic(current.get("traffic"))
                 == _normalized_traffic(owned.get("traffic"))
                 and (
@@ -1100,10 +1117,12 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
     try:
         boundaries.verify_benchmark()
         rollout.acquire_lock()
-        rollout.build_candidate()
         rollout.capture_snapshot()
+        rollout.build_candidate()
         prior_revision = next(
-            item["revision"] for item in rollout.snapshot["traffic"] if item["percent"] == 100
+            item["revision"]
+            for item in _normalized_traffic(rollout.snapshot["traffic"])
+            if item["percent"] == 100
         )
         if "observedGeneration" in rollout.snapshot:
             prior_url = rollout._service_base_url()
