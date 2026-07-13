@@ -225,6 +225,8 @@ def verify_stage_identities(
     percent: int,
 ) -> dict[str, int]:
     """Validate known identities; counts are diagnostic, never traffic ratios."""
+    if prior == candidate:
+        raise IdentityRefusal("prior and candidate identities must differ")
     counts: dict[str, int] = {}
     for sample in samples:
         if sample == prior:
@@ -532,6 +534,7 @@ class RolloutController:
                         self._service_base_url(),
                         self.prior_identity,
                         timeout=self._remaining(),
+                        allow_legacy_prior=True,
                     )
                     if restored != self.prior_identity:
                         raise RollbackProofError("planned restoration identity mismatch")
@@ -679,7 +682,10 @@ class RolloutController:
 
     def verify_rollback_health(self) -> Any:
         return self.boundaries.health(
-            "https://service.example", self.prior_identity, timeout=self._remaining(rollback=True)
+            "https://service.example",
+            self.prior_identity,
+            timeout=self._remaining(rollback=True),
+            allow_legacy_prior=True,
         )
 
     def terminal_rollback(self, *, reason: str) -> None:
@@ -717,6 +723,7 @@ class RolloutController:
                 "https://service.example",
                 self.prior_identity,
                 timeout=self._remaining(rollback=True),
+                allow_legacy_prior=True,
             )
             valid = valid and health == self.prior_identity
             if self.lock_generation is not None:
@@ -1040,6 +1047,8 @@ def _execute_v2_progression(
     )
     shadow_url = boundaries.tag_url(shadow_state, shadow_tag)
     rollout.candidate_identity = rollout.verify_candidate_health(shadow_url)
+    if rollout.prior_identity == rollout.candidate_identity:
+        raise IdentityRefusal("prior and candidate identities must differ")
     rollout.run_paid_attempt(stage="shadow", surface="sync", url=shadow_url)
     rollout.run_paid_attempt(stage="shadow", surface="stream", url=shadow_url)
 
@@ -1127,7 +1136,10 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
         if "observedGeneration" in rollout.snapshot:
             prior_url = rollout._service_base_url()
             rollout.prior_identity = boundaries.health(
-                prior_url, None, timeout=rollout._remaining()
+                prior_url,
+                None,
+                timeout=rollout._remaining(),
+                allow_legacy_prior=True,
             )
         else:
             prior_url = "https://service.example"
@@ -1380,10 +1392,20 @@ class GcloudBoundaries:
             raise SemanticFailure(classify_semantic_error(exc)) from None
         return {"ok": True}
 
-    def health(self, url: str, expected: dict[str, Any] | None, *, timeout: float) -> dict[str, Any]:
+    def health(
+        self,
+        url: str,
+        expected: dict[str, Any] | None,
+        *,
+        timeout: float,
+        allow_legacy_prior: bool = False,
+    ) -> dict[str, Any]:
         from scripts.verify_deploy_health import fetch_health_json, health_identity
 
-        identity = health_identity(fetch_health_json(url, timeout_seconds=timeout))
+        identity = health_identity(
+            fetch_health_json(url, timeout_seconds=timeout),
+            allow_legacy_identity_without_artifacts=allow_legacy_prior,
+        )
         if expected is not None and identity != expected:
             raise IdentityRefusal("health identity mismatch")
         return identity
@@ -1419,9 +1441,17 @@ class GcloudBoundaries:
         percent: int,
         timeout: float,
     ) -> dict[str, int]:
+        if prior == candidate:
+            raise IdentityRefusal("prior and candidate identities must differ")
         deadline = self._deadline(timeout)
         samples = [
-            self.health(url, None, timeout=self._budget(deadline)) for _ in range(5)
+            self.health(
+                url,
+                None,
+                timeout=self._budget(deadline),
+                allow_legacy_prior=True,
+            )
+            for _ in range(5)
         ]
         return verify_stage_identities(samples, prior, candidate, percent=percent)
 
