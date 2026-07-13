@@ -974,7 +974,7 @@ def main(argv: list[str] | None = None) -> int:
             args.url, args.project, args.secret, samples=args.samples, stream_samples=args.stream_samples, timeout=args.timeout,
             max_latency=args.max_latency_seconds, max_tokens=args.max_tokens, max_cost=args.max_cost_usd,
             max_error_rate=args.max_error_rate, expected_proof=expected_provenance,
-            baseline_evidence=baseline or expected_evidence, strict_candidate=not args.baseline,
+            baseline_evidence=baseline, strict_candidate=not args.baseline,
             legacy_baseline=args.legacy_baseline,
             max_quality_drop=args.max_quality_drop, max_latency_ratio=args.max_latency_ratio,
             max_cost_ratio=args.max_cost_ratio, min_route_success=args.min_route_success,
