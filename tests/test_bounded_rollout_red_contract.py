@@ -32,6 +32,10 @@ def api():
 
 class Boundaries:
     def __init__(self):
+        module = api()
+        self.project = module.FIXED_PROJECT
+        self.region = module.FIXED_REGION
+        self.service = module.FIXED_SERVICE
         self.events = []
         self.objects = {}
         self.network_outcomes = []
@@ -679,46 +683,10 @@ def test_one_global_same_stage_infrastructure_retry_allows_at_most_six(classific
         rollout.run_paid_attempt(stage="extra", surface="sync", url="https://service.example")
 
 
-def test_prior_paid_attempt_carry_forward_allows_exactly_five_planned_attempts():
-    boundaries = Boundaries()
-    rollout = controller(boundaries, prior_paid_attempts=1)
-
-    rollout.execute_paid_plan()
-
-    assert rollout.attempt_count == 6
-    assert len([event for event in boundaries.events if event[0] == "paid"]) == 5
-    assert sorted(
-        int(name.rsplit("/", 1)[1].split("-", 1)[0])
-        for name in boundaries.objects
-    ) == [2, 2, 3, 3, 4, 4, 5, 5, 6, 6]
-
-
-def test_prior_paid_attempt_plus_retry_consumes_capacity_and_prevents_seventh_request():
-    boundaries = Boundaries()
-    boundaries.state = prior_state()
-    boundaries.network_outcomes = [
-        api().InfrastructureFailure("timeout"),
-        {"ok": True},
-        {"ok": True},
-        {"ok": True},
-        {"ok": True},
-    ]
-    rollout = controller(boundaries, prior_paid_attempts=1)
-    rollout.snapshot = prior_state()
-    rollout.rollout_owned_state = deepcopy(boundaries.state)
-    rollout.mutation_armed = True
-
-    with pytest.raises(api().PaidAttemptLimitError):
-        try:
-            rollout.execute_paid_plan()
-        except api().PaidAttemptLimitError:
-            rollout.handle_terminal("paid-cap")
-            raise
-
-    assert rollout.attempt_count == 6
-    assert len([event for event in boundaries.events if event[0] == "paid"]) == 5
-    assert rollout.paid_gate_state == "terminally_closed"
-    assert any(event[0] == "service-patch" for event in boundaries.events)
+@pytest.mark.parametrize("value", [1, 3, 4, 5, 6, "1", "3", "4", "5", "6"])
+def test_arbitrary_paid_attempt_carry_forward_is_refused(value):
+    with pytest.raises(ValueError, match="fresh mode forbids resume authorization|prior paid attempts"):
+        controller(Boundaries(), prior_paid_attempts=value)
 
 
 def test_default_future_run_starts_paid_ledger_at_one_unchanged():
@@ -729,10 +697,24 @@ def test_default_future_run_starts_paid_ledger_at_one_unchanged():
     assert "rollout-evidence/rollout-123/attempts/0001-started.json" in boundaries.objects
 
 
-@pytest.mark.parametrize("value", [True, False, -1, 7, "-1", "7", "01", "1.0", "", None, object()])
+@pytest.mark.parametrize("value", [True, False, 0.0, 2.0, 0.5, 1.5, -1, 1, 3, 6, 7, "-1", "0", "1", "2", "3", "6", "7", "01", "1.0", "2.0", "0.5", "", None, object()])
 def test_prior_paid_attempt_input_rejects_bool_negative_over_max_and_malformed(value):
     with pytest.raises(ValueError, match="prior paid attempts"):
         api().validate_prior_paid_attempts(value)
+
+
+@pytest.mark.parametrize("attribute,value", [
+    ("project", "wrong-project"),
+    ("region", "wrong-region"),
+    ("service", "wrong-service"),
+])
+def test_controller_rejects_conflicting_production_namespace_before_boundaries(attribute, value):
+    module = api()
+    boundaries = Boundaries()
+    setattr(boundaries, attribute, value)
+    with pytest.raises(module.SourceBindingError):
+        controller(boundaries)
+    assert boundaries.events == []
 
 
 def test_second_infrastructure_failure_is_terminal_without_another_retry():
@@ -1986,7 +1968,8 @@ def test_real_smoke_adapters_preserve_retryable_transport_classification(
 def test_gcloud_paid_adapter_maps_typed_smoke_infrastructure_failure(monkeypatch):
     smoke = importlib.import_module("scripts.verify_council_smoke")
     boundaries = api().GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=api().FIXED_PROJECT, region=api().FIXED_REGION,
+        service=api().FIXED_SERVICE, approved_sha="a" * 40
     )
     monkeypatch.setattr(smoke, "load_secret", lambda *args, **kwargs: "secret")
 
@@ -2010,7 +1993,8 @@ def test_gcloud_paid_adapter_maps_typed_smoke_infrastructure_failure(monkeypatch
 def test_gcloud_paid_adapter_preserves_each_typed_semantic_category(monkeypatch, classification):
     smoke = importlib.import_module("scripts.verify_council_smoke")
     boundaries = api().GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=api().FIXED_PROJECT, region=api().FIXED_REGION,
+        service=api().FIXED_SERVICE, approved_sha="a" * 40
     )
     monkeypatch.setattr(smoke, "load_secret", lambda *args, **kwargs: "secret")
     monkeypatch.setattr(
@@ -2028,7 +2012,8 @@ def test_gcloud_paid_adapter_preserves_each_typed_semantic_category(monkeypatch,
 def test_unknown_smoke_semantic_failure_is_bounded_and_raw_message_is_not_recorded(monkeypatch):
     smoke = importlib.import_module("scripts.verify_council_smoke")
     boundaries = api().GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=api().FIXED_PROJECT, region=api().FIXED_REGION,
+        service=api().FIXED_SERVICE, approved_sha="a" * 40
     )
     monkeypatch.setattr(smoke, "load_secret", lambda *args, **kwargs: "secret")
     monkeypatch.setattr(
@@ -2055,7 +2040,8 @@ def test_unknown_smoke_semantic_failure_is_bounded_and_raw_message_is_not_record
 def test_gcloud_candidate_health_invokes_strict_verifier_with_approved_values(monkeypatch):
     health = importlib.import_module("scripts.verify_deploy_health")
     boundaries = api().GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=api().FIXED_PROJECT, region=api().FIXED_REGION,
+        service=api().FIXED_SERVICE, approved_sha="a" * 40
     )
     payload = {"status": "healthy", "config": {}, "artifacts": {"identity": "candidate"}}
     observed = []
@@ -2092,7 +2078,8 @@ def test_gcloud_candidate_health_invokes_strict_verifier_with_approved_values(mo
 def test_gcloud_build_and_rest_calls_reduce_one_shared_adapter_budget(monkeypatch):
     module = api()
     boundaries = module.GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=module.FIXED_PROJECT, region=module.FIXED_REGION,
+        service=module.FIXED_SERVICE, approved_sha="a" * 40
     )
     now = [100.0]
     monkeypatch.setattr(module.time, "monotonic", lambda: now[0])
@@ -2135,7 +2122,8 @@ def test_gcloud_build_and_rest_calls_reduce_one_shared_adapter_budget(monkeypatc
 
 def _gcloud_boundaries():
     return api().GcloudBoundaries(
-        project="project", region="region", service="service", approved_sha="a" * 40
+        project=api().FIXED_PROJECT, region=api().FIXED_REGION,
+        service=api().FIXED_SERVICE, approved_sha="a" * 40
     )
 
 

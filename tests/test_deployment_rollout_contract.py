@@ -11,6 +11,8 @@ from pathlib import Path
 
 import pytest
 
+from scripts import bounded_rollout as rollout
+
 ROOT = Path(__file__).parents[1]
 ENTRY_POINTS = (
     ROOT / ".github/workflows/deploy.yml",
@@ -19,18 +21,13 @@ ENTRY_POINTS = (
 )
 
 PRIOR_PAID_ATTEMPTS_INPUT = """      prior_paid_attempts:
-        description: Number of prior paid rollout attempts
+        description: Fixed cumulative paid attempts (0 fresh, 2 approved resume)
         required: true
         default: "0"
         type: choice
         options:
           - "0"
-          - "1"
           - "2"
-          - "3"
-          - "4"
-          - "5"
-          - "6"
 """
 
 
@@ -57,6 +54,9 @@ def _run_deploy_entrypoint(
     forgejo_available=True,
     origin_available=True,
     prior_paid_attempts=None,
+    rollout_mode=None,
+    manifest_uri=None,
+    manifest_generation=None,
 ):
     """Execute the real shell entry point against recording command boundaries."""
     bin_dir = tmp_path / "bin"
@@ -115,6 +115,12 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
         env["GITHUB_SHA"] = head
     if prior_paid_attempts is not None:
         env["ROLLOUT_PRIOR_PAID_ATTEMPTS"] = prior_paid_attempts
+    if rollout_mode is not None:
+        env["ROLLOUT_MODE"] = rollout_mode
+    if manifest_uri is not None:
+        env["ROLLOUT_RESUME_MANIFEST_URI"] = manifest_uri
+    if manifest_generation is not None:
+        env["ROLLOUT_RESUME_MANIFEST_GENERATION"] = manifest_generation
     result = subprocess.run(
         [str(ROOT / "scripts/deploy.sh")],
         cwd=ROOT,
@@ -136,6 +142,26 @@ def test_manual_entry_points_delegate_only_to_top_level_controller():
     assert "scripts/cloud_run_semantic_rollout.sh" not in workflow
     for forbidden in ("docker build", "docker push", "gcloud run", "verify_council_smoke"):
         assert forbidden not in workflow
+
+
+@pytest.mark.parametrize("name,value", [
+    ("PROJECT", "wrong-project"),
+    ("REGION", "wrong-region"),
+    ("SERVICE", "wrong-service"),
+])
+def test_controller_cli_rejects_namespace_env_before_boundary_creation(
+    monkeypatch, name, value
+):
+    monkeypatch.setenv(name, value)
+    created = []
+    monkeypatch.setattr(
+        rollout,
+        "GcloudBoundaries",
+        lambda **kwargs: created.append(kwargs),
+    )
+    with pytest.raises(SystemExit, match="production namespace override refused"):
+        rollout.main(["--approved-sha", "a" * 40, "--rollout-id", "test"])
+    assert created == []
 
 
 def test_local_entrypoint_executes_clean_tree_and_forgejo_sha_checks_before_controller(tmp_path):
@@ -209,7 +235,7 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
     assert result.stderr == ""
     lines = log.read_text(encoding="utf-8").splitlines()
     controller_index = lines.index(
-        f"controller run python -m scripts.bounded_rollout --approved-sha {sha} --prior-paid-attempts 0"
+        f"controller run python -m scripts.bounded_rollout --approved-sha {sha} --mode fresh --prior-paid-attempts 0"
     )
     assert lines[:controller_index] == [
         "git status --porcelain",
@@ -220,7 +246,7 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
     ]
 
 
-@pytest.mark.parametrize("value", ["0", "1", "6"])
+@pytest.mark.parametrize("value", ["0"])
 def test_deploy_entrypoint_forwards_exact_validated_prior_paid_attempts(tmp_path, value):
     sha = "d" * 40
     result, commands = _run_deploy_entrypoint(
@@ -230,11 +256,11 @@ def test_deploy_entrypoint_forwards_exact_validated_prior_paid_attempts(tmp_path
     assert result.returncode == 0
     assert (
         f"controller run python -m scripts.bounded_rollout --approved-sha {sha} "
-        f"--prior-paid-attempts {value}"
+        f"--mode fresh --prior-paid-attempts {value}"
     ) in commands.splitlines()
 
 
-@pytest.mark.parametrize("value", ["true", "-1", "7", "01", "1.0", ""])
+@pytest.mark.parametrize("value", ["true", "-1", "1", "2", "6", "7", "01", "1.0", ""])
 def test_deploy_entrypoint_rejects_invalid_prior_paid_attempts(tmp_path, value):
     sha = "d" * 40
     result, commands = _run_deploy_entrypoint(
@@ -242,7 +268,62 @@ def test_deploy_entrypoint_rejects_invalid_prior_paid_attempts(tmp_path, value):
     )
 
     assert result.returncode == 2
-    assert "invalid ROLLOUT_PRIOR_PAID_ATTEMPTS" in result.stderr
+    assert "Refusing" in result.stderr
+    assert "controller " not in commands
+
+
+def test_deploy_entrypoint_forwards_exact_resume_authorization(tmp_path):
+    sha = "d" * 40
+    uri = (
+        "gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence/"
+        "resume-after-prior-v1/approved.json"
+    )
+    result, commands = _run_deploy_entrypoint(
+        tmp_path,
+        mode="local",
+        head=sha,
+        remote=sha,
+        prior_paid_attempts="2",
+        rollout_mode="resume-after-prior-v1",
+        manifest_uri=uri,
+        manifest_generation="99",
+    )
+    assert result.returncode == 0
+    assert (
+        f"--mode resume-after-prior-v1 --prior-paid-attempts 2 "
+        f"--resume-manifest-uri {uri} --resume-manifest-generation 99"
+    ) in commands
+
+
+@pytest.mark.parametrize(
+    ("rollout_mode", "count", "uri", "generation"),
+    [
+        ("fresh", "0", "gs://bad/manifest.json", "1"),
+        ("resume-after-prior-v1", "0", "gs://bad/manifest.json", "1"),
+        ("resume-after-prior-v1", "2", "gs://bad/manifest.json", "1"),
+        (
+            "resume-after-prior-v1",
+            "2",
+            "gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence/resume-after-prior-v1/approved.json",
+            "latest",
+        ),
+    ],
+)
+def test_deploy_entrypoint_fails_closed_on_inconsistent_resume_tuple(
+    tmp_path, rollout_mode, count, uri, generation
+):
+    sha = "d" * 40
+    result, commands = _run_deploy_entrypoint(
+        tmp_path,
+        mode="local",
+        head=sha,
+        remote=sha,
+        prior_paid_attempts=count,
+        rollout_mode=rollout_mode,
+        manifest_uri=uri,
+        manifest_generation=generation,
+    )
+    assert result.returncode == 2
     assert "controller " not in commands
 
 
@@ -341,6 +422,9 @@ def test_github_workflow_constrains_and_forwards_prior_paid_attempts():
     _assert_prior_paid_attempts_workflow_contract(workflow)
     deploy_step = workflow[workflow.index("      - name: Execute sole bounded deployment entry point") :]
     assert "ROLLOUT_PRIOR_PAID_ATTEMPTS: ${{ inputs.prior_paid_attempts }}" in deploy_step
+    assert "ROLLOUT_MODE: ${{ inputs.rollout_mode }}" in deploy_step
+    assert "ROLLOUT_RESUME_MANIFEST_URI: ${{ inputs.resume_manifest_uri }}" in deploy_step
+    assert "ROLLOUT_RESUME_MANIFEST_GENERATION: ${{ inputs.resume_manifest_generation }}" in deploy_step
 
 
 @pytest.mark.parametrize(
@@ -348,7 +432,7 @@ def test_github_workflow_constrains_and_forwards_prior_paid_attempts():
     [
         lambda workflow: workflow.replace(PRIOR_PAID_ATTEMPTS_INPUT, ""),
         lambda workflow: workflow.replace("        type: choice\n", "        type: string\n", 1),
-        lambda workflow: workflow.replace('          - "6"\n', '          - "7"\n', 1),
+        lambda workflow: workflow.replace('          - "2"\n', '          - "7"\n', 1),
     ],
     ids=["omitted", "unconstrained-type", "unconstrained-value"],
 )

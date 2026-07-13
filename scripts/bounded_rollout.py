@@ -32,6 +32,16 @@ LOCK_OBJECT = (
     "tke-phi-privacy-engine/us-central1/llm-council.lock"
 )
 EVIDENCE_ROOT = "gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence"
+RESUME_MANIFEST_ROOT = f"{EVIDENCE_ROOT}/resume-after-prior-v1"
+RESUME_MODE = "resume-after-prior-v1"
+FRESH_MODE = "fresh"
+PROJECT = "tke-phi-privacy-engine"
+REGION = "us-central1"
+SERVICE = "llm-council"
+# Compatibility exports for existing pure tests; production code cannot override these.
+FIXED_PROJECT = PROJECT
+FIXED_REGION = REGION
+FIXED_SERVICE = SERVICE
 ATTEMPT_CLASSIFICATIONS = {
     "succeeded",
     "http_429",
@@ -65,6 +75,19 @@ PAID_PLAN = (
 MAX_PAID_ATTEMPTS = 6
 
 
+def validate_production_namespace(project: Any, region: Any, service: Any) -> None:
+    """Refuse every production namespace except the compiled deployment target."""
+    if (
+        type(project) is not str
+        or type(region) is not str
+        or type(service) is not str
+        or project != FIXED_PROJECT
+        or region != FIXED_REGION
+        or service != FIXED_SERVICE
+    ):
+        raise SourceBindingError("production namespace override refused")
+
+
 class RolloutError(RuntimeError):
     """Base class for bounded rollout refusals."""
 
@@ -84,6 +107,10 @@ class LockRecoveryRequired(LockRefusal):
 
 
 class InitialStateRefusal(RolloutError):
+    pass
+
+
+class ResumeRefusal(RolloutError):
     pass
 
 
@@ -146,19 +173,61 @@ def _integer(value: Any) -> int:
     return int(text)
 
 
+def validate_resume_inputs(
+    mode: Any,
+    prior_paid_attempts: Any,
+    manifest_uri: Any = None,
+    manifest_generation: Any = None,
+) -> tuple[str, int, str | None, str | None]:
+    """Accept only the two explicit authorization tuples."""
+    if type(prior_paid_attempts) is not int:
+        raise ValueError("prior paid attempts must be exactly 0 or 2")
+    if mode == FRESH_MODE:
+        if prior_paid_attempts != 0 or manifest_uri not in {None, ""} or manifest_generation not in {None, ""}:
+            raise ValueError("fresh mode forbids resume authorization")
+        return FRESH_MODE, 0, None, None
+    if mode != RESUME_MODE or prior_paid_attempts != 2:
+        raise ValueError("resume-after-prior-v1 requires prior paid attempts equal to 2")
+    if not isinstance(manifest_uri, str) or not manifest_uri.startswith(f"{RESUME_MANIFEST_ROOT}/"):
+        raise ValueError("resume manifest URI is outside the approved evidence prefix")
+    suffix = manifest_uri.removeprefix(f"{RESUME_MANIFEST_ROOT}/")
+    if not suffix or "/" in suffix or not suffix.endswith(".json") or any(part in suffix for part in ("#", "?")):
+        raise ValueError("resume manifest URI is malformed")
+    if not isinstance(manifest_generation, str) or not re.fullmatch(r"[1-9][0-9]*", manifest_generation):
+        raise ValueError("exact resume manifest generation is required")
+    return RESUME_MODE, 2, manifest_uri, manifest_generation
+
+
 def validate_prior_paid_attempts(value: Any) -> int:
-    """Validate the cumulative paid-attempt count carried from an incident."""
-    if isinstance(value, bool):
-        raise ValueError("prior paid attempts must be an integer from 0 through 6")
-    if isinstance(value, int):
-        result = value
-    elif isinstance(value, str) and re.fullmatch(r"0|[1-6]", value):
-        result = int(value)
-    else:
-        raise ValueError("prior paid attempts must be an integer from 0 through 6")
-    if not 0 <= result <= MAX_PAID_ATTEMPTS:
-        raise ValueError("prior paid attempts must be an integer from 0 through 6")
-    return result
+    """Compatibility validator for a fresh ledger or the sole approved resume count."""
+    if type(value) is not int:
+        raise ValueError("prior paid attempts must be exactly 0 or 2")
+    if value == 0:
+        return 0
+    if value == 2:
+        return 2
+    raise ValueError("prior paid attempts must be exactly 0 or 2")
+
+
+def normalize_revision_reference(value: Any) -> str:
+    """Return a short revision ID only from the exact service namespace."""
+    if not isinstance(value, str):
+        raise ConcurrencyRefusal("revision reference refused")
+    revision_pattern = r"[a-z](?:[a-z0-9-]{0,61}[a-z0-9])?"
+    if re.fullmatch(revision_pattern, value):
+        return value
+    prefix = (
+        f"projects/{FIXED_PROJECT}/locations/{FIXED_REGION}/services/"
+        f"{FIXED_SERVICE}/revisions/"
+    )
+    if value.startswith(prefix) and re.fullmatch(revision_pattern, value.removeprefix(prefix)):
+        return value.removeprefix(prefix)
+    raise ConcurrencyRefusal("revision reference refused")
+
+
+def _canonical_sha256(value: Any) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _normalized_reconciling(state: Any) -> bool:
@@ -277,8 +346,20 @@ class RolloutController:
         clock: Any | None = None,
         promotion_seconds: float = 1800,
         rollback_seconds: float = 300,
-        prior_paid_attempts: int | str = 0,
+        prior_paid_attempts: int = 0,
+        mode: str = FRESH_MODE,
+        resume_manifest_uri: str | None = None,
+        resume_manifest_generation: str | None = None,
     ):
+        expected_namespace = {
+            "project": FIXED_PROJECT,
+            "region": FIXED_REGION,
+            "service": FIXED_SERVICE,
+        }
+        for attribute, expected in expected_namespace.items():
+            supplied = getattr(boundaries, attribute, None)
+            if supplied != expected or type(supplied) is not str:
+                raise SourceBindingError("production namespace override refused")
         self.boundaries = boundaries
         self.rollout_id = rollout_id
         self.approved_sha = approved_sha
@@ -289,7 +370,15 @@ class RolloutController:
         self.rollback_deadline: float | None = None
         self.paid_gate_state = "open"
         self.promotion_gate_state = "unchanged"
-        self.attempt_count = validate_prior_paid_attempts(prior_paid_attempts)
+        (
+            self.mode,
+            self.attempt_count,
+            self.resume_manifest_uri,
+            self.resume_manifest_generation,
+        ) = validate_resume_inputs(
+            mode, prior_paid_attempts, resume_manifest_uri, resume_manifest_generation
+        )
+        self.resume_manifest: dict[str, Any] | None = None
         self.retry_consumed = False
         self.lock_generation: str | None = None
         self.snapshot: dict[str, Any] | None = None
@@ -373,7 +462,10 @@ class RolloutController:
             raise ConcurrencyRefusal("candidate revision intent is incomplete")
         name_factory = getattr(self.boundaries, "revision_resource_name", lambda value: value)
         try:
-            if not isinstance(state, dict) or state.get("name") != name_factory(revision):
+            if (
+                not isinstance(state, dict)
+                or self._revision(state.get("name")) != self._revision(name_factory(revision))
+            ):
                 raise ValueError
             containers = state.get("containers")
             if containers is None and isinstance(state.get("spec"), dict):
@@ -434,7 +526,7 @@ class RolloutController:
             if container_ready.get("state") != "CONDITION_SUCCEEDED":
                 raise ValueError
 
-            retired_exceptions = {
+            retired_exceptions: dict[str, dict[str, Any]] = {
                 "Active": {
                     "state": "CONDITION_FAILED",
                     "severity": "INFO",
@@ -482,10 +574,20 @@ class RolloutController:
     def acquire_lock(self) -> None:
         owner = self.rollout_id
         try:
+            lock_value = {"rollout_id": self.rollout_id, "owner": owner}
+            if self.mode == RESUME_MODE:
+                if self.resume_manifest_uri is None or self.resume_manifest_generation is None:
+                    raise ResumeRefusal("resume lock binding is incomplete")
+                lock_value.update(
+                    resume_mode=self.mode,
+                    resume_manifest_uri=self.resume_manifest_uri,
+                    resume_manifest_generation=self.resume_manifest_generation,
+                    target_sha=self.approved_sha,
+                )
             generation = self._call_with_budget(
                 self.boundaries.create_gcs,
                 LOCK_OBJECT,
-                {"rollout_id": self.rollout_id, "owner": owner},
+                lock_value,
                 if_generation_match=0,
             )
             receipt = {"owner": owner, "generation": generation}
@@ -496,6 +598,272 @@ class RolloutController:
             raise LockRecoveryRequired(
                 "stale_lock_recovery_required: existing lock requires bounded manual recovery"
             ) from exc
+
+    def _read_resume_object(self, uri: Any, generation: Any) -> dict[str, Any]:
+        if (
+            not isinstance(uri, str)
+            or not uri.startswith(f"{EVIDENCE_ROOT}/")
+            or "#" in uri
+            or "?" in uri
+            or not isinstance(generation, str)
+            or re.fullmatch(r"[1-9][0-9]*", generation) is None
+        ):
+            raise ResumeRefusal("resume evidence reference refused")
+        method = getattr(self.boundaries, "read_gcs_generation", None)
+        if method is None:
+            raise ResumeRefusal("exact-generation evidence boundary is missing")
+        try:
+            value = self._call_with_budget(method, uri, generation)
+        except Exception as exc:
+            raise ResumeRefusal("resume evidence generation could not be read") from exc
+        if not isinstance(value, dict):
+            raise ResumeRefusal("resume evidence object must be JSON object")
+        return value
+
+    def _revision(self, value: Any) -> str:
+        return normalize_revision_reference(value)
+
+    def _validate_resume_service(
+        self, state: Any, manifest: dict[str, Any]
+    ) -> tuple[dict[str, Any], str]:
+        try:
+            if "observedGeneration" in state:
+                validated = validate_initial_service(state)
+            else:
+                validated = deepcopy(state)
+                generation = _integer(validated["generation"])
+                if (
+                    _integer(validated["observed_generation"]) != generation
+                    or _normalized_reconciling(validated)
+                ):
+                    raise ValueError
+                traffic = _normalized_traffic(validated["traffic"])
+                owners = [item for item in traffic if item["percent"] > 0]
+                if len(owners) != 1 or owners[0]["percent"] != 100:
+                    raise ValueError
+                if not validated.get("uid") or not validated.get("etag"):
+                    raise ValueError
+            traffic = _normalized_traffic(validated["traffic"])
+            owners = [item for item in traffic if item["percent"] > 0]
+            prior = self._revision(owners[0]["revision"])
+            if prior != self._revision(manifest["expected_prior_revision"]):
+                raise ValueError
+            uri = validated.get("uri")
+            parsed = urllib.parse.urlsplit(uri) if isinstance(uri, str) else None
+            if (
+                parsed is None
+                or parsed.scheme != "https"
+                or not parsed.netloc
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise ValueError
+            if not isinstance(uri, str):
+                raise ValueError
+            if hashlib.sha256(uri.encode()).hexdigest() != manifest["service_url_sha256"]:
+                raise ValueError
+            if _canonical_sha256(traffic) != manifest["traffic_sha256"]:
+                raise ValueError
+        except (KeyError, TypeError, ValueError, InitialStateRefusal, ConcurrencyRefusal) as exc:
+            raise ResumeRefusal("resume service preflight refused") from exc
+        return validated, prior
+
+    def _verify_resume_evidence(self) -> tuple[dict[str, Any], dict[str, Any], str]:
+        manifest = self._read_resume_object(
+            self.resume_manifest_uri, self.resume_manifest_generation
+        )
+        manifest_fields = {
+            "schema_version", "mode", "target_sha", "project", "region", "service",
+            "cumulative_paid_attempts", "expected_prior_revision", "service_url_sha256",
+            "traffic_sha256", "sources",
+        }
+        try:
+            if set(manifest) != manifest_fields:
+                raise ValueError
+            if (
+                type(manifest["schema_version"]) is not int
+                or manifest["schema_version"] != 1
+                or manifest["mode"] != RESUME_MODE
+                or manifest["target_sha"] != self.approved_sha
+                or manifest["project"] != FIXED_PROJECT
+                or manifest["region"] != FIXED_REGION
+                or manifest["service"] != FIXED_SERVICE
+                or type(manifest["cumulative_paid_attempts"]) is not int
+                or manifest["cumulative_paid_attempts"] != 2
+                or not re.fullmatch(r"[0-9a-f]{64}", manifest["service_url_sha256"])
+                or not re.fullmatch(r"[0-9a-f]{64}", manifest["traffic_sha256"])
+                or not isinstance(manifest["sources"], list)
+                or len(manifest["sources"]) != 2
+            ):
+                raise ValueError
+            expected_source_fields = {
+                "source_rollout_id", "source_approved_sha", "checkpoint_uri", "checkpoint_generation",
+                "recovery_uri", "recovery_generation", "source_attestation_uri",
+                "source_attestation_generation",
+            }
+            source_ids: set[str] = set()
+            evidence_uris: set[str] = set()
+            evidence_references: set[tuple[str, str]] = set()
+            for number, source in enumerate(manifest["sources"], 1):
+                if not isinstance(source, dict) or set(source) != expected_source_fields:
+                    raise ValueError
+                source_id = source["source_rollout_id"]
+                if (
+                    not isinstance(source_id, str)
+                    or not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?", source_id)
+                    or source_id in source_ids
+                ):
+                    raise ValueError
+                source_ids.add(source_id)
+                if (
+                    not isinstance(source["source_approved_sha"], str)
+                    or re.fullmatch(r"[0-9a-f]{40}", source["source_approved_sha"]) is None
+                ):
+                    raise ValueError
+                expected_checkpoint_uri = (
+                    f"{EVIDENCE_ROOT}/{source_id}/attempts/{number:04d}-completed.json"
+                )
+                expected_recovery_uri = f"{EVIDENCE_ROOT}/{source_id}/recovery.json"
+                expected_attestation_uri = (
+                    f"{EVIDENCE_ROOT}/{source_id}/source-attestation.json"
+                )
+                if (
+                    source["checkpoint_uri"] != expected_checkpoint_uri
+                    or source["recovery_uri"] != expected_recovery_uri
+                    or source["source_attestation_uri"] != expected_attestation_uri
+                ):
+                    raise ValueError
+                for uri_field, generation_field in (
+                    ("checkpoint_uri", "checkpoint_generation"),
+                    ("recovery_uri", "recovery_generation"),
+                    ("source_attestation_uri", "source_attestation_generation"),
+                ):
+                    uri = source[uri_field]
+                    generation = source[generation_field]
+                    reference = (uri, generation)
+                    if uri in evidence_uris or reference in evidence_references:
+                        raise ValueError
+                    evidence_uris.add(uri)
+                    evidence_references.add(reference)
+                checkpoint = self._read_resume_object(
+                    source["checkpoint_uri"], source["checkpoint_generation"]
+                )
+                checkpoint_fields = {
+                    "rollout_id", "stage", "surface", "url_sha256", "attempt_number",
+                    "paid_gate_state", "classification",
+                }
+                if (
+                    set(checkpoint) != checkpoint_fields
+                    or checkpoint["rollout_id"] != source_id
+                    or type(checkpoint["attempt_number"]) is not int
+                    or checkpoint["attempt_number"] != number
+                    or checkpoint["classification"] != "succeeded"
+                    or checkpoint["paid_gate_state"] != "open"
+                    or checkpoint["stage"] != "prior"
+                    or checkpoint["surface"] != "stream"
+                    or checkpoint["url_sha256"] != manifest["service_url_sha256"]
+                ):
+                    raise ValueError
+                recovery = self._read_resume_object(
+                    source["recovery_uri"], source["recovery_generation"]
+                )
+                count_field = "paid_attempts" if number == 1 else "cumulative_paid_attempts"
+                recovery_fields = {
+                    "rollout_id", "status", count_field, "traffic_matches_snapshot",
+                    "candidate_traffic_percent", "prior_revision",
+                }
+                if (
+                    set(recovery) != recovery_fields
+                    or recovery["rollout_id"] != source_id
+                    or recovery["status"] != "ALREADY_CONVERGED_NO_TRAFFIC"
+                    or type(recovery[count_field]) is not int
+                    or recovery[count_field] != number
+                    or recovery["traffic_matches_snapshot"] is not True
+                    or type(recovery["candidate_traffic_percent"]) is not int
+                    or recovery["candidate_traffic_percent"] != 0
+                    or self._revision(recovery["prior_revision"])
+                    != self._revision(manifest["expected_prior_revision"])
+                ):
+                    raise ValueError
+                attestation = self._read_resume_object(
+                    source["source_attestation_uri"],
+                    source["source_attestation_generation"],
+                )
+                attestation_fields = {
+                    "schema_version", "mode", "source_rollout_id",
+                    "source_approved_sha", "target_sha", "project", "region",
+                    "service", "checkpoint_uri", "checkpoint_generation",
+                    "recovery_uri", "recovery_generation", "expected_attempt_number",
+                    "service_url_sha256", "traffic_sha256", "prior_revision",
+                }
+                if (
+                    set(attestation) != attestation_fields
+                    or type(attestation["schema_version"]) is not int
+                    or attestation["schema_version"] != 1
+                    or attestation["mode"] != RESUME_MODE
+                    or attestation["source_rollout_id"] != source_id
+                    or attestation["source_approved_sha"] != source["source_approved_sha"]
+                    or attestation["target_sha"] != self.approved_sha
+                    or attestation["project"] != FIXED_PROJECT
+                    or attestation["region"] != FIXED_REGION
+                    or attestation["service"] != FIXED_SERVICE
+                    or attestation["checkpoint_uri"] != source["checkpoint_uri"]
+                    or attestation["checkpoint_generation"] != source["checkpoint_generation"]
+                    or attestation["recovery_uri"] != source["recovery_uri"]
+                    or attestation["recovery_generation"] != source["recovery_generation"]
+                    or type(attestation["expected_attempt_number"]) is not int
+                    or attestation["expected_attempt_number"] != number
+                    or attestation["service_url_sha256"] != manifest["service_url_sha256"]
+                    or attestation["traffic_sha256"] != manifest["traffic_sha256"]
+                    or self._revision(attestation["prior_revision"])
+                    != self._revision(manifest["expected_prior_revision"])
+                ):
+                    raise ValueError
+        except (KeyError, TypeError, ValueError, ConcurrencyRefusal) as exc:
+            raise ResumeRefusal("resume manifest or source chain refused") from exc
+        state = self._service_get()
+        validated, prior = self._validate_resume_service(state, manifest)
+        return manifest, validated, prior
+
+    def prepare_resume(self) -> tuple[dict[str, Any], str]:
+        """Verify immutable evidence and unchanged production on both sides of CAS lock."""
+        if self.mode != RESUME_MODE:
+            raise ResumeRefusal("resume preparation requires exact resume mode")
+        ensure_absent = getattr(self.boundaries, "ensure_lock_absent", None)
+        if ensure_absent is None:
+            raise ResumeRefusal("preexisting-lock boundary is missing")
+        self._call_with_budget(ensure_absent, LOCK_OBJECT)
+        first_manifest, first_state, first_prior = self._verify_resume_evidence()
+        self.acquire_lock()
+        second_manifest, second_state, second_prior = self._verify_resume_evidence()
+        stable_fields = ("uid", "etag", "generation", "observedGeneration", "observed_generation", "uri")
+        if (
+            first_manifest != second_manifest
+            or first_prior != second_prior
+            or any(first_state.get(key) != second_state.get(key) for key in stable_fields)
+            or _normalized_traffic(first_state["traffic"]) != _normalized_traffic(second_state["traffic"])
+        ):
+            raise ResumeRefusal("resume evidence or service changed during lock acquisition")
+        self.resume_manifest = deepcopy(second_manifest)
+        self.snapshot = deepcopy(second_state)
+        self.prior_service_url = second_state["uri"]
+        self.prior_identity = self.boundaries.health(
+            self.prior_service_url,
+            None,
+            timeout=self._remaining(),
+            allow_legacy_prior=True,
+        )
+        # Revalidate the one-owner control plane after the fresh data-plane health call.
+        final_state = self._service_get()
+        final_validated, final_prior = self._validate_resume_service(final_state, second_manifest)
+        if final_prior != second_prior or any(
+            second_state.get(key) != final_validated.get(key) for key in stable_fields
+        ) or _normalized_traffic(second_state["traffic"]) != _normalized_traffic(final_validated["traffic"]):
+            raise ResumeRefusal("production changed during resume health preflight")
+        self.snapshot = deepcopy(final_validated)
+        return deepcopy(final_validated), final_prior
 
     def capture_snapshot(self) -> dict[str, Any]:
         state = self._service_get()
@@ -557,8 +925,13 @@ class RolloutController:
         if self.expected_candidate_revision is not None and "expected_revision" in inspect.signature(deploy).parameters:
             kwargs["expected_revision"] = self.expected_candidate_revision
         self.candidate_revision = deploy(self.image_digest, **kwargs)
-        if self.expected_candidate_revision is not None and self.candidate_revision != self.expected_candidate_revision:
+        if (
+            self.expected_candidate_revision is not None
+            and self._revision(self.candidate_revision)
+            != self._revision(self.expected_candidate_revision)
+        ):
             raise ConcurrencyRefusal("deployed candidate revision mismatch")
+        self.candidate_revision = self._revision(self.candidate_revision)
         self.expected_candidate_revision = self.candidate_revision
         self._remaining()
         return self.candidate_revision
@@ -616,6 +989,9 @@ class RolloutController:
             if_generation_match=0,
         )
         if isinstance(result, InfrastructureFailure):
+            if self.mode == RESUME_MODE:
+                self.paid_gate_state = "terminally_closed"
+                raise result
             if self.retry_consumed:
                 self.paid_gate_state = "terminally_closed"
                 raise result
@@ -899,17 +1275,20 @@ class RolloutController:
             raise RollbackProofError("rollback proof refused") from exc
 
     def _snapshot_traffic_is_already_restored(self, current: Any) -> bool:
+        snapshot = self.snapshot
+        if snapshot is None:
+            return False
         try:
             return (
                 isinstance(current, dict)
-                and current.get("uid") == self.snapshot.get("uid")
+                and current.get("uid") == snapshot.get("uid")
                 and _integer(current.get("observedGeneration"))
                 == _integer(current.get("generation"))
                 and not _normalized_reconciling(current)
                 and _normalized_traffic(current.get("traffic"))
-                == _normalized_traffic(self.snapshot.get("traffic"))
+                == _normalized_traffic(snapshot.get("traffic"))
                 and _normalized_traffic(current.get("trafficStatuses"))
-                == _normalized_traffic(self.snapshot.get("trafficStatuses"))
+                == _normalized_traffic(snapshot.get("trafficStatuses"))
             )
         except (KeyError, TypeError, ValueError):
             return False
@@ -932,17 +1311,20 @@ class RolloutController:
         self, restored: Any, owner: dict[str, Any], owner_generation: int
     ) -> bool:
         """Return False only for an exact, still-reconciling owned restoration."""
+        snapshot = self.snapshot
+        if snapshot is None:
+            raise RollbackProofError("rollback snapshot is missing")
         try:
-            if not isinstance(restored, dict) or restored.get("uid") != self.snapshot.get("uid"):
+            if not isinstance(restored, dict) or restored.get("uid") != snapshot.get("uid"):
                 raise ValueError
             generation = _integer(restored.get("generation"))
             observed = _integer(restored.get("observedGeneration"))
             if generation != owner_generation + 1:
                 raise ValueError
-            if restored.get("etag") in {self.snapshot.get("etag"), owner.get("etag")}:
+            if restored.get("etag") in {snapshot.get("etag"), owner.get("etag")}:
                 raise ValueError
             traffic = _normalized_traffic(restored.get("traffic"))
-            expected = _normalized_traffic(self.snapshot["traffic"])
+            expected = _normalized_traffic(snapshot["traffic"])
             if traffic != expected:
                 raise ValueError
             reconciling = _normalized_reconciling(restored)
@@ -1038,9 +1420,9 @@ class RolloutController:
                 and isinstance(etag, str)
                 and bool(etag)
                 and etag != snapshot.get("etag")
-                and current.get("latestCreatedRevision") == revision
+                and self._revision(current.get("latestCreatedRevision")) == self._revision(revision)
                 and isinstance(template, dict)
-                and template.get("revision") == revision
+                and self._revision(template.get("revision")) == self._revision(revision)
                 and image_exact
                 and deploy_revision_values == [self.approved_sha]
                 and image_digest_values == [self.image_digest]
@@ -1058,11 +1440,11 @@ class RolloutController:
                 and not _normalized_reconciling(current)
             ):
                 if (
-                    current.get("latestReadyRevision") == revision
+                    self._revision(current.get("latestReadyRevision")) == self._revision(revision)
                     and self.candidate_revision_state is not None
                 ):
                     return "owned"
-                prior_ready = snapshot.get("latestReadyRevision")
+                prior_ready = self._revision(snapshot.get("latestReadyRevision"))
                 terminal = current.get("terminalCondition")
                 conditions = current.get("conditions")
                 if not isinstance(conditions, list) or any(
@@ -1086,7 +1468,7 @@ class RolloutController:
                 ]
                 configuration = configurations[0] if len(configurations) == 1 else None
                 if (
-                    current.get("latestReadyRevision") == prior_ready
+                    self._revision(current.get("latestReadyRevision")) == prior_ready
                     and isinstance(terminal, dict)
                     and terminal.get("type") == "Ready"
                     and self._condition_truth(terminal) is True
@@ -1097,15 +1479,16 @@ class RolloutController:
                 ):
                     return "owned"
                 return "contradictory"
-            prior_ready = snapshot.get("latestReadyRevision")
+            prior_ready = self._revision(snapshot.get("latestReadyRevision"))
             if (
                 snapshot_generation <= observed < generation
                 and _normalized_reconciling(current)
-                and current.get("latestReadyRevision") in {prior_ready, revision}
+                and self._revision(current.get("latestReadyRevision"))
+                in {prior_ready, self._revision(revision)}
             ):
                 return "intermediate"
             return "contradictory"
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, ConcurrencyRefusal):
             return "contradictory"
 
     def _deploy_state_is_exactly_owned(self, current: dict[str, Any]) -> bool:
@@ -1139,8 +1522,14 @@ class RolloutController:
                     or _normalized_traffic(current.get("trafficStatuses"))
                     == _normalized_traffic(owned.get("trafficStatuses"))
                 )
-                and current.get("latestReadyRevision")
-                == owned.get("latestReadyRevision")
+                and (
+                    (
+                        "latestReadyRevision" not in current
+                        and "latestReadyRevision" not in owned
+                    )
+                    or self._revision(current.get("latestReadyRevision"))
+                    == self._revision(owned.get("latestReadyRevision"))
+                )
             )
         except (KeyError, TypeError, ValueError, PromotionDeadlineExceeded, RollbackProofError):
             return False
@@ -1191,7 +1580,10 @@ def run_rollout(
     clock: Any | None = None,
     promotion_seconds: float = 1800,
     rollback_seconds: float = 300,
-    prior_paid_attempts: int | str = 0,
+    prior_paid_attempts: int = 0,
+    mode: str = FRESH_MODE,
+    resume_manifest_uri: str | None = None,
+    resume_manifest_generation: str | None = None,
 ) -> RolloutController:
     """Execute the one immutable rollout sequence; callers cannot supply a plan."""
     rollout = RolloutController(
@@ -1202,6 +1594,9 @@ def run_rollout(
         promotion_seconds=promotion_seconds,
         rollback_seconds=rollback_seconds,
         prior_paid_attempts=prior_paid_attempts,
+        mode=mode,
+        resume_manifest_uri=resume_manifest_uri,
+        resume_manifest_generation=resume_manifest_generation,
     )
     return _execute_rollout(rollout)
 
@@ -1357,15 +1752,23 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
     rollout.start_promotion_deadline()
     try:
         boundaries.verify_benchmark()
-        rollout.acquire_lock()
-        rollout.capture_snapshot()
+        if rollout.mode == RESUME_MODE:
+            _, prior_revision = rollout.prepare_resume()
+        else:
+            rollout.acquire_lock()
+            captured = rollout.capture_snapshot()
+            prior_revision = next(
+                item["revision"]
+                for item in _normalized_traffic(captured["traffic"])
+                if item["percent"] == 100
+            )
+        snapshot = rollout.snapshot
+        if snapshot is None:
+            raise InitialStateRefusal("rollout snapshot is missing")
         rollout.build_candidate()
-        prior_revision = next(
-            item["revision"]
-            for item in _normalized_traffic(rollout.snapshot["traffic"])
-            if item["percent"] == 100
-        )
-        if "observedGeneration" in rollout.snapshot:
+        if rollout.mode == RESUME_MODE:
+            prior_url = rollout._service_base_url()
+        elif "observedGeneration" in snapshot:
             prior_url = rollout._service_base_url()
             rollout.prior_identity = boundaries.health(
                 prior_url,
@@ -1378,16 +1781,17 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
             rollout.prior_identity = deepcopy(
                 getattr(boundaries, "health_identity", {"revision": prior_revision})
             )
-        rollout.run_paid_attempt(stage="prior", surface="stream", url=prior_url)
+        if rollout.mode != RESUME_MODE:
+            rollout.run_paid_attempt(stage="prior", surface="stream", url=prior_url)
         rollout.deploy_candidate()
-        if "observedGeneration" in rollout.snapshot:
+        if "observedGeneration" in snapshot:
             _execute_v2_progression(rollout, prior_revision=prior_revision)
         else:
             rollout.candidate_identity = rollout.verify_candidate_health("https://shadow.example")
             rollout.run_paid_attempt(stage="shadow", surface="sync", url="https://shadow.example")
             rollout.run_paid_attempt(stage="shadow", surface="stream", url="https://shadow.example")
             rollout._event("stage-10")
-            rollout.planned_restore(rollout.snapshot)
+            rollout.planned_restore(snapshot)
             rollout._event("stage-10")
             rollout.observe_stage(10)
             rollout._event("stage-50")
@@ -1415,6 +1819,7 @@ class GcloudBoundaries:
     """Production GCS, Cloud Run v2, health, probe, and build adapters."""
 
     def __init__(self, *, project: str, region: str, service: str, approved_sha: str):
+        validate_production_namespace(project, region, service)
         self.project = project
         self.region = region
         self.service = service
@@ -1476,6 +1881,53 @@ class GcloudBoundaries:
             self.lock_owner = value.get("owner") if isinstance(value, dict) else None
             self.lock_generation = generation
         return generation
+
+    def ensure_lock_absent(self, uri: str, *, timeout: float = 30) -> None:
+        if uri != LOCK_OBJECT:
+            raise LockRefusal("unexpected lock object")
+        try:
+            self._run(
+                ["gcloud", "storage", "objects", "describe", uri, "--format=json"],
+                timeout=timeout,
+            )
+        except subprocess.CalledProcessError as exc:
+            message = (exc.stderr or "").lower()
+            if not any(marker in message for marker in ("not found", "does not exist", "404")):
+                raise LockRefusal("lock absence could not be proven") from exc
+            return
+        raise LockRecoveryRequired(
+            "stale_lock_recovery_required: existing lock requires bounded manual recovery"
+        )
+
+    def read_gcs_generation(
+        self, uri: str, generation: str, *, timeout: float = 30
+    ) -> dict[str, Any]:
+        if (
+            not uri.startswith(f"{EVIDENCE_ROOT}/")
+            or not re.fullmatch(r"[1-9][0-9]*", generation)
+            or "#" in uri
+            or "?" in uri
+        ):
+            raise ResumeRefusal("exact GCS evidence reference refused")
+        versioned_uri = f"{uri}#{generation}"
+        deadline = self._deadline(timeout)
+        metadata = json.loads(
+            self._run(
+                ["gcloud", "storage", "objects", "describe", versioned_uri, "--format=json"],
+                timeout=self._budget(deadline),
+            )
+        )
+        if str(metadata.get("generation", "")) != generation:
+            raise ResumeRefusal("GCS evidence generation mismatch")
+        value = json.loads(
+            self._run(
+                ["gcloud", "storage", "cat", versioned_uri],
+                timeout=self._budget(deadline),
+            )
+        )
+        if not isinstance(value, dict):
+            raise ResumeRefusal("GCS evidence is not an object")
+        return value
 
     def verify_benchmark(self) -> None:
         from scripts.verify_promotion_benchmark import verify_promotion_benchmark
@@ -1558,10 +2010,12 @@ class GcloudBoundaries:
         return self._request("GET", self._service_url, timeout=timeout)
 
     def revision_resource_name(self, revision: str) -> str:
-        return f"projects/{self.project}/locations/{self.region}/services/{self.service}/revisions/{revision}"
+        short = normalize_revision_reference(revision)
+        return f"projects/{self.project}/locations/{self.region}/services/{self.service}/revisions/{short}"
 
     def revision_get(self, revision: str, *, timeout: float = 30) -> dict[str, Any]:
-        if not isinstance(revision, str) or not revision.startswith(f"{self.service}-"):
+        revision = normalize_revision_reference(revision)
+        if not revision.startswith(f"{self.service}-"):
             raise ConcurrencyRefusal("candidate revision name refused")
         name = self.revision_resource_name(revision)
         return self._request("GET", f"https://run.googleapis.com/v2/{name}", timeout=timeout)
@@ -1767,18 +2221,41 @@ def main(argv: list[str] | None = None) -> int:
         "--prior-paid-attempts",
         default=os.environ.get("ROLLOUT_PRIOR_PAID_ATTEMPTS", "0"),
     )
+    parser.add_argument("--mode", default=os.environ.get("ROLLOUT_MODE", FRESH_MODE))
+    parser.add_argument(
+        "--resume-manifest-uri", default=os.environ.get("ROLLOUT_RESUME_MANIFEST_URI")
+    )
+    parser.add_argument(
+        "--resume-manifest-generation",
+        default=os.environ.get("ROLLOUT_RESUME_MANIFEST_GENERATION"),
+    )
     args = parser.parse_args(argv)
     if not args.approved_sha or re.fullmatch(r"[0-9a-f]{40}", args.approved_sha) is None:
         raise SystemExit("approved full Forgejo SHA is required")
     rollout_id = args.rollout_id or f"{args.approved_sha[:12]}-{int(time.time())}"
     try:
-        prior_paid_attempts = validate_prior_paid_attempts(args.prior_paid_attempts)
+        if args.prior_paid_attempts not in {"0", "2"}:
+            raise ValueError("prior paid attempts must be exactly 0 or 2")
+        cli_prior_paid_attempts = int(args.prior_paid_attempts)
+        mode, prior_paid_attempts, manifest_uri, manifest_generation = validate_resume_inputs(
+            args.mode,
+            cli_prior_paid_attempts,
+            args.resume_manifest_uri,
+            args.resume_manifest_generation,
+        )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
+    project = os.environ.get("PROJECT", FIXED_PROJECT)
+    region = os.environ.get("REGION", FIXED_REGION)
+    service = os.environ.get("SERVICE", FIXED_SERVICE)
+    try:
+        validate_production_namespace(project, region, service)
+    except SourceBindingError as exc:
+        raise SystemExit(str(exc)) from exc
     boundaries = GcloudBoundaries(
-        project=os.environ.get("PROJECT", "tke-phi-privacy-engine"),
-        region=os.environ.get("REGION", "us-central1"),
-        service=os.environ.get("SERVICE", "llm-council"),
+        project=FIXED_PROJECT,
+        region=FIXED_REGION,
+        service=FIXED_SERVICE,
         approved_sha=args.approved_sha,
     )
     controller = RolloutController(
@@ -1786,6 +2263,9 @@ def main(argv: list[str] | None = None) -> int:
         rollout_id=rollout_id,
         approved_sha=args.approved_sha,
         prior_paid_attempts=prior_paid_attempts,
+        mode=mode,
+        resume_manifest_uri=manifest_uri,
+        resume_manifest_generation=manifest_generation,
     )
     _install_signal_handlers(controller)
     _execute_rollout(controller)
