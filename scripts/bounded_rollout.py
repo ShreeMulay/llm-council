@@ -20,6 +20,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -771,18 +772,33 @@ class RolloutController:
                 )
                 count_field = "paid_attempts" if number == 1 else "cumulative_paid_attempts"
                 recovery_fields = {
-                    "rollout_id", "status", count_field, "traffic_matches_snapshot",
-                    "candidate_traffic_percent", "prior_revision",
+                    "candidate_image_digest", "candidate_revision",
+                    "candidate_traffic_percent", "classification", count_field,
+                    "lock_generation", "prior_revision", "rollout_id",
+                    "service_generation", "service_uid", "traffic_matches_snapshot",
                 }
+                candidate_revision = normalize_revision_reference(
+                    recovery["candidate_revision"]
+                )
+                service_uid = recovery["service_uid"]
                 if (
                     set(recovery) != recovery_fields
                     or recovery["rollout_id"] != source_id
-                    or recovery["status"] != "ALREADY_CONVERGED_NO_TRAFFIC"
+                    or recovery["classification"] != "ALREADY_CONVERGED_NO_TRAFFIC"
                     or type(recovery[count_field]) is not int
                     or recovery[count_field] != number
                     or recovery["traffic_matches_snapshot"] is not True
                     or type(recovery["candidate_traffic_percent"]) is not int
                     or recovery["candidate_traffic_percent"] != 0
+                    or re.fullmatch(
+                        r"sha256:[0-9a-f]{64}", recovery["candidate_image_digest"]
+                    ) is None
+                    or not candidate_revision.startswith(f"{FIXED_SERVICE}-")
+                    or re.fullmatch(r"[0-9]+", recovery["lock_generation"]) is None
+                    or type(recovery["service_generation"]) is not int
+                    or recovery["service_generation"] <= 0
+                    or not isinstance(service_uid, str)
+                    or str(uuid.UUID(service_uid)) != service_uid
                     or self._revision(recovery["prior_revision"])
                     != self._revision(manifest["expected_prior_revision"])
                 ):
