@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import statistics
 import subprocess
 import sys
 import time
@@ -19,6 +20,7 @@ from typing import Any
 
 from backend.execution_planning import ExecutionPlan, build_execution_plan
 from backend.model_registry import load_registry
+from scripts.verify_promotion_benchmark import PromotionBenchmarkError, verify_promotion_benchmark
 
 EXPECTED_CHAIRMAN_OUTPUT = "DEPLOYMENT_CHECK_OK: 2+2=4"
 SYNTHETIC_QUERY = (
@@ -27,6 +29,7 @@ SYNTHETIC_QUERY = (
 )
 MIN_SAMPLES = 5
 MIN_STREAM_SAMPLES = 1
+PAIRED_TRIAL_ORDER = ("AB", "BA", "AB", "BA", "AB")
 MAX_SSE_BYTES = 8 * 1024 * 1024
 MAX_SSE_EVENTS = 100
 ALLOWED_STREAM_EVENTS = {
@@ -739,6 +742,155 @@ def run_smoke(
     return evidence
 
 
+def _paired_ratio(candidate: float | None, baseline: float | None) -> float:
+    if candidate is None or baseline is None or baseline <= 0:
+        raise SmokeVerificationError("paired diagnostic denominator is unavailable")
+    return candidate / baseline
+
+
+def run_paired_canary(
+    legacy_baseline_url: str,
+    candidate_url: str,
+    project: str,
+    secret: str,
+    *,
+    timeout: float,
+    max_latency: float = 480,
+    max_tokens: int = 60_000,
+    max_cost: float = 1.50,
+    max_error_rate: float = 0.0,
+    max_latency_ratio: float = 1.20,
+    max_cost_ratio: float = 1.25,
+    legacy_baseline: bool = False,
+    secret_loader: Callable[[str, str], str] = load_secret,
+    poster: Callable[[str, str, float], tuple[dict[str, Any], float]] = post_council,
+    stream_poster: Callable[[str, str, float], tuple[dict[str, Any], float]] = post_council_stream,
+    promotion_verifier: Callable[[], None] = verify_promotion_benchmark,
+) -> dict[str, Any]:
+    """Run one verified cold call then five deterministic measured pairs per surface."""
+    if not legacy_baseline_url or not candidate_url or legacy_baseline_url == candidate_url:
+        raise SmokeVerificationError("paired canary requires distinct exact URLs")
+    if (
+        not 0 < max_latency <= 480
+        or not 0 < max_tokens <= 60_000
+        or not 0 < max_cost <= 1.50
+        or max_error_rate != 0.0
+        or max_latency_ratio != 1.20
+        or max_cost_ratio != 1.25
+    ):
+        raise SmokeVerificationError("paired canary gates cannot be weakened or redefined")
+    promotion_verifier()
+    key = secret_loader(project, secret)
+    surfaces = {"sync": poster, "stream": stream_poster}
+    cold: dict[str, Any] = {}
+    steady: dict[str, Any] = {}
+    candidate_provenance: dict[str, Any] | None = None
+    baseline_provenance: dict[str, Any] | None = None
+
+    def checked_call(
+        call: Callable[[str, str, float], tuple[dict[str, Any], float]],
+        url: str,
+        *,
+        baseline_side: bool,
+    ) -> tuple[dict[str, Any], dict[str, float | None]]:
+        payload, elapsed = call(url, key, timeout)
+        proof = verify_payload(
+            payload,
+            elapsed,
+            max_latency=math.inf if baseline_side else max_latency,
+            max_tokens=sys.maxsize if baseline_side else max_tokens,
+            max_cost=math.inf if baseline_side else max_cost,
+            max_error_rate=max_error_rate,
+            strict_candidate=not baseline_side,
+            legacy_baseline=baseline_side and legacy_baseline,
+        )
+        return proof, _sample_metrics(
+            payload,
+            elapsed,
+            legacy_baseline=baseline_side and legacy_baseline,
+            max_tokens=max_tokens,
+        )
+
+    for surface, call in surfaces.items():
+        surface_cold: dict[str, Any] = {}
+        for side, url, baseline_side in (
+            ("baseline", legacy_baseline_url, True),
+            ("candidate", candidate_url, False),
+        ):
+            proof, metrics = checked_call(call, url, baseline_side=baseline_side)
+            if baseline_side:
+                if baseline_provenance is not None and proof != baseline_provenance:
+                    raise SmokeVerificationError("baseline provenance is inconsistent")
+                baseline_provenance = proof
+            else:
+                if candidate_provenance is not None and proof != candidate_provenance:
+                    raise SmokeVerificationError("candidate provenance is inconsistent")
+                candidate_provenance = proof
+            surface_cold[side] = {
+                "elapsed_latency_seconds": metrics["elapsed_latency"],
+                "reported_latency_seconds": metrics["reported_latency"],
+                "conservative_cost_usd": metrics["conservative_cost_usd"],
+                "list_cost_usd": metrics["list_cost_usd"],
+            }
+        cold[surface] = surface_cold
+
+        baseline_samples: list[dict[str, float | None]] = []
+        candidate_samples: list[dict[str, float | None]] = []
+        paired_ratios = {"elapsed": [], "reported": [], "list_cost": []}
+        for order in PAIRED_TRIAL_ORDER:
+            pair: dict[str, dict[str, float | None]] = {}
+            for side in order:
+                baseline_side = side == "A"
+                proof, metrics = checked_call(
+                    call,
+                    legacy_baseline_url if baseline_side else candidate_url,
+                    baseline_side=baseline_side,
+                )
+                expected = baseline_provenance if baseline_side else candidate_provenance
+                if proof != expected:
+                    raise SmokeVerificationError("paired sample provenance is inconsistent")
+                pair[side] = metrics
+                (baseline_samples if baseline_side else candidate_samples).append(metrics)
+            paired_ratios["elapsed"].append(
+                _paired_ratio(pair["B"]["elapsed_latency"], pair["A"]["elapsed_latency"])
+            )
+            paired_ratios["reported"].append(
+                _paired_ratio(pair["B"]["reported_latency"], pair["A"]["reported_latency"])
+            )
+            paired_ratios["list_cost"].append(
+                _paired_ratio(pair["B"]["list_cost_usd"], pair["A"]["list_cost_usd"])
+            )
+
+        candidate_metrics = _metrics_aggregate(candidate_samples)
+        if candidate_metrics["route_success_rate"] is None or candidate_metrics["route_success_rate"] < 0.99:
+            raise SmokeVerificationError("candidate route success is below 99%")
+        elapsed_ratio = statistics.median(paired_ratios["elapsed"])
+        reported_ratio = statistics.median(paired_ratios["reported"])
+        cost_ratio = statistics.median(paired_ratios["list_cost"])
+        steady[surface] = {
+            "trial_count": len(PAIRED_TRIAL_ORDER),
+            "trial_order": list(PAIRED_TRIAL_ORDER),
+            "candidate_metrics": candidate_metrics,
+            "diagnostics": {
+                "paired_median_elapsed_latency_ratio": elapsed_ratio,
+                "paired_median_reported_latency_ratio": reported_ratio,
+                "paired_median_list_cost_ratio": cost_ratio,
+                "elapsed_latency_status": "warning" if elapsed_ratio > max_latency_ratio else "within_limit",
+                "reported_latency_status": "warning" if reported_ratio > max_latency_ratio else "within_limit",
+                "list_cost_status": "warning" if cost_ratio > max_cost_ratio else "within_limit",
+            },
+        }
+
+    return {
+        "schema_version": 1,
+        **PRICING_SNAPSHOT_METADATA,
+        "promotion_gate": {"status": "passed"},
+        "cold_gate": {"status": "passed", "measurements": cold},
+        "hard_canary_gate": {"status": "passed"},
+        "steady_canary": steady,
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run secret-safe fixed synthetic council evidence set")
     parser.add_argument("url")
@@ -760,9 +912,49 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--baseline-proof")
     parser.add_argument("--baseline", action="store_true")
     parser.add_argument("--legacy-baseline", action="store_true")
+    parser.add_argument("--paired", action="store_true")
+    parser.add_argument("--baseline-url")
+    parser.add_argument("--paired-legacy-baseline", action="store_true")
+    parser.add_argument("--evidence-out")
     args = parser.parse_args(argv)
     try:
         proof_actions = bool(args.proof_out) + bool(args.expected_proof)
+        if args.paired:
+            if (
+                not args.baseline_url
+                or args.baseline
+                or args.legacy_baseline
+                or args.proof_out
+                or args.expected_proof
+                or args.baseline_proof
+                or args.samples != MIN_SAMPLES
+                or args.stream_samples != MIN_STREAM_SAMPLES
+                or args.max_quality_drop != 3.0
+                or args.min_route_success != 0.99
+            ):
+                raise SmokeVerificationError("paired mode flags conflict")
+            evidence = run_paired_canary(
+                args.baseline_url,
+                args.url,
+                args.project,
+                args.secret,
+                timeout=args.timeout,
+                max_latency=args.max_latency_seconds,
+                max_tokens=args.max_tokens,
+                max_cost=args.max_cost_usd,
+                max_error_rate=args.max_error_rate,
+                max_latency_ratio=args.max_latency_ratio,
+                max_cost_ratio=args.max_cost_ratio,
+                legacy_baseline=args.paired_legacy_baseline,
+            )
+            if args.evidence_out:
+                Path(args.evidence_out).write_text(
+                    json.dumps(evidence, sort_keys=True, separators=(",", ":")), encoding="utf-8"
+                )
+            print("SUCCESS: paired council smoke verification passed")
+            return 0
+        if args.baseline_url or args.paired_legacy_baseline or args.evidence_out:
+            raise SmokeVerificationError("paired-only flags require --paired")
         if (args.baseline or args.legacy_baseline) and proof_actions != 1:
             raise SmokeVerificationError(
                 "baseline mode requires exactly one of --proof-out or --expected-proof"
@@ -789,7 +981,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         if args.proof_out:
             Path(args.proof_out).write_text(json.dumps(evidence, sort_keys=True, separators=(",", ":")), encoding="utf-8")
-    except (SmokeVerificationError, subprocess.SubprocessError, OSError, json.JSONDecodeError, TypeError, KeyError):
+    except (SmokeVerificationError, PromotionBenchmarkError, subprocess.SubprocessError, OSError, json.JSONDecodeError, TypeError, KeyError):
         print("FAIL: council smoke verification failed", file=sys.stderr)
         return 1
     print("SUCCESS: council smoke verification passed")

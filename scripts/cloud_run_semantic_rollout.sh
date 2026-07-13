@@ -38,12 +38,16 @@ if not 0 <= observation <= 600 or not 1 <= health <= 5 or not 5 <= service_healt
     raise SystemExit("rollout thresholds are outside safe bounds")
 PY
 
+# Immutable representative evidence is a prerequisite to every read/snapshot/mutation.
+python3 "${REPO_ROOT}/scripts/verify_promotion_benchmark.py"
+
 WORK=$(mktemp -d)
 SERVICE_JSON="${WORK}/service.json"
 TRAFFIC_SNAPSHOT="${WORK}/traffic.json"
 PRIOR_IDENTITY="${WORK}/prior-identity.json"
 CANDIDATE_IDENTITY="${WORK}/candidate-identity.json"
 PRIOR_SMOKE="${WORK}/prior-smoke.json"
+PAIRED_CANARY_EVIDENCE="${WORK}/paired-canary.json"
 trap 'rm -rf "${WORK}"' EXIT
 
 describe_service() {
@@ -65,14 +69,44 @@ smoke() {
     --max-cost-ratio "${COUNCIL_MAX_COST_RATIO}" --min-route-success "${COUNCIL_MIN_ROUTE_SUCCESS}" "$@"
 }
 
-verify_candidate_tag() {
+verify_candidate_health() {
   local stage=$1 url=$2 sample
   echo "Verifying ${stage} candidate tag"
   for ((sample=1; sample<=ROLLOUT_HEALTH_SAMPLES; sample++)); do
     python3 "${HEALTH_VERIFIER}" "${url}" --expected-revision "${DEPLOY_REVISION}" --expected-image-digest "${IMAGE_DIGEST}"
   done
-  smoke "${url}" --baseline-proof "${PRIOR_SMOKE}"
+}
+
+verify_candidate_tag() {
+  local stage=$1 url=$2
+  verify_candidate_health "${stage}" "${url}"
+  smoke "${url}"
   if (( ROLLOUT_OBSERVATION_SECONDS > 0 )); then "${SLEEP_COMMAND}" "${ROLLOUT_OBSERVATION_SECONDS}"; fi
+}
+
+paired_canary() {
+  local baseline_url=$1 candidate_url=$2
+  local legacy_flags=()
+  if [[ "${LEGACY_BASELINE}" == true ]]; then legacy_flags+=(--paired-legacy-baseline); fi
+  PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" python3 "${SMOKE_VERIFIER}" "${candidate_url}" \
+    --project "${PROJECT}" --secret "${COUNCIL_API_KEY_SECRET}" --paired --baseline-url "${baseline_url}" \
+    --timeout 600 --max-latency-seconds "${COUNCIL_MAX_LATENCY_SECONDS}" \
+    --max-tokens "${COUNCIL_MAX_TOKENS}" --max-cost-usd "${COUNCIL_MAX_COST_USD}" \
+    --max-error-rate "${COUNCIL_MAX_ERROR_RATE}" --max-latency-ratio "${COUNCIL_MAX_LATENCY_RATIO}" \
+    --max-cost-ratio "${COUNCIL_MAX_COST_RATIO}" --evidence-out "${PAIRED_CANARY_EVIDENCE}" \
+    "${legacy_flags[@]}"
+  python3 - "${PAIRED_CANARY_EVIDENCE}" <<'PY'
+import json, sys
+evidence = json.load(open(sys.argv[1], encoding="utf-8"))
+print(json.dumps({
+    "promotion_gate": evidence["promotion_gate"],
+    "cold_gate": {"status": evidence["cold_gate"]["status"]},
+    "hard_canary_gate": evidence["hard_canary_gate"],
+    "steady_canary": {
+        surface: value["diagnostics"] for surface, value in evidence["steady_canary"].items()
+    },
+}, sort_keys=True, separators=(",", ":")))
+PY
 }
 
 restore_prior() {
@@ -138,7 +172,10 @@ gcloud run deploy "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --ima
 
 NEW_REVISION=$(gcloud run services describe "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --format='value(status.latestCreatedRevisionName)')
 SHADOW_URL=$(gcloud run services describe "${SERVICE}" --project="${PROJECT}" --region="${REGION}" --format=json | python3 -c 'import json,sys; tag=sys.argv[1]; print(next(x["url"] for x in json.load(sys.stdin)["status"]["traffic"] if x.get("tag")==tag))' "${SHADOW_TAG}")
-verify_candidate_tag shadow "${SHADOW_URL}"
+verify_candidate_health shadow "${SHADOW_URL}"
+paired_canary "${PRIOR_URL}" "${SHADOW_URL}"
+smoke "${SHADOW_URL}"
+if (( ROLLOUT_OBSERVATION_SECONDS > 0 )); then "${SLEEP_COMMAND}" "${ROLLOUT_OBSERVATION_SECONDS}"; fi
 # Candidate identity capture occurs only after strict health and smoke verification.
 python3 "${HEALTH_VERIFIER}" "${SHADOW_URL}" --identity-only \
   --identity-out "${CANDIDATE_IDENTITY}"

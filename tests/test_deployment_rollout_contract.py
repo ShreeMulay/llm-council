@@ -36,8 +36,31 @@ def test_rollout_helper_enforces_shadow_canary_verification_and_rollback():
         "--clear-tags",
         "--expected-proof",
         "REQUIRE_VERTEX_ANTHROPIC=true",
+        "verify_promotion_benchmark.py",
+        "--paired",
+        "--baseline-url",
     ):
         assert contract in text
+
+
+def test_promotion_benchmark_precedes_describe_snapshot_and_deploy():
+    text = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
+    assert "PROMOTION_VERIFIER" not in text
+    gate = text.index('python3 "${REPO_ROOT}/scripts/verify_promotion_benchmark.py"')
+    assert gate < text.index('describe_service "${SERVICE_JSON}"')
+    assert gate < text.index("cloud_run_traffic.py snapshot")
+    assert gate < text.index('gcloud run deploy "${SERVICE}"')
+
+
+def test_shadow_uses_paired_canary_once_and_later_checks_are_candidate_absolute_only():
+    text = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
+    shadow = text.index('verify_candidate_health shadow "${SHADOW_URL}"')
+    paired = text.index('paired_canary "${PRIOR_URL}" "${SHADOW_URL}"')
+    first_stage = text.index("apply_stage 10")
+    candidate_function = text[text.index("verify_candidate_tag()") : text.index("paired_canary()")]
+    assert shadow < paired < first_stage
+    assert text.count('paired_canary "${PRIOR_URL}" "${SHADOW_URL}"') == 1
+    assert "--baseline-proof" not in candidate_function
 
 
 def test_rollout_executes_real_rollback_then_reapplies_10_50_100():

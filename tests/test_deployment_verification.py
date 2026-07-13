@@ -1312,6 +1312,9 @@ provenance={'stage1':[{'model':'legacy','provider':'openrouter-fallback','config
 proof={'schema_version':2,'sample_count':5,'provenance':provenance,'metrics':{'quality_score':100,'objective_correct_rate':1,'factual_error_rate':0,'evaluator_format_success_rate':1,'route_success_rate':None if legacy else 1,'error_rate':0,'p95_elapsed_latency_seconds':1,'p95_reported_latency_seconds':1,'mean_token_count':1,'mean_conservative_cost_usd':0.001}}
 if '--proof-out' in args: pathlib.Path(args[args.index('--proof-out')+1]).write_text(json.dumps(proof))
 if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('--expected-proof')+1]).read_text()) == proof
+if '--evidence-out' in args:
+ paired={'promotion_gate':{'status':'passed'},'cold_gate':{'status':'passed'},'hard_canary_gate':{'status':'passed'},'steady_canary':{'sync':{'diagnostics':{'elapsed_latency_status':'within_limit'}},'stream':{'diagnostics':{'elapsed_latency_status':'within_limit'}}}}
+ pathlib.Path(args[args.index('--evidence-out')+1]).write_text(json.dumps(paired))
 """
     )
     routing = tmp_path / "routing.py"
@@ -1355,8 +1358,10 @@ if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('-
     assert any("--set-tags=debug=old-debug,stable=stable-b" in line for line in commands)
     verifier_calls = verify_log.read_text().splitlines()
     smoke_calls = [line for line in verifier_calls if line.startswith("smoke ")]
-    assert len(smoke_calls) == 7
-    assert all("--stream-samples 5" in line for line in smoke_calls)
+    assert len(smoke_calls) == 8
+    paired_calls = [line for line in smoke_calls if "--paired" in line]
+    assert len(paired_calls) == 1
+    assert all("--stream-samples 5" in line for line in smoke_calls if "--paired" not in line)
     candidate_calls = [line for line in verifier_calls if "https://shadow.example" in line]
     assert all("--legacy-baseline" not in line for line in candidate_calls)
     if legacy_baseline:
