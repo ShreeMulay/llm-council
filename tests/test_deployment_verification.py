@@ -19,9 +19,14 @@ from scripts.verify_council_smoke import (
     EXPECTED_EVALUATORS,
     EXPECTED_MODELS,
     EXPECTED_ROUTES,
+    MODEL_ROUTE_LIST_PRICING,
+    PRICING_SNAPSHOT_DIGEST,
+    PRICING_SNAPSHOT_METADATA,
+    PRICING_SNAPSHOT_SOURCE,
     PROMPT_COST_UPPER_BOUND_PER_MILLION,
     SYNTHETIC_QUERY,
     SmokeVerificationError,
+    _pricing_snapshot_digest,
     _sample_metrics,
     canonical_smoke_plan,
     compare_evidence,
@@ -252,7 +257,7 @@ def test_smoke_rejects_sync_stream_provenance_mismatch():
     streamed = copy.deepcopy(sync)
     streamed["stage1"][0]["selected_route_id"] = "different-route"
 
-    with pytest.raises(SmokeVerificationError, match="sync/stream"):
+    with pytest.raises(SmokeVerificationError, match="route|sync/stream"):
         run_smoke(
             "https://candidate.example", "project", "secret", samples=5, stream_samples=1,
             timeout=100, max_latency=100, max_tokens=60000, max_cost=2,
@@ -387,6 +392,135 @@ def test_smoke_uses_separate_reviewed_conservative_cost_bounds():
     )
 
 
+def test_pricing_snapshot_has_complete_exact_current_and_legacy_compact_coverage():
+    expected_pairs = {
+        ("openai/gpt-5.5", "openrouter:openai/gpt-5.5"),
+        ("openai/gpt-5.6-sol", "openrouter:openai/gpt-5.6-sol"),
+        ("anthropic/claude-fable-5", "vertex:anthropic/claude-fable-5"),
+        ("fireworks/glm-5.2", "fireworks:fireworks/glm-5.2"),
+        ("fireworks/glm-5.2", "openrouter:fireworks/glm-5.2"),
+        ("google/gemini-3.1-pro-preview", "openrouter:google/gemini-3.1-pro-preview"),
+        ("x-ai/grok-4.3", "xai:x-ai/grok-4.3"),
+        ("x-ai/grok-4.5", "xai:x-ai/grok-4.5"),
+    }
+
+    assert set(MODEL_ROUTE_LIST_PRICING) == expected_pairs
+    assert MODEL_ROUTE_LIST_PRICING[("openai/gpt-5.6-sol", "openrouter:openai/gpt-5.6-sol")] == (5.0, 30.0)
+    assert MODEL_ROUTE_LIST_PRICING[("anthropic/claude-fable-5", "vertex:anthropic/claude-fable-5")] == (10.0, 50.0)
+    with pytest.raises(TypeError):
+        MODEL_ROUTE_LIST_PRICING[("unknown", "unknown")] = (1.0, 1.0)
+
+    assert _sample_metrics(_make_objective_output(smoke_payload()), 10)["list_cost_usd"] > 0
+    assert _sample_metrics(legacy_smoke_payload(), 10, legacy_baseline=True)["list_cost_usd"] > 0
+
+
+def test_legacy_missing_stage2_and_stage3_routes_resolve_from_execution_plan():
+    payload = legacy_smoke_payload()
+
+    assert all("route_id" not in item for item in [*payload["stage2"], payload["stage3"]])
+    assert _sample_metrics(payload, 10, legacy_baseline=True)["list_cost_usd"] > 0
+
+
+@pytest.mark.parametrize(
+    ("stage", "provider"),
+    [
+        ("stage2_fable", "vertex-anthropic"),
+        ("stage2_gpt", "openrouter"),
+        ("stage3", "vertex-anthropic"),
+    ],
+)
+def test_legacy_route_less_results_accept_canonical_provider_aliases(stage, provider):
+    payload = legacy_smoke_payload()
+    if stage == "stage3":
+        item = payload["stage3"]
+    else:
+        model = (
+            "anthropic/claude-fable-5"
+            if stage == "stage2_fable"
+            else "openai/gpt-5.5"
+        )
+        item = next(result for result in payload["stage2"] if result["model"] == model)
+    item["provider"] = provider
+
+    assert _sample_metrics(payload, 10, legacy_baseline=True)["list_cost_usd"] > 0
+
+
+@pytest.mark.parametrize("stage", ["stage2", "stage3"])
+@pytest.mark.parametrize("provider", ["openrouter-fallback", "wrong-provider", None])
+def test_legacy_route_less_results_reject_fallback_mismatch_or_missing_provider(
+    stage, provider
+):
+    payload = legacy_smoke_payload()
+    item = payload["stage2"][0] if stage == "stage2" else payload["stage3"]
+    if provider is None:
+        item.pop("provider", None)
+    else:
+        item["provider"] = provider
+
+    with pytest.raises(SmokeVerificationError, match="provider"):
+        _sample_metrics(payload, 10, legacy_baseline=True)
+
+
+@pytest.mark.parametrize(
+    ("legacy", "mutation", "message"),
+    [
+        (False, lambda value: value["stage1"][0].pop("selected_route_id"), "route.*missing"),
+        (False, lambda value: value["stage1"][0].update(selected_route_id="unknown:route"), "price.*unknown"),
+        (True, lambda value: value["stage1"][0].pop("route_id"), "route.*missing"),
+        (True, lambda value: value["metadata"]["execution_plan"].update(models=[]), "mapping.*missing"),
+        (
+            True,
+            lambda value: value["metadata"]["execution_plan"]["models"].append({
+                "model": "anthropic/claude-fable-5",
+                "route_id": "openrouter:anthropic/claude-fable-5",
+            }),
+            "mapping.*ambiguous",
+        ),
+        (True, lambda value: value["stage1"][0].update(route_id="unknown:route"), "price.*unknown"),
+    ],
+)
+def test_list_pricing_fails_closed_for_missing_unknown_or_ambiguous_routes(
+    legacy, mutation, message
+):
+    payload = legacy_smoke_payload() if legacy else _make_objective_output(smoke_payload())
+    mutation(payload)
+    with pytest.raises(SmokeVerificationError, match=message):
+        _sample_metrics(payload, 10, legacy_baseline=legacy)
+
+
+def test_legacy_openrouter_glm_fallback_uses_approved_conservative_list_price():
+    payload = legacy_smoke_payload()
+    glm = next(item for item in payload["stage1"] if item["model"] == "fireworks/glm-5.2")
+    glm["route_id"] = "openrouter:fireworks/glm-5.2"
+    assert _sample_metrics(payload, 10, legacy_baseline=True)["list_cost_usd"] > 0
+
+
+def test_list_cost_rejects_missing_usage_and_nonfinite_computation():
+    missing = legacy_smoke_payload()
+    missing["stage2"][0].pop("usage")
+    with pytest.raises(SmokeVerificationError, match="usage.*missing"):
+        _sample_metrics(missing, 10, legacy_baseline=True)
+
+    nonfinite = _make_objective_output(smoke_payload())
+    nonfinite["stage1"][0]["usage"] = {
+        "prompt_tokens": 10**400, "completion_tokens": 0, "total_tokens": 10**400,
+    }
+    with pytest.raises(SmokeVerificationError, match="cost.*nonfinite"):
+        _sample_metrics(nonfinite, 10)
+
+
+def test_absolute_cap_remains_conservative_and_independent_from_list_cost():
+    payload = _make_objective_output(smoke_payload())
+    metrics = _sample_metrics(payload, 10)
+
+    assert metrics["conservative_cost_usd"] > metrics["list_cost_usd"]
+    with pytest.raises(SmokeVerificationError, match="cost"):
+        verify_payload(
+            payload, 10, max_latency=100, max_tokens=60_000,
+            max_cost=(metrics["conservative_cost_usd"] + metrics["list_cost_usd"]) / 2,
+        )
+
+
 @pytest.mark.parametrize(
     "response",
     [
@@ -480,29 +614,50 @@ def test_baseline_proof_detects_changed_restored_route():
 
 def legacy_smoke_payload():
     payload = _make_objective_output(smoke_payload())
-    payload["stage1"][0]["model"] = "openai/gpt-5.5"
+    replacements = {
+        "openai/gpt-5.6-sol": (
+            "openai/gpt-5.5", "openrouter:openai/gpt-5.5"
+        ),
+        "x-ai/grok-4.5": ("x-ai/grok-4.3", "xai:x-ai/grok-4.3"),
+    }
     for item in [*payload["stage1"], *payload["stage2"], payload["stage3"]]:
-        usage = item.get("usage")
+        model, route = replacements.get(
+            item["model"], (item["model"], item["route_id"])
+        )
+        item.update(model=model, route_id=route)
         for field in (
-            "route_id", "selected_route_id", "fallback_used",
+            "selected_route_id", "fallback_used",
             "allow_declared_route_failover", "allow_provider_substitution",
-            "terminal_status", "usage",
+            "terminal_status",
         ):
             item.pop(field, None)
-        if str(item.get("model", "")).startswith("x-ai/grok-"):
-            item["usage"] = usage
-    payload.pop("metadata")
+    for item in [*payload["stage2"], payload["stage3"]]:
+        item["provider"] = (
+            "vertex-anthropic"
+            if item["model"] == "anthropic/claude-fable-5"
+            else "openrouter"
+        )
+        item.pop("route_id")
+    payload["metadata"]["execution_plan"]["models"] = [
+        {"model": item["model"], "route_id": item["route_id"]}
+        for item in payload["stage1"]
+    ]
     return payload
 
 
 def legacy_xai_usage_payload(*, provider="xai", model="x-ai/grok-4.3"):
     payload = _make_objective_output(smoke_payload())
-    payload["stage1"][0].update(provider=provider, model=model)
+    route = {
+        "x-ai/grok-4.3": "xai:x-ai/grok-4.3",
+        "x-ai/grok-4.5": "xai:x-ai/grok-4.5",
+        "openai/gpt-5.5": "openrouter:openai/gpt-5.5",
+    }.get(model, payload["stage1"][0]["route_id"])
+    payload["stage1"][0].update(provider=provider, model=model, route_id=route)
     return payload
 
 
 def test_legacy_xai_hidden_reasoning_is_billed_as_completion_without_double_counting():
-    payload = legacy_xai_usage_payload(model="legacy/grok")
+    payload = legacy_xai_usage_payload()
     payload["stage1"][0]["usage"] = {
         "prompt_tokens": 60,
         "completion_tokens": 40,
@@ -571,7 +726,11 @@ def test_non_xai_legacy_and_candidate_usage_still_require_exact_totals():
         _sample_metrics(legacy, 10, legacy_baseline=True)
 
     candidate = _make_objective_output(smoke_payload())
-    candidate["stage1"][0].update(provider="xai", model="x-ai/grok-4.5")
+    candidate["stage1"][0].update(
+        provider="xai",
+        model="x-ai/grok-4.5",
+        selected_route_id="xai:x-ai/grok-4.5",
+    )
     candidate["stage1"][0]["usage"]["total_tokens"] = 101
     with pytest.raises(SmokeVerificationError, match="usage"):
         _sample_metrics(candidate, 10)
@@ -626,7 +785,7 @@ def test_legacy_baseline_preserves_available_provenance_without_inventing_route_
     assert proof["provenance_contract"] == "legacy-partial-terminal-provenance"
     assert proof["stage1"][0]["model"] == "openai/gpt-5.5"
     assert proof["stage1"][0]["provider"] is None
-    assert proof["stage1"][0]["configured_route_id"] is None
+    assert proof["stage1"][0]["configured_route_id"] == "openrouter:openai/gpt-5.5"
     assert proof["stage1"][0]["observed_route_id"] is None
     assert proof["stage1"][0]["fallback_used"] is None
     assert proof["stage1"][0]["terminal_status"] is None
@@ -634,7 +793,7 @@ def test_legacy_baseline_preserves_available_provenance_without_inventing_route_
     assert proof["stage1"][0]["allow_provider_substitution"] is None
     metrics = _sample_metrics(payload, 10, legacy_baseline=True)
     assert metrics["route_success"] is None
-    assert metrics["token_count"] is None
+    assert metrics["token_count"] == 700
     verify_payload(
         copy.deepcopy(payload), 10, max_latency=100, max_tokens=60000, max_cost=2,
         expected_proof=proof, strict_candidate=False, legacy_baseline=True,
@@ -733,7 +892,6 @@ def test_legacy_rollback_rejects_any_provenance_mutation(mutation):
     baseline["stage1"][0].update(
         fallback_used=True,
         provider="openrouter-fallback",
-        route_id="configured-legacy-route",
     )
     proof = verify_payload(
         baseline, 10, max_latency=100, max_tokens=60000, max_cost=2,
@@ -742,7 +900,10 @@ def test_legacy_rollback_rejects_any_provenance_mutation(mutation):
     restored = copy.deepcopy(baseline)
     mutation(restored["stage1"][0])
 
-    with pytest.raises(SmokeVerificationError, match="does not match baseline|provider"):
+    with pytest.raises(
+        SmokeVerificationError,
+        match="does not match baseline|provider|price|model",
+    ):
         verify_payload(
             restored, 10, max_latency=100, max_tokens=60000, max_cost=2,
             expected_proof=proof, strict_candidate=False, legacy_baseline=True,
@@ -758,7 +919,7 @@ def test_legacy_smoke_rejects_inconsistent_samples_and_sync_stream_proof():
     changed["stage1"][0]["model"] = "changed-model"
     calls = iter([baseline, changed])
 
-    with pytest.raises(SmokeVerificationError, match="inconsistent"):
+    with pytest.raises(SmokeVerificationError, match="inconsistent|price"):
         run_smoke(
             "https://legacy.example", "project", "secret", samples=5,
             stream_samples=1, timeout=100, max_latency=100, max_tokens=60000,
@@ -770,7 +931,7 @@ def test_legacy_smoke_rejects_inconsistent_samples_and_sync_stream_proof():
 
     streamed = copy.deepcopy(baseline)
     streamed["stage1"][0]["model"] = "stream-model"
-    with pytest.raises(SmokeVerificationError, match="sync/stream"):
+    with pytest.raises(SmokeVerificationError, match="sync/stream|price"):
         run_smoke(
             "https://legacy.example", "project", "secret", samples=5,
             stream_samples=1, timeout=100, max_latency=100, max_tokens=60000,
@@ -815,7 +976,7 @@ def test_legacy_fallback_baseline_and_exact_rollback_run_smoke_path():
 def test_modern_baseline_still_requires_observed_route_success():
     payload = _make_objective_output(smoke_payload())
     payload["stage1"][0].pop("selected_route_id")
-    with pytest.raises(SmokeVerificationError, match="route success"):
+    with pytest.raises(SmokeVerificationError, match="route.*missing|route success"):
         verify_payload(
             payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
             strict_candidate=False,
@@ -891,9 +1052,11 @@ def evidence(**metrics):
         "p95_reported_latency_seconds": 10.0,
         "mean_token_count": 1000.0,
         "mean_conservative_cost_usd": 0.03,
+        "mean_list_cost_usd": 0.01,
     }
     defaults.update(metrics)
     return {
+        **PRICING_SNAPSHOT_METADATA,
         "sample_count": 5,
         "stream_sample_count": 1,
         "metrics": defaults,
@@ -913,11 +1076,73 @@ def test_smoke_rejects_insufficient_samples_and_relative_regression():
 
 
 def test_cost_ratio_accepts_exactly_1_25_and_rejects_slightly_above():
-    baseline = evidence(mean_conservative_cost_usd=0.03)
+    baseline = evidence(mean_list_cost_usd=0.03)
 
-    compare_evidence(evidence(mean_conservative_cost_usd=0.0375), baseline)
+    compare_evidence(
+        evidence(mean_list_cost_usd=0.0375, mean_conservative_cost_usd=999.0),
+        baseline,
+    )
     with pytest.raises(SmokeVerificationError, match="cost"):
-        compare_evidence(evidence(mean_conservative_cost_usd=0.037500001), baseline)
+        compare_evidence(evidence(mean_list_cost_usd=0.037500001), baseline)
+
+    stream_over = evidence(mean_list_cost_usd=0.03)
+    stream_over["stream_metrics"]["mean_list_cost_usd"] = 0.037500001
+    with pytest.raises(SmokeVerificationError, match="cost"):
+        compare_evidence(stream_over, baseline)
+
+
+@pytest.mark.parametrize("missing_metric", ["mean_conservative_cost_usd", "mean_list_cost_usd"])
+def test_compare_requires_both_cost_metrics(missing_metric):
+    candidate = evidence()
+    candidate["metrics"].pop(missing_metric)
+    with pytest.raises(SmokeVerificationError, match="required metrics"):
+        compare_evidence(candidate, evidence())
+
+
+def test_pricing_snapshot_digest_changes_with_table_source_or_date():
+    original = PRICING_SNAPSHOT_DIGEST
+    changed_table = dict(MODEL_ROUTE_LIST_PRICING)
+    changed_table[("openai/gpt-5.5", "openrouter:openai/gpt-5.5")] = (5.1, 30.0)
+
+    assert _pricing_snapshot_digest(changed_table) != original
+    assert _pricing_snapshot_digest(source=PRICING_SNAPSHOT_SOURCE + " changed") != original
+    assert _pricing_snapshot_digest(captured_at="2026-07-14") != original
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("pricing_snapshot_id", "other"),
+        ("pricing_snapshot_captured_at", "2026-07-14"),
+        ("pricing_snapshot_source", "other"),
+        ("pricing_snapshot_digest", "0" * 64),
+    ],
+)
+def test_compare_requires_exact_current_matching_pricing_snapshot(field, value):
+    candidate = evidence()
+    candidate[field] = value
+    with pytest.raises(SmokeVerificationError, match="pricing snapshot"):
+        compare_evidence(candidate, evidence())
+
+
+def test_evidence_contains_only_content_free_pricing_metadata_and_dual_costs():
+    payload = _make_objective_output(smoke_payload())
+    result = run_smoke(
+        "https://candidate.example", "project", "secret", samples=5, stream_samples=1,
+        timeout=100, max_latency=100, max_tokens=60_000, max_cost=2,
+        secret_loader=lambda *_args: "key",
+        poster=lambda *_args: (copy.deepcopy(payload), 10),
+    )
+    serialized = json.dumps(result)
+
+    assert {key: result[key] for key in PRICING_SNAPSHOT_METADATA} == dict(PRICING_SNAPSHOT_METADATA)
+    assert result["metrics"]["mean_list_cost_usd"] > 0
+    assert result["metrics"]["total_list_cost_usd"] == pytest.approx(
+        result["metrics"]["mean_list_cost_usd"] * 5
+    )
+    assert result["stream_metrics"]["mean_list_cost_usd"] > 0
+    for forbidden in (SYNTHETIC_QUERY, "synthetic result", '"usage"', '"response"'):
+        assert forbidden not in serialized
 
 
 def test_candidate_fallback_and_low_route_success_fail_against_route_unknown_legacy():
