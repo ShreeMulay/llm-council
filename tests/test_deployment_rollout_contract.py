@@ -57,6 +57,7 @@ def test_workflow_and_all_paths_supply_bounded_rollout_thresholds():
         "ROLLOUT_HEALTH_SAMPLES",
         "ROLLOUT_SERVICE_HEALTH_SAMPLES",
         "ROLLOUT_SMOKE_SAMPLES",
+        "ROLLOUT_STREAM_SMOKE_SAMPLES",
         "COUNCIL_MAX_LATENCY_SECONDS",
         "COUNCIL_MAX_TOKENS",
         "COUNCIL_MAX_COST_USD",
@@ -74,6 +75,18 @@ def test_workflow_and_all_paths_supply_bounded_rollout_thresholds():
     workflow = (ROOT / ".github/workflows/deploy.yml").read_text()
     assert "scripts/cloud_run_semantic_rollout.sh" in workflow
     assert "Semantic canary rollout" in workflow
+
+
+def test_rollout_stream_smoke_samples_default_to_five_and_use_common_smoke_flag():
+    helper = (ROOT / "scripts/cloud_run_semantic_rollout.sh").read_text()
+    smoke_function = helper[helper.index("smoke()") : helper.index("verify_candidate_tag()")]
+
+    assert 'ROLLOUT_STREAM_SMOKE_SAMPLES="${ROLLOUT_STREAM_SMOKE_SAMPLES:-5}"' in helper
+    assert '--stream-samples "${ROLLOUT_STREAM_SMOKE_SAMPLES}"' in smoke_function
+    for path in ENTRY_POINTS:
+        text = path.read_text()
+        assert "ROLLOUT_STREAM_SMOKE_SAMPLES" in text
+        assert "ROLLOUT_STREAM_SMOKE_SAMPLES:-5" in text or "ROLLOUT_STREAM_SMOKE_SAMPLES: '5'" in text or "_ROLLOUT_STREAM_SMOKE_SAMPLES: '5'" in text
 
 
 def test_rollout_helper_accepts_project_id_and_workflow_exports_project():

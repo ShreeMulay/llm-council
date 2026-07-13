@@ -261,6 +261,37 @@ def test_smoke_rejects_sync_stream_provenance_mismatch():
         )
 
 
+def test_rollout_stream_aggregation_uses_exactly_five_calls_and_mean_cost():
+    payload = _make_objective_output(smoke_payload())
+    stream_payloads = []
+    for completion_tokens in (20, 30, 40, 50, 60):
+        sample = copy.deepcopy(payload)
+        sample["stage3"]["usage"] = {
+            "prompt_tokens": 60,
+            "completion_tokens": completion_tokens,
+            "total_tokens": 60 + completion_tokens,
+        }
+        stream_payloads.append(sample)
+    calls = []
+    stream_results = iter(stream_payloads)
+
+    def stream_poster(*_args):
+        calls.append("stream")
+        return next(stream_results), 10
+
+    result = run_smoke(
+        "https://candidate.example", "project", "secret", samples=5, stream_samples=5,
+        timeout=100, max_latency=100, max_tokens=60000, max_cost=2,
+        secret_loader=lambda *_args: "key",
+        poster=lambda *_args: (copy.deepcopy(payload), 10), stream_poster=stream_poster,
+    )
+
+    expected_mean = sum(_sample_metrics(item, 10)["conservative_cost_usd"] for item in stream_payloads) / 5
+    assert calls == ["stream"] * 5
+    assert result["stream_sample_count"] == 5
+    assert result["stream_metrics"]["mean_conservative_cost_usd"] == pytest.approx(expected_mean)
+
+
 def test_complete_traffic_snapshot_preserves_and_verifies_zero_percent_tag(tmp_path):
     source = tmp_path / "service.json"
     expected = tmp_path / "traffic.json"
@@ -835,6 +866,19 @@ def test_baseline_cli_allows_exactly_capture_or_rollback_comparison(
         assert json.loads(proof.read_text(encoding="utf-8")) == evidence
 
 
+def test_standalone_smoke_cli_keeps_one_stream_sample_default(monkeypatch):
+    observed = {}
+
+    def capture(*_args, **kwargs):
+        observed.update(kwargs)
+        return {"provenance": {}}
+
+    monkeypatch.setattr("scripts.verify_council_smoke.run_smoke", capture)
+
+    assert smoke_main(["https://service", "--project", "project"]) == 0
+    assert observed["stream_samples"] == 1
+
+
 def evidence(**metrics):
     defaults = {
         "quality_score": 100.0,
@@ -866,6 +910,14 @@ def test_smoke_rejects_insufficient_samples_and_relative_regression():
         compare_evidence(evidence(quality_score=96.0), evidence())
     with pytest.raises(SmokeVerificationError, match="latency"):
         compare_evidence(evidence(p95_elapsed_latency_seconds=12.1), evidence())
+
+
+def test_cost_ratio_accepts_exactly_1_25_and_rejects_slightly_above():
+    baseline = evidence(mean_conservative_cost_usd=0.03)
+
+    compare_evidence(evidence(mean_conservative_cost_usd=0.0375), baseline)
+    with pytest.raises(SmokeVerificationError, match="cost"):
+        compare_evidence(evidence(mean_conservative_cost_usd=0.037500001), baseline)
 
 
 def test_candidate_fallback_and_low_route_success_fail_against_route_unknown_legacy():
@@ -920,6 +972,43 @@ def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_onl
             "https://service", prior, candidate, samples=5, percent=100,
             fetcher=lambda _url, _timeout: unknown,
         )
+
+
+@pytest.mark.parametrize("stream_samples", ["0", "6"])
+def test_rollout_rejects_stream_sample_bounds_before_deploy(tmp_path, stream_samples):
+    root = Path(__file__).parents[1]
+    marker = tmp_path / "gcloud-called"
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    gcloud = fake_bin / "gcloud"
+    gcloud.write_text(
+        "#!/usr/bin/env bash\ntouch \"${GCLOUD_MARKER}\"\nexit 99\n",
+        encoding="utf-8",
+    )
+    gcloud.chmod(0o755)
+
+    result = subprocess.run(
+        ["bash", "scripts/cloud_run_semantic_rollout.sh"],
+        cwd=root,
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "GCLOUD_MARKER": str(marker),
+            "PROJECT": "project",
+            "REGION": "region",
+            "SERVICE": "service",
+            "IMAGE_DIGEST": "image@sha256:" + "a" * 64,
+            "DEPLOY_REVISION": "candidate",
+            "ROLLOUT_STREAM_SMOKE_SAMPLES": stream_samples,
+        },
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode != 0
+    assert "rollout thresholds are outside safe bounds" in result.stderr
+    assert not marker.exists()
 
 
 @pytest.mark.parametrize("legacy_baseline", [False, True])
@@ -1040,6 +1129,9 @@ if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('-
     assert any("--clear-tags" in line and "stable-a=70,stable-b=30" in line for line in commands)
     assert any("--set-tags=debug=old-debug,stable=stable-b" in line for line in commands)
     verifier_calls = verify_log.read_text().splitlines()
+    smoke_calls = [line for line in verifier_calls if line.startswith("smoke ")]
+    assert len(smoke_calls) == 7
+    assert all("--stream-samples 5" in line for line in smoke_calls)
     candidate_calls = [line for line in verifier_calls if "https://shadow.example" in line]
     assert all("--legacy-baseline" not in line for line in candidate_calls)
     if legacy_baseline:
