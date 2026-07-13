@@ -8,15 +8,25 @@ import random
 import re
 import time
 from collections import defaultdict
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from dataclasses import asdict, replace
-from typing import Any
+from typing import Any, Literal
 
-from .execution_planning import ExecutionPlan, build_execution_plan, curate_responses
+from .execution_planning import (
+    ExecutionPlan,
+    PlanOperation,
+    build_execution_plan,
+    curate_responses,
+)
 from .model_registry import load_registry
 from .parallel_intelligence import EvidenceBundle
 
 logger = logging.getLogger("llm-council.council")
+
+CouncilStage = Literal["stage1", "stage2", "stage3"]
+OperationExecutor = Callable[
+    [CouncilStage, PlanOperation], Awaitable[dict[str, Any] | None]
+]
 
 
 def execution_plan_metadata(plan: ExecutionPlan) -> dict[str, Any]:
@@ -31,6 +41,10 @@ def execution_plan_metadata(plan: ExecutionPlan) -> dict[str, Any]:
         "roster": [operation.logical_id for operation in plan.stage1],
         "evaluators": [operation.logical_id for operation in plan.evaluators],
         "chairman": plan.chairman.logical_id,
+        "settings": {
+            "allow_declared_route_failover": plan.settings.allow_declared_route_failover,
+            "allow_provider_substitution": plan.settings.allow_provider_substitution,
+        },
         "models": [
             {
                 "model": model,
@@ -69,7 +83,7 @@ def _get_cache_key(model_id: str | Any, prompt: str) -> str:
     else:
         operation = asdict(model_id)
         operation.pop("messages", None)
-        identity = {"version": 2, "operation": operation}
+        identity = {"version": 3, "operation": operation}
     payload = json.dumps(identity, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(f"{payload}:{prompt}".encode()).hexdigest()[:16]
 
@@ -112,19 +126,93 @@ def _cache_response(model_id: str | Any, prompt: str, response: dict[str, Any]):
     _sweep_stage1_cache()
 
 
-def _project_stage1_result(model: str, response: dict[str, Any]) -> dict[str, Any]:
+def _bounded_text(value: object, limit: int = 500) -> str | None:
+    """Bound safe dispatcher summaries before returning public provenance."""
+    if value is None:
+        return None
+    return str(value)[:limit]
+
+
+def _project_attempts(value: object) -> list[dict[str, Any]]:
+    """Project only bounded, secret-free attempt metadata."""
+    if not isinstance(value, (list, tuple)):
+        return []
+    projected = []
+    for attempt in value[:64]:
+        if not isinstance(attempt, dict):
+            continue
+        projected.append({
+            "route_id": _bounded_text(attempt.get("route_id"), 200),
+            "attempt": attempt.get("attempt"),
+            "status": _bounded_text(attempt.get("status"), 50),
+            **(
+                {"reason": _bounded_text(attempt.get("reason"), 100)}
+                if attempt.get("reason") is not None
+                else {}
+            ),
+        })
+    return projected
+
+
+def _project_error(value: object) -> dict[str, str | None] | None:
+    """Return a bounded dispatcher error summary, never a raw provider body."""
+    if not isinstance(value, dict):
+        return None
+    return {
+        "code": _bounded_text(value.get("code"), 100),
+        "message": _bounded_text(value.get("message"), 500),
+    }
+
+
+def _project_execution_provenance(
+    response: dict[str, Any], operation: PlanOperation | None = None
+) -> dict[str, Any]:
+    """Project bounded, secret-free terminal execution provenance."""
+    attempted = response.get("attempted_route_ids", [])
+    return {
+        **(
+            {
+                "allow_declared_route_failover": operation.settings.allow_declared_route_failover,
+                "allow_provider_substitution": operation.settings.allow_provider_substitution,
+            }
+            if operation is not None
+            else {}
+        ),
+        "route_id": _bounded_text(response.get("route_id"), 200),
+        "attempted_route_ids": [
+            item for route in attempted[:64]
+            if (item := _bounded_text(route, 200)) is not None
+        ] if isinstance(attempted, (list, tuple)) else [],
+        "attempts": _project_attempts(response.get("attempts", ())),
+        "selected_route_id": _bounded_text(response.get("selected_route_id"), 200),
+        "fallback_used": response.get("fallback_used", False),
+        "fallback_reason": _bounded_text(response.get("fallback_reason"), 100),
+        "primary_failure_reason": _bounded_text(
+            response.get("primary_failure_reason"), 100
+        ),
+        "failure_reason": _bounded_text(response.get("failure_reason"), 100),
+        "error": _project_error(response.get("error")),
+        "terminal_status": _bounded_text(
+            response.get(
+                "terminal_status", "succeeded" if response.get("content") else "failed"
+            ),
+            50,
+        ),
+    }
+
+
+def _project_stage1_result(
+    model: str,
+    response: dict[str, Any],
+    operation: PlanOperation | None = None,
+) -> dict[str, Any]:
     """Project one normalized dispatcher terminal result without losing provenance."""
     return {
         "model": model,
         "response": response.get("content", ""),
         "usage": response.get("usage", {}),
         "provider": response.get("provider", "unknown"),
-        "route_id": response.get("route_id"),
-        "fallback_used": response.get("fallback_used", False),
-        "error": response.get("error"),
-        "terminal_status": response.get(
-            "terminal_status", "succeeded" if response.get("content") else "failed"
-        ),
+        **_project_execution_provenance(response, operation),
     }
 
 
@@ -136,13 +224,31 @@ def _order_stage1_results(
     return sorted(results, key=lambda result: seat[result["model"]])
 
 
-async def _execute_stage1_operation(operation, cache_prompt: str) -> dict[str, Any]:
+async def _execute_operation(
+    stage: CouncilStage,
+    operation: PlanOperation,
+    operation_executor: OperationExecutor | None,
+) -> dict[str, Any] | None:
+    if operation_executor is not None:
+        return await operation_executor(stage, operation)
+    return await _dispatcher().execute(operation)
+
+
+async def _execute_stage1_operation(
+    operation: PlanOperation,
+    cache_prompt: str,
+    operation_executor: OperationExecutor | None = None,
+) -> dict[str, Any]:
     """Resolve one planned Stage 1 seat through the shared normalized cache path."""
+    if operation_executor is not None:
+        response = await _execute_operation("stage1", operation, operation_executor)
+        return _project_stage1_result(operation.logical_id, response or {}, operation)
     cached = _get_cached_response(operation, cache_prompt)
     if cached is None:
-        cached = await _dispatcher().execute(operation)
+        cached = await _execute_operation("stage1", operation, None)
+        cached = cached or {}
         _cache_response(operation, cache_prompt, cached)
-    return _project_stage1_result(operation.logical_id, cached)
+    return _project_stage1_result(operation.logical_id, cached, operation)
 
 
 def _truncate_for_prompt(
@@ -185,6 +291,16 @@ def get_evaluator_models(council_models: list[str]) -> list[str]:
 
     available = [m for m in EVALUATOR_PRIORITY if m in council_models]
     return available[:3]
+
+
+def _registry_evaluator_effort(model_id: str) -> str | None:
+    """Resolve evaluator effort with the same generic fallback as execution plans."""
+    try:
+        reasoning = load_registry().model(model_id).reasoning
+    except KeyError:
+        return None
+    effort = reasoning.get("evaluator") or reasoning.get("member") or reasoning.get("default")
+    return str(effort) if effort else None
 
 
 def filter_responses_for_evaluator(
@@ -486,6 +602,8 @@ async def stage1_collect_responses(
     council_models: list[str] | None = None,
     execution_plan: ExecutionPlan | None = None,
     evidence_bundle: EvidenceBundle | None = None,
+    *,
+    operation_executor: OperationExecutor | None = None,
 ) -> list[dict[str, Any]]:
     """
     Stage 1: Collect individual responses from all council models.
@@ -514,7 +632,8 @@ async def stage1_collect_responses(
             for op in execution_plan.stage1
         ]
         stage1_results = list(await asyncio.gather(*[
-            _execute_stage1_operation(operation, cache_prompt) for operation in operations
+            _execute_stage1_operation(operation, cache_prompt, operation_executor)
+            for operation in operations
         ]))
     else:
         cached = {model: _get_cached_response(model, cache_prompt) for model in models}
@@ -544,6 +663,8 @@ async def stage2_collect_rankings(
     stage1_results: list[dict[str, Any]],
     council_models: list[str] | None = None,
     execution_plan: ExecutionPlan | None = None,
+    *,
+    operation_executor: OperationExecutor | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, str]]:
     """
     Stage 2: Each model ranks the anonymized responses.
@@ -638,15 +759,14 @@ Now provide your evaluation and ranking:"""
 
         messages = [{"role": "user", "content": ranking_prompt}]
 
-        # Use high reasoning effort for GPT-5.5 as evaluator
         if execution_plan:
             operation = planned_evaluators[evaluator]
-            task = _dispatcher().execute(replace(operation, messages=tuple((item["role"], item["content"]) for item in messages)))
-        elif evaluator == "openai/gpt-5.5":
-            # Override with evaluator-specific reasoning effort
-            from .config import get_model_reasoning_effort
-            reasoning = get_model_reasoning_effort("openai/gpt-5.5-evaluator")
-            # Pass reasoning override through query_single_model
+            task = _execute_operation(
+                "stage2",
+                replace(operation, messages=tuple((item["role"], item["content"]) for item in messages)),
+                operation_executor,
+            )
+        elif reasoning := _registry_evaluator_effort(evaluator):
             task = _query_single_with_reasoning_override(evaluator, messages, reasoning_effort=reasoning)
         else:
             task = query_single_model(evaluator, messages)
@@ -684,6 +804,10 @@ Now provide your evaluation and ranking:"""
                     "usage": response.get("usage", {}),
                     "provider": response.get("provider", "unknown"),
                     "label_to_model": eval_label_to_model,
+                    **_project_execution_provenance(
+                        response,
+                        planned_evaluators.get(evaluator) if execution_plan else None,
+                    ),
                 }
             )
 
@@ -696,6 +820,8 @@ async def stage3_synthesize_final(
     stage2_results: list[dict[str, Any]],
     chairman_model: str | None = None,
     execution_plan: ExecutionPlan | None = None,
+    *,
+    operation_executor: OperationExecutor | None = None,
 ) -> dict[str, Any]:
     """
     Stage 3: Chairman synthesizes final response.
@@ -771,7 +897,7 @@ Provide a clear, well-reasoned final answer that represents the council's collec
     try:
         if execution_plan:
             operation = replace(execution_plan.chairman, messages=tuple((item["role"], item["content"]) for item in messages))
-            response = await _dispatcher().execute(operation)
+            response = await _execute_operation("stage3", operation, operation_executor)
         else:
             response = await asyncio.wait_for(query_single_model(chairman, messages), timeout=CHAIRMAN_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
@@ -786,6 +912,9 @@ Provide a clear, well-reasoned final answer that represents the council's collec
             "model": chairman,
             "response": "Error: Unable to generate final synthesis.",
             "usage": {},
+            **_project_execution_provenance(
+                {}, execution_plan.chairman if execution_plan else None
+            ),
         }
 
     return {
@@ -793,6 +922,9 @@ Provide a clear, well-reasoned final answer that represents the council's collec
         "response": response.get("content", ""),
         "usage": response.get("usage", {}),
         "provider": response.get("provider", "unknown"),
+        **_project_execution_provenance(
+            response, execution_plan.chairman if execution_plan else None
+        ),
     }
 
 
@@ -890,6 +1022,7 @@ async def run_full_council(
     chairman_model: str | None = None,
     execution_plan: ExecutionPlan | None = None,
     evidence_bundle: EvidenceBundle | None = None,
+    operation_executor: OperationExecutor | None = None,
 ) -> tuple[list, list, dict, dict]:
     """
     Run the complete 3-stage council process.
@@ -920,7 +1053,18 @@ async def run_full_council(
         council_models = COMPACT_COUNCIL_MODELS
 
     # Stage 1: Collect individual responses
-    stage1_results = await stage1_collect_responses(user_query, council_models, plan, evidence_bundle)
+    if operation_executor is None:
+        stage1_results = await stage1_collect_responses(
+            user_query, council_models, plan, evidence_bundle
+        )
+    else:
+        stage1_results = await stage1_collect_responses(
+            user_query,
+            council_models,
+            plan,
+            evidence_bundle,
+            operation_executor=operation_executor,
+        )
     successful_stage1 = [result for result in stage1_results if result.get("response")]
 
     # If no models responded successfully, return error
@@ -945,15 +1089,25 @@ async def run_full_council(
 
     if final_only:
         # Skip Stage 2, just synthesize from Stage 1
+        stage3_kwargs = (
+            {"operation_executor": operation_executor} if operation_executor else {}
+        )
         stage3_result = await stage3_synthesize_final(
-            user_query, successful_stage1, [], chairman_model, plan
+            user_query, successful_stage1, [], chairman_model, plan, **stage3_kwargs
         )
         metadata = {"aggregate_rankings": [], "label_to_model": {}, "final_only": True, "compact": compact, "execution_plan": execution_plan_metadata(plan)}
         return stage1_results, [], stage3_result, metadata
 
     # Stage 2: Collect rankings
+    stage2_kwargs = (
+        {"operation_executor": operation_executor} if operation_executor else {}
+    )
     stage2_results, label_to_model = await stage2_collect_rankings(
-        user_query, successful_stage1, [operation.logical_id for operation in plan.evaluators], plan
+        user_query,
+        successful_stage1,
+        [operation.logical_id for operation in plan.evaluators],
+        plan,
+        **stage2_kwargs,
     )
 
     # Calculate aggregate rankings
@@ -961,7 +1115,12 @@ async def run_full_council(
 
     # Stage 3: Synthesize final answer
     stage3_result = await stage3_synthesize_final(
-        user_query, successful_stage1, stage2_results, chairman_model, plan
+        user_query,
+        successful_stage1,
+        stage2_results,
+        chairman_model,
+        plan,
+        **stage2_kwargs,
     )
 
     # Prepare metadata
@@ -1018,7 +1177,7 @@ async def _query_planned_operation(operation):
     result = await _dispatcher().execute(operation)
     if not result:
         return {"model": operation.logical_id, "response": "", "usage": {}, "provider": "failed", "route_id": operation.routes[-1].route_id, "fallback_used": len(operation.routes) > 1, "error": {"code": "provider_exhausted", "message": "All captured routes failed"}, "terminal_status": "failed"}
-    return _project_stage1_result(operation.logical_id, result)
+    return _project_stage1_result(operation.logical_id, result, operation)
 
 
 async def stream_council(

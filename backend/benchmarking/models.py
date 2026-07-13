@@ -11,6 +11,8 @@ JULY_2026_PRICING_SOURCE = "approved OpenSpec roster-refresh-2026-07 conservativ
 JULY_2026_PRICING_CAPTURED_AT = "2026-07-04T00:00:00Z"
 DEFAULT_VARIANT_SET = "default"
 JULY_2026_ROSTER_VARIANT_SET = "july-2026-roster"
+FLAGSHIP_PROMOTION_VARIANT_SET = "flagship-promotion-v1"
+FLAGSHIP_PROMPT_SET_VERSION = "flagship-promotion-v1"
 JULY_2026_PROMOTION_THRESHOLDS = {
     "minimax-vs-llama": {
         "candidate_variant_id": "openrouter-minimax-m3",
@@ -33,6 +35,18 @@ JULY_2026_PROMOTION_THRESHOLDS = {
         "tie_requires_latency_improvement": True,
         "max_estimated_cost_multiplier": 2.0,
     },
+}
+FLAGSHIP_PROMOTION_THRESHOLDS = {
+    "quality_overall": {"min_delta_points": -3.0},
+    "quality_by_stratum": {"min_delta_points": -5.0},
+    "objective_accuracy": {"min_delta_points": -2.0},
+    "evaluator_format_rate": {"min_delta_points": 0.0},
+    "factual_error_rate": {"max_delta_points": 0.0},
+    "route_success_rate": {"minimum": 0.99},
+    "grok_direct_failover_rate": {"maximum": 0.02},
+    "full_council_p95_latency": {"max_baseline_multiplier": 1.20},
+    "individual_p95_latency": {"max_baseline_multiplier": 1.50},
+    "cost": {"max_baseline_multiplier": 1.25, "exception_requires_acceptance": True},
 }
 
 
@@ -59,7 +73,9 @@ class BenchmarkVariant:
     display_name: str
     reasoning_effort: str | None
     pricing: PricingSnapshot
-    allow_fallbacks: bool = False
+    route_id: str | None = None
+    allow_declared_route_failover: bool = False
+    allow_provider_substitution: bool = False
 
     def to_dict(self) -> dict[str, object]:
         data = asdict(self)
@@ -73,6 +89,16 @@ class VariantSpec:
 
     variant: BenchmarkVariant
     probe_key: str | None = None
+
+
+@dataclass(frozen=True)
+class CouncilBenchmarkVariant:
+    """Pre-registered full-council or single-seat ablation."""
+
+    variant_id: str
+    roster: tuple[str, ...]
+    ablated_seat: str | None = None
+    configuration: str = "full"
 
 
 @dataclass(frozen=True)
@@ -268,13 +294,83 @@ JULY_2026_ROSTER_VARIANT_SPECS: tuple[VariantSpec, ...] = (
     ),
 )
 
+_CURRENT_COUNCIL = (
+    "openai/gpt-5.6-sol",
+    "anthropic/claude-fable-5",
+    "fireworks/glm-5.2",
+    "google/gemini-3.1-pro-preview",
+    "x-ai/grok-4.5",
+    "fireworks/kimi-k2.7-code",
+    "deepseek/deepseek-v4-pro",
+    "meta-llama/llama-4-maverick",
+    "qwen/qwen3.7-max",
+)
+_LEGACY_COUNCIL = (
+    "openai/gpt-5.5",
+    *_CURRENT_COUNCIL[1:4],
+    "x-ai/grok-4.3",
+    *_CURRENT_COUNCIL[5:],
+)
+
+_SEAT_ABLATIONS = tuple(
+    CouncilBenchmarkVariant(
+        f"seat-removal-{index}",
+        tuple(model for model in _CURRENT_COUNCIL if model != seat),
+        seat,
+        "removed",
+    )
+    for index, seat in enumerate(_CURRENT_COUNCIL, 1)
+)
+
+PROMOTION_COUNCIL_VARIANTS: tuple[CouncilBenchmarkVariant, ...] = (
+    CouncilBenchmarkVariant("full-council-old", _LEGACY_COUNCIL, configuration="legacy"),
+    CouncilBenchmarkVariant("full-council-new", _CURRENT_COUNCIL),
+    *_SEAT_ABLATIONS,
+    CouncilBenchmarkVariant(
+        "seat-ablation-gpt",
+        ("openai/gpt-5.5", *_CURRENT_COUNCIL[1:]),
+        "openai/gpt-5.6-sol",
+        "replacement",
+    ),
+    CouncilBenchmarkVariant(
+        "seat-ablation-grok",
+        (*_CURRENT_COUNCIL[:4], "x-ai/grok-4.3", *_CURRENT_COUNCIL[5:]),
+        "x-ai/grok-4.5",
+        "replacement",
+    ),
+)
+
+FLAGSHIP_PROMOTION_VARIANT_SPECS: tuple[VariantSpec, ...] = (
+    VariantSpec(BenchmarkVariant(
+        "openrouter-gpt-5.5-medium", "openrouter", "openai/gpt-5.5",
+        "GPT-5.5 baseline", "medium", _july_pricing(5.0, 30.0),
+        route_id="openrouter:openai/gpt-5.5",
+    ), probe_key="promotion:openai/gpt-5.5"),
+    VariantSpec(BenchmarkVariant(
+        "openrouter-gpt-5.6-sol-medium", "openrouter", "openai/gpt-5.6-sol",
+        "GPT-5.6 Sol candidate", "medium", _july_pricing(5.0, 30.0),
+        route_id="openrouter:openai/gpt-5.6-sol",
+    ), probe_key="promotion:openai/gpt-5.6-sol"),
+    VariantSpec(BenchmarkVariant(
+        "xai-grok-4.3", "xai", "x-ai/grok-4.3", "Grok 4.3 baseline", None,
+        _july_pricing(3.0, 15.0), route_id="xai:x-ai/grok-4.3",
+    ), probe_key="promotion:x-ai/grok-4.3"),
+    VariantSpec(BenchmarkVariant(
+        "xai-grok-4.5", "xai", "x-ai/grok-4.5", "Grok 4.5 candidate", None,
+        _july_pricing(3.0, 15.0), route_id="xai:x-ai/grok-4.5",
+    ), probe_key="promotion:x-ai/grok-4.5"),
+)
+FLAGSHIP_PROMOTION_VARIANTS = tuple(spec.variant for spec in FLAGSHIP_PROMOTION_VARIANT_SPECS)
+
 VARIANT_SETS = {
     DEFAULT_VARIANT_SET: DEFAULT_VARIANT_SPECS,
     JULY_2026_ROSTER_VARIANT_SET: JULY_2026_ROSTER_VARIANT_SPECS,
+    FLAGSHIP_PROMOTION_VARIANT_SET: FLAGSHIP_PROMOTION_VARIANT_SPECS,
 }
 
 PROMOTION_THRESHOLDS_BY_VARIANT_SET = {
     JULY_2026_ROSTER_VARIANT_SET: JULY_2026_PROMOTION_THRESHOLDS,
+    FLAGSHIP_PROMOTION_VARIANT_SET: FLAGSHIP_PROMOTION_THRESHOLDS,
 }
 
 

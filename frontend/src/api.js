@@ -16,155 +16,36 @@ if (API_KEY) {
   defaultHeaders['X-Council-Key'] = API_KEY;
 }
 
-export const MODEL_INFO = {
-  'gpt-5.5': {
-    id: 'gpt-5.5',
-    modelId: 'openai/gpt-5.5',
-    name: 'GPT-5.5',
-    provider: 'OpenAI',
-    color: '#10b981',
-    bg: '#e6f7f2',
-    border: '#a7f3d0',
-    icon: '⚡',
-  },
-  'fable': {
-    id: 'fable',
-    modelId: 'anthropic/claude-fable-5',
-    name: 'Claude Fable 5',
-    provider: 'Vertex AI Anthropic',
-    note: 'PHI-eligible only through covered Vertex BAA route; OpenRouter fallback is non-PHI/deidentified only.',
-    color: '#f97316',
-    bg: '#fff7ed',
-    border: '#fed7aa',
-    icon: '📜',
-  },
-  'opus': {
-    id: 'opus',
-    modelId: 'anthropic/claude-opus-4.8',
-    name: 'Claude Opus 4.8',
-    provider: 'Anthropic',
-    color: '#fb923c',
-    bg: '#fff7ed',
-    border: '#fed7aa',
-    icon: '🏺',
-  },
-  'glm': {
-    id: 'glm',
-    modelId: 'fireworks/glm-5.2',
-    name: 'Fireworks GLM-5.2 xHigh',
-    provider: 'Fireworks',
-    color: '#3b82f6',
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    icon: '🎆',
-  },
-  'glm-fw': {
-    id: 'glm-fw',
-    modelId: 'fireworks/glm-5.2',
-    name: 'Fireworks GLM-5.2 xHigh',
-    provider: 'Fireworks',
-    challenger: true,
-    color: '#2563eb',
-    bg: '#eff6ff',
-    border: '#93c5fd',
-    icon: '🎇',
-  },
-  'glm-zai': {
-    id: 'glm-zai',
-    modelId: 'z-ai/glm-5.2',
-    name: 'Z.ai GLM-5.2',
-    provider: 'Z.ai / OpenRouter',
-    challenger: true,
-    color: '#3b82f6',
-    bg: '#eff6ff',
-    border: '#bfdbfe',
-    icon: '🎆',
-  },
-  'gemini': {
-    id: 'gemini',
-    modelId: 'google/gemini-3.1-pro-preview',
-    name: 'Gemini 3.1 Pro',
-    provider: 'Google',
-    color: '#a855f7',
-    bg: '#f5f3ff',
-    border: '#ddd6fe',
-    icon: '♊',
-  },
-  'grok': {
-    id: 'grok',
-    modelId: 'x-ai/grok-4.3',
-    name: 'Grok 4.3',
-    provider: 'xAI',
-    color: '#ef4444',
-    bg: '#fef2f2',
-    border: '#fecaca',
-    icon: '✖️',
-  },
-  'kimi': {
-    id: 'kimi',
-    modelId: 'fireworks/kimi-k2.7-code',
-    name: 'Kimi K2.7 Code',
-    provider: 'Fireworks / Moonshot',
-    color: '#ec4899',
-    bg: '#fdf2f8',
-    border: '#fbcfe8',
-    icon: '🌙',
-  },
-  'kimi26': {
-    id: 'kimi26',
-    modelId: 'fireworks/kimi-k2.6',
-    name: 'Kimi K2.6',
-    provider: 'Fireworks / Moonshot legacy',
-    challenger: true,
-    color: '#db2777',
-    bg: '#fdf2f8',
-    border: '#f9a8d4',
-    icon: '🌘',
-  },
-  'deepseek': {
-    id: 'deepseek',
-    modelId: 'deepseek/deepseek-v4-pro',
-    name: 'DeepSeek V4 Pro',
-    provider: 'DeepSeek',
-    color: '#14b8a6',
-    bg: '#f0fdfa',
-    border: '#ccfbf1',
-    icon: '🐳',
-  },
-  'llama': {
-    id: 'llama',
-    modelId: 'meta-llama/llama-4-maverick',
-    name: 'Llama 4 Maverick',
-    provider: 'Meta',
-    color: '#64748b',
-    bg: '#f8fafc',
-    border: '#e2e8f0',
-    icon: '🦙',
-  },
-  'qwen': {
-    id: 'qwen',
-    modelId: 'qwen/qwen3.7-max',
-    name: 'Qwen 3.7 Max',
-    provider: 'Alibaba',
-    color: '#6366f1',
-    bg: '#eef2ff',
-    border: '#e0e7ff',
-    icon: '👑',
-  },
-  'minimax': {
-    id: 'minimax',
-    modelId: 'minimax/minimax-m3',
-    name: 'MiniMax M3',
-    provider: 'MiniMax / OpenRouter',
-    challenger: true,
-    color: '#0ea5e9',
-    bg: '#f0f9ff',
-    border: '#bae6fd',
-    icon: '🧪',
-  }
+const FAMILY_STYLE = {
+  openai: { color: '#10b981', bg: '#e6f7f2', border: '#a7f3d0', icon: '⚡' },
+  anthropic: { color: '#f97316', bg: '#fff7ed', border: '#fed7aa', icon: '📜' },
+  fireworks: { color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', icon: '🎆' },
+  google: { color: '#a855f7', bg: '#f5f3ff', border: '#ddd6fe', icon: '♊' },
+  'x-ai': { color: '#ef4444', bg: '#fef2f2', border: '#fecaca', icon: '✖️' },
+  deepseek: { color: '#14b8a6', bg: '#f0fdfa', border: '#ccfbf1', icon: '🐳' },
+  'meta-llama': { color: '#64748b', bg: '#f8fafc', border: '#e2e8f0', icon: '🦙' },
+  qwen: { color: '#6366f1', bg: '#eef2ff', border: '#e0e7ff', icon: '👑' },
 };
+const DEFAULT_STYLE = { color: '#6366f1', bg: '#eef2ff', border: '#e0e7ff', icon: '🤖' };
 
-// All default production model IDs in order (Opus remains in MODEL_INFO for backcompat)
+function registryModelInfo(model, id = model.aliases[0] || model.id) {
+  return {
+    id,
+    modelId: model.id,
+    name: model.label,
+    provider: model.provider,
+    challenger: model.challenger,
+    legacy: model.legacy,
+    ...(FAMILY_STYLE[model.family] || DEFAULT_STYLE),
+  };
+}
+
+export const MODEL_INFO = Object.fromEntries(modelRegistry.models.flatMap((model) => {
+  const keys = model.aliases.length ? model.aliases : [model.id];
+  return keys.map((key) => [key, registryModelInfo(model, key)]);
+}));
+
+// All default production model aliases in canonical seat order.
 export const ALL_MODEL_IDS = modelRegistry.default_roster.map((modelId) => {
   const model = modelRegistry.models.find((item) => item.id === modelId);
   return model?.aliases[0] || modelId;
@@ -191,12 +72,12 @@ export const MODEL_PRESETS = {
   speed: {
     name: 'Speed',
     icon: '🚀',
-    models: ['gpt-5.5', 'fable', 'gemini'],
+    models: [ALL_MODEL_IDS[0], ALL_MODEL_IDS[1], ALL_MODEL_IDS[3]],
   },
   minimal: {
     name: 'Minimal',
     icon: '🎯',
-    models: ['gpt-5.5', 'fable'],
+    models: ALL_MODEL_IDS.slice(0, 2),
   },
 };
 
@@ -214,28 +95,11 @@ export function getModelInfo(modelId) {
     };
   }
   const lower = modelId.toLowerCase();
-  if (lower === 'glm-fw' || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
-  if (lower === 'glm-zai' || (lower.includes('z-ai') && lower.includes('glm'))) return MODEL_INFO['glm-zai'];
-  if (lower.includes('minimax')) return MODEL_INFO['minimax'];
-  if (lower === 'kimi26' || lower.includes('kimi-k2.6')) return MODEL_INFO['kimi26'];
-  if (lower.includes('gpt') || lower.includes('openai')) return MODEL_INFO['gpt-5.5'];
-  if (lower.includes('fable')) return MODEL_INFO['fable'];
-  if (lower.includes('opus')) return MODEL_INFO['opus'];
-  if (lower.includes('claude') || lower.includes('anthropic')) return MODEL_INFO['fable'];
-  if (lower.includes('glm') || (lower.includes('fireworks') && lower.includes('glm'))) return MODEL_INFO['glm'];
-  if (lower.includes('deepseek')) return MODEL_INFO['deepseek'];
-  if (lower.includes('gemini') || lower.includes('google')) return MODEL_INFO['gemini'];
-  if (lower.includes('grok') || lower.includes('x-ai') || lower.includes('xai')) return MODEL_INFO['grok'];
-  if (lower.includes('kimi') || lower.includes('moonshot')) return MODEL_INFO['kimi'];
-  if (lower.includes('llama') || lower.includes('meta')) return MODEL_INFO['llama'];
-  if (lower.includes('qwen')) return MODEL_INFO['qwen'];
-  
-  // Fireworks direct fallback
-  if (lower.includes('fireworks')) {
-    if (lower.includes('kimi-k2.6')) return MODEL_INFO['kimi26'];
-    if (lower.includes('kimi')) return MODEL_INFO['kimi'];
-    return MODEL_INFO['glm'];
-  }
+  if (MODEL_INFO[lower]) return MODEL_INFO[lower];
+  const model = modelRegistry.models.find((item) =>
+    item.id.toLowerCase() === lower || item.provider_model_id.toLowerCase() === lower
+  );
+  if (model) return registryModelInfo(model);
 
   // Fallback
   const shortName = modelId.split('/')[1] || modelId;
@@ -243,7 +107,7 @@ export function getModelInfo(modelId) {
     id: shortName.toLowerCase(),
     modelId: modelId,
     name: shortName,
-    provider: modelId.split('/')[0] || 'Unknown',
+    provider: 'Unknown',
     color: '#6366f1',
     bg: '#eef2ff',
     border: '#e0e7ff',

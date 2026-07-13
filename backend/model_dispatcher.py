@@ -8,12 +8,30 @@ from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any
 
+import httpx
+
 from . import config
 from .execution_planning import PlanOperation, RequestSettings, RetryPolicy, RouteResolution
 from .model_registry import ModelRoute, load_registry
 
 logger = logging.getLogger("llm-council.dispatcher")
 Adapter = Callable[..., Awaitable[dict[str, Any] | None]]
+
+
+class _FrozenAttempt(dict[str, Any]):
+    """JSON-compatible immutable, secret-free attempt provenance."""
+
+    def _immutable(self, *_args, **_kwargs) -> None:
+        raise TypeError("attempt provenance is immutable")
+
+    __setitem__ = _immutable
+    __delitem__ = _immutable
+    clear = _immutable
+    pop = _immutable
+    popitem = _immutable
+    setdefault = _immutable
+    update = _immutable
+    __ior__ = _immutable
 
 
 @dataclass(frozen=True)
@@ -30,6 +48,8 @@ class DispatchRequest:
     backoff_base: float = 1.5
     allow_fallbacks: bool = True
     provider: str | None = None
+    allow_declared_route_failover: bool | None = None
+    allow_provider_substitution: bool = False
 
 
 class ModelDispatcher:
@@ -54,6 +74,11 @@ class ModelDispatcher:
 
     def capture(self, request: DispatchRequest) -> PlanOperation:
         """Resolve a legacy request once at its public boundary."""
+        allow_declared_route_failover = (
+            request.allow_fallbacks
+            if request.allow_declared_route_failover is None
+            else request.allow_declared_route_failover
+        )
         routes = tuple(
             RouteResolution(request.model_id, route.route_id, route.provider, route.provider_model_id, route.adapter)
             for route in self._routes(request)
@@ -62,43 +87,71 @@ class ModelDispatcher:
             request.model_id,
             routes,
             tuple((str(item["role"]), str(item["content"])) for item in request.messages),
-            RequestSettings(request.max_tokens, request.temperature, request.reasoning_effort or config.get_model_reasoning_effort(request.model_id), request.allow_fallbacks),
+            RequestSettings(
+                request.max_tokens,
+                request.temperature,
+                request.reasoning_effort or config.get_model_reasoning_effort(request.model_id),
+                allow_declared_route_failover,
+                request.allow_provider_substitution,
+            ),
             RetryPolicy(request.timeout, request.max_retries, request.backoff_base),
             "provider-neutral-dispatch/v2",
         )
 
     async def execute(self, operation: PlanOperation) -> dict[str, Any] | None:
         """Execute only captured data; registry and config are never consulted."""
-        request = DispatchRequest(
-            operation.logical_id,
-            [{"role": role, "content": content} for role, content in operation.messages],
-            operation.settings.max_tokens,
-            operation.settings.temperature,
-            operation.settings.reasoning_effort,
-            operation.retry.timeout_seconds,
-            operation.retry.max_retries,
-            operation.retry.backoff_base_seconds,
-            operation.settings.allow_provider_fallbacks,
+        routes = (
+            operation.routes
+            if operation.settings.allow_declared_route_failover
+            else operation.routes[:1]
         )
-        routes = operation.routes
+        attempted_route_ids: list[str] = []
+        attempts: list[_FrozenAttempt] = []
+        failure_reason = "empty_response"
+        primary_failure_reason: str | None = None
         for route_index, route in enumerate(routes):
+            attempted_route_ids.append(route.route_id)
             for attempt in range(operation.retry.max_retries + 1):
                 try:
                     raw = await asyncio.wait_for(
-                        self._invoke_captured(route, request), timeout=operation.retry.timeout_seconds
+                        self._invoke_captured(route, operation),
+                        timeout=operation.retry.timeout_seconds,
                     )
                     if raw and raw.get("content"):
-                        return _normalize(raw, request.model_id, route, route_index > 0)
+                        attempts.append(_FrozenAttempt(
+                            route_id=route.route_id,
+                            attempt=attempt + 1,
+                            status="succeeded",
+                        ))
+                        return _normalize(
+                            raw,
+                            operation.logical_id,
+                            route,
+                            route_index > 0,
+                            attempted_route_ids,
+                            attempts,
+                            primary_failure_reason,
+                        )
+                    failure_reason = "empty_response"
                 except Exception as error:
+                    failure_reason = _failure_category(error)
                     logger.warning(
-                        "Route %s attempt %d failed for %s: %s",
+                        "Route %s attempt %d failed for %s (%s)",
                         route.route_id,
                         attempt + 1,
-                        request.model_id,
-                        error,
+                        operation.logical_id,
+                        failure_reason,
                     )
+                attempts.append(_FrozenAttempt(
+                    route_id=route.route_id,
+                    attempt=attempt + 1,
+                    status="failed",
+                    reason=failure_reason,
+                ))
                 if attempt < operation.retry.max_retries:
                     await self.sleep(operation.retry.backoff_base_seconds * (2**attempt))
+            if route_index == 0:
+                primary_failure_reason = failure_reason
         route = routes[-1]
         return {
             "content": "",
@@ -106,7 +159,15 @@ class ModelDispatcher:
             "provider": route.provider,
             "model": operation.logical_id,
             "route_id": route.route_id,
-            "fallback_used": len(routes) > 1,
+            "attempted_route_ids": attempted_route_ids,
+            "attempts": tuple(attempts),
+            "selected_route_id": None,
+            "fallback_used": len(attempted_route_ids) > 1,
+            "fallback_reason": (
+                primary_failure_reason if len(attempted_route_ids) > 1 else None
+            ),
+            "primary_failure_reason": primary_failure_reason,
+            "failure_reason": failure_reason,
             "error": {
                 "code": "provider_exhausted",
                 "message": "All captured routes failed",
@@ -150,7 +211,12 @@ class ModelDispatcher:
                         "openrouter_adapter",
                     ),
                 )
-        return ordered if request.allow_fallbacks else ordered[:1]
+        allow_declared_route_failover = (
+            request.allow_fallbacks
+            if request.allow_declared_route_failover is None
+            else request.allow_declared_route_failover
+        )
+        return ordered if allow_declared_route_failover else ordered[:1]
 
     def _strict_vertex(self, model_id: str) -> bool:
         """Deployment policy is a floor; constructors may only strengthen it."""
@@ -170,19 +236,29 @@ class ModelDispatcher:
         if route.provider in {"openrouter", "fireworks", "vertex"}:
             kwargs["reasoning_effort"] = reasoning
         if route.provider == "openrouter":
-            kwargs["allow_fallbacks"] = request.allow_fallbacks
+            kwargs["allow_provider_substitution"] = request.allow_provider_substitution
         return await adapter(route.provider_model_id, request.messages, **kwargs)
 
-    async def _invoke_captured(self, route: RouteResolution, request: DispatchRequest) -> dict[str, Any] | None:
+    async def _invoke_captured(
+        self, route: RouteResolution, operation: PlanOperation
+    ) -> dict[str, Any] | None:
         adapter = self.adapters.get(route.provider)
         if adapter is None:
             raise ValueError(f"unsupported provider {route.provider}")
-        kwargs: dict[str, Any] = {"max_tokens": request.max_tokens, "temperature": request.temperature}
+        kwargs: dict[str, Any] = {
+            "max_tokens": operation.settings.max_tokens,
+            "temperature": operation.settings.temperature,
+        }
         if route.provider in {"openrouter", "fireworks", "vertex"}:
-            kwargs["reasoning_effort"] = request.reasoning_effort
+            kwargs["reasoning_effort"] = operation.settings.reasoning_effort
         if route.provider == "openrouter":
-            kwargs["allow_fallbacks"] = request.allow_fallbacks
-        return await adapter(route.provider_model_id, request.messages, **kwargs)
+            kwargs["allow_provider_substitution"] = (
+                operation.settings.allow_provider_substitution
+            )
+        messages = [
+            {"role": role, "content": content} for role, content in operation.messages
+        ]
+        return await adapter(route.provider_model_id, messages, **kwargs)
 
 
 def _default_adapters() -> dict[str, Adapter]:
@@ -224,7 +300,13 @@ def _legacy_route(model_id: str, provider: str | None) -> ModelRoute:
 
 
 def _normalize(
-    raw: dict[str, Any], logical_id: str, route: ModelRoute, fallback_used: bool
+    raw: dict[str, Any],
+    logical_id: str,
+    route: ModelRoute | RouteResolution,
+    fallback_used: bool,
+    attempted_route_ids: list[str],
+    attempts: list[_FrozenAttempt],
+    fallback_reason: str | None,
 ) -> dict[str, Any]:
     result = dict(raw)
     provider = str(result.get("provider") or route.provider)
@@ -236,11 +318,28 @@ def _normalize(
         provider=provider,
         model=logical_id,
         route_id=route.route_id,
+        attempted_route_ids=list(attempted_route_ids),
+        attempts=tuple(attempts),
+        selected_route_id=route.route_id,
         fallback_used=fallback_used,
+        fallback_reason=fallback_reason,
+        primary_failure_reason=fallback_reason,
+        failure_reason=None,
         error=None,
         terminal_status="succeeded",
     )
     return result
+
+
+def _failure_category(error: Exception) -> str:
+    """Map provider failures to bounded categories without retaining details."""
+    if isinstance(error, (TimeoutError, httpx.TimeoutException)):
+        return "timeout"
+    if isinstance(error, httpx.HTTPStatusError):
+        return "http_error"
+    if isinstance(error, ValueError) and str(error).startswith("unsupported provider"):
+        return "unsupported_provider"
+    return "adapter_error"
 
 
 async def query_model(request: DispatchRequest) -> dict[str, Any] | None:

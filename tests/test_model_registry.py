@@ -20,11 +20,11 @@ from backend.model_registry import (
 )
 
 FROZEN_PRODUCTION = (
-    "openai/gpt-5.5",
+    "openai/gpt-5.6-sol",
     "anthropic/claude-fable-5",
     "fireworks/glm-5.2",
     "google/gemini-3.1-pro-preview",
-    "x-ai/grok-4.3",
+    "x-ai/grok-4.5",
     "fireworks/kimi-k2.7-code",
     "deepseek/deepseek-v4-pro",
     "meta-llama/llama-4-maverick",
@@ -42,20 +42,26 @@ def test_canonical_registry_is_declarative_schema_versioned_json():
     assert raw["defaults"]["evaluator_priority"] == [
         "anthropic/claude-fable-5",
         "deepseek/deepseek-v4-pro",
-        "openai/gpt-5.5",
+        "openai/gpt-5.6-sol",
     ]
     assert all("reasoning" in model and "tier" in model for model in raw["models"])
 
 CHALLENGERS = {
-    "openai/gpt-5.6-sol",
     "openai/gpt-5.6-terra",
     "openai/gpt-5.6-luna",
     "anthropic/claude-sonnet-5",
     "anthropic/claude-opus-4.8",
     "google/gemini-3.5-flash",
-    "x-ai/grok-4.5",
     "deepseek/deepseek-v4-flash",
     "minimax/minimax-m3",
+    "mistralai/mistral-medium-3-5",
+    "meta-llama/llama-4-scout",
+    "qwen/qwen3.7-plus",
+}
+
+LEGACY_FLAGSHIPS = {
+    "openai/gpt-5.5",
+    "x-ai/grok-4.3",
     "mistralai/mistral-large-3",
 }
 
@@ -127,6 +133,36 @@ def test_challenger_records_are_explicit_and_not_roster_members():
         assert candidate.routes
 
 
+def test_promoted_flagships_and_demoted_ids_keep_exact_identity():
+    registry = load_registry()
+    gpt = registry.model("openai/gpt-5.6-sol")
+    grok = registry.model("x-ai/grok-4.5")
+
+    assert gpt.aliases == ("gpt",)
+    assert gpt.roles == ("member", "evaluator")
+    assert gpt.seats == (1,)
+    assert gpt.reasoning == {"member": "medium", "evaluator": "high"}
+    assert grok.aliases == ("grok",)
+    assert grok.roles == ("member",)
+    assert grok.seats == (5,)
+    assert [(route.provider, route.provider_model_id) for route in grok.routes] == [
+        ("xai", "grok-4.5"),
+        ("openrouter", "x-ai/grok-4.5"),
+    ]
+    assert grok.preferred_route_id == "xai:x-ai/grok-4.5"
+
+    for logical_id in LEGACY_FLAGSHIPS:
+        legacy = registry.model(logical_id)
+        assert legacy.logical_id == logical_id
+        assert legacy.lifecycle == "legacy"
+        assert legacy.legacy is True
+        assert legacy.challenger is False
+        assert legacy.aliases == ()
+        assert legacy.roles == ()
+        assert legacy.seats == ()
+        assert legacy.routes
+
+
 def test_logical_identity_is_stable_when_preferred_route_changes():
     registry = load_registry()
     fable = registry.model("anthropic/claude-fable-5")
@@ -189,7 +225,8 @@ def test_registry_validation_rejects_duplicate_identifiers(duplicate_kind):
     if duplicate_kind == "logical_id":
         raw["models"][1]["logical_id"] = raw["models"][0]["logical_id"]
     elif duplicate_kind == "alias":
-        raw["models"][1]["aliases"] = [raw["models"][0]["aliases"][0]]
+        aliased = [model for model in raw["models"] if model["aliases"]]
+        aliased[1]["aliases"] = [aliased[0]["aliases"][0]]
     else:
         raw["models"][1]["routes"][0]["route_id"] = raw["models"][0]["routes"][0]["route_id"]
 
@@ -200,11 +237,11 @@ def test_registry_validation_rejects_duplicate_identifiers(duplicate_kind):
 def test_frozen_routes_use_provider_exact_model_ids_and_ordered_fallbacks():
     registry = load_registry()
     expected = {
-        "openai/gpt-5.5": ("openrouter", "openai/gpt-5.5"),
+        "openai/gpt-5.6-sol": ("openrouter", "openai/gpt-5.6-sol"),
         "anthropic/claude-fable-5": ("vertex", "claude-fable-5"),
         "fireworks/glm-5.2": ("fireworks", "accounts/fireworks/models/glm-5p2"),
         "google/gemini-3.1-pro-preview": ("openrouter", "google/gemini-3.1-pro-preview"),
-        "x-ai/grok-4.3": ("xai", "grok-4.3"),
+        "x-ai/grok-4.5": ("xai", "grok-4.5"),
         "fireworks/kimi-k2.7-code": ("fireworks", "accounts/fireworks/models/kimi-k2p7-code"),
         "deepseek/deepseek-v4-pro": ("openrouter", "deepseek/deepseek-v4-pro"),
         "meta-llama/llama-4-maverick": ("openrouter", "meta-llama/llama-4-maverick"),
@@ -261,8 +298,12 @@ def test_generator_checks_every_committed_projection(tmp_path):
 
 
 def test_projection_contains_required_public_metadata():
-    projection = derive_projections(load_registry())["api"].to_dict()
+    registry = load_registry()
+    projection = derive_projections(registry)["api"].to_dict()
 
+    assert projection["schema_version"] == registry.schema_version
+    assert projection["registry_version"] == registry.version
+    assert projection["registry_digest"] == registry.digest
     assert projection["default_roster"] == list(FROZEN_PRODUCTION)
     assert projection["compact_roster"] == list(FROZEN_PRODUCTION[:5])
     assert projection["eligible_roster"]

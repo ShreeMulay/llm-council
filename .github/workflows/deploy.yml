@@ -15,6 +15,18 @@ env:
   REGION: us-central1
   SERVICE: llm-council
   REGISTRY: us-central1-docker.pkg.dev/tke-phi-privacy-engine/llm-council/llm-council
+  ROLLOUT_OBSERVATION_SECONDS: '30'
+  ROLLOUT_HEALTH_SAMPLES: '1'
+  ROLLOUT_SERVICE_HEALTH_SAMPLES: '50'
+  ROLLOUT_SMOKE_SAMPLES: '5'
+  COUNCIL_MAX_LATENCY_SECONDS: '480'
+  COUNCIL_MAX_TOKENS: '60000'
+  COUNCIL_MAX_COST_USD: '1.50'
+  COUNCIL_MAX_ERROR_RATE: '0'
+  COUNCIL_MAX_QUALITY_DROP: '3'
+  COUNCIL_MAX_LATENCY_RATIO: '1.20'
+  COUNCIL_MAX_COST_RATIO: '1.25'
+  COUNCIL_MIN_ROUTE_SUCCESS: '0.99'
 
 jobs:
   ci:
@@ -46,10 +58,6 @@ jobs:
       - name: Test
         run: uv run pytest -m "not slow and not e2e"
 
-      # Verify Dockerfile builds before attempting deploy (catches broken deps early)
-      - name: Build Docker image (verification)
-        run: docker build -t ${{ env.REGISTRY }}:ci .
-
   deploy:
     name: Deploy
     needs: ci
@@ -74,33 +82,18 @@ jobs:
       - name: Authenticate Docker to Artifact Registry
         run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
 
-      - name: Build and push Docker image
+      - name: Build and push image once
         run: |
-          docker build -t ${{ env.REGISTRY }}:${{ github.sha }} -t ${{ env.REGISTRY }}:latest .
+          docker build -t ${{ env.REGISTRY }}:${{ github.sha }} .
           docker push ${{ env.REGISTRY }}:${{ github.sha }}
-          docker push ${{ env.REGISTRY }}:latest
+          DIGEST=$(gcloud artifacts docker images describe \
+            ${{ env.REGISTRY }}:${{ github.sha }} \
+            --project=${{ env.PROJECT_ID }} \
+            --format='value(image_summary.digest)')
+          echo "IMAGE_DIGEST=${{ env.REGISTRY }}@${DIGEST}" >> "$GITHUB_ENV"
 
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy ${{ env.SERVICE }} \
-            --image=${{ env.REGISTRY }}:${{ github.sha }} \
-            --region=${{ env.REGION }} \
-            --port=8800 \
-            --timeout=1800 \
-            --memory=512Mi \
-            --cpu=1 \
-            --min-instances=1 \
-            --max-instances=2 \
-            --allow-unauthenticated \
-            --set-secrets=OPENROUTER_API_KEY=llm-council-openrouter-key:latest,ANTHROPIC_API_KEY=llm-council-anthropic-key:latest,FIREWORKS_API_KEY=llm-council-fireworks-key:latest,GROK_API_KEY=llm-council-grok-key:latest,COUNCIL_API_KEY=llm-council-api-key:latest \
-            --quiet
-
-      - name: Verify deployment
-        run: |
-          URL=$(gcloud run services describe ${{ env.SERVICE }} --region=${{ env.REGION }} --format='value(status.url)')
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
-          if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
-            exit 1
-          fi
-          echo "Deployment verified: $URL/health returned 200"
+      - name: Semantic canary rollout
+        env:
+          PROJECT: ${{ env.PROJECT_ID }}
+          DEPLOY_REVISION: ${{ github.sha }}
+        run: scripts/cloud_run_semantic_rollout.sh

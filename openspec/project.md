@@ -47,10 +47,10 @@ When users query the system, it proceeds in 3 stages:
 - **Model Cache**: JSON in `data/cache/models.json`
 
 ### API Providers
-- **OpenRouter**: GPT-5.5, Gemini 3.1 Pro Preview, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, and non-PHI/deidentified fallbacks
+- **OpenRouter**: GPT-5.6 Sol, Gemini 3.1 Pro Preview, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max, and non-PHI/deidentified fallbacks
 - **Vertex AI Anthropic**: Claude Fable 5 default/chairman through the covered Google/Vertex BAA route in `shree-development`
 - **Fireworks Direct**: GLM-5.2 and Kimi K2.7 Code
-- **xAI Direct**: Grok 4.3
+- **xAI Direct**: Grok 4.5
 - **Cerebras**: Legacy/non-production explicit routes only; not part of the current production roster
 
 ## Model Configuration
@@ -58,22 +58,22 @@ When users query the system, it proceeds in 3 stages:
 ### Production Council Members (9 models)
 | # | Model | Provider | Alias |
 |---|-------|----------|-------|
-| 1 | `openai/gpt-5.5` | OpenRouter | `gpt` |
+| 1 | `openai/gpt-5.6-sol` | OpenRouter | `gpt` |
 | 2 | `anthropic/claude-fable-5` | Vertex AI Anthropic in `shree-development`; OpenRouter fallback is non-PHI/deidentified only | `fable` |
 | 3 | `fireworks/glm-5.2` | Fireworks direct | `glm`, `glm-fw` |
 | 4 | `google/gemini-3.1-pro-preview` | OpenRouter | `gemini`, `pro` |
-| 5 | `x-ai/grok-4.3` | xAI direct | `grok` |
+| 5 | `x-ai/grok-4.5` | xAI direct | `grok` |
 | 6 | `fireworks/kimi-k2.7-code` | Fireworks direct | `kimi` |
 | 7 | `deepseek/deepseek-v4-pro` | OpenRouter | `deepseek` |
 | 8 | `meta-llama/llama-4-maverick` | OpenRouter | `llama` |
 | 9 | `qwen/qwen3.7-max` | OpenRouter | `qwen` |
 
 ### Compact Council Members (5 models)
-- `openai/gpt-5.5`
+- `openai/gpt-5.6-sol`
 - `anthropic/claude-fable-5`
 - `fireworks/glm-5.2`
 - `google/gemini-3.1-pro-preview`
-- `x-ai/grok-4.3`
+- `x-ai/grok-4.5`
 
 ### Chairman
 - **Model**: `anthropic/claude-fable-5`
@@ -109,6 +109,8 @@ When users query the system, it proceeds in 3 stages:
 - No secrets in code or environment files
 - PHI eligibility is route-conditional; OpenRouter is non-PHI/deidentified only
 - `REQUIRE_VERTEX_ANTHROPIC=true` MUST be set in covered deployments that process PHI through Fable
+- Production deploys MUST preserve `VERTEX_PROJECT_ID=shree-development`, `VERTEX_LOCATION=global`, and `REQUIRE_VERTEX_ANTHROPIC=true`.
+- Post-deploy verification MUST validate the semantic `/health` contract: exact ordered production, compact, and evaluator rosters; Fable chairman and Vertex route; strict Vertex configuration; and promoted GPT-5.6 Sol/Grok 4.5 IDs. HTTP status alone is insufficient.
 - CORS enabled for local development
 
 ## Performance Considerations

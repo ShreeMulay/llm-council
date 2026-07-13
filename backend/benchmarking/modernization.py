@@ -354,7 +354,8 @@ def report_incomplete_cells(
 
 
 ABLATION_METRICS = (
-    "quality", "diversity", "latency", "cost", "failure_rate", "uncertainty", "judge_agreement"
+    "quality", "objective_accuracy", "evaluator_format_rate", "factual_error_rate",
+    "diversity", "latency", "cost", "failure_rate", "uncertainty", "judge_agreement"
 )
 
 

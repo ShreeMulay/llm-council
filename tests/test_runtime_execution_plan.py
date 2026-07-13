@@ -17,6 +17,17 @@ def _plan(*, compact: bool = False, mode: str = "sync"):
     )
 
 
+def test_promoted_gpt_5_6_sol_is_captured_for_sync_stream_and_cache_identity():
+    sync = _plan(compact=True, mode="sync")
+    stream = _plan(compact=True, mode="stream")
+    sync_gpt = next(op for op in sync.stage1 if op.logical_id == "openai/gpt-5.6-sol")
+    stream_gpt = next(op for op in stream.stage1 if op.logical_id == "openai/gpt-5.6-sol")
+
+    assert sync_gpt == stream_gpt
+    assert sync_gpt.route.provider_model_id == "openai/gpt-5.6-sol"
+    assert council._get_cache_key(sync_gpt, "same") == council._get_cache_key(stream_gpt, "same")
+
+
 @pytest.mark.asyncio
 async def test_sync_runtime_uses_fixed_stage_roles_and_emits_safe_plan_metadata(monkeypatch):
     plan = _plan(compact=True)
@@ -173,6 +184,8 @@ async def test_dispatcher_sync_and_stream_stage1_terminal_fold_equivalence(monke
     assert fallback["terminal_status"] == "succeeded"
     assert fallback["route_id"] == operations[fallback_model].routes[1].route_id
     assert fallback["fallback_used"] is True
+    assert fallback["fallback_reason"] == "empty_response"
+    assert fallback["attempts"][-1]["status"] == "succeeded"
     assert fallback["response"] == f"answer:{fallback_model}"
     assert fallback["usage"] == {"total_tokens": len(fallback_model)}
 
@@ -186,6 +199,8 @@ async def test_dispatcher_sync_and_stream_stage1_terminal_fold_equivalence(monke
         "code": "provider_exhausted",
         "message": "All captured routes failed",
     }
+    assert failure["failure_reason"] == "empty_response"
+    assert all("reason" in attempt for attempt in failure["attempts"])
     assert sync_metadata["execution_plan"]["digest"] == complete["metadata"]["execution_plan"]["digest"] == plan.digest
 
 
@@ -219,10 +234,104 @@ async def test_stream_warm_cache_uses_real_flow_and_zero_adapter_calls(monkeypat
 
 def test_stage1_cache_key_changes_with_captured_route_and_settings():
     plan = _plan(compact=True)
-    operation = plan.stage1[0]
+    operation = next(item for item in plan.stage1 if item.settings.allow_declared_route_failover)
     changed = replace(operation, settings=replace(operation.settings, temperature=0.1))
 
     assert council._get_cache_key(operation, "question") != council._get_cache_key(changed, "question")
+
+    route_policy = replace(
+        operation,
+        settings=replace(operation.settings, allow_declared_route_failover=False),
+    )
+    substitution_policy = replace(
+        operation,
+        settings=replace(operation.settings, allow_provider_substitution=True),
+    )
+    assert council._get_cache_key(operation, "question") != council._get_cache_key(route_policy, "question")
+    assert council._get_cache_key(operation, "question") != council._get_cache_key(substitution_policy, "question")
+
+
+@pytest.mark.asyncio
+async def test_custom_stage_aware_executor_is_order_independent_and_bypasses_cache(
+    monkeypatch,
+):
+    import asyncio
+
+    plan = _plan(compact=True)
+    completions = []
+    council._stage1_cache.clear()
+    council._stage1_cache["unrelated"] = ({"content": "keep"}, 1.0)
+
+    def forbidden_dispatcher():
+        raise AssertionError("custom execution must not use the global dispatcher")
+
+    monkeypatch.setattr(council, "_dispatcher", forbidden_dispatcher)
+
+    async def execute(stage, operation):
+        operations = {
+            "stage1": plan.stage1,
+            "stage2": plan.evaluators,
+            "stage3": (plan.chairman,),
+        }[stage]
+        logical_ids = [item.logical_id for item in operations]
+        await asyncio.sleep(
+            0.001 * (len(operations) - logical_ids.index(operation.logical_id))
+        )
+        completions.append((stage, operation.logical_id, operation.route.route_id))
+        content = (
+            "FINAL RANKING:\n1. Response A"
+            if stage == "stage2"
+            else f"answer:{operation.logical_id}"
+        )
+        return {
+            "content": content,
+            "usage": {"total_tokens": 1},
+            "provider": operation.route.provider,
+            "route_id": operation.route.route_id,
+            "selected_route_id": operation.route.route_id,
+            "attempted_route_ids": [operation.route.route_id],
+            "attempts": [{"route_id": operation.route.route_id, "attempt": 1, "status": "succeeded"}],
+            "fallback_used": False,
+            "terminal_status": "succeeded",
+        }
+
+    stage1, stage2, stage3, _ = await council.run_full_council(
+        "planned question", execution_plan=plan, operation_executor=execute
+    )
+
+    assert [item[1] for item in completions if item[0] == "stage1"] != [
+        operation.logical_id for operation in plan.stage1
+    ]
+    assert {(stage, model, route) for stage, model, route in completions} == {
+        (stage, operation.logical_id, operation.route.route_id)
+        for stage, operations in (
+            ("stage1", plan.stage1),
+            ("stage2", plan.evaluators),
+            ("stage3", (plan.chairman,)),
+        )
+        for operation in operations
+    }
+    assert [item["model"] for item in stage1] == [op.logical_id for op in plan.stage1]
+    assert all(item["selected_route_id"] == item["route_id"] for item in stage2)
+    assert stage3["selected_route_id"] == plan.chairman.route.route_id
+    assert council._stage1_cache == {"unrelated": ({"content": "keep"}, 1.0)}
+
+
+@pytest.mark.asyncio
+async def test_default_run_full_council_remains_compatible_with_legacy_stage_hooks(
+    monkeypatch,
+):
+    plan = _plan(compact=True)
+    stage1 = [{"model": op.logical_id, "response": "ok"} for op in plan.stage1]
+    collect = AsyncMock(return_value=stage1)
+    synthesize = AsyncMock(return_value={"model": plan.chairman.logical_id, "response": "done"})
+    monkeypatch.setattr(council, "stage1_collect_responses", collect)
+    monkeypatch.setattr(council, "stage3_synthesize_final", synthesize)
+
+    await council.run_full_council("planned question", final_only=True, execution_plan=plan)
+
+    assert collect.await_args.kwargs == {}
+    assert synthesize.await_args.kwargs == {}
 
 
 @pytest.mark.asyncio

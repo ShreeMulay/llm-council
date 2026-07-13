@@ -23,7 +23,8 @@ async def query_model(
     temperature: float = 0.7,
     timeout: float = 900.0,
     reasoning_effort: str | None = None,
-    allow_fallbacks: bool = True,
+    allow_fallbacks: bool | None = None,
+    allow_provider_substitution: bool = False,
 ) -> dict[str, Any] | None:
     """
     Query a single model via OpenRouter API.
@@ -36,7 +37,8 @@ async def query_model(
         timeout: Request timeout in seconds
         reasoning_effort: Override reasoning effort (e.g., "high", "medium", "xhigh").
                          If None, uses config default for the model.
-        allow_fallbacks: Whether OpenRouter may silently route to fallback providers.
+        allow_fallbacks: Legacy compatibility argument; never enables provider substitution.
+        allow_provider_substitution: Whether OpenRouter may substitute upstream providers.
 
     Returns:
         Response dict with 'content', 'usage', 'model', 'provider' or None if failed
@@ -59,6 +61,7 @@ async def query_model(
         temperature=temperature,
         reasoning_effort=reasoning_effort,
         allow_fallbacks=allow_fallbacks,
+        allow_provider_substitution=allow_provider_substitution,
     )
 
     try:
@@ -100,16 +103,18 @@ def build_chat_payload(
     max_tokens: int = 32768,
     temperature: float = 0.7,
     reasoning_effort: str | None = None,
-    allow_fallbacks: bool = True,
+    allow_fallbacks: bool | None = None,
+    allow_provider_substitution: bool = False,
 ) -> dict[str, Any]:
     """Build an OpenRouter chat payload with explicit fallback control."""
+    del allow_fallbacks  # Legacy flag controls declared routes at dispatcher boundaries only.
     payload: dict[str, Any] = {
         "model": model,
         "messages": messages,
         "max_tokens": max_tokens,
         "temperature": temperature,
         "provider": {
-            "allow_fallbacks": allow_fallbacks,
+            "allow_fallbacks": allow_provider_substitution,
         },
     }
 
@@ -123,8 +128,8 @@ def build_chat_payload(
         # the reasoning_effort parameter, which defeats the purpose.
         # Tested Apr 17 2026: Bedrock returned ~1000 tokens for all efforts,
         # while Anthropic native honored xhigh (1320 vs 1145 for high).
-        # allow_fallbacks defaults to true for production council calls but can
-        # be disabled by benchmark mode so unsupported efforts are not hidden.
+        # Upstream-provider substitution is explicit and defaults off so
+        # benchmark and production routes cannot silently change providers.
         if model.startswith("anthropic/"):
             payload["provider"]["order"] = ["anthropic"]
         elif model.startswith("openai/"):

@@ -117,6 +117,8 @@ async def handle_council_command(
     tool_context: bool = True,
     parallel_mode: str = "disabled",
     parallel_classifier_score: float | None = None,
+    allow_declared_route_failover: bool = True,
+    allow_provider_substitution: bool = False,
 ) -> dict[str, Any]:
     """
     Handle /council command invocation.
@@ -153,6 +155,8 @@ async def handle_council_command(
         "chairman": chairman_model, "mode": "sync",
         "parallel_mode": parallel_mode,
         "parallel_classifier_score": parallel_classifier_score,
+        "allow_declared_route_failover": allow_declared_route_failover,
+        "allow_provider_substitution": allow_provider_substitution,
     })
     stage0_metadata: dict[str, Any] = {"planned": False, "gate_reason": "disabled"}
     evidence_bundle = None
@@ -207,6 +211,8 @@ async def handle_council_command(
             "tool_context": tool_context,
             "parallel_mode": parallel_mode,
             "parallel_classifier_score": parallel_classifier_score,
+            "allow_declared_route_failover": allow_declared_route_failover,
+            "allow_provider_substitution": allow_provider_substitution,
         },
     }
 
@@ -215,7 +221,7 @@ async def handle_council_command(
 MCP_TOOL_SCHEMA = {
     "name": "llm_council",
     "description": (
-        "Consult 9 LLMs (GPT-5.5, Fable 5 via Vertex AI Anthropic, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.3, Kimi K2.7 Code, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. "
+        "Consult 9 LLMs (GPT-5.6 Sol, Fable 5 via Vertex AI Anthropic, Fireworks GLM-5.2 xHigh, Gemini 3.1 Pro, Grok 4.5, Kimi K2.7 Code, DeepSeek V4 Pro, Llama 4 Maverick, Qwen 3.7 Max) for peer-reviewed answers. "
         "3-stage deliberation: individual responses -> peer rankings -> chairman synthesis (Fable 5 via Vertex AI; OpenRouter fallback is non-PHI/deidentified only). "
         "Explicit URL context is fetched and injected before deliberation by default. Use for complex questions requiring multiple perspectives."
     ),
@@ -263,6 +269,16 @@ MCP_TOOL_SCHEMA = {
                 "type": "number", "minimum": 0, "maximum": 1,
                 "description": "Caller-provided classifier score for classifier mode",
             },
+            "allow_declared_route_failover": {
+                "type": "boolean",
+                "description": "Allow failover only to routes declared in the immutable plan",
+                "default": True,
+            },
+            "allow_provider_substitution": {
+                "type": "boolean",
+                "description": "Allow an upstream provider to substitute another provider",
+                "default": False,
+            },
         },
         "required": ["query"],
     },
@@ -272,14 +288,14 @@ MCP_TOOL_SCHEMA = {
 # Model aliases documentation for help text
 MODEL_ALIASES_HELP = """
 **Model Aliases** (for /council --models):
-- `gpt` -> openai/gpt-5.5
+- `gpt` -> openai/gpt-5.6-sol
 - `opus` -> anthropic/claude-opus-4.8
 - `glm` -> fireworks/glm-5.2 (default Fireworks GLM-5.2 xHigh)
 - `glm-fw` -> fireworks/glm-5.2 (legacy alias for default GLM)
 - `glm-zai` -> z-ai/glm-5.2 (explicit legacy baseline)
 - `fable` -> anthropic/claude-fable-5 (default production council member/chairman via Vertex AI; OpenRouter fallback is non-PHI/deidentified only)
 - `gemini` or `pro` -> google/gemini-3.1-pro-preview
-- `grok` -> x-ai/grok-4.3
+- `grok` -> x-ai/grok-4.5
 - `kimi` -> fireworks/kimi-k2.7-code
 - `kimi26` -> fireworks/kimi-k2.6 (explicit legacy baseline)
 - `deepseek` -> deepseek/deepseek-v4-pro

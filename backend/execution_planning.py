@@ -57,7 +57,8 @@ class RequestSettings:
     max_tokens: int
     temperature: float
     reasoning_effort: str | None = None
-    allow_provider_fallbacks: bool = True
+    allow_declared_route_failover: bool = True
+    allow_provider_substitution: bool = False
 
     def __getitem__(self, key: str):
         return getattr(self, key)
@@ -258,7 +259,20 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     messages = tuple(filter(None, ((("system", str(request["system"])) if request.get("system") else None), ("user", str(request.get("query", ""))))))
     if request.get("route_policy", "primary") != "primary":
         raise ValueError(f"unsupported route policy: {request['route_policy']}")
-    settings = RequestSettings(int(request.get("max_tokens", 8192)), float(request.get("temperature", 0.7)))
+    route_failover_value = request.get(
+        "allow_declared_route_failover", request.get("allow_fallbacks", True)
+    )
+    provider_substitution_value = request.get("allow_provider_substitution", False)
+    if not isinstance(route_failover_value, bool):
+        raise TypeError("allow_declared_route_failover must be a boolean")
+    if not isinstance(provider_substitution_value, bool):
+        raise TypeError("allow_provider_substitution must be a boolean")
+    settings = RequestSettings(
+        int(request.get("max_tokens", 8192)),
+        float(request.get("temperature", 0.7)),
+        allow_declared_route_failover=route_failover_value,
+        allow_provider_substitution=provider_substitution_value,
+    )
     retry = RetryPolicy(float(request.get("timeout", 180)), int(request.get("max_retries", 2)), float(request.get("backoff_base", 1.5)))
     def captured_routes(model_id: str) -> tuple[ModelRoute, ...]:
         record = registry.model(model_id)
@@ -280,11 +294,14 @@ def build_execution_plan(registry: RegistrySnapshot, request: Mapping[str, Any])
     def operation(model_id: str, *, reasoning: str | None = None) -> PlanOperation:
         ordered = captured_routes(model_id)
         routes = tuple(RouteResolution(model_id, route.route_id, route.provider, route.provider_model_id, route.adapter) for route in ordered)
+        model_reasoning = registry.model(model_id).reasoning
+        effective_reasoning = reasoning or model_reasoning.get("member") or model_reasoning.get("default")
         operation_settings = RequestSettings(
             settings.max_tokens,
             settings.temperature,
-            reasoning,
-            settings.allow_provider_fallbacks and len(routes) > 1,
+            effective_reasoning,
+            settings.allow_declared_route_failover,
+            settings.allow_provider_substitution,
         )
         return PlanOperation(model_id, routes, messages, operation_settings, retry, "provider-neutral-dispatch/v2")
     operations = tuple(operation(model_id) for model_id in model_ids)

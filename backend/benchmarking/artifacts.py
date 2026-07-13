@@ -87,6 +87,13 @@ def write_artifacts(
         "estimated_input_cost_usd",
         "estimated_output_cost_usd",
         "estimated_total_cost_usd",
+        "usage_complete",
+        "quality_status",
+        "quality",
+        "objective_exact_accuracy",
+        "objective_normalized_accuracy",
+        "evaluator_format_rate",
+        "factual_error_rate",
         "error_status",
         "fallback_used",
         "finish_reason",
@@ -120,6 +127,8 @@ def write_artifacts(
 def build_summary_markdown(config: dict[str, Any], results: list[dict[str, Any]]) -> str:
     """Build the summary Markdown report."""
     total_cost = sum(result.get("estimated_total_cost_usd") or 0 for result in results)
+    council_spend = float(config.get("council_spend_usd") or 0.0)
+    probe_spend = float(config.get("probe_spend_usd") or 0.0)
     errors = [result for result in results if result.get("error_status")]
     budget = config.get("budget", {})
     lines = [
@@ -129,7 +138,10 @@ def build_summary_markdown(config: dict[str, Any], results: list[dict[str, Any]]
         f"Mode: `{config.get('mode')}`",
         f"Created at: `{config.get('created_at')}`",
         f"Completed calls: {len(results)}",
-        f"Estimated total cost: ${total_cost:.8f}",
+        f"Estimated individual-model cost: ${total_cost:.8f}",
+        f"Observed support-probe spend: ${probe_spend:.8f}",
+        f"Observed council spend: ${council_spend:.8f}",
+        f"Estimated total cost: ${total_cost + probe_spend + council_spend:.8f}",
         f"Errors: {len(errors)}",
     ]
     if budget.get("stopped"):

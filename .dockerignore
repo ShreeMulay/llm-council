@@ -4,11 +4,21 @@ __pycache__/
 *.pyc
 *.pyo
 
-# MCP server (TypeScript — not needed in container)
-mcp/
+# MCP server (only its generated registry projection is needed in container)
+mcp/*
+!mcp/src/
+mcp/src/*
+!mcp/src/generated/
+mcp/src/generated/*
+!mcp/src/generated/model-registry.json
 
-# Frontend (not needed in container)
-frontend/
+# Frontend (only its generated registry projection is needed in container)
+frontend/*
+!frontend/src/
+frontend/src/*
+!frontend/src/generated/
+frontend/src/generated/*
+!frontend/src/generated/model-registry.json
 
 # Data (runtime-generated)
 data/

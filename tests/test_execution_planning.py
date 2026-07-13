@@ -133,8 +133,10 @@ def test_plan_contains_complete_frozen_three_stage_contract():
     plan = build_execution_plan(registry, request)
     assert plan.stage0["decision"] == "compact"
     assert plan.stage1
-    assert tuple(op.logical_id for op in plan.evaluators) == (
-        "anthropic/claude-fable-5", "openai/gpt-5.5"
+    assert tuple(op.logical_id for op in plan.evaluators) == tuple(
+        model_id
+        for model_id in registry.evaluator_priority
+        if model_id in registry.compact_roster
     )
     assert plan.chairman.logical_id == registry.chairman_logical_id
     assert plan.roles[registry.chairman_logical_id] == ("member", "evaluator", "chairman")
@@ -240,6 +242,46 @@ def test_non_strict_fable_fallback_and_policy_digest_are_captured():
         "vertex", "openrouter"
     ]
     assert strict.digest != public.digest
+
+
+def test_independent_fallback_policies_are_frozen_and_digest_covered():
+    registry = load_registry()
+    base = {"query": "same", "models": ["x-ai/grok-4.5"]}
+    production = build_execution_plan(registry, base)
+    no_route_failover = build_execution_plan(
+        registry, {**base, "allow_declared_route_failover": False}
+    )
+    substitution = build_execution_plan(
+        registry, {**base, "allow_provider_substitution": True}
+    )
+
+    assert production.settings.allow_declared_route_failover is True
+    assert production.settings.allow_provider_substitution is False
+    assert production.stage1[0].settings.allow_declared_route_failover is True
+    assert production.stage1[0].settings.allow_provider_substitution is False
+    assert len({production.digest, no_route_failover.digest, substitution.digest}) == 3
+
+
+def test_legacy_allow_fallbacks_only_controls_declared_route_failover():
+    plan = build_execution_plan(
+        load_registry(),
+        {"query": "legacy", "models": ["x-ai/grok-4.3"], "allow_fallbacks": True},
+    )
+
+    assert plan.settings.allow_declared_route_failover is True
+    assert plan.settings.allow_provider_substitution is False
+
+
+def test_promoted_gpt_5_6_sol_plan_uses_registry_member_and_evaluator_effort():
+    plan = build_execution_plan(
+        load_registry(), {"query": "promoted", "models": ["openai/gpt-5.6-sol"]}
+    )
+
+    assert plan.stage1[0].logical_id == "openai/gpt-5.6-sol"
+    assert plan.stage1[0].route.provider_model_id == "openai/gpt-5.6-sol"
+    assert plan.stage1[0].settings.reasoning_effort == "medium"
+    evaluator = next(op for op in plan.evaluators if op.logical_id == "openai/gpt-5.6-sol")
+    assert evaluator.settings.reasoning_effort == "high"
 
 
 @pytest.mark.parametrize(

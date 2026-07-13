@@ -1,6 +1,7 @@
 """FastAPI backend for LLM Council with OpenCode integration."""
 
 import contextlib
+import hashlib
 import hmac
 import logging
 import os
@@ -21,12 +22,13 @@ logging.basicConfig(
 import asyncio
 import json
 import uuid
+from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, StrictBool
 
 from . import storage
 from .auth import ApiKeyMiddleware
@@ -52,7 +54,7 @@ from .council import (
 )
 from .execution_planning import build_execution_plan
 from .model_discovery import get_model_discovery
-from .model_registry import load_registry
+from .model_registry import PROJECTION_PATHS, load_registry
 from .opencode_integration import (
     MCP_TOOL_SCHEMA,
     MODEL_ALIASES_HELP,
@@ -123,6 +125,8 @@ class CouncilRequest(BaseModel):
     tool_context: bool = True
     parallel_mode: str = "disabled"
     parallel_classifier_score: float | None = None
+    allow_declared_route_failover: StrictBool = True
+    allow_provider_substitution: StrictBool = False
 
 
 class MonitorEventRequest(BaseModel):
@@ -185,18 +189,41 @@ async def root():
 @app.get("/health")
 async def health():
     """Detailed health check."""
+    registry = load_registry()
+
+    def packaged_projection_digest(surface: str) -> str:
+        projection_path = Path(__file__).parents[1] / PROJECTION_PATHS[surface]
+        projection = json.loads(projection_path.read_text(encoding="utf-8"))
+        serialized = json.dumps(projection, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(serialized.encode()).hexdigest()
+
     return {
         "status": "healthy",
         "service": "llm-council",
         "config": {
-            "council_models": COUNCIL_MODELS,
-            "chairman_model": CHAIRMAN_MODEL,
+            "council_models": list(registry.production_roster),
+            "compact_council_models": list(registry.compact_roster),
+            "evaluator_models": list(registry.evaluator_priority),
+            "chairman_model": registry.chairman_logical_id,
+            "production_route_ids": [
+                registry.model(model_id).preferred_route_id
+                for model_id in registry.production_roster
+            ],
             "vertex_anthropic_models": VERTEX_ANTHROPIC_MODEL_IDS,
             "vertex_project_id": VERTEX_PROJECT_ID,
             "vertex_location": VERTEX_LOCATION,
             "vertex_project_configured": bool(VERTEX_PROJECT_ID),
             "require_vertex_anthropic": REQUIRE_VERTEX_ANTHROPIC,
             "fable_baa_policy": "Vertex AI primary route is PHI-eligible only in covered Google Cloud projects/services under BAA; OpenRouter fallback is non-PHI/deidentified only.",
+        },
+        "artifacts": {
+            "registry_digest": registry.digest,
+            "projection_digests": {
+                surface: packaged_projection_digest(surface)
+                for surface in ("backend", "frontend", "mcp")
+            },
+            "application_revision": os.getenv("DEPLOY_REVISION") or os.getenv("K_REVISION"),
+            "image_digest": os.getenv("APP_IMAGE_DIGEST"),
         },
     }
 
@@ -308,6 +335,8 @@ async def council_deliberation(request: CouncilRequest, format: str | None = Non
         tool_context=request.tool_context,
         parallel_mode=request.parallel_mode,
         parallel_classifier_score=request.parallel_classifier_score,
+        allow_declared_route_failover=request.allow_declared_route_failover,
+        allow_provider_substitution=request.allow_provider_substitution,
     )
 
     if format == "markdown-raw":
@@ -453,6 +482,8 @@ async def council_stream(request: CouncilRequest):
             "mode": "stream",
             "parallel_mode": request.parallel_mode,
             "parallel_classifier_score": request.parallel_classifier_score,
+            "allow_declared_route_failover": request.allow_declared_route_failover,
+            "allow_provider_substitution": request.allow_provider_substitution,
         },
     )
     stage0 = create_parallel_stage0(request.parallel_mode)
@@ -485,6 +516,8 @@ async def council_stream(request: CouncilRequest):
                         "final_only": request.final_only,
                         "compact": request.compact,
                         "tool_context": request.tool_context,
+                        "allow_declared_route_failover": request.allow_declared_route_failover,
+                        "allow_provider_substitution": request.allow_provider_substitution,
                     }
                     event["metadata"] = {
                         **event.get("metadata", {}),
