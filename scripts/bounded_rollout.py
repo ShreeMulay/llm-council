@@ -35,6 +35,9 @@ LOCK_OBJECT = (
 EVIDENCE_ROOT = "gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence"
 RESUME_MANIFEST_ROOT = f"{EVIDENCE_ROOT}/resume-after-prior-v1"
 RESUME_MODE = "resume-after-prior-v1"
+SHADOW_RESUME_MANIFEST_ROOT = f"{EVIDENCE_ROOT}/resume-after-shadow-v1"
+SHADOW_CLAIMS_ROOT = "rollout-evidence/resume-after-shadow-v1/claims"
+RESUME_AFTER_SHADOW_MODE = "resume-after-shadow-v1"
 FRESH_MODE = "fresh"
 PROJECT = "tke-phi-privacy-engine"
 REGION = "us-central1"
@@ -74,6 +77,19 @@ PAID_PLAN = (
     ("final", "stream", "https://service.example"),
 )
 MAX_PAID_ATTEMPTS = 6
+INCIDENT_TARGET_SHA = "000754f3c963c002b25a35f0b13a7c01a69510f9"
+INCIDENT_SOURCE_RUN = "000754f3c963-1783979097"
+INCIDENT_PRIOR_MANIFEST_URI = (
+    f"{RESUME_MANIFEST_ROOT}/000754f3c963-resume-v2.json"
+)
+INCIDENT_PRIOR_MANIFEST_GENERATION = "1783979022365682"
+INCIDENT_RECOVERY_GENERATION = "1783980208306954"
+INCIDENT_CANDIDATE_REVISION = "llm-council-000754f3c963-9b63e747"
+INCIDENT_CANDIDATE_DIGEST = (
+    "sha256:b34c651fcbc29f8b6491bfd8ecdf0d7abe7b954d814a750c7ea3a7621dec10c2"
+)
+INCIDENT_SERVICE_UID = "a74ded22-b26a-408d-80e8-dadf4fe454dd"
+INCIDENT_SERVICE_GENERATION = 87
 
 
 def validate_production_namespace(project: Any, region: Any, service: Any) -> None:
@@ -182,11 +198,31 @@ def validate_resume_inputs(
 ) -> tuple[str, int, str | None, str | None]:
     """Accept only the two explicit authorization tuples."""
     if type(prior_paid_attempts) is not int:
-        raise ValueError("prior paid attempts must be exactly 0 or 2")
+        raise ValueError("prior paid attempts must be exactly 0, 2, or 4")
     if mode == FRESH_MODE:
         if prior_paid_attempts != 0 or manifest_uri not in {None, ""} or manifest_generation not in {None, ""}:
             raise ValueError("fresh mode forbids resume authorization")
         return FRESH_MODE, 0, None, None
+    if mode == RESUME_AFTER_SHADOW_MODE:
+        if prior_paid_attempts != 4:
+            raise ValueError("resume-after-shadow-v1 requires prior paid attempts equal to 4")
+        if not isinstance(manifest_uri, str) or not manifest_uri.startswith(
+            f"{SHADOW_RESUME_MANIFEST_ROOT}/"
+        ):
+            raise ValueError("shadow resume manifest URI is outside the approved evidence prefix")
+        suffix = manifest_uri.removeprefix(f"{SHADOW_RESUME_MANIFEST_ROOT}/")
+        if (
+            not suffix
+            or "/" in suffix
+            or not suffix.endswith(".json")
+            or any(part in suffix for part in ("#", "?"))
+        ):
+            raise ValueError("shadow resume manifest URI is malformed")
+        if not isinstance(manifest_generation, str) or not re.fullmatch(
+            r"[1-9][0-9]*", manifest_generation
+        ):
+            raise ValueError("exact shadow resume manifest generation is required")
+        return RESUME_AFTER_SHADOW_MODE, 4, manifest_uri, manifest_generation
     if mode != RESUME_MODE or prior_paid_attempts != 2:
         raise ValueError("resume-after-prior-v1 requires prior paid attempts equal to 2")
     if not isinstance(manifest_uri, str) or not manifest_uri.startswith(f"{RESUME_MANIFEST_ROOT}/"):
@@ -300,10 +336,18 @@ def _traffic_equal(left: Any, right: Any) -> bool:
 
 def _expected_traffic_statuses(traffic: Any) -> list[dict[str, Any]]:
     """Project config traffic to the exact targets emitted in trafficStatuses."""
+    normalized = _normalized_traffic(traffic)
+    tagged_revisions = {
+        item["revision"] for item in normalized if "tag" in item
+    }
     return [
         item
-        for item in _normalized_traffic(traffic)
-        if item["percent"] != 0 or "tag" in item
+        for item in normalized
+        if not (
+            item["percent"] == 0
+            and "tag" not in item
+            and item["revision"] in tagged_revisions
+        )
     ]
 
 
@@ -425,6 +469,8 @@ class RolloutController:
             mode, prior_paid_attempts, resume_manifest_uri, resume_manifest_generation
         )
         self.resume_manifest: dict[str, Any] | None = None
+        self.target_sha = approved_sha
+        self.continuation_claim: str | None = None
         self.retry_consumed = False
         self.lock_generation: str | None = None
         self.snapshot: dict[str, Any] | None = None
@@ -438,6 +484,7 @@ class RolloutController:
         self.pre_deploy_state: dict[str, Any] | None = None
         self.expected_candidate_revision: str | None = None
         self.candidate_revision_state: dict[str, Any] | None = None
+        self.pending_transition: dict[str, Any] | None = None
 
     def _event(self, *event: Any) -> None:
         events = getattr(self.boundaries, "events", None)
@@ -526,7 +573,7 @@ class RolloutController:
                 if not isinstance(item, dict) or not isinstance(item.get("name"), str):
                     raise ValueError
                 env_values.setdefault(item["name"], []).append(item.get("value"))
-            if env_values.get("DEPLOY_REVISION") != [self.approved_sha]:
+            if env_values.get("DEPLOY_REVISION") != [self.target_sha]:
                 raise ValueError
             if env_values.get("APP_IMAGE_DIGEST") != [self.image_digest]:
                 raise ValueError
@@ -621,15 +668,17 @@ class RolloutController:
         owner = self.rollout_id
         try:
             lock_value = {"rollout_id": self.rollout_id, "owner": owner}
-            if self.mode == RESUME_MODE:
+            if self.mode in {RESUME_MODE, RESUME_AFTER_SHADOW_MODE}:
                 if self.resume_manifest_uri is None or self.resume_manifest_generation is None:
                     raise ResumeRefusal("resume lock binding is incomplete")
                 lock_value.update(
                     resume_mode=self.mode,
                     resume_manifest_uri=self.resume_manifest_uri,
                     resume_manifest_generation=self.resume_manifest_generation,
-                    target_sha=self.approved_sha,
+                    target_sha=self.target_sha,
                 )
+                if self.mode == RESUME_AFTER_SHADOW_MODE:
+                    lock_value["controller_sha"] = self.approved_sha
             generation = self._call_with_budget(
                 self.boundaries.create_gcs,
                 LOCK_OBJECT,
@@ -927,6 +976,260 @@ class RolloutController:
         self.snapshot = deepcopy(final_validated)
         return deepcopy(final_validated), final_prior
 
+    @staticmethod
+    def _strict_fields(value: Any, fields: set[str]) -> dict[str, Any]:
+        if not isinstance(value, dict) or set(value) != fields:
+            raise ValueError
+        return value
+
+    def _verify_shadow_resume_evidence(
+        self,
+    ) -> tuple[dict[str, Any], dict[str, Any], str]:
+        """Validate the one Oracle-approved incident continuation without widening it."""
+        manifest = self._read_resume_object(
+            self.resume_manifest_uri, self.resume_manifest_generation
+        )
+        try:
+            self._strict_fields(manifest, {
+                "schema_version", "mode", "continuation_id", "controller_sha",
+                "target_sha", "source_run_id", "project", "region", "service",
+                "cumulative_paid_attempts", "prior_manifest", "attempts", "recovery",
+                "current_service", "candidate",
+            })
+            if (
+                type(manifest["schema_version"]) is not int
+                or manifest["schema_version"] != 1
+                or manifest["mode"] != RESUME_AFTER_SHADOW_MODE
+                or manifest["controller_sha"] != self.approved_sha
+                or manifest["target_sha"] != INCIDENT_TARGET_SHA
+                or manifest["source_run_id"] != INCIDENT_SOURCE_RUN
+                or manifest["project"] != FIXED_PROJECT
+                or manifest["region"] != FIXED_REGION
+                or manifest["service"] != FIXED_SERVICE
+                or type(manifest["cumulative_paid_attempts"]) is not int
+                or manifest["cumulative_paid_attempts"] != 4
+                or not isinstance(manifest["continuation_id"], str)
+                or re.fullmatch(r"[a-z0-9](?:[a-z0-9-]{0,62})", manifest["continuation_id"])
+                is None
+            ):
+                raise ValueError
+
+            prior_ref = self._strict_fields(
+                manifest["prior_manifest"], {"uri", "generation"}
+            )
+            if prior_ref != {
+                "uri": INCIDENT_PRIOR_MANIFEST_URI,
+                "generation": INCIDENT_PRIOR_MANIFEST_GENERATION,
+            }:
+                raise ValueError
+            prior_controller = RolloutController(
+                boundaries=self.boundaries,
+                rollout_id=f"prior-proof-{self.rollout_id}",
+                approved_sha=manifest["target_sha"],
+                clock=self.clock,
+                promotion_seconds=self._remaining(),
+                rollback_seconds=self.rollback_seconds,
+                prior_paid_attempts=2,
+                mode=RESUME_MODE,
+                resume_manifest_uri=prior_ref["uri"],
+                resume_manifest_generation=prior_ref["generation"],
+            )
+            prior_manifest, prior_state, prior_revision = (
+                prior_controller._verify_resume_evidence()
+            )
+            if prior_manifest["target_sha"] != manifest["target_sha"]:
+                raise ValueError
+
+            attempts = manifest["attempts"]
+            if not isinstance(attempts, list) or len(attempts) != 2:
+                raise ValueError
+            shadow_url_hash: str | None = None
+            for number, surface, item in zip((3, 4), ("sync", "stream"), attempts, strict=True):
+                self._strict_fields(item, {
+                    "attempt_number", "started_uri", "started_generation",
+                    "completed_uri", "completed_generation",
+                })
+                prefix = f"{EVIDENCE_ROOT}/{INCIDENT_SOURCE_RUN}/attempts/{number:04d}"
+                if (
+                    type(item["attempt_number"]) is not int
+                    or item["attempt_number"] != number
+                    or item["started_uri"] != f"{prefix}-started.json"
+                    or item["completed_uri"] != f"{prefix}-completed.json"
+                ):
+                    raise ValueError
+                started = self._read_resume_object(
+                    item["started_uri"], item["started_generation"]
+                )
+                completed = self._read_resume_object(
+                    item["completed_uri"], item["completed_generation"]
+                )
+                fields = {
+                    "rollout_id", "stage", "surface", "url_sha256", "attempt_number",
+                    "paid_gate_state", "classification",
+                }
+                self._strict_fields(started, fields)
+                self._strict_fields(completed, fields)
+                repeated = fields - {"classification"}
+                if (
+                    any(started[field] != completed[field] for field in repeated)
+                    or started["rollout_id"] != INCIDENT_SOURCE_RUN
+                    or started["stage"] != "shadow"
+                    or started["surface"] != surface
+                    or type(started["attempt_number"]) is not int
+                    or started["attempt_number"] != number
+                    or started["paid_gate_state"] != "open"
+                    or started["classification"] != "started"
+                    or completed["classification"] != "succeeded"
+                    or re.fullmatch(r"[0-9a-f]{64}", started["url_sha256"]) is None
+                ):
+                    raise ValueError
+                if shadow_url_hash is None:
+                    shadow_url_hash = started["url_sha256"]
+                elif shadow_url_hash != started["url_sha256"]:
+                    raise ValueError
+
+            recovery_ref = self._strict_fields(
+                manifest["recovery"], {"uri", "generation"}
+            )
+            expected_recovery_uri = f"{EVIDENCE_ROOT}/{INCIDENT_SOURCE_RUN}/recovery.json"
+            if recovery_ref != {
+                "uri": expected_recovery_uri,
+                "generation": INCIDENT_RECOVERY_GENERATION,
+            }:
+                raise ValueError
+            recovery = self._read_resume_object(
+                recovery_ref["uri"], recovery_ref["generation"]
+            )
+            self._strict_fields(recovery, {
+                "candidate_image_digest", "candidate_revision", "candidate_traffic_percent",
+                "classification", "cumulative_paid_attempts", "lock_generation",
+                "prior_revision", "rollout_id", "service_generation", "service_uid",
+                "traffic_matches_snapshot",
+            })
+            if (
+                recovery["candidate_image_digest"] != INCIDENT_CANDIDATE_DIGEST
+                or self._revision(recovery["candidate_revision"])
+                != INCIDENT_CANDIDATE_REVISION
+                or type(recovery["candidate_traffic_percent"]) is not int
+                or recovery["candidate_traffic_percent"] != 0
+                or recovery["classification"] != "ALREADY_CONVERGED_NO_TRAFFIC"
+                or type(recovery["cumulative_paid_attempts"]) is not int
+                or recovery["cumulative_paid_attempts"] != 4
+                or recovery["lock_generation"] != "1783979116412357"
+                or self._revision(recovery["prior_revision"]) != prior_revision
+                or recovery["rollout_id"] != INCIDENT_SOURCE_RUN
+                or type(recovery["service_generation"]) is not int
+                or recovery["service_generation"] != INCIDENT_SERVICE_GENERATION
+                or recovery["service_uid"] != INCIDENT_SERVICE_UID
+                or recovery["traffic_matches_snapshot"] is not True
+            ):
+                raise ValueError
+
+            current = self._strict_fields(manifest["current_service"], {
+                "uid", "generation", "etag", "service_url_sha256", "traffic_sha256"
+            })
+            if (
+                current["uid"] != INCIDENT_SERVICE_UID
+                or type(current["generation"]) is not int
+                or current["generation"] != INCIDENT_SERVICE_GENERATION
+                or not isinstance(current["etag"], str) or not current["etag"]
+                or re.fullmatch(r"[0-9a-f]{64}", current["service_url_sha256"]) is None
+                or re.fullmatch(r"[0-9a-f]{64}", current["traffic_sha256"]) is None
+            ):
+                raise ValueError
+            candidate = self._strict_fields(
+                manifest["candidate"], {"revision", "image_digest", "target_sha"}
+            )
+            if candidate != {
+                "revision": INCIDENT_CANDIDATE_REVISION,
+                "image_digest": INCIDENT_CANDIDATE_DIGEST,
+                "target_sha": INCIDENT_TARGET_SHA,
+            }:
+                raise ValueError
+            validated, live_prior = self._validate_resume_service(
+                prior_state,
+                {
+                    "expected_prior_revision": prior_revision,
+                    "service_url_sha256": current["service_url_sha256"],
+                    "traffic_sha256": current["traffic_sha256"],
+                },
+            )
+            generation_key = (
+                "observedGeneration" if "observedGeneration" in validated
+                else "observed_generation"
+            )
+            if (
+                validated.get("uid") != current["uid"]
+                or _integer(validated.get("generation")) != current["generation"]
+                or _integer(validated.get(generation_key)) != current["generation"]
+                or validated.get("etag") != current["etag"]
+                or live_prior != prior_revision
+            ):
+                raise ValueError
+        except (KeyError, TypeError, ValueError, ResumeRefusal, ConcurrencyRefusal) as exc:
+            raise ResumeRefusal("shadow resume manifest or evidence chain refused") from exc
+        return manifest, validated, prior_revision
+
+    def prepare_shadow_resume(self) -> tuple[dict[str, Any], str]:
+        if self.mode != RESUME_AFTER_SHADOW_MODE:
+            raise ResumeRefusal("shadow resume preparation requires exact mode")
+        ensure_absent = getattr(self.boundaries, "ensure_lock_absent", None)
+        if ensure_absent is None:
+            raise ResumeRefusal("preexisting-lock boundary is missing")
+        self._call_with_budget(ensure_absent, LOCK_OBJECT)
+        first_manifest, first_state, first_prior = self._verify_shadow_resume_evidence()
+        self.target_sha = first_manifest["target_sha"]
+        self.acquire_lock()
+        second_manifest, second_state, second_prior = self._verify_shadow_resume_evidence()
+        stable = ("uid", "etag", "generation", "observedGeneration", "observed_generation", "uri")
+        if (
+            first_manifest != second_manifest
+            or first_prior != second_prior
+            or any(first_state.get(key) != second_state.get(key) for key in stable)
+            or not _traffic_equal(first_state["traffic"], second_state["traffic"])
+        ):
+            raise ResumeRefusal("shadow resume evidence changed around lock acquisition")
+        claim_key = hashlib.sha256(
+            f"{self.resume_manifest_uri}#{self.resume_manifest_generation}".encode()
+        ).hexdigest()
+        claim_path = f"{SHADOW_CLAIMS_ROOT}/{claim_key}.json"
+        claim = {
+            "mode": RESUME_AFTER_SHADOW_MODE,
+            "manifest_uri": self.resume_manifest_uri,
+            "manifest_generation": self.resume_manifest_generation,
+            "controller_sha": self.approved_sha,
+            "target_sha": second_manifest["target_sha"],
+            "continuation_id": second_manifest["continuation_id"],
+            "cumulative_paid_attempts": 4,
+        }
+        try:
+            self._call_with_budget(
+                self.boundaries.create_gcs, claim_path, claim, if_generation_match=0
+            )
+        except Exception as exc:
+            raise ResumeRefusal("shadow resume continuation already claimed") from exc
+        self.continuation_claim = claim_path
+        self.resume_manifest = deepcopy(second_manifest)
+        self.target_sha = second_manifest["target_sha"]
+        self.snapshot = deepcopy(second_state)
+        self.prior_service_url = second_state["uri"]
+        self.prior_identity = self.boundaries.health(
+            self.prior_service_url, None, timeout=self._remaining(), allow_legacy_prior=True
+        )
+        final_manifest, final_state, final_prior = self._verify_shadow_resume_evidence()
+        if (
+            final_manifest != second_manifest
+            or final_prior != second_prior
+            or any(second_state.get(key) != final_state.get(key) for key in stable)
+            or not _traffic_equal(second_state["traffic"], final_state["traffic"])
+        ):
+            raise ResumeRefusal("production changed during shadow resume health preflight")
+        self.snapshot = deepcopy(final_state)
+        self.candidate_revision = INCIDENT_CANDIDATE_REVISION
+        self.expected_candidate_revision = INCIDENT_CANDIDATE_REVISION
+        self.image_digest = f"us-central1-docker.pkg.dev/{FIXED_PROJECT}/llm-council/llm-council@{INCIDENT_CANDIDATE_DIGEST}"
+        return deepcopy(final_state), final_prior
+
     def capture_snapshot(self) -> dict[str, Any]:
         state = self._service_get()
         if "observedGeneration" in state:
@@ -1051,7 +1354,7 @@ class RolloutController:
             if_generation_match=0,
         )
         if isinstance(result, InfrastructureFailure):
-            if self.mode == RESUME_MODE:
+            if self.mode in {RESUME_MODE, RESUME_AFTER_SHADOW_MODE}:
                 self.paid_gate_state = "terminally_closed"
                 raise result
             if self.retry_consumed:
@@ -1086,7 +1389,7 @@ class RolloutController:
             )
         return method(
             url,
-            expected_revision=self.approved_sha,
+            expected_revision=self.target_sha,
             expected_image_digest=self.image_digest,
             timeout=self._remaining(),
         )
@@ -1174,6 +1477,33 @@ class RolloutController:
             raise OperationRefusal("operation response refused")
         return True, response
 
+    @staticmethod
+    def _operation_proves_rejection(operation: Any, expected_name: Any) -> bool:
+        """Accept only an exact FAILED_PRECONDITION for the pending Cloud LRO."""
+        if (
+            not isinstance(operation, dict)
+            or set(operation) != {"name", "done", "error"}
+            or operation.get("done") is not True
+            or not isinstance(expected_name, str)
+            or operation.get("name") != expected_name
+            or re.fullmatch(
+                r"projects/[^/]+/locations/[^/]+/operations/[^/]+", expected_name
+            )
+            is None
+        ):
+            return False
+        error = operation.get("error")
+        if not isinstance(error, dict) or set(error) != {"code", "message"}:
+            return False
+        message = error.get("message")
+        return (
+            type(error.get("code")) is int
+            and error["code"] == 9
+            and isinstance(message, str)
+            and message == message.strip()
+            and re.search(r"\bprecondition\b", message, re.IGNORECASE) is not None
+        )
+
     def _validate_transition_state(
         self,
         state: Any,
@@ -1230,11 +1560,23 @@ class RolloutController:
             or current.get("etag") != expected_etag
         ):
             raise ConcurrencyRefusal("service ownership changed before patch")
+        self.pending_transition = {
+            "uid": expected_uid,
+            "generation": _integer(expected_generation),
+            "etag": expected_etag,
+            "traffic": deepcopy(requested),
+        }
         operation = self._patch(requested, expected_etag, self._remaining(cap=timeout))
         if "done" not in operation and operation.get("uid"):
             return operation
+        operation_name = operation.get("name") if isinstance(operation, dict) else None
+        self.pending_transition["operation_name"] = operation_name
         response = None
         while True:
+            if self._operation_proves_rejection(operation, operation_name):
+                self.pending_transition = None
+                self.rollout_owned_state = deepcopy(current)
+                raise OperationRefusal("operation refused")
             done, response = self._validate_operation(operation)
             if done:
                 break
@@ -1253,6 +1595,7 @@ class RolloutController:
                 old_etag=expected_etag, final=True,
             ):
                 self.rollout_owned_state = deepcopy(state)
+                self.pending_transition = None
                 return state
 
     def wait_for_operation(self, name: str) -> Any:
@@ -1421,6 +1764,23 @@ class RolloutController:
                 continue
             if self._current_state_is_owned(current):
                 return current
+            pending_status = self._pending_transition_ownership_status(current)
+            if pending_status == "owned":
+                self.rollout_owned_state = deepcopy(current)
+                self.pending_transition = None
+                return current
+            if pending_status in {"pre_patch", "intermediate"}:
+                try:
+                    self._remaining(rollback=True)
+                except RollbackProofError as exc:
+                    raise RollbackRecoveryRequired(
+                        "recovery_required: rollback grace exhausted without owned convergence"
+                    ) from exc
+                continue
+            if pending_status == "contradictory":
+                raise RollbackRecoveryRequired(
+                    "recovery_required: pending transition ownership is contradictory"
+                )
             if self.rollout_owned_state is None:
                 if self.candidate_revision_state is None:
                     try:
@@ -1444,6 +1804,44 @@ class RolloutController:
                         ) from exc
                     continue
             raise RollbackProofError("rollback mutation ownership refused")
+
+    def _pending_transition_ownership_status(self, current: Any) -> str:
+        """Classify only the exact CAS transition this controller just requested."""
+        pending = self.pending_transition
+        snapshot = self.snapshot
+        if pending is None or snapshot is None or not isinstance(current, dict):
+            return "none"
+        try:
+            if self._snapshot_traffic_is_already_restored(current):
+                if (
+                    current.get("uid") == pending["uid"]
+                    and _integer(current.get("generation")) == pending["generation"]
+                    and current.get("etag") == pending["etag"]
+                ):
+                    return "pre_patch"
+                return "contradictory"
+            generation = _integer(current.get("generation"))
+            observed = _integer(current.get("observedGeneration"))
+            if (
+                current.get("uid") != pending["uid"]
+                or generation != pending["generation"] + 1
+                or current.get("etag") == pending["etag"]
+                or not _traffic_equal(current.get("traffic"), pending["traffic"])
+            ):
+                return "contradictory"
+            reconciling = _normalized_reconciling(current)
+            if observed == generation and not reconciling:
+                if (
+                    _normalized_traffic(current.get("trafficStatuses"))
+                    != _expected_traffic_statuses(pending["traffic"])
+                ):
+                    return "contradictory"
+                return "owned"
+            if pending["generation"] <= observed < generation and reconciling:
+                return "intermediate"
+            return "contradictory"
+        except (KeyError, TypeError, ValueError):
+            return "contradictory"
 
     def _deploy_state_ownership_status(self, current: dict[str, Any]) -> str:
         """Classify ambiguous deploy state as exact intermediate, owned, or contradictory."""
@@ -1488,9 +1886,9 @@ class RolloutController:
                 and isinstance(template, dict)
                 and self._revision(template.get("revision")) == self._revision(revision)
                 and image_exact
-                and deploy_revision_values == [self.approved_sha]
+                and deploy_revision_values == [self.target_sha]
                 and image_digest_values == [self.image_digest]
-                and env_values.get("DEPLOY_REVISION") == self.approved_sha
+                and env_values.get("DEPLOY_REVISION") == self.target_sha
                 and env_values.get("APP_IMAGE_DIGEST") == self.image_digest
                 and _traffic_equal(
                     current.get("traffic"),
@@ -1822,12 +2220,73 @@ def _execute_v2_progression(
         raise ConcurrencyRefusal("final canonical traffic mismatch")
 
 
+def _execute_shadow_resume_progression(
+    rollout: RolloutController, *, prior_revision: str
+) -> None:
+    """Run only the incident-authorized 100% candidate finalization path."""
+    del prior_revision
+    boundaries = rollout.boundaries
+    snapshot = rollout.snapshot
+    if snapshot is None or rollout.candidate_revision is None:
+        raise InitialStateRefusal("shadow resume state is incomplete")
+    service_url = rollout._service_base_url()
+    shadow_tag = f"shadow-{INCIDENT_SOURCE_RUN}"[:63].rstrip("-")
+
+    rollout.fetch_candidate_revision()
+    current = rollout._service_get()
+    if (
+        current.get("uid") != snapshot.get("uid")
+        or current.get("etag") != snapshot.get("etag")
+        or _integer(current.get("generation")) != _integer(snapshot.get("generation"))
+        or not _traffic_equal(current.get("traffic"), snapshot.get("traffic"))
+    ):
+        raise ConcurrencyRefusal("restored service changed before shadow continuation")
+    rollout.mutation_armed = True
+    tagged = _transition_stage(
+        rollout,
+        current,
+        _stage_traffic(
+            snapshot, rollout.candidate_revision, 100, shadow_tag=shadow_tag
+        ),
+    )
+    shadow_url = boundaries.tag_url(tagged, shadow_tag)
+    rollout.candidate_identity = rollout.verify_candidate_health(shadow_url)
+    if rollout.prior_identity == rollout.candidate_identity:
+        raise IdentityRefusal("prior and candidate identities must differ")
+    boundaries.sample_stage_identities(
+        service_url,
+        rollout.prior_identity,
+        rollout.candidate_identity,
+        percent=100,
+        timeout=rollout._remaining(),
+    )
+    if rollout.verify_candidate_health(service_url) != rollout.candidate_identity:
+        raise IdentityRefusal("shadow resume production identity mismatch")
+    rollout._event("final-production-health-verify")
+    rollout.run_paid_attempt(stage="final", surface="sync", url=service_url)
+    rollout.run_paid_attempt(stage="final", surface="stream", url=service_url)
+
+    expected_final = _stage_traffic(
+        snapshot, rollout.candidate_revision, 100, shadow_tag=None
+    )
+    final = _transition_stage(rollout, tagged, expected_final)
+    if (
+        rollout.verify_candidate_health(service_url) != rollout.candidate_identity
+        or not _traffic_equal(final.get("traffic"), expected_final)
+        or _normalized_traffic(final.get("trafficStatuses"))
+        != _expected_traffic_statuses(expected_final)
+    ):
+        raise ConcurrencyRefusal("shadow resume final verification refused")
+
+
 def _execute_rollout(rollout: RolloutController) -> RolloutController:
     boundaries = rollout.boundaries
     rollout.start_promotion_deadline()
     try:
         boundaries.verify_benchmark()
-        if rollout.mode == RESUME_MODE:
+        if rollout.mode == RESUME_AFTER_SHADOW_MODE:
+            _, prior_revision = rollout.prepare_shadow_resume()
+        elif rollout.mode == RESUME_MODE:
             _, prior_revision = rollout.prepare_resume()
         else:
             rollout.acquire_lock()
@@ -1846,8 +2305,9 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
             for item in _normalized_traffic(snapshot["traffic"])
         ):
             raise InitialStateRefusal("rollout shadow tag collides with snapshot traffic")
-        rollout.build_candidate()
-        if rollout.mode == RESUME_MODE:
+        if rollout.mode != RESUME_AFTER_SHADOW_MODE:
+            rollout.build_candidate()
+        if rollout.mode in {RESUME_MODE, RESUME_AFTER_SHADOW_MODE}:
             prior_url = rollout._service_base_url()
         elif "observedGeneration" in snapshot:
             prior_url = rollout._service_base_url()
@@ -1862,10 +2322,13 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
             rollout.prior_identity = deepcopy(
                 getattr(boundaries, "health_identity", {"revision": prior_revision})
             )
-        if rollout.mode != RESUME_MODE:
+        if rollout.mode == FRESH_MODE:
             rollout.run_paid_attempt(stage="prior", surface="stream", url=prior_url)
-        rollout.deploy_candidate()
-        if "observedGeneration" in snapshot:
+        if rollout.mode != RESUME_AFTER_SHADOW_MODE:
+            rollout.deploy_candidate()
+        if rollout.mode == RESUME_AFTER_SHADOW_MODE:
+            _execute_shadow_resume_progression(rollout, prior_revision=prior_revision)
+        elif "observedGeneration" in snapshot:
             _execute_v2_progression(rollout, prior_revision=prior_revision)
         else:
             rollout.candidate_identity = rollout.verify_candidate_health("https://shadow.example")
@@ -2315,8 +2778,8 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("approved full Forgejo SHA is required")
     rollout_id = args.rollout_id or f"{args.approved_sha[:12]}-{int(time.time())}"
     try:
-        if args.prior_paid_attempts not in {"0", "2"}:
-            raise ValueError("prior paid attempts must be exactly 0 or 2")
+        if args.prior_paid_attempts not in {"0", "2", "4"}:
+            raise ValueError("prior paid attempts must be exactly 0, 2, or 4")
         cli_prior_paid_attempts = int(args.prior_paid_attempts)
         mode, prior_paid_attempts, manifest_uri, manifest_generation = validate_resume_inputs(
             args.mode,

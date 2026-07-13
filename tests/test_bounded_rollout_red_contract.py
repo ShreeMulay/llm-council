@@ -539,18 +539,14 @@ def _live_tagged_stage(percent=0):
     traffic = api()._stage_traffic(
         snapshot, "candidate", percent, shadow_tag="shadow-rollout-123"
     )
-    statuses = [
-        deepcopy(item)
-        for item in traffic
-        if not (item["percent"] == 0 and "tag" not in item)
-    ]
+    statuses = api()._expected_traffic_statuses(traffic)
     for item in statuses:
         if "tag" in item:
             item["uri"] = f"https://{item['tag']}---service.example"
     return traffic, statuses
 
 
-def test_expected_traffic_statuses_removes_only_untagged_zero_without_merging():
+def test_expected_traffic_statuses_removes_only_duplicate_revision_untagged_zero():
     traffic, statuses = _live_tagged_stage()
 
     assert len(traffic) == 4
@@ -564,6 +560,39 @@ def test_expected_traffic_statuses_removes_only_untagged_zero_without_merging():
         and item.get("tag") == "shadow-rollout-123"
         for item in api()._expected_traffic_statuses(traffic)
     )
+
+
+def test_expected_traffic_statuses_preserves_unrelated_untagged_zero_tagged_zero_and_positives():
+    traffic = [
+        {"revision": "prior", "percent": 100},
+        {"revision": "candidate", "percent": 0},
+        {"revision": "candidate", "percent": 0, "tag": "shadow"},
+        {"revision": "unrelated-zero", "percent": 0},
+        {"revision": "tagged-zero", "percent": 0, "tag": "debug"},
+    ]
+
+    projected = api()._expected_traffic_statuses(traffic)
+
+    assert {item["revision"] for item in projected} == {
+        "prior", "candidate", "unrelated-zero", "tagged-zero"
+    }
+    assert not any(
+        item["revision"] == "candidate" and "tag" not in item for item in projected
+    )
+    assert any(
+        item["revision"] == "candidate" and item.get("tag") == "shadow"
+        for item in projected
+    )
+
+
+def test_expected_traffic_statuses_retains_untagged_zero_when_only_other_revision_is_tagged():
+    traffic = [
+        {"revision": "prior", "percent": 100},
+        {"revision": "unrelated-zero", "percent": 0},
+        {"revision": "different", "percent": 0, "tag": "debug"},
+    ]
+
+    assert api()._expected_traffic_statuses(traffic) == api()._normalized_traffic(traffic)
 
 
 @pytest.mark.parametrize(
@@ -1694,6 +1723,295 @@ def test_post_patch_live_status_projection_is_owned_then_rollback_restores_and_r
     assert [event[0] for event in boundaries.events].count("service-patch") == 2
     assert ("lock-release", "17") in boundaries.events
     assert rollout.lock_generation is None
+
+
+def test_rollback_recovers_exact_pending_cas_transition_after_ambiguous_lro_failure():
+    boundaries = V2Boundaries()
+    snapshot = v2_service()
+    requested = api()._stage_traffic(
+        snapshot, "candidate", 100, shadow_tag="shadow-rollout-123"
+    )
+    owned = v2_service(
+        generation="42", observed_generation="42", etag="etag-42",
+        traffic=requested,
+        traffic_statuses=api()._expected_traffic_statuses(requested),
+    )
+    restored = v2_service(
+        generation="43", observed_generation="43", etag="etag-43"
+    )
+    boundaries.state = snapshot
+    boundaries.operation_polls = [{"name": "ambiguous", "done": True}]
+    ctl = controller(boundaries, clock=boundaries.clock)
+    ctl.snapshot = snapshot
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.lock_generation = "17"
+    ctl.mutation_armed = True
+
+    with pytest.raises(api().OperationRefusal):
+        ctl.transition_traffic(
+            requested,
+            expected_uid=snapshot["uid"],
+            expected_generation=snapshot["generation"],
+            expected_etag=snapshot["etag"],
+            timeout=120,
+        )
+
+    boundaries.state = owned
+    boundaries.operation_polls = [v2_operation(done=True, response=restored)]
+    boundaries.service_polls = [restored]
+    ctl.terminal_rollback(reason="ambiguous-lro")
+
+    patches = [event for event in boundaries.events if event[0] == "service-patch"]
+    assert patches[-1][1] == {"traffic": snapshot["traffic"]}
+    assert ("lock-release", "17") in boundaries.events
+
+
+class AmbiguousPatchBoundaries(V2Boundaries):
+    def __init__(self, service_gets):
+        super().__init__()
+        self.service_gets = [deepcopy(state) for state in service_gets]
+
+    def service_get(self, *, timeout=None):
+        self.events.append(("service-get", timeout))
+        self.clock.advance(1)
+        return deepcopy(self.service_gets.pop(0))
+
+    def service_patch(self, body, *, etag, timeout=None):
+        self.events.append(("service-patch", deepcopy(body), etag, timeout))
+        if len([event for event in self.events if event[0] == "service-patch"]) == 1:
+            raise TimeoutError("client timed out after PATCH was accepted")
+        return v2_operation(done=False)
+
+
+def test_ambiguous_patch_old_read_is_not_restore_proof_then_owned_candidate100_is_restored():
+    snapshot = v2_service()
+    requested = api()._stage_traffic(snapshot, "candidate", 100, shadow_tag=None)
+    owned = v2_service(
+        generation="42", observed_generation="42", etag="etag-42",
+        traffic=requested, traffic_statuses=api()._expected_traffic_statuses(requested),
+    )
+    restored = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries = AmbiguousPatchBoundaries([snapshot, snapshot, owned])
+    boundaries.operation_polls = [v2_operation(done=True, response=restored)]
+    boundaries.service_polls = [restored]
+    ctl = controller(boundaries, clock=boundaries.clock, rollback_seconds=10)
+    ctl.snapshot = snapshot
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.lock_generation = "17"
+    ctl.mutation_armed = True
+
+    with pytest.raises(TimeoutError):
+        ctl.transition_traffic(
+            requested,
+            expected_uid=snapshot["uid"],
+            expected_generation=snapshot["generation"],
+            expected_etag=snapshot["etag"],
+            timeout=120,
+        )
+    ctl.terminal_rollback(reason="ambiguous-patch")
+
+    patches = [event for event in boundaries.events if event[0] == "service-patch"]
+    assert len(patches) == 2
+    assert patches[-1][1] == {"traffic": snapshot["traffic"]}
+    assert boundaries.events.index(("lock-release", "17")) > max(
+        index for index, event in enumerate(boundaries.events) if event[0] == "service-poll"
+    )
+
+
+def test_ambiguous_patch_that_never_converges_retains_lock_and_requires_recovery():
+    snapshot = v2_service()
+    requested = api()._stage_traffic(snapshot, "candidate", 100, shadow_tag=None)
+    boundaries = AmbiguousPatchBoundaries([snapshot] * 20)
+    ctl = controller(boundaries, clock=boundaries.clock, rollback_seconds=3)
+    ctl.snapshot = snapshot
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.lock_generation = "17"
+    ctl.mutation_armed = True
+
+    with pytest.raises(TimeoutError):
+        ctl.transition_traffic(
+            requested,
+            expected_uid=snapshot["uid"],
+            expected_generation=snapshot["generation"],
+            expected_etag=snapshot["etag"],
+            timeout=120,
+        )
+    with pytest.raises(api().RollbackRecoveryRequired) as caught:
+        ctl.terminal_rollback(reason="ambiguous-patch")
+
+    assert caught.value.status == "recovery_required"
+    assert ctl.lock_generation == "17"
+    assert boundaries.lock_held is True
+    assert not any(event[0] == "lock-release" for event in boundaries.events)
+
+
+def test_explicit_operation_rejection_proves_patch_not_accepted_and_allows_safe_release():
+    snapshot = v2_service()
+    requested = api()._stage_traffic(snapshot, "candidate", 100, shadow_tag=None)
+    boundaries = V2Boundaries()
+    boundaries.state = snapshot
+    boundaries.operation_polls = [{
+        "name": "projects/project/locations/us-central1/operations/traffic-42",
+        "done": True,
+        "error": {"code": 9, "message": "precondition rejected"},
+    }]
+    ctl = controller(boundaries, clock=boundaries.clock)
+    ctl.snapshot = snapshot
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.lock_generation = "17"
+    ctl.mutation_armed = True
+
+    with pytest.raises(api().OperationRefusal):
+        ctl.transition_traffic(
+            requested,
+            expected_uid=snapshot["uid"],
+            expected_generation=snapshot["generation"],
+            expected_etag=snapshot["etag"],
+            timeout=120,
+        )
+    ctl.terminal_rollback(reason="operation-rejected")
+
+    assert len([event for event in boundaries.events if event[0] == "service-patch"]) == 1
+    assert ("lock-release", "17") in boundaries.events
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 4, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 13, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 14, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 1, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 42, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": True, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9.0, "message": "precondition rejected"}},
+        {"name": "", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/other", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}, "response": {}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}, "unknown": True},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected", "details": []}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": ""}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": " precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "permission denied"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": True}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": False,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": 1,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": "precondition rejected"},
+        None,
+    ],
+)
+def test_only_exact_code_9_pending_operation_proves_rejection(operation):
+    expected_name = "projects/project/locations/us-central1/operations/traffic-42"
+    assert api().RolloutController._operation_proves_rejection(
+        operation, expected_name
+    ) is False
+
+
+def test_exact_code_9_pending_operation_proves_rejection():
+    name = "projects/project/locations/us-central1/operations/traffic-42"
+    operation = {
+        "name": name,
+        "done": True,
+        "error": {"code": 9, "message": "precondition rejected"},
+    }
+
+    assert api().RolloutController._operation_proves_rejection(operation, name) is True
+
+
+class ExpiringPendingOperationBoundaries(V2Boundaries):
+    def service_get(self, *, timeout=None):
+        self.events.append(("service-get", timeout))
+        if len([event for event in self.events if event[0] == "service-get"]) > 1:
+            self.clock.advance(301)
+        return deepcopy(self.state)
+
+
+@pytest.mark.parametrize(
+    "terminal_operation",
+    [
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 4, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 13, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 14, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 99, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": True, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9.0, "message": "precondition rejected"}},
+        {"name": "", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/other", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}, "response": {}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected"}, "unknown": True},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "precondition rejected", "details": []}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": ""}},
+        {"name": "projects/project/locations/us-central1/operations/traffic-42", "done": True,
+         "error": {"code": 9, "message": "permission denied"}},
+    ],
+)
+def test_nondefinitive_operation_retains_pending_lock_and_requires_recovery(
+    terminal_operation,
+):
+    snapshot = v2_service()
+    requested = api()._stage_traffic(snapshot, "candidate", 100, shadow_tag=None)
+    boundaries = ExpiringPendingOperationBoundaries()
+    boundaries.state = snapshot
+    boundaries.operation_polls = [terminal_operation]
+    ctl = controller(boundaries, clock=boundaries.clock, rollback_seconds=300)
+    ctl.snapshot = snapshot
+    ctl.prior_identity = deepcopy(boundaries.health_identity)
+    ctl.lock_generation = "17"
+    ctl.mutation_armed = True
+
+    with pytest.raises(api().OperationRefusal):
+        ctl.transition_traffic(
+            requested,
+            expected_uid=snapshot["uid"],
+            expected_generation=snapshot["generation"],
+            expected_etag=snapshot["etag"],
+            timeout=120,
+        )
+
+    assert ctl.pending_transition is not None
+    with pytest.raises(api().RollbackRecoveryRequired) as caught:
+        ctl.terminal_rollback(reason="nondefinitive-operation")
+
+    assert caught.value.status == "recovery_required"
+    assert ctl.pending_transition is not None
+    assert ctl.lock_generation == "17"
+    assert boundaries.lock_held is True
+    assert not any(event[0] == "lock-release" for event in boundaries.events)
 
 
 def test_rollback_classification_rejects_explicit_null_reconciling():

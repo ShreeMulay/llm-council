@@ -127,6 +127,19 @@ The prospective top-level `run_rollout` controller SHALL own the complete rollou
 - **AND** only prior stream SHALL be skipped, attempts 3-6 SHALL be shadow sync/stream then final sync/stream, infrastructure retry SHALL be disabled, and attempt 7 MUST be impossible
 - **AND** fresh mode MUST remain count `0` and reject all resume fields
 
+#### Scenario: Resume the Oracle-approved incident after shadow probes
+
+- **GIVEN** source run `000754f3c963-1783979097` has exact successful started/completed attempt pairs 3 and 4, exact recovery generation `1783980208306954` with cumulative count 4, and retained candidate `llm-council-000754f3c963-9b63e747` at digest `sha256:b34c651fcbc29f8b6491bfd8ecdf0d7abe7b954d814a750c7ea3a7621dec10c2`
+- **WHEN** an operator selects exact mode `resume-after-shadow-v1`
+- **THEN** count MUST be exact integer `4`, the manifest MUST be under the fixed `resume-after-shadow-v1` prefix at an exact generation, and all other mode/count/prefix combinations MUST fail closed
+- **AND** the strict no-extra-fields manifest MUST separately bind current controller SHA, immutable target SHA `000754f3c963c002b25a35f0b13a7c01a69510f9`, source run, fixed namespace, exact prior manifest URI/generation, exact attempt 3/4 started/completed URI/generations and matching metadata, exact recovery, restored service UID/generation/etag/URL hash/traffic hash, continuation ID, and candidate revision/digest/target SHA
+- **AND** the exact prior manifest and its complete source chain MUST be revalidated using its target SHA while controller authorization remains the exact current Forgejo master SHA; controller and target SHA MAY differ
+- **AND** all manifest and evidence numeric values MUST have exact JSON integer type, all reads MUST be generation-pinned, and evidence plus current service MUST be read before and after CAS lock acquisition and rechecked around fresh prior health
+- **AND** under the newly acquired lock and before mutation, a generation-0 permanent claim keyed safely by manifest URI/generation MUST bind exact manifest, controller, target, continuation ID, and count 4; replay MUST refuse and the claim MUST never be deleted
+- **AND** historical recovery lock generation MUST grant no authority, pre-mutation failure MUST release only the newly acquired lock while retaining the claim, and post-mutation rollback MUST require exact owned state and restore the exact snapshot
+- **AND** this mode MUST NOT build or deploy, MUST validate the retained candidate Revision resource, and MUST transition directly from restored prior-100 to tagged candidate-100
+- **AND** candidate-only production sampling and strict target/image health MUST pass before attempt 5 final sync and attempt 6 final stream, no retry or attempt 7 is allowed, and final traffic MUST be untagged candidate-100 while preserving unrelated snapshot zero targets and tags
+
 #### Scenario: Normalize exact revision resources
 
 - **WHEN** deploy ownership compares latest-created, latest-ready, template, revision-resource, or expected revision values
@@ -184,7 +197,7 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **AND** UID MUST remain stable, generation MUST progress as expected, and each accepted transition MUST expose a fresh etag
 - **AND** requested canonical traffic and tags MUST equal accepted Service `traffic`, while URI-normalized `trafficStatuses` MUST equal the expected-status projection of that traffic
 - **AND** complete traffic targets MUST be strictly type-normalized and sorted by exact routing fields before comparison or hashing, without merging targets, dropping tags, or depending on API response order
-- **AND** expected-status projection MUST first apply that strict canonical normalization and then remove only targets whose normalized percent is zero and whose tag is absent; tagged zero-percent targets, every positive target, and all distinct entries MUST remain unchanged
+- **AND** expected-status projection MUST first apply that strict canonical normalization and then remove only an untagged zero-percent target whose revision also appears in a tagged target; unrelated untagged zero-percent targets, tagged zero-percent targets, every positive target, and all distinct entries MUST remain unchanged
 - **AND** projection MUST NOT hide unknown fields, malformed values, duplicates, invalid allocations, omitted positive targets, missing tagged targets, extra statuses, or wrong revision/tag/percent values; strict normalization or exact projected comparison MUST reject them
 - **AND** target identity MUST be the exact `(revision, tag)` pair, where an absent tag is distinct from every tagged target; identities and nonempty tags MUST each be unique and every complete allocation MUST sum to exactly 100%
 - **AND** each stage MUST transform the snapshot's sole positive prior target in place to the remaining percentage, preserving its exact revision, tag presence, and tag value rather than adding a second prior target

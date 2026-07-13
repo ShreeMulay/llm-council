@@ -21,13 +21,14 @@ ENTRY_POINTS = (
 )
 
 PRIOR_PAID_ATTEMPTS_INPUT = """      prior_paid_attempts:
-        description: Fixed cumulative paid attempts (0 fresh, 2 approved resume)
+        description: Fixed cumulative paid attempts (0 fresh, 2 prior resume, 4 shadow resume)
         required: true
         default: "0"
         type: choice
         options:
           - "0"
           - "2"
+          - "4"
 """
 
 
@@ -260,7 +261,7 @@ def test_deploy_entrypoint_forwards_exact_validated_prior_paid_attempts(tmp_path
     ) in commands.splitlines()
 
 
-@pytest.mark.parametrize("value", ["true", "-1", "1", "2", "6", "7", "01", "1.0", ""])
+@pytest.mark.parametrize("value", ["true", "-1", "1", "2", "4", "6", "7", "01", "1.0", ""])
 def test_deploy_entrypoint_rejects_invalid_prior_paid_attempts(tmp_path, value):
     sha = "d" * 40
     result, commands = _run_deploy_entrypoint(
@@ -295,12 +296,32 @@ def test_deploy_entrypoint_forwards_exact_resume_authorization(tmp_path):
     ) in commands
 
 
+def test_deploy_entrypoint_forwards_exact_shadow_resume_authorization(tmp_path):
+    sha = "d" * 40
+    uri = (
+        "gs://tke-phi-privacy-engine_cloudbuild/rollout-evidence/"
+        "resume-after-shadow-v1/incident.json"
+    )
+    result, commands = _run_deploy_entrypoint(
+        tmp_path, mode="local", head=sha, remote=sha,
+        prior_paid_attempts="4", rollout_mode="resume-after-shadow-v1",
+        manifest_uri=uri, manifest_generation="777",
+    )
+    assert result.returncode == 0
+    assert (
+        f"--mode resume-after-shadow-v1 --prior-paid-attempts 4 "
+        f"--resume-manifest-uri {uri} --resume-manifest-generation 777"
+    ) in commands
+
+
 @pytest.mark.parametrize(
     ("rollout_mode", "count", "uri", "generation"),
     [
         ("fresh", "0", "gs://bad/manifest.json", "1"),
         ("resume-after-prior-v1", "0", "gs://bad/manifest.json", "1"),
         ("resume-after-prior-v1", "2", "gs://bad/manifest.json", "1"),
+        ("resume-after-shadow-v1", "2", "gs://bad/manifest.json", "1"),
+        ("resume-after-shadow-v1", "4", "gs://bad/manifest.json", "1"),
         (
             "resume-after-prior-v1",
             "2",
@@ -425,6 +446,7 @@ def test_github_workflow_constrains_and_forwards_prior_paid_attempts():
     assert "ROLLOUT_MODE: ${{ inputs.rollout_mode }}" in deploy_step
     assert "ROLLOUT_RESUME_MANIFEST_URI: ${{ inputs.resume_manifest_uri }}" in deploy_step
     assert "ROLLOUT_RESUME_MANIFEST_GENERATION: ${{ inputs.resume_manifest_generation }}" in deploy_step
+    assert workflow.count("          - resume-after-shadow-v1\n") == 1
 
 
 @pytest.mark.parametrize(
