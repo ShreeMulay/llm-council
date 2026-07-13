@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import math
+import re
+import socket
 import statistics
 import subprocess
 import sys
@@ -116,12 +119,105 @@ class SmokeVerificationError(ValueError):
     """Raised for a council smoke contract failure."""
 
 
-def load_secret(project: str, secret: str) -> str:
+SMOKE_SEMANTIC_CLASSIFICATIONS = frozenset({
+    "objective",
+    "instruction",
+    "factual",
+    "evaluator_format",
+    "schema",
+    "content",
+    "fallback",
+    "route",
+    "policy",
+    "usage",
+    "pricing",
+    "identity",
+    "absolute_slo",
+    "semantic_unknown",
+})
+
+
+class SmokeSemanticError(SmokeVerificationError):
+    """Content-free semantic category safe for immutable rollout evidence."""
+
+    def __init__(self, classification: str):
+        if classification not in SMOKE_SEMANTIC_CLASSIFICATIONS:
+            raise ValueError("invalid smoke semantic classification")
+        self.classification = classification
+        safe_descriptions = {
+            "instruction": "quality instruction failure",
+            "factual": "quality factual failure",
+            "evaluator_format": "quality evaluator format failure",
+            "absolute_slo": "absolute latency token cost SLO failure",
+        }
+        super().__init__(safe_descriptions.get(classification, classification))
+
+
+def classify_semantic_error(exc: SmokeVerificationError) -> str:
+    """Exhaustively reduce internal static verifier errors to bounded evidence."""
+    if isinstance(exc, SmokeSemanticError):
+        return exc.classification
+
+    message = str(exc)
+    rules = (
+        ("instruction", ("instruction", "DEPLOYMENT_CHECK_OK")),
+        ("factual", ("factual",)),
+        ("evaluator_format", ("evaluator format", "evaluator_format")),
+        ("objective", ("objective", "quality ceiling", "quality regressed")),
+        ("usage", ("usage", "token count")),
+        ("pricing", ("price", "pricing", "cost is nonfinite")),
+        ("fallback", ("fallback", "explicit error", "explicit failure", "unsuccessful result")),
+        ("policy", ("policy", "gates cannot be weakened", "flags conflict")),
+        ("route", ("route", "provenance")),
+        ("identity", ("model is missing", "model/observed", "chairman", "Stage1", "Stage2", "Stage3")),
+        ("absolute_slo", ("latency", "error rate", "estimated cost", "cost exceeded", "below 99%")),
+        ("content", ("content", "complete event", "result content")),
+        (
+            "schema",
+            (
+                "structure", "invalid JSON", "must be an object", "malformed", "UTF-8",
+                "framing", "unexpected event", "event limit", "byte limit", "missing required metrics",
+                "samples must be", "stream smoke samples", "denominator is unavailable",
+                "requires distinct exact URLs", "valid only with", "require --paired",
+            ),
+        ),
+    )
+    for classification, fragments in rules:
+        if any(fragment.lower() in message.lower() for fragment in fragments):
+            return classification
+    return "semantic_unknown"
+
+
+class SmokeInfrastructureError(SmokeVerificationError):
+    """Content-free typed retryable failure raised by real smoke adapters."""
+
+    def __init__(self, classification: str):
+        if classification not in {"http_429", "http_503", "timeout", "connection_reset"}:
+            raise ValueError("invalid smoke infrastructure classification")
+        self.classification = classification
+        super().__init__(classification)
+
+
+def _transport_classification(exc: BaseException) -> str | None:
+    reason = exc.reason if isinstance(exc, urllib.error.URLError) else exc
+    if isinstance(reason, (TimeoutError, socket.timeout)):
+        return "timeout"
+    if isinstance(reason, ConnectionResetError) or getattr(reason, "errno", None) in {
+        errno.ECONNRESET,
+        errno.ECONNABORTED,
+        errno.EPIPE,
+    }:
+        return "connection_reset"
+    return None
+
+
+def load_secret(project: str, secret: str, timeout: float | None = None) -> str:
     result = subprocess.run(
         ["gcloud", "secrets", "versions", "access", "latest", "--secret", secret, "--project", project],
         check=True,
         capture_output=True,
         text=True,
+        timeout=timeout,
     )
     key = result.stdout.strip()
     if not key:
@@ -156,9 +252,17 @@ def post_council(url: str, key: str, timeout: float) -> tuple[dict[str, Any], fl
         with urllib.request.urlopen(request, timeout=timeout) as response:
             status, raw = response.status, response.read()
     except urllib.error.HTTPError as exc:
+        if exc.code in {429, 503}:
+            raise SmokeInfrastructureError(f"http_{exc.code}") from None
         raise SmokeVerificationError(f"council endpoint returned HTTP {exc.code}") from exc
     except urllib.error.URLError as exc:
+        if classification := _transport_classification(exc):
+            raise SmokeInfrastructureError(classification) from None
         raise SmokeVerificationError("council endpoint request failed") from exc
+    except (TimeoutError, ConnectionResetError) as exc:
+        raise SmokeInfrastructureError(
+            _transport_classification(exc) or "connection_reset"
+        ) from None
     elapsed = time.monotonic() - started
     if status != 200:
         raise SmokeVerificationError(f"council endpoint returned HTTP {status}")
@@ -218,6 +322,8 @@ def parse_sse_complete(lines: Any) -> dict[str, Any]:
             data = line[5:]
             buffered_data.append(data[1:] if data.startswith(" ") else data)
     except (TimeoutError, OSError) as exc:
+        if classification := _transport_classification(exc):
+            raise SmokeInfrastructureError(classification) from None
         raise SmokeVerificationError("council stream timed out or was truncated") from exc
 
     raise SmokeVerificationError("council stream ended without a complete event")
@@ -237,8 +343,12 @@ def post_council_stream(url: str, key: str, timeout: float) -> tuple[dict[str, A
                 raise SmokeVerificationError(f"council stream endpoint returned HTTP {response.status}")
             payload = parse_sse_complete(iter(lambda: response.readline(MAX_SSE_BYTES + 1), b""))
     except urllib.error.HTTPError as exc:
+        if exc.code in {429, 503}:
+            raise SmokeInfrastructureError(f"http_{exc.code}") from None
         raise SmokeVerificationError(f"council stream endpoint returned HTTP {exc.code}") from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        if classification := _transport_classification(exc):
+            raise SmokeInfrastructureError(classification) from None
         raise SmokeVerificationError("council stream endpoint request failed") from exc
     return payload, time.monotonic() - started
 
@@ -336,7 +446,7 @@ def _sample_metrics(
     chairman_response = payload["stage3"].get("response")
     chairman_text = " ".join(chairman_response.split()) if isinstance(chairman_response, str) else ""
     objective_correct = chairman_text == EXPECTED_CHAIRMAN_OUTPUT
-    factual_correct = objective_correct
+    factual_correct = re.search(r"2\s*\+\s*2\s*=\s*(?!4(?:\D|$))\S+", chairman_text) is None
     evaluator_format = all(
         bool(item.get("parsed_ranking"))
         or (legacy_baseline and bool(item.get("ranking")))
@@ -552,17 +662,21 @@ def verify_payload(
         payload, elapsed, legacy_baseline=legacy_baseline, max_tokens=max_tokens
     )
     if metrics["route_success"] is not None and metrics["route_success"] < 0.99:
-        raise SmokeVerificationError("fallback or observed route success fell below 99%")
+        raise SmokeSemanticError("route")
     if metrics["error_rate"] > max_error_rate:
-        raise SmokeVerificationError("council error rate exceeded ceiling")
+        raise SmokeSemanticError("absolute_slo")
     if max(metrics["elapsed_latency"], metrics["reported_latency"]) > max_latency:
-        raise SmokeVerificationError("council latency exceeded ceiling")
+        raise SmokeSemanticError("absolute_slo")
     if metrics["token_count"] is not None and metrics["token_count"] > max_tokens:
-        raise SmokeVerificationError("council token count exceeded ceiling")
+        raise SmokeSemanticError("absolute_slo")
     if metrics["conservative_cost_usd"] is not None and metrics["conservative_cost_usd"] > max_cost:
-        raise SmokeVerificationError("council estimated cost exceeded ceiling")
-    if metrics["factual_error"] or not metrics["objective_correct"] or not metrics["evaluator_format_success"]:
-        raise SmokeVerificationError("council objective/factual/evaluator quality ceiling failed")
+        raise SmokeSemanticError("absolute_slo")
+    if metrics["factual_error"]:
+        raise SmokeSemanticError("factual")
+    if not metrics["objective_correct"]:
+        raise SmokeSemanticError("instruction")
+    if not metrics["evaluator_format_success"]:
+        raise SmokeSemanticError("evaluator_format")
     return proof
 
 

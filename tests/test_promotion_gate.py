@@ -315,24 +315,27 @@ def test_paired_warmup_or_candidate_hard_failure_stops_without_retry():
 
 
 @pytest.mark.parametrize(
-    ("failure", "mutation"),
+    ("failure", "classification", "mutation"),
     [
         (
             "fixed instruction/objective mismatch",
+            "instruction",
             lambda payload: payload["stage3"].update(response="WRONG_FIXED_OUTPUT"),
         ),
         (
             "fixed factual error",
+            "factual",
             lambda payload: payload["stage3"].update(response="2 + 2 = 5"),
         ),
         (
             "fixed evaluator-format failure",
+            "evaluator_format",
             lambda payload: payload["stage2"][0].update(parsed_ranking=[]),
         ),
     ],
 )
 def test_candidate_fixed_quality_failures_hard_fail_despite_passing_benchmark(
-    failure, mutation
+    failure, classification, mutation
 ):
     calls = []
     benchmark_verified = []
@@ -344,7 +347,7 @@ def test_candidate_fixed_quality_failures_hard_fail_despite_passing_benchmark(
             mutation(payload)
         return payload, 10
 
-    with pytest.raises(SmokeVerificationError, match="objective/factual/evaluator"):
+    with pytest.raises(SmokeVerificationError) as caught:
         run_paired_canary(
             "https://baseline.example",
             "https://candidate.example",
@@ -356,6 +359,8 @@ def test_candidate_fixed_quality_failures_hard_fail_despite_passing_benchmark(
             stream_poster=poster,
             promotion_verifier=lambda: benchmark_verified.append(True),
         )
+
+    assert caught.value.classification == classification
 
     assert failure
     assert benchmark_verified == [True]

@@ -71,11 +71,10 @@ def verify_service_routing(
             observed["candidate"] += 1
         else:
             raise RoutingVerificationError("service URL reached an unknown health identity")
-    if percent == 100:
-        if set(observed) != {"candidate"}:
-            raise RoutingVerificationError("100% stage did not route only to candidate")
-    elif set(observed) != {"prior", "candidate"}:
-        raise RoutingVerificationError("staged service URL did not observe both prior and candidate identities")
+    if percent == 100 and set(observed) != {"candidate"}:
+        raise RoutingVerificationError("100% stage did not route only to candidate")
+    # Partial-stage counts are diagnostic only. Cloud Run control-plane state,
+    # not a small health sample, proves the configured traffic percentage.
     return {"sample_count": samples, "observed_identity_counts": dict(sorted(observed.items()))}
 
 

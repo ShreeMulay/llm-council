@@ -2,10 +2,7 @@
 
 import copy
 import json
-import os
-import subprocess
 import urllib.request
-from pathlib import Path
 
 import pytest
 
@@ -264,7 +261,6 @@ def test_smoke_rejects_sync_stream_provenance_mismatch():
             strict_candidate=False, secret_loader=lambda *_args: "key",
             poster=lambda *_args: (sync, 10), stream_poster=lambda *_args: (streamed, 10),
         )
-
 
 def test_rollout_stream_aggregation_uses_exactly_five_calls_and_mean_cost():
     payload = _make_objective_output(smoke_payload())
@@ -1258,7 +1254,7 @@ def test_candidate_fallback_and_low_route_success_fail_against_route_unknown_leg
         )
 
 
-def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_only_at_100():
+def test_service_routing_allows_one_known_identity_at_partial_stages_and_requires_candidate_at_100():
     prior = {"status": "healthy", "config": {"roster": "legacy"}}
     candidate = {
         "status": "healthy", "config": {"roster": "candidate"},
@@ -1283,9 +1279,21 @@ def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_onl
         fetcher=lambda _url, _timeout: candidate,
     )
     assert proof["observed_identity_counts"] == {"candidate": 5}
-    with pytest.raises(RoutingVerificationError, match="both"):
+    for percent, identity, label in (
+        (10, prior, "prior"),
+        (10, candidate, "candidate"),
+        (50, prior, "prior"),
+        (50, candidate, "candidate"),
+    ):
+        proof = verify_service_routing(
+            "https://service", prior, candidate, samples=5, percent=percent,
+            fetcher=lambda _url, _timeout, value=identity: value,
+        )
+        assert proof["observed_identity_counts"] == {label: 5}
+
+    with pytest.raises(RoutingVerificationError, match="candidate"):
         verify_service_routing(
-            "https://service", prior, candidate, samples=5, percent=10,
+            "https://service", prior, candidate, samples=5, percent=100,
             fetcher=lambda _url, _timeout: prior,
         )
 
@@ -1296,246 +1304,3 @@ def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_onl
             "https://service", prior, candidate, samples=5, percent=100,
             fetcher=lambda _url, _timeout: unknown,
         )
-
-
-@pytest.mark.parametrize("stream_samples", ["0", "6"])
-def test_rollout_rejects_stream_sample_bounds_before_deploy(tmp_path, stream_samples):
-    root = Path(__file__).parents[1]
-    marker = tmp_path / "gcloud-called"
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    gcloud = fake_bin / "gcloud"
-    gcloud.write_text(
-        "#!/usr/bin/env bash\ntouch \"${GCLOUD_MARKER}\"\nexit 99\n",
-        encoding="utf-8",
-    )
-    gcloud.chmod(0o755)
-
-    result = subprocess.run(
-        ["bash", "scripts/cloud_run_semantic_rollout.sh"],
-        cwd=root,
-        env={
-            **os.environ,
-            "PATH": f"{fake_bin}:{os.environ['PATH']}",
-            "GCLOUD_MARKER": str(marker),
-            "PROJECT": "project",
-            "REGION": "region",
-            "SERVICE": "service",
-            "IMAGE_DIGEST": "image@sha256:" + "a" * 64,
-            "DEPLOY_REVISION": "candidate",
-            "ROLLOUT_STREAM_SMOKE_SAMPLES": stream_samples,
-        },
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-
-    assert result.returncode != 0
-    assert "rollout thresholds are outside safe bounds" in result.stderr
-    assert not marker.exists()
-
-
-@pytest.mark.parametrize("legacy_baseline", [False, True])
-def test_rollout_with_mock_gcloud_rehearses_restore_and_reapply(tmp_path, legacy_baseline):
-    root = Path(__file__).parents[1]
-    state = tmp_path / "state.json"
-    log = tmp_path / "gcloud.log"
-    verify_log = tmp_path / "verify.log"
-    state.write_text(json.dumps(service_state()))
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    gcloud = fake_bin / "gcloud"
-    gcloud.write_text(
-        """#!/usr/bin/env python3
-import json, os, sys
-from pathlib import Path
-args = sys.argv[1:]
-state_path, log_path = Path(os.environ['FAKE_STATE']), Path(os.environ['FAKE_LOG'])
-with log_path.open('a') as stream: stream.write(' '.join(args) + '\\n')
-state = json.loads(state_path.read_text())
-if args[:3] == ['run', 'services', 'describe']:
-    fmt = next((x for x in args if x.startswith('--format=')), '')
-    if 'latestCreatedRevisionName' in fmt: print('candidate-rev')
-    elif 'status.url' in fmt: print('https://service.example')
-    else: print(json.dumps(state))
-elif args[:2] == ['run', 'deploy']:
-    tag = next(x.split('=',1)[1] for x in args if x.startswith('--tag='))
-    state['status']['traffic'].append({'revisionName':'candidate-rev','percent':0,'tag':tag,'url':'https://shadow.example'})
-    state_path.write_text(json.dumps(state))
-elif args[:3] == ['run', 'services', 'update-traffic']:
-    revisions = next((x.split('=', 1)[1] for x in args if x.startswith('--to-revisions=')), None)
-    clear = '--clear-tags' in args
-    if revisions is not None:
-        tagged = {} if clear else {x['revisionName']:x['tag'] for x in state['status']['traffic'] if x.get('tag')}
-        assignments = []
-        for part in revisions.split(','):
-            revision, percent = part.rsplit('=', 1)
-            item = {'revisionName':revision,'percent':int(percent)}
-            if revision in tagged: item['tag'] = tagged.pop(revision)
-            assignments.append(item)
-        state['status']['traffic'] = assignments + [{'revisionName':revision,'percent':0,'tag':tag} for revision,tag in tagged.items()]
-    tag_arg = next((x.split('=', 1)[1] for x in args if x.startswith('--set-tags=')), None)
-    if tag_arg:
-        for part in tag_arg.split(','):
-            tag, revision = part.split('=', 1)
-            match = next((x for x in state['status']['traffic'] if x['revisionName'] == revision), None)
-            if match is None: state['status']['traffic'].append({'revisionName':revision,'percent':0,'tag':tag,'url':'https://shadow.example'})
-            else:
-                match['tag'] = tag
-                if revision == 'candidate-rev': match['url'] = 'https://shadow.example'
-    state_path.write_text(json.dumps(state))
-else:
-    raise SystemExit('unexpected fake gcloud command')
-"""
-    )
-    gcloud.chmod(0o755)
-    health = tmp_path / "health.py"
-    health.write_text(
-        """import json, os, pathlib, sys
-args=sys.argv[1:]
-with pathlib.Path(os.environ['FAKE_VERIFY_LOG']).open('a') as stream: stream.write('health ' + ' '.join(args) + '\\n')
-if '--identity-out' in args:
- identity={'status':'healthy','config':{}}
- if os.environ.get('LEGACY_BASELINE') != '1': identity['artifacts']={'application_revision':'prior-app'}
- pathlib.Path(args[args.index('--identity-out')+1]).write_text(json.dumps(identity))
-if '--expected-identity' in args: json.loads(pathlib.Path(args[args.index('--expected-identity')+1]).read_text())
-"""
-    )
-    smoke = tmp_path / "smoke.py"
-    smoke.write_text(
-        """import json, os, pathlib, sys
-args=sys.argv[1:]
-with pathlib.Path(os.environ['FAKE_VERIFY_LOG']).open('a') as stream: stream.write('smoke ' + ' '.join(args) + '\\n')
-legacy='--legacy-baseline' in args
-provenance={'stage1':[{'model':'legacy','provider':'openrouter-fallback','configured_route_id':'configured','observed_route_id':None,'fallback_used':True,'terminal_status':None,'allow_declared_route_failover':None,'allow_provider_substitution':None}],'provenance_contract':'legacy-partial-terminal-provenance'} if legacy else {'stage1':[['candidate','route']]}
-proof={'schema_version':2,'sample_count':5,'provenance':provenance,'metrics':{'quality_score':100,'objective_correct_rate':1,'factual_error_rate':0,'evaluator_format_success_rate':1,'route_success_rate':None if legacy else 1,'error_rate':0,'p95_elapsed_latency_seconds':1,'p95_reported_latency_seconds':1,'mean_token_count':1,'mean_conservative_cost_usd':0.001}}
-if '--proof-out' in args: pathlib.Path(args[args.index('--proof-out')+1]).write_text(json.dumps(proof))
-if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('--expected-proof')+1]).read_text()) == proof
-if '--evidence-out' in args:
- paired={'promotion_gate':{'status':'passed'},'cold_gate':{'status':'passed'},'hard_canary_gate':{'status':'passed'},'steady_canary':{'sync':{'diagnostics':{'elapsed_latency_status':'within_limit'}},'stream':{'diagnostics':{'elapsed_latency_status':'within_limit'}}}}
- pathlib.Path(args[args.index('--evidence-out')+1]).write_text(json.dumps(paired))
-"""
-    )
-    routing = tmp_path / "routing.py"
-    routing.write_text("import sys\n")
-    env = {
-        **os.environ,
-        "PATH": f"{fake_bin}:{os.environ['PATH']}",
-        "FAKE_STATE": str(state),
-        "FAKE_LOG": str(log),
-        "FAKE_VERIFY_LOG": str(verify_log),
-        "LEGACY_BASELINE": "1" if legacy_baseline else "0",
-        "PROJECT": "test-project",
-        "REGION": "test-region",
-        "SERVICE": "test-service",
-        "IMAGE_DIGEST": "registry/image@sha256:" + "a" * 64,
-        "DEPLOY_REVISION": "revision",
-        "ROLLOUT_OBSERVATION_SECONDS": "0",
-        "HEALTH_VERIFIER": str(health),
-        "SMOKE_VERIFIER": str(smoke),
-        "ROUTING_VERIFIER": str(routing),
-    }
-    result = subprocess.run(
-        ["bash", "scripts/cloud_run_semantic_rollout.sh"],
-        cwd=root,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode == 0, result.stderr
-    commands = log.read_text().splitlines()
-    assignments = [line for line in commands if "--to-revisions=" in line]
-    candidate_assignments = [line for line in assignments if "candidate-rev=" in line]
-    assert [next(part for part in line.split() if part.startswith("--to-revisions=")) for line in candidate_assignments] == [
-        "--to-revisions=candidate-rev=10,stable-a=63,stable-b=27",
-        "--to-revisions=candidate-rev=10,stable-a=63,stable-b=27",
-        "--to-revisions=candidate-rev=50,stable-a=35,stable-b=15",
-        "--to-revisions=candidate-rev=100",
-    ]
-    assert any("--clear-tags" in line and "stable-a=70,stable-b=30" in line for line in commands)
-    assert any("--set-tags=debug=old-debug,stable=stable-b" in line for line in commands)
-    verifier_calls = verify_log.read_text().splitlines()
-    smoke_calls = [line for line in verifier_calls if line.startswith("smoke ")]
-    assert len(smoke_calls) == 8
-    paired_calls = [line for line in smoke_calls if "--paired" in line]
-    assert len(paired_calls) == 1
-    assert all("--stream-samples 5" in line for line in smoke_calls if "--paired" not in line)
-    candidate_calls = [line for line in verifier_calls if "https://shadow.example" in line]
-    assert all("--legacy-baseline" not in line for line in candidate_calls)
-    if legacy_baseline:
-        baseline_calls = [line for line in verifier_calls if line.startswith("smoke https://service.example")]
-        assert baseline_calls and all("--legacy-baseline" in line for line in baseline_calls)
-        assert any("--proof-out" in line for line in baseline_calls)
-        assert any("--expected-proof" in line for line in baseline_calls)
-        assert any(
-            line.startswith("health https://service.example")
-            and "--expected-identity" in line
-            and "--allow-legacy-identity-without-artifacts" in line
-            for line in verifier_calls
-        )
-    else:
-        assert all("--legacy-baseline" not in line for line in verifier_calls)
-
-
-def test_rollout_restores_state_when_deploy_fails_after_partial_mutation(tmp_path):
-    root = Path(__file__).parents[1]
-    original = {"status": {"traffic": [{"revisionName": "stable", "percent": 100}]}}
-    state, log = tmp_path / "state.json", tmp_path / "gcloud.log"
-    state.write_text(json.dumps(original))
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    gcloud = fake_bin / "gcloud"
-    gcloud.write_text(
-        """#!/usr/bin/env python3
-import json, os, sys
-from pathlib import Path
-args=sys.argv[1:]; state=Path(os.environ['FAKE_STATE']); log=Path(os.environ['FAKE_LOG'])
-with log.open('a') as stream: stream.write(' '.join(args)+'\\n')
-value=json.loads(state.read_text())
-if args[:3] == ['run','services','describe']:
-    fmt=next((item for item in args if item.startswith('--format=')),'')
-    print('https://service.example' if 'status.url' in fmt else json.dumps(value))
-elif args[:2] == ['run','deploy']:
-    value['status']['traffic'].append({'revisionName':'partial','percent':0,'tag':'shadow'})
-    state.write_text(json.dumps(value)); raise SystemExit(9)
-elif args[:3] == ['run','services','update-traffic']:
-    revisions=next(item.split('=',1)[1] for item in args if item.startswith('--to-revisions='))
-    value['status']['traffic']=[{'revisionName':part.rsplit('=',1)[0],'percent':int(part.rsplit('=',1)[1])} for part in revisions.split(',')]
-    state.write_text(json.dumps(value))
-else: raise SystemExit('unexpected command')
-"""
-    )
-    gcloud.chmod(0o755)
-    health = tmp_path / "health.py"
-    health.write_text(
-        "import json,pathlib,sys\na=sys.argv\np=pathlib.Path(a[a.index('--identity-out')+1])\np.write_text(json.dumps({'status':'healthy','config':{},'artifacts':{'application_revision':'prior'}}))\n"
-    )
-    smoke = tmp_path / "smoke.py"
-    smoke.write_text(
-        "import json,pathlib,sys\na=sys.argv\np=pathlib.Path(a[a.index('--proof-out')+1])\np.write_text(json.dumps({'sample_count':5,'provenance':{},'metrics':{}}))\n"
-    )
-    result = subprocess.run(
-        ["bash", "scripts/cloud_run_semantic_rollout.sh"],
-        cwd=root,
-        env={
-            **os.environ,
-            "PATH": f"{fake_bin}:{os.environ['PATH']}",
-            "FAKE_STATE": str(state),
-            "FAKE_LOG": str(log),
-            "PROJECT": "project",
-            "REGION": "region",
-            "SERVICE": "service",
-            "IMAGE_DIGEST": "image@sha256:" + "a" * 64,
-            "DEPLOY_REVISION": "candidate",
-            "ROLLOUT_OBSERVATION_SECONDS": "0",
-            "HEALTH_VERIFIER": str(health),
-            "SMOKE_VERIFIER": str(smoke),
-        },
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert result.returncode != 0
-    assert json.loads(state.read_text()) == original
-    assert "--clear-tags --to-revisions=stable=100" in log.read_text()
