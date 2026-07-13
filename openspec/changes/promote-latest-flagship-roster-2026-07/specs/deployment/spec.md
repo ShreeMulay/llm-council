@@ -186,7 +186,9 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **AND** complete traffic targets MUST be strictly type-normalized and sorted by exact routing fields before comparison or hashing, without merging targets, dropping tags, or depending on API response order
 - **AND** target identity MUST be the exact `(revision, tag)` pair, where an absent tag is distinct from every tagged target; identities and nonempty tags MUST each be unique and every complete allocation MUST sum to exactly 100%
 - **AND** each stage MUST transform the snapshot's sole positive prior target in place to the remaining percentage, preserving its exact revision, tag presence, and tag value rather than adding a second prior target
+- **AND** immediately after `gcloud run deploy --no-traffic`, Service `traffic` and URI-normalized `trafficStatuses` MUST equal the exact canonical snapshot with no candidate target
 - **AND** a tagged stage MUST preserve both the automatic untagged candidate target at 0% and a separate tagged candidate target at the requested percentage; final untagged 100% MUST contain exactly one candidate target at 100%
+- **AND** deploy ownership MUST reject any candidate traffic target before the tagged PATCH, while tagged-stage convergence MUST reject either candidate target being absent
 - **AND** a generated shadow tag colliding with any snapshot tag MUST fail before build, deploy, traffic PATCH, or paid request
 - **AND** planned and terminal restoration MUST restore the exact snapshot and thereby remove both rollout-owned candidate targets
 - **AND** any malformed or error long-running operation, stale or unexpected UID, generation, observed generation, reconciling state, unchanged etag, ownership, canonical traffic, canonical tag, or `trafficStatuses` transition MUST independently fail closed
@@ -310,7 +312,7 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 - **AND** it MUST require exact resource name; exactly one `Ready=CONDITION_SUCCEEDED`; exactly one `ContainerReady=CONDITION_SUCCEEDED`; exactly one `Active` with state `CONDITION_FAILED`, severity `INFO`, and revision reason `RETIRED`; no other terminal failure; exact immutable image digest; and exact approved-revision and image-digest environment markers
 - **AND** the condition-type allowlist MUST be exactly mandatory `Ready`, `ContainerReady`, and `Active`, plus optional `ResourcesAvailable` and `MinInstancesProvisioned`; every unexpected condition type MUST fail closed regardless of state
 - **AND** only `ResourcesAvailable` and `MinInstancesProvisioned` MAY be omitted, each MUST match its exact retired shape when present, every condition type MUST be unique, every present condition MUST have a known state, and any missing or unknown state or contradictory failed terminal or relevant condition MUST fail closed
-- **AND** the Service MUST retain the captured UID and exact snapshot traffic/statuses, advance exactly one generation with a fresh etag, converge observed generation with reconciliation false, name the candidate as latest-created and template revision, and expose successful terminal Ready and ConfigurationsReady conditions with revision reason `RETIRED`
+- **AND** the Service MUST retain the captured UID and exact canonical snapshot traffic/statuses with no candidate target, advance exactly one generation with a fresh etag, converge observed generation with reconciliation false, name the candidate as latest-created and template revision, and expose successful terminal Ready and ConfigurationsReady conditions with revision reason `RETIRED`
 - **AND** that exact state MAY be treated as rollout-owned although `latestReadyRevision` remains prior
 - **AND** any mismatched latest-created revision, template revision, image, environment marker, condition, traffic, status, revision resource, UID, generation, or etag MUST fail closed
 - **AND** progression MUST use this combined Service ownership and Revision readiness proof rather than require Service `latestReadyRevision` to equal candidate
@@ -321,6 +323,7 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 - **WHEN** rollback proof runs
 - **THEN** it MUST prove stable UID, converged generation, reconciliation false, exact prior health, and the exact owned lock generation
 - **AND** it MUST NOT issue a traffic PATCH or require a synthetic post-PATCH generation/etag progression
+- **AND** the exact post-deploy snapshot state MUST use this no-PATCH path even though the candidate revision, template, generation, and etag prove the deployment occurred
 - **AND** only after those proofs pass it MUST disarm mutation and generation-conditionally release the owned lock
 - **AND** traffic or status drift MUST retain the exact etag-conditioned PATCH, LRO, convergence, health, and lock-proof rollback path
 - **AND** both this no-PATCH proof and the PATCH rollback proof MUST use the exact service base URL captured during initial prior state capture, never a placeholder or rediscovered URL
