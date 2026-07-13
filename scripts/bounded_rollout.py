@@ -244,17 +244,25 @@ def _normalized_reconciling(state: Any) -> bool:
 
 
 def _normalized_traffic(items: Any) -> list[dict[str, Any]]:
+    """Normalize and validate exact Cloud Run revision+tag target semantics."""
     if not isinstance(items, list) or not items:
         raise ValueError
     normalized = []
+    target_identities: set[tuple[str, str | None]] = set()
+    tags: set[str] = set()
     for raw in items:
         if not isinstance(raw, dict):
             raise ValueError
         allowed = {"type", "revision", "percent", "tag", "uri"}
         if not set(raw) <= allowed:
             raise ValueError
+        target_type = raw.get("type")
         revision = raw.get("revision")
         percent = raw.get("percent", 0)
+        if target_type is not None and (
+            not isinstance(target_type, str) or not target_type
+        ):
+            raise ValueError
         if not isinstance(revision, str) or not revision:
             raise ValueError
         if isinstance(percent, bool) or not isinstance(percent, int) or not 0 <= percent <= 100:
@@ -263,8 +271,36 @@ def _normalized_traffic(items: Any) -> list[dict[str, Any]]:
         item["percent"] = percent
         if "tag" in item and (not isinstance(item["tag"], str) or not item["tag"]):
             raise ValueError
+        tag = item.get("tag")
+        identity = (revision, tag)
+        if identity in target_identities or (tag is not None and tag in tags):
+            raise ValueError
+        target_identities.add(identity)
+        if tag is not None:
+            tags.add(tag)
         normalized.append(item)
-    return normalized
+    if sum(item["percent"] for item in normalized) != 100:
+        raise ValueError
+    return sorted(
+        normalized,
+        key=lambda item: (
+            item.get("type", ""),
+            item["revision"],
+            item["percent"],
+            "tag" in item,
+            item.get("tag", ""),
+        ),
+    )
+
+
+def _traffic_equal(left: Any, right: Any) -> bool:
+    """Compare complete traffic targets without depending on API response order."""
+    return _normalized_traffic(left) == _normalized_traffic(right)
+
+
+def _traffic_sha256(items: Any) -> str:
+    """Hash complete traffic semantics in canonical order."""
+    return _canonical_sha256(_normalized_traffic(items))
 
 
 def validate_initial_service(state: Any) -> dict[str, Any]:
@@ -281,7 +317,7 @@ def validate_initial_service(state: Any) -> dict[str, Any]:
             raise ValueError
         traffic = _normalized_traffic(state.get("traffic"))
         statuses = _normalized_traffic(state.get("trafficStatuses"))
-        if traffic != statuses:
+        if not _traffic_equal(traffic, statuses):
             raise ValueError
         resolved = [item for item in traffic if item["percent"] > 0]
         if len(resolved) != 1 or resolved[0]["percent"] != 100:
@@ -665,7 +701,7 @@ class RolloutController:
                 raise ValueError
             if hashlib.sha256(uri.encode()).hexdigest() != manifest["service_url_sha256"]:
                 raise ValueError
-            if _canonical_sha256(traffic) != manifest["traffic_sha256"]:
+            if _traffic_sha256(traffic) != manifest["traffic_sha256"]:
                 raise ValueError
         except (KeyError, TypeError, ValueError, InitialStateRefusal, ConcurrencyRefusal) as exc:
             raise ResumeRefusal("resume service preflight refused") from exc
@@ -728,7 +764,8 @@ class RolloutController:
                 )
                 expected_recovery_uri = f"{EVIDENCE_ROOT}/{source_id}/recovery.json"
                 expected_attestation_uri = (
-                    f"{EVIDENCE_ROOT}/{source_id}/source-attestation.json"
+                    f"{EVIDENCE_ROOT}/{source_id}/"
+                    f"source-attestation-{self.approved_sha}.json"
                 )
                 if (
                     source["checkpoint_uri"] != expected_checkpoint_uri
@@ -859,7 +896,7 @@ class RolloutController:
             first_manifest != second_manifest
             or first_prior != second_prior
             or any(first_state.get(key) != second_state.get(key) for key in stable_fields)
-            or _normalized_traffic(first_state["traffic"]) != _normalized_traffic(second_state["traffic"])
+            or not _traffic_equal(first_state["traffic"], second_state["traffic"])
         ):
             raise ResumeRefusal("resume evidence or service changed during lock acquisition")
         self.resume_manifest = deepcopy(second_manifest)
@@ -876,7 +913,7 @@ class RolloutController:
         final_validated, final_prior = self._validate_resume_service(final_state, second_manifest)
         if final_prior != second_prior or any(
             second_state.get(key) != final_validated.get(key) for key in stable_fields
-        ) or _normalized_traffic(second_state["traffic"]) != _normalized_traffic(final_validated["traffic"]):
+        ) or not _traffic_equal(second_state["traffic"], final_validated["traffic"]):
             raise ResumeRefusal("production changed during resume health preflight")
         self.snapshot = deepcopy(final_validated)
         return deepcopy(final_validated), final_prior
@@ -1146,7 +1183,7 @@ class RolloutController:
             if generation != old_generation + 1 or state.get("etag") == old_etag:
                 raise ValueError
             traffic = _normalized_traffic(state.get("traffic"))
-            if traffic != _normalized_traffic(requested):
+            if not _traffic_equal(traffic, requested):
                 raise ValueError
             reconciling = _normalized_reconciling(state)
             converged = observed == generation and not reconciling
@@ -1159,7 +1196,7 @@ class RolloutController:
                     raise ValueError
                 return False
             statuses = _normalized_traffic(state.get("trafficStatuses"))
-            if statuses != traffic:
+            if not _traffic_equal(statuses, traffic):
                 raise ValueError
             return True
         except (TypeError, ValueError) as exc:
@@ -1301,10 +1338,10 @@ class RolloutController:
                 and _integer(current.get("observedGeneration"))
                 == _integer(current.get("generation"))
                 and not _normalized_reconciling(current)
-                and _normalized_traffic(current.get("traffic"))
-                == _normalized_traffic(snapshot.get("traffic"))
-                and _normalized_traffic(current.get("trafficStatuses"))
-                == _normalized_traffic(snapshot.get("trafficStatuses"))
+                and _traffic_equal(current.get("traffic"), snapshot.get("traffic"))
+                and _traffic_equal(
+                    current.get("trafficStatuses"), snapshot.get("trafficStatuses")
+                )
             )
         except (KeyError, TypeError, ValueError):
             return False
@@ -1341,11 +1378,11 @@ class RolloutController:
                 raise ValueError
             traffic = _normalized_traffic(restored.get("traffic"))
             expected = _normalized_traffic(snapshot["traffic"])
-            if traffic != expected:
+            if not _traffic_equal(traffic, expected):
                 raise ValueError
             reconciling = _normalized_reconciling(restored)
             if observed == generation and not reconciling:
-                if _normalized_traffic(restored.get("trafficStatuses")) != expected:
+                if not _traffic_equal(restored.get("trafficStatuses"), expected):
                     raise ValueError
                 return True
             if observed < generation and reconciling:
@@ -1444,10 +1481,14 @@ class RolloutController:
                 and image_digest_values == [self.image_digest]
                 and env_values.get("DEPLOY_REVISION") == self.approved_sha
                 and env_values.get("APP_IMAGE_DIGEST") == self.image_digest
-                and _normalized_traffic(current.get("traffic"))
-                == _normalized_traffic(snapshot.get("traffic"))
-                and _normalized_traffic(current.get("trafficStatuses"))
-                == _normalized_traffic(snapshot.get("trafficStatuses"))
+                and _traffic_equal(
+                    current.get("traffic"),
+                    _deploy_traffic(snapshot, self._revision(revision)),
+                )
+                and _traffic_equal(
+                    current.get("trafficStatuses"),
+                    _deploy_traffic(snapshot, self._revision(revision)),
+                )
             )
             if not exact_rollout_intent:
                 return "contradictory"
@@ -1531,12 +1572,12 @@ class RolloutController:
                 and _integer(owned.get(owned_observed)) == _integer(owned.get("generation"))
                 and not _normalized_reconciling(current)
                 and not _normalized_reconciling(owned)
-                and _normalized_traffic(current.get("traffic"))
-                == _normalized_traffic(owned.get("traffic"))
+                and _traffic_equal(current.get("traffic"), owned.get("traffic"))
                 and (
                     "trafficStatuses" not in owned
-                    or _normalized_traffic(current.get("trafficStatuses"))
-                    == _normalized_traffic(owned.get("trafficStatuses"))
+                    or _traffic_equal(
+                        current.get("trafficStatuses"), owned.get("trafficStatuses")
+                    )
                 )
                 and (
                     (
@@ -1620,35 +1661,44 @@ def run_rollout(
 def _stage_traffic(
     snapshot: dict[str, Any], candidate: str, percent: int, *, shadow_tag: str | None
 ) -> list[dict[str, Any]]:
-    """Build exact revision traffic while preserving all pre-existing tags."""
+    """Build exact-sum revision+tag traffic while preserving snapshot identities."""
     traffic = _normalized_traffic(snapshot["traffic"])
-    prior = next(item["revision"] for item in traffic if item["percent"] == 100)
-    requested = [
-        {
-            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
-            "revision": candidate,
-            "percent": percent,
-        }
-    ]
-    if percent < 100:
-        requested.append(
-            {
-                "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
-                "revision": prior,
-                "percent": 100 - percent,
-            }
-        )
-    requested.extend(deepcopy(item) for item in traffic if "tag" in item)
+    if shadow_tag is not None and any(item.get("tag") == shadow_tag for item in traffic):
+        raise ValueError("rollout shadow tag collides with snapshot traffic")
+    prior_index = next(index for index, item in enumerate(traffic) if item["percent"] > 0)
+    requested = deepcopy(traffic)
+    requested[prior_index]["percent"] = 100 - percent
+    candidate_target = {
+        "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        "revision": candidate,
+        "percent": percent,
+    }
     if shadow_tag is not None:
+        # Cloud Run creates this target on a no-traffic revision deploy. Preserve it
+        # explicitly and route the requested percentage through the tagged target.
+        candidate_target["percent"] = 0
         requested.append(
             {
                 "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
                 "revision": candidate,
-                "percent": 0,
+                "percent": percent,
                 "tag": shadow_tag,
             }
         )
-    return requested
+    requested.append(candidate_target)
+    return _normalized_traffic(requested)
+
+
+def _deploy_traffic(snapshot: dict[str, Any], candidate: str) -> list[dict[str, Any]]:
+    """Return exact post-deploy traffic, including Cloud Run's automatic target."""
+    return [
+        *_normalized_traffic(snapshot["traffic"]),
+        {
+            "type": "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+            "revision": candidate,
+            "percent": 0,
+        },
+    ]
 
 
 def _transition_stage(
@@ -1757,8 +1807,9 @@ def _execute_v2_progression(
     )
     if rollout.verify_candidate_health(service_url) != rollout.candidate_identity:
         raise IdentityRefusal("final candidate identity mismatch")
-    if _normalized_traffic(final["traffic"]) != _stage_traffic(
-        snapshot, rollout.candidate_revision, 100, shadow_tag=None
+    if not _traffic_equal(
+        final["traffic"],
+        _stage_traffic(snapshot, rollout.candidate_revision, 100, shadow_tag=None),
     ):
         raise ConcurrencyRefusal("final canonical traffic mismatch")
 
@@ -1781,6 +1832,12 @@ def _execute_rollout(rollout: RolloutController) -> RolloutController:
         snapshot = rollout.snapshot
         if snapshot is None:
             raise InitialStateRefusal("rollout snapshot is missing")
+        shadow_tag = f"shadow-{rollout.rollout_id}"[:63].rstrip("-")
+        if any(
+            item.get("tag") == shadow_tag
+            for item in _normalized_traffic(snapshot["traffic"])
+        ):
+            raise InitialStateRefusal("rollout shadow tag collides with snapshot traffic")
         rollout.build_candidate()
         if rollout.mode == RESUME_MODE:
             prior_url = rollout._service_base_url()

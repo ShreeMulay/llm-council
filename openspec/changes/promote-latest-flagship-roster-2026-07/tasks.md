@@ -19,5 +19,6 @@
 - [x] Make GitHub deploy manual-only with approved full-SHA binding; add the GCS generation-0 lock, prior-state precondition, Cloud Run v2 etag PATCH/convergence, monotonic deadline, signal-safe rollback grace, diagnostic telemetry observations, and exact terminal cleanup.
 - [x] Create the durable 24-hour GCS retention obligation without runtime `bd` execution; orchestrator creates the follow-up verification Bead after success; do not delete the prior revision.
 - [x] Close final Oracle P1s for ambiguous deploy ownership recovery, repeated rollback convergence, and exact bounded smoke semantic classifications.
+- [x] Canonicalize traffic comparison/hash order, preserve automatic and tagged candidate targets, and bind source attestations to the corrected target SHA.
 - [ ] Deploy one zero-traffic shadow, run bounded 10%/rollback/10%/50%/100% progression, and stop after the first failure or verified success.
 - [ ] Land Forgejo PR after CI, mirror GitHub, update shared checkout, archive this change, close Bead, and store non-sensitive memory.
