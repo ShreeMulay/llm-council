@@ -5,6 +5,7 @@ and executes through injected boundaries rather than shell-string assertions.
 """
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -23,7 +24,17 @@ def _write_executable(path: Path, body: str) -> None:
     path.chmod(0o755)
 
 
-def _run_deploy_entrypoint(tmp_path, *, mode, head, remote, clean=True, approved=None):
+def _run_deploy_entrypoint(
+    tmp_path,
+    *,
+    mode,
+    head,
+    remote,
+    clean=True,
+    approved=None,
+    forgejo_available=True,
+    origin_available=True,
+):
     """Execute the real shell entry point against recording command boundaries."""
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
@@ -36,6 +47,12 @@ printf 'git %s\n' "$*" >> "$COMMAND_LOG"
 case "$*" in
   "status --porcelain"|"status --porcelain --untracked-files=normal")
     [ "$WORKTREE_CLEAN" = true ] || printf ' M dirty-file\n'
+    ;;
+  "fetch forgejo master")
+    [ "$FORGEJO_AVAILABLE" = true ] || { printf 'fatal: forgejo unavailable\n' >&2; exit 1; }
+    ;;
+  "fetch origin master")
+    [ "$ORIGIN_AVAILABLE" = true ] || { printf 'fatal: origin unavailable\n' >&2; exit 1; }
     ;;
   "rev-parse HEAD") printf '%s\n' "$LOCAL_HEAD" ;;
   "rev-parse forgejo/master"|"rev-parse origin/master") printf '%s\n' "$FORGEJO_MASTER" ;;
@@ -67,6 +84,8 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
         "LOCAL_HEAD": head,
         "FORGEJO_MASTER": remote,
         "WORKTREE_CLEAN": str(clean).lower(),
+        "FORGEJO_AVAILABLE": str(forgejo_available).lower(),
+        "ORIGIN_AVAILABLE": str(origin_available).lower(),
     }
     if approved is not None:
         env["APPROVED_FORGEJO_SHA"] = approved
@@ -111,6 +130,86 @@ def test_local_entrypoint_executes_clean_tree_and_forgejo_sha_checks_before_cont
     assert "git rev-parse HEAD" in lines[:controller_index]
     assert "git rev-parse forgejo/master" in lines[:controller_index] or "git rev-parse origin/master" in lines[:controller_index]
     assert not any(line.startswith(("gcloud ", "docker ", "curl ")) for line in lines[:controller_index])
+
+
+def test_local_entrypoint_reaches_controller_without_python_binary(tmp_path):
+    sha = "a" * 40
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    log = tmp_path / "commands.log"
+    bash = shutil.which("bash")
+    python3 = shutil.which("python3")
+    assert bash is not None
+    assert python3 is not None
+    (bin_dir / "bash").symlink_to(bash)
+    (bin_dir / "python3").symlink_to(python3)
+    _write_executable(
+        bin_dir / "git",
+        """#!/usr/bin/env bash
+set -eu
+printf 'git %s\n' "$*" >> "$COMMAND_LOG"
+case "$*" in
+  "status --porcelain") ;;
+  "fetch forgejo master") printf 'fatal: forgejo unavailable\n' >&2; exit 1 ;;
+  "fetch origin master") ;;
+  "rev-parse HEAD"|"rev-parse origin/master") printf '%s\n' "$EXPECTED_SHA" ;;
+esac
+""",
+    )
+    _write_executable(
+        bin_dir / "uv",
+        """#!/usr/bin/env bash
+set -eu
+command -v python3 >/dev/null
+if command -v python >/dev/null; then exit 91; fi
+printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
+""",
+    )
+
+    result = subprocess.run(
+        [str(ROOT / "scripts/deploy.sh")],
+        cwd=ROOT,
+        env={
+            "PATH": str(bin_dir),
+            "COMMAND_LOG": str(log),
+            "DEPLOY_ENTRYPOINT_MODE": "local",
+            "EXPECTED_SHA": sha,
+        },
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+    lines = log.read_text(encoding="utf-8").splitlines()
+    controller_index = lines.index(
+        f"controller run python -m scripts.bounded_rollout --approved-sha {sha}"
+    )
+    assert lines[:controller_index] == [
+        "git status --porcelain",
+        "git fetch forgejo master",
+        "git fetch origin master",
+        "git rev-parse HEAD",
+        "git rev-parse origin/master",
+    ]
+
+
+def test_local_entrypoint_preserves_origin_fallback_failure(tmp_path):
+    sha = "a" * 40
+    result, commands = _run_deploy_entrypoint(
+        tmp_path,
+        mode="local",
+        head=sha,
+        remote=sha,
+        forgejo_available=False,
+        origin_available=False,
+    )
+
+    assert result.returncode != 0
+    assert "forgejo unavailable" not in result.stderr
+    assert "fatal: origin unavailable" in result.stderr
+    assert "controller " not in commands
 
 
 def test_github_entrypoint_executes_exact_approved_forgejo_sha_check_before_controller(tmp_path):
@@ -192,6 +291,38 @@ def test_ci_and_deploy_checkout_and_verify_the_identical_approved_full_sha():
     assert workflow.count("[[ \"$APPROVED_FORGEJO_SHA\" =~ ^[0-9a-f]{40}$ ]]") == 2
     assert workflow.count('test "$(git rev-parse HEAD)" = "$APPROVED_FORGEJO_SHA"') == 2
     assert workflow.count('test "$(git rev-parse forgejo/master)" = "$APPROVED_FORGEJO_SHA"') == 2
+
+
+def test_ci_installs_test_extra_and_deploy_installs_runtime_dependencies():
+    workflow = (ROOT / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
+    ci_job = workflow[workflow.index("\n  ci:") : workflow.index("\n  deploy:")]
+    deploy_job = workflow[workflow.index("\n  deploy:") :]
+    expected_action = (
+        "uses: astral-sh/setup-uv@"
+        "11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2"
+    )
+
+    assert "run: uv sync --extra test" in ci_job
+    assert "run: uv sync --all-groups" not in ci_job
+    assert "run: uv sync --all-groups" in deploy_job
+    for job in (ci_job, deploy_job):
+        setup_uv_step = job[
+            job.index("      - name: Setup uv") : job.index(
+                "      - name: Install dependencies"
+            )
+        ]
+        assert setup_uv_step.count("uses: astral-sh/setup-uv@") == 1
+        assert expected_action in setup_uv_step
+        assert 'version: "0.11.28"' in setup_uv_step
+
+    setup_uv_uses = [
+        line.strip()
+        for line in workflow.splitlines()
+        if "uses: astral-sh/setup-uv@" in line
+    ]
+    assert setup_uv_uses == [expected_action, expected_action]
+    assert "astral-sh/setup-uv@latest" not in workflow
+    assert "astral-sh/setup-uv@v" not in workflow
 
 
 def test_deployment_runtime_never_executes_beads_cli():
