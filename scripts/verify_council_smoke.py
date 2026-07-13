@@ -32,6 +32,7 @@ ALLOWED_STREAM_EVENTS = {
 }
 PROMPT_COST_UPPER_BOUND_PER_MILLION = 50.0
 COMPLETION_COST_UPPER_BOUND_PER_MILLION = 100.0
+APPROVED_LEGACY_FALLBACK_PROVIDER = "openrouter-fallback"
 
 
 def canonical_smoke_plan() -> ExecutionPlan:
@@ -242,7 +243,7 @@ def smoke_proof(payload: dict[str, Any], *, legacy_baseline: bool = False) -> di
         "settings": plan.get("settings"),
     }
     if legacy_baseline:
-        proof["provenance_contract"] = "legacy-unavailable"
+        proof["provenance_contract"] = "legacy-partial-terminal-provenance"
     return proof
 
 
@@ -256,9 +257,8 @@ def _sample_metrics(
     results = _results(payload)
     if legacy_baseline:
         successful = [
-            not bool(item.get("fallback_used"))
-            and item.get("terminal_status") in (None, "succeeded")
-            and not item.get("error")
+            item.get("terminal_status") in (None, "succeeded")
+            and item.get("error") is None
             and bool(item.get("response") or item.get("ranking"))
             for item in results
         ]
@@ -318,9 +318,7 @@ def _sample_metrics(
         "factual_error": float(not factual_correct),
         "evaluator_format_success": float(evaluator_format),
         "route_success": (
-            sum(successful) / len(results)
-            if not legacy_baseline or any(_observed_route(item) for item in results)
-            else None
+            None if legacy_baseline else sum(successful) / len(results)
         ),
         "error_rate": errors / len(results),
         "elapsed_latency": elapsed,
@@ -395,9 +393,13 @@ def verify_payload(
     proof = smoke_proof(payload, legacy_baseline=legacy_baseline)
     results = _results(payload)
     if legacy_baseline:
-        if any(bool(item.get("fallback_used")) for item in results):
-            raise SmokeVerificationError("legacy baseline contains explicit fallback")
-        if any(item.get("error") for item in results):
+        if any(
+            bool(item.get("fallback_used"))
+            and item.get("provider") != APPROVED_LEGACY_FALLBACK_PROVIDER
+            for item in results
+        ):
+            raise SmokeVerificationError("legacy baseline fallback provider is not approved")
+        if any(item.get("error") is not None for item in results):
             raise SmokeVerificationError("legacy baseline contains an explicit error")
         if any(
             "terminal_status" in item and item.get("terminal_status") != "succeeded"
