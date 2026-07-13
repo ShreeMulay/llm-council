@@ -62,6 +62,7 @@ PAID_PLAN = (
     ("final", "sync", "https://service.example"),
     ("final", "stream", "https://service.example"),
 )
+MAX_PAID_ATTEMPTS = 6
 
 
 class RolloutError(RuntimeError):
@@ -143,6 +144,21 @@ def _integer(value: Any) -> int:
     if not text.isdigit():
         raise ValueError
     return int(text)
+
+
+def validate_prior_paid_attempts(value: Any) -> int:
+    """Validate the cumulative paid-attempt count carried from an incident."""
+    if isinstance(value, bool):
+        raise ValueError("prior paid attempts must be an integer from 0 through 6")
+    if isinstance(value, int):
+        result = value
+    elif isinstance(value, str) and re.fullmatch(r"0|[1-6]", value):
+        result = int(value)
+    else:
+        raise ValueError("prior paid attempts must be an integer from 0 through 6")
+    if not 0 <= result <= MAX_PAID_ATTEMPTS:
+        raise ValueError("prior paid attempts must be an integer from 0 through 6")
+    return result
 
 
 def _normalized_reconciling(state: Any) -> bool:
@@ -261,6 +277,7 @@ class RolloutController:
         clock: Any | None = None,
         promotion_seconds: float = 1800,
         rollback_seconds: float = 300,
+        prior_paid_attempts: int | str = 0,
     ):
         self.boundaries = boundaries
         self.rollout_id = rollout_id
@@ -272,11 +289,12 @@ class RolloutController:
         self.rollback_deadline: float | None = None
         self.paid_gate_state = "open"
         self.promotion_gate_state = "unchanged"
-        self.attempt_count = 0
+        self.attempt_count = validate_prior_paid_attempts(prior_paid_attempts)
         self.retry_consumed = False
         self.lock_generation: str | None = None
         self.snapshot: dict[str, Any] | None = None
         self.prior_identity: dict[str, Any] | None = None
+        self.prior_service_url: str | None = None
         self.candidate_identity: dict[str, Any] | None = None
         self.candidate_revision: str | None = None
         self.image_digest: str | None = None
@@ -284,6 +302,7 @@ class RolloutController:
         self.rollout_owned_state: dict[str, Any] | None = None
         self.pre_deploy_state: dict[str, Any] | None = None
         self.expected_candidate_revision: str | None = None
+        self.candidate_revision_state: dict[str, Any] | None = None
 
     def _event(self, *event: Any) -> None:
         events = getattr(self.boundaries, "events", None)
@@ -333,10 +352,132 @@ class RolloutController:
         return self._call_with_budget(self.boundaries.service_get, rollback=rollback)
 
     def _service_base_url(self, *, rollback: bool = False) -> str:
-        method = getattr(self.boundaries, "get_service_base_url", None)
-        if method is not None:
-            return self._call_with_budget(method, rollback=rollback)
-        return getattr(self.boundaries, "service_base_url", "https://service.example")
+        del rollback
+        if self.prior_service_url is None:
+            raise InitialStateRefusal("captured service URI is unavailable")
+        return self.prior_service_url
+
+    @staticmethod
+    def _condition_truth(condition: dict[str, Any]) -> bool | None:
+        value = condition.get("status", condition.get("state"))
+        if value is True or value in {"True", "CONDITION_SUCCEEDED"}:
+            return True
+        if value is False or value in {"False", "CONDITION_FAILED"}:
+            return False
+        return None
+
+    def validate_candidate_revision(self, state: Any) -> dict[str, Any]:
+        """Validate the exact ready revision retained after a zero-traffic deploy."""
+        revision = self.expected_candidate_revision or self.candidate_revision
+        if revision is None or self.image_digest is None:
+            raise ConcurrencyRefusal("candidate revision intent is incomplete")
+        name_factory = getattr(self.boundaries, "revision_resource_name", lambda value: value)
+        try:
+            if not isinstance(state, dict) or state.get("name") != name_factory(revision):
+                raise ValueError
+            containers = state.get("containers")
+            if containers is None and isinstance(state.get("spec"), dict):
+                containers = state["spec"].get("containers")
+            if not isinstance(containers, list) or len(containers) != 1:
+                raise ValueError
+            container = containers[0]
+            if not isinstance(container, dict) or container.get("image") != self.image_digest:
+                raise ValueError
+            env_values: dict[str, list[Any]] = {}
+            for item in container.get("env", []):
+                if not isinstance(item, dict) or not isinstance(item.get("name"), str):
+                    raise ValueError
+                env_values.setdefault(item["name"], []).append(item.get("value"))
+            if env_values.get("DEPLOY_REVISION") != [self.approved_sha]:
+                raise ValueError
+            if env_values.get("APP_IMAGE_DIGEST") != [self.image_digest]:
+                raise ValueError
+            conditions = state.get("conditions")
+            if conditions is None and isinstance(state.get("status"), dict):
+                conditions = state["status"].get("conditions")
+            if not isinstance(conditions, list):
+                raise ValueError
+            allowed_condition_types = {
+                "Ready",
+                "ContainerReady",
+                "Active",
+                "ResourcesAvailable",
+                "MinInstancesProvisioned",
+            }
+            known_condition_states = {
+                "CONDITION_SUCCEEDED",
+                "CONDITION_FAILED",
+                "CONDITION_RECONCILING",
+            }
+            by_type: dict[str, dict[str, Any]] = {}
+            for condition in conditions:
+                if not isinstance(condition, dict) or not isinstance(condition.get("type"), str):
+                    raise ValueError
+                if condition["type"] not in allowed_condition_types:
+                    raise ValueError
+                if condition.get("state") not in known_condition_states:
+                    raise ValueError
+                if condition["type"] in by_type:
+                    raise ValueError
+                if "status" in condition and self._condition_truth({
+                    "status": condition["status"]
+                }) != self._condition_truth({"state": condition.get("state")}):
+                    raise ValueError
+                by_type[condition["type"]] = condition
+            ready = by_type.get("Ready", {})
+            if (
+                ready.get("state") != "CONDITION_SUCCEEDED"
+                or ready.get("revisionReason") != "RETIRED"
+            ):
+                raise ValueError
+            container_ready = by_type.get("ContainerReady", {})
+            if container_ready.get("state") != "CONDITION_SUCCEEDED":
+                raise ValueError
+
+            retired_exceptions = {
+                "Active": {
+                    "state": "CONDITION_FAILED",
+                    "severity": "INFO",
+                    "revisionReason": "RETIRED",
+                },
+                "ResourcesAvailable": {
+                    "state": "CONDITION_RECONCILING",
+                    "severity": None,
+                    "revisionReason": "RETIRED",
+                },
+                "MinInstancesProvisioned": {
+                    "state": "CONDITION_FAILED",
+                    "severity": "INFO",
+                    "revisionReason": "MIN_INSTANCES_NOT_PROVISIONED",
+                },
+            }
+            for kind, expected in retired_exceptions.items():
+                condition = by_type.get(kind)
+                if kind == "Active" and condition is None:
+                    raise ValueError
+                if condition is not None and any(
+                    condition.get(field) != value for field, value in expected.items()
+                ):
+                    raise ValueError
+            if any(
+                condition.get("state")
+                in {"CONDITION_FAILED", "CONDITION_RECONCILING"}
+                for kind, condition in by_type.items()
+                if kind not in retired_exceptions
+            ):
+                raise ValueError
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ConcurrencyRefusal("candidate revision resource refused") from exc
+        self.candidate_revision_state = deepcopy(state)
+        return deepcopy(state)
+
+    def fetch_candidate_revision(self, *, rollback: bool = False) -> dict[str, Any]:
+        revision = self.expected_candidate_revision or self.candidate_revision
+        method = getattr(self.boundaries, "revision_get", None)
+        if revision is None or method is None:
+            raise ConcurrencyRefusal("candidate revision boundary is missing")
+        state = self._call_with_budget(method, revision, rollback=rollback)
+        return self.validate_candidate_revision(state)
 
     def acquire_lock(self) -> None:
         owner = self.rollout_id
@@ -360,6 +501,19 @@ class RolloutController:
         state = self._service_get()
         if "observedGeneration" in state:
             self.snapshot = validate_initial_service(state)
+            uri = state.get("uri")
+            parsed = urllib.parse.urlsplit(uri) if isinstance(uri, str) else None
+            if (
+                parsed is None
+                or parsed.scheme != "https"
+                or not parsed.netloc
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise InitialStateRefusal("initial service URI is missing or malformed")
+            self.prior_service_url = uri
         else:
             try:
                 uid, etag = state["uid"], state["etag"]
@@ -436,7 +590,7 @@ class RolloutController:
     ) -> Any:
         if self.paid_gate_state != "open":
             raise PaidGateClosedError("paid gate is closed")
-        if self.attempt_count >= 6:
+        if self.attempt_count >= MAX_PAID_ATTEMPTS:
             raise PaidAttemptLimitError("paid attempt bound reached")
         self.attempt_count += 1
         number = self.attempt_count
@@ -682,7 +836,7 @@ class RolloutController:
 
     def verify_rollback_health(self) -> Any:
         return self.boundaries.health(
-            "https://service.example",
+            self._service_base_url(rollback=True),
             self.prior_identity,
             timeout=self._remaining(rollback=True),
             allow_legacy_prior=True,
@@ -702,6 +856,15 @@ class RolloutController:
         try:
             if not self._current_state_is_owned(current):
                 raise RollbackProofError("rollback mutation ownership refused")
+            if self._snapshot_traffic_is_already_restored(current):
+                self._prove_prior_health_and_lock()
+                self.mutation_armed = False
+                if self.lock_generation is not None:
+                    self._call_with_budget(
+                        self.boundaries.release_lock, self.lock_generation, rollback=True
+                    )
+                    self.lock_generation = None
+                return
             owner_generation = _integer(current["generation"])
             operation = self._patch(
                 self.snapshot["traffic"], current["etag"], self._remaining(rollback=True)
@@ -719,21 +882,9 @@ class RolloutController:
                 if self._rollback_state_status(restored, current, owner_generation):
                     break
             valid = isinstance(response, dict)
-            health = self.boundaries.health(
-                "https://service.example",
-                self.prior_identity,
-                timeout=self._remaining(rollback=True),
-                allow_legacy_prior=True,
-            )
-            valid = valid and health == self.prior_identity
-            if self.lock_generation is not None:
-                valid = valid and self._call_with_budget(
-                    self.boundaries.verify_lock,
-                    self.lock_generation,
-                    rollback=True,
-                ) is True
             if not valid:
                 raise RollbackProofError("rollback proof refused")
+            self._prove_prior_health_and_lock()
             self.mutation_armed = False
             if self.lock_generation is not None:
                 self._call_with_budget(
@@ -741,10 +892,41 @@ class RolloutController:
                     self.lock_generation,
                     rollback=True,
                 )
+                self.lock_generation = None
         except RollbackProofError:
             raise
         except Exception as exc:
             raise RollbackProofError("rollback proof refused") from exc
+
+    def _snapshot_traffic_is_already_restored(self, current: Any) -> bool:
+        try:
+            return (
+                isinstance(current, dict)
+                and current.get("uid") == self.snapshot.get("uid")
+                and _integer(current.get("observedGeneration"))
+                == _integer(current.get("generation"))
+                and not _normalized_reconciling(current)
+                and _normalized_traffic(current.get("traffic"))
+                == _normalized_traffic(self.snapshot.get("traffic"))
+                and _normalized_traffic(current.get("trafficStatuses"))
+                == _normalized_traffic(self.snapshot.get("trafficStatuses"))
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
+
+    def _prove_prior_health_and_lock(self) -> None:
+        valid = self.lock_generation is not None and self.boundaries.health(
+            self._service_base_url(rollback=True),
+            self.prior_identity,
+            timeout=self._remaining(rollback=True),
+            allow_legacy_prior=True,
+        ) == self.prior_identity
+        if self.lock_generation is not None:
+            valid = valid and self._call_with_budget(
+                self.boundaries.verify_lock, self.lock_generation, rollback=True
+            ) is True
+        if not valid:
+            raise RollbackProofError("rollback proof refused")
 
     def _rollback_state_status(
         self, restored: Any, owner: dict[str, Any], owner_generation: int
@@ -794,6 +976,15 @@ class RolloutController:
             if self._current_state_is_owned(current):
                 return current
             if self.rollout_owned_state is None:
+                if self.candidate_revision_state is None:
+                    try:
+                        self.fetch_candidate_revision(rollback=True)
+                    except Exception as exc:
+                        if isinstance(exc, RollbackProofError):
+                            raise RollbackRecoveryRequired(
+                                "recovery_required: rollback grace exhausted without owned convergence"
+                            ) from exc
+                        raise RollbackProofError("rollback revision ownership refused") from exc
                 status = self._deploy_state_ownership_status(current)
                 if status == "owned":
                     self.rollout_owned_state = deepcopy(current)
@@ -865,9 +1056,47 @@ class RolloutController:
             if (
                 observed == generation
                 and not _normalized_reconciling(current)
-                and current.get("latestReadyRevision") == revision
             ):
-                return "owned"
+                if (
+                    current.get("latestReadyRevision") == revision
+                    and self.candidate_revision_state is not None
+                ):
+                    return "owned"
+                prior_ready = snapshot.get("latestReadyRevision")
+                terminal = current.get("terminalCondition")
+                conditions = current.get("conditions")
+                if not isinstance(conditions, list) or any(
+                    not isinstance(item, dict) or not isinstance(item.get("type"), str)
+                    for item in conditions
+                ):
+                    return "contradictory"
+                relevant = {"ConfigurationsReady", "Ready", "ContainerReady"}
+                relevant_conditions = [item for item in conditions if item["type"] in relevant]
+                if (
+                    len({item["type"] for item in relevant_conditions})
+                    != len(relevant_conditions)
+                    or [item["type"] for item in relevant_conditions]
+                    != ["ConfigurationsReady"]
+                    or any(self._condition_truth(item) is False for item in conditions)
+                ):
+                    return "contradictory"
+                configurations = [
+                    item for item in relevant_conditions
+                    if item["type"] == "ConfigurationsReady"
+                ]
+                configuration = configurations[0] if len(configurations) == 1 else None
+                if (
+                    current.get("latestReadyRevision") == prior_ready
+                    and isinstance(terminal, dict)
+                    and terminal.get("type") == "Ready"
+                    and self._condition_truth(terminal) is True
+                    and isinstance(configuration, dict)
+                    and self._condition_truth(configuration) is True
+                    and configuration.get("revisionReason") == "RETIRED"
+                    and self.candidate_revision_state is not None
+                ):
+                    return "owned"
+                return "contradictory"
             prior_ready = snapshot.get("latestReadyRevision")
             if (
                 snapshot_generation <= observed < generation
@@ -962,6 +1191,7 @@ def run_rollout(
     clock: Any | None = None,
     promotion_seconds: float = 1800,
     rollback_seconds: float = 300,
+    prior_paid_attempts: int | str = 0,
 ) -> RolloutController:
     """Execute the one immutable rollout sequence; callers cannot supply a plan."""
     rollout = RolloutController(
@@ -971,6 +1201,7 @@ def run_rollout(
         clock=clock,
         promotion_seconds=promotion_seconds,
         rollback_seconds=rollback_seconds,
+        prior_paid_attempts=prior_paid_attempts,
     )
     return _execute_rollout(rollout)
 
@@ -1037,7 +1268,8 @@ def _execute_v2_progression(
     shadow_tag = f"shadow-{rollout.rollout_id}"[:63].rstrip("-")
 
     deployed = rollout._service_get()
-    if deployed.get("uid") != snapshot["uid"] or deployed.get("latestReadyRevision") != rollout.candidate_revision:
+    rollout.fetch_candidate_revision()
+    if rollout._deploy_state_ownership_status(deployed) != "owned":
         raise ConcurrencyRefusal("deployed candidate identity mismatch")
     rollout.rollout_owned_state = deepcopy(deployed)
     shadow_state = _transition_stage(
@@ -1325,6 +1557,15 @@ class GcloudBoundaries:
     def service_get(self, *, timeout: float = 30) -> dict[str, Any]:
         return self._request("GET", self._service_url, timeout=timeout)
 
+    def revision_resource_name(self, revision: str) -> str:
+        return f"projects/{self.project}/locations/{self.region}/services/{self.service}/revisions/{revision}"
+
+    def revision_get(self, revision: str, *, timeout: float = 30) -> dict[str, Any]:
+        if not isinstance(revision, str) or not revision.startswith(f"{self.service}-"):
+            raise ConcurrencyRefusal("candidate revision name refused")
+        name = self.revision_resource_name(revision)
+        return self._request("GET", f"https://run.googleapis.com/v2/{name}", timeout=timeout)
+
     @property
     def service_base_url(self) -> str:
         return self.get_service_base_url(timeout=30)
@@ -1522,10 +1763,18 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run one bounded Cloud Run rollout")
     parser.add_argument("--approved-sha", default=os.environ.get("APPROVED_FORGEJO_SHA"))
     parser.add_argument("--rollout-id", default=os.environ.get("ROLLOUT_ID"))
+    parser.add_argument(
+        "--prior-paid-attempts",
+        default=os.environ.get("ROLLOUT_PRIOR_PAID_ATTEMPTS", "0"),
+    )
     args = parser.parse_args(argv)
     if not args.approved_sha or re.fullmatch(r"[0-9a-f]{40}", args.approved_sha) is None:
         raise SystemExit("approved full Forgejo SHA is required")
     rollout_id = args.rollout_id or f"{args.approved_sha[:12]}-{int(time.time())}"
+    try:
+        prior_paid_attempts = validate_prior_paid_attempts(args.prior_paid_attempts)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     boundaries = GcloudBoundaries(
         project=os.environ.get("PROJECT", "tke-phi-privacy-engine"),
         region=os.environ.get("REGION", "us-central1"),
@@ -1533,7 +1782,10 @@ def main(argv: list[str] | None = None) -> int:
         approved_sha=args.approved_sha,
     )
     controller = RolloutController(
-        boundaries=boundaries, rollout_id=rollout_id, approved_sha=args.approved_sha
+        boundaries=boundaries,
+        rollout_id=rollout_id,
+        approved_sha=args.approved_sha,
+        prior_paid_attempts=prior_paid_attempts,
     )
     _install_signal_handlers(controller)
     _execute_rollout(controller)
