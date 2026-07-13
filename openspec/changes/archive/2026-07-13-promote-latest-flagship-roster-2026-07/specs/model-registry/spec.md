@@ -1,6 +1,6 @@
 # Model Registry Delta
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: Latest flagship production roster
 
@@ -22,8 +22,6 @@ The canonical registry SHALL promote GPT-5.6 Sol and Grok 4.5 while preserving t
 - **THEN** the historical model remains callable through its own route
 - **AND** it is not silently rewritten to the promoted model
 - **AND** it has no production role or seat
-
-## ADDED Requirements
 
 ### Requirement: Current challenger catalog
 

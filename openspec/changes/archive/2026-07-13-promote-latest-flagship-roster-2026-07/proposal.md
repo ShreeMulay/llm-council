@@ -8,11 +8,11 @@ Issue: `llm-council-465`
 
 Promote GPT-5.6 Sol and Grok 4.5 into the production, compact, and evaluator rosters while preserving the latest top-capability callable model in every existing family. Retain explicit legacy IDs, refresh challenger metadata, separate declared route failover from OpenRouter provider substitution, and deploy through evidence-backed shadow, canary, rollback, and production gates.
 
-## Motivation
+## Why
 
 The production roster was intentionally frozen while GPT-5.6 Sol and Grok 4.5 remained challengers. First-party and provider catalogs now identify them as the current callable flagships for their families. The other seven production seats already use their latest applicable top-capability models. A reviewed registry mutation is required because model identity, aliases, roles, routes, generated consumers, benchmarks, and deployment checks must change atomically.
 
-## Scope
+## What Changes
 
 ### In scope
 
