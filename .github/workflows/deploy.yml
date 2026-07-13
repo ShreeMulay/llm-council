@@ -1,41 +1,39 @@
 name: Deploy to Cloud Run
 
 on:
-  push:
-    branches: [master]
-    paths-ignore:
-      - '*.md'
-      - 'docs/**'
-      - 'mcp/**'
-      - '.beads/**'
-      - 'openspec/**'
+  workflow_dispatch:
+    inputs:
+      approved_forgejo_sha:
+        description: Full approved Forgejo master SHA
+        required: true
+        type: string
 
 env:
   PROJECT_ID: tke-phi-privacy-engine
   REGION: us-central1
   SERVICE: llm-council
-  REGISTRY: us-central1-docker.pkg.dev/tke-phi-privacy-engine/llm-council/llm-council
-  ROLLOUT_OBSERVATION_SECONDS: '30'
-  ROLLOUT_HEALTH_SAMPLES: '1'
-  ROLLOUT_SERVICE_HEALTH_SAMPLES: '50'
-  ROLLOUT_SMOKE_SAMPLES: '5'
-  ROLLOUT_STREAM_SMOKE_SAMPLES: '5'
-  COUNCIL_MAX_LATENCY_SECONDS: '480'
-  COUNCIL_MAX_TOKENS: '60000'
-  COUNCIL_MAX_COST_USD: '1.50'
-  COUNCIL_MAX_ERROR_RATE: '0'
-  COUNCIL_MAX_QUALITY_DROP: '3'
-  COUNCIL_MAX_LATENCY_RATIO: '1.20'
-  COUNCIL_MAX_COST_RATIO: '1.25'
-  COUNCIL_MIN_ROUTE_SUCCESS: '0.99'
 
 jobs:
   ci:
     name: CI Gate
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.approved_forgejo_sha }}
+          fetch-depth: 0
+
+      - name: Bind checkout to exact Forgejo master
+        env:
+          APPROVED_FORGEJO_SHA: ${{ inputs.approved_forgejo_sha }}
+        run: |
+          [[ "$APPROVED_FORGEJO_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git remote add forgejo https://git.thekidneyexperts.com/thekidneyexperts/llm-council.git
+          git fetch forgejo master
+          test "$(git rev-parse HEAD)" = "$APPROVED_FORGEJO_SHA"
+          test "$(git rev-parse forgejo/master)" = "$APPROVED_FORGEJO_SHA"
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v3
@@ -63,6 +61,7 @@ jobs:
     name: Deploy
     needs: ci
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     permissions:
       contents: read
       id-token: write  # Required for Workload Identity Federation
@@ -70,6 +69,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.approved_forgejo_sha }}
+          fetch-depth: 0
+
+      - name: Bind checkout to exact Forgejo master
+        env:
+          APPROVED_FORGEJO_SHA: ${{ inputs.approved_forgejo_sha }}
+        run: |
+          [[ "$APPROVED_FORGEJO_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git remote add forgejo https://git.thekidneyexperts.com/thekidneyexperts/llm-council.git
+          git fetch forgejo master
+          test "$(git rev-parse HEAD)" = "$APPROVED_FORGEJO_SHA"
+          test "$(git rev-parse forgejo/master)" = "$APPROVED_FORGEJO_SHA"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
@@ -80,21 +92,8 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Authenticate Docker to Artifact Registry
-        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
-
-      - name: Build and push image once
-        run: |
-          docker build -t ${{ env.REGISTRY }}:${{ github.sha }} .
-          docker push ${{ env.REGISTRY }}:${{ github.sha }}
-          DIGEST=$(gcloud artifacts docker images describe \
-            ${{ env.REGISTRY }}:${{ github.sha }} \
-            --project=${{ env.PROJECT_ID }} \
-            --format='value(image_summary.digest)')
-          echo "IMAGE_DIGEST=${{ env.REGISTRY }}@${DIGEST}" >> "$GITHUB_ENV"
-
-      - name: Semantic canary rollout
+      - name: Execute sole bounded deployment entry point
         env:
-          PROJECT: ${{ env.PROJECT_ID }}
-          DEPLOY_REVISION: ${{ github.sha }}
-        run: scripts/cloud_run_semantic_rollout.sh
+          DEPLOY_ENTRYPOINT_MODE: github
+          APPROVED_FORGEJO_SHA: ${{ inputs.approved_forgejo_sha }}
+        run: scripts/deploy.sh

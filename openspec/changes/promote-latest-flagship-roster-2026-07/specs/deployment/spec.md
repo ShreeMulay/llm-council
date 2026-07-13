@@ -2,42 +2,294 @@
 
 ## ADDED Requirements
 
-### Requirement: Evidence-backed latest-roster rollout
+### Requirement: Honest immutable promotion evidence
 
-Production SHALL only receive the promoted roster through pinned, observable, reversible stages.
+The rollout SHALL verify promotion evidence before reading or mutating the service and SHALL state its binding scope exactly.
 
-#### Scenario: Promote reviewed artifact
+#### Scenario: Verify benchmark without claiming image identity
 
-- **GIVEN** full local validation, exact-route probes, paired benchmarks, and Forgejo CI pass
-- **WHEN** the release is deployed
-- **THEN** the image, registry, and projection digests are pinned
-- **AND** zero-traffic shadow checks run before canary traffic
-- **AND** canary progresses through 10% and 50% before 100%
-- **AND** the prior image/registry remains available for rollback
-
-#### Scenario: Verify immutable promotion evidence before rollout mutation
-
-- **GIVEN** the committed 52-case representative live benchmark hard-gates its evidenced quality, factual-error, objective, evaluator-format, route, latency, and cost thresholds
+- **GIVEN** the committed 52-case benchmark binds the roster, registry digest, run manifest, policies, prompt suite, completeness, and threshold outcomes
 - **WHEN** a rollout is requested
-- **THEN** the verifier MUST validate its pinned hashes, exact run and registry identity, no-fallback policy, completeness, and every passing threshold outcome before service describe, snapshot, deploy, or traffic mutation
-- **AND** missing, stale, mismatched, incomplete, or failing benchmark evidence MUST stop the rollout
+- **THEN** the verifier MUST validate every pinned hash and passing outcome before service describe, lock acquisition, snapshot, deploy, or traffic mutation
+- **AND** the evidence MUST NOT claim to bind an image SHA built after the benchmark
+- **AND** runtime probes MUST separately bind the deployed revision/image, registry and projection digests, roster, routes, schema, policy, and objective output
 
-#### Scenario: Run paired synthetic shadow canary
+### Requirement: Single manual deployment owner
 
-- **GIVEN** exact prior-service and shadow-candidate URLs and strict shadow health
-- **WHEN** synthetic canary evidence is collected prospectively
-- **THEN** sync and stream each MUST run one verified warmup per URL followed by exactly five measured pairs ordered `AB, BA, AB, BA, AB`
-- **AND** warmup latency and cost MUST be recorded separately and excluded from measured aggregates
-- **AND** any fixed deployment instruction/objective mismatch, factual error, evaluator-format failure, schema violation, explicit error, fallback, route mismatch, policy violation, usage/pricing violation, or absolute latency/token/cost violation by the candidate MUST hard-fail regardless of the immutable benchmark outcome
-- **AND** paired steady-state latency and list-cost ratios MUST be emitted as explicit diagnostic statuses and MUST NOT replace the representative benchmark's relative promotion gates
-- **AND** later 10%, restarted 10%, 50%, and 100% checks MUST retain strict candidate and absolute gates without reapplying baseline-relative synthetic gates
-- **AND** evidence MUST remain content-free and distinguish `promotion_gate`, `cold_gate`, `hard_canary_gate`, and steady-canary diagnostics
-- **AND** these artifacts MUST NOT claim comprehensive safety evaluation
+GitHub SHALL be a mirror whose deployment workflow can be started only by an explicit operator dispatch.
 
-#### Scenario: Complete shared-checkout landing
+#### Scenario: Mirror master without deployment
 
-- **GIVEN** Forgejo has merged and GitHub has mirrored the release
+- **GIVEN** Forgejo master is mirrored to GitHub master
+- **WHEN** GitHub receives the push
+- **THEN** no deploy workflow SHALL start
+- **AND** no image build, traffic mutation, or paid council probe SHALL occur
+- **AND** the GitHub deploy workflow SHALL expose only `workflow_dispatch` as its trigger
+
+#### Scenario: Bind manual dispatch to approved Forgejo master
+
+- **GIVEN** an operator manually dispatches the GitHub mirror workflow with an approved full Forgejo commit SHA
+- **WHEN** the workflow prepares to build
+- **THEN** it MUST fetch Forgejo `master` and require the dispatch input, checked-out commit, and fetched Forgejo `master` commit to be the same full SHA
+- **AND** a missing, abbreviated, malformed, stale, or mismatched SHA MUST fail before build, service access, traffic mutation, or paid probe
+- **AND** the executable entry point MUST complete these checks before it calls top-level `run_rollout`
+
+#### Scenario: Bind a local rollout to clean Forgejo master
+
+- **WHEN** a local deployment entry point is invoked
+- **THEN** it MUST fetch Forgejo `origin/master` and require a clean worktree whose `HEAD` exactly equals that fetched full SHA
+- **AND** it MUST fail before build, service access, traffic mutation, or paid probe when either condition is false
+- **AND** the executable entry point MUST complete both checks before it calls top-level `run_rollout`
+
+#### Scenario: Delegate every deployment through one controller
+
+- **GIVEN** the bounded controller is still prospective in Phase 1
+- **WHEN** production entry-point contracts are evaluated
+- **THEN** `scripts/deploy.sh` MUST be the production entry point and delegate the complete operation to `run_rollout`
+- **AND** GitHub manual dispatch MUST invoke only `scripts/deploy.sh` after full-SHA verification rather than build, mutate traffic, or run probes itself
+- **AND** `cloudbuild.yaml` MUST be build-only or delegate to `run_rollout`
+- **AND** Cloud Build MUST NOT independently mutate Cloud Run traffic, deploy a service, or issue a paid council probe
+- **AND** these SHALL remain RED prospective contracts until production implementation is explicitly authorized
+
+### Requirement: Exact bounded paid-attempt state machine
+
+The prospective top-level `run_rollout` controller SHALL own the complete rollout sequence, its five expected paid attempts, and the six-attempt absolute bound. No caller SHALL pass, replace, or reorder an attempt plan.
+
+#### Scenario: Controller owns the immutable sequence
+
+- **WHEN** any approved deployment entry point invokes `run_rollout`
+- **THEN** the controller MUST execute benchmark → lock → build → prior capture/stream → shadow deploy/health → shadow sync/stream → 10% → planned restore → restarted 10% → 50% → authoritative 100% convergence → strict approved production health verification → final sync/stream → terminal cleanup/verification → durable retention obligation → mutation disarm → lock release
+- **AND** benchmark verification MUST precede lock acquisition
+- **AND** lock acquisition MUST precede build and every Cloud Run service access
+- **AND** the public controller interface MUST NOT accept an attempt sequence
+
+#### Scenario: Execute the five expected attempts
+
+- **GIVEN** the immutable benchmark and free identity gates pass
+- **WHEN** the rollout succeeds without infrastructure retry
+- **THEN** paid attempts MUST occur exactly in order as `prior-stream`, `shadow-sync`, `shadow-stream`, `final-sync`, and `final-stream`
+- **AND** no paid attempt SHALL occur at rehearsal 10%, planned rehearsal restoration, restarted 10%, or 50%
+- **AND** each attempt MUST create `rollout-evidence/<rollout-id>/attempts/NNNN-started.json` before its network request and separately create `NNNN-completed.json` after classification
+- **AND** both objects MUST be immutable generation-match `0` creates and MUST never be updated
+- **AND** each started record's exact content-free fields MUST be `rollout_id`, `stage`, `surface`, `url_sha256`, `attempt_number`, optional `retry_of`, `paid_gate_state`, and `classification: started`
+- **AND** its completed record MUST repeat and exactly match that started record's `rollout_id`, `attempt_number`, `stage`, `surface`, `url_sha256`, optional `retry_of` presence and value, and `paid_gate_state`
+- **AND** the completed `classification` MUST be exactly one bounded outcome from `succeeded`, `http_429`, `http_503`, `timeout`, `connection_reset`, `objective`, `instruction`, `factual`, `evaluator_format`, `schema`, `content`, `fallback`, `route`, `policy`, `usage`, `pricing`, `identity`, `absolute_slo`, or `semantic_unknown`
+- **AND** typed smoke semantic failures MUST retain their actual bounded category; an unrecognized semantic failure MUST become `semantic_unknown` and MUST never default to `objective`
+- **AND** `url_sha256` MUST identify the exact URL without storing the URL, and no prompt, response, content, secret, PHI, raw exception, or raw error SHALL be stored
+- **AND** a started attempt MUST count after process crash even when no completion exists
+
+#### Scenario: Refuse automatic crash recovery
+
+- **GIVEN** a generation-0 deployment lock already exists, including a stale lock left by an interrupted rollout
+- **WHEN** a normal controller run attempts lock acquisition
+- **THEN** it MUST return explicit `stale_lock_recovery_required` status
+- **AND** it MUST NOT steal, expire, replace, or release the existing lock
+- **AND** it MUST NOT read or mutate the service, build an image, inspect an attempt ledger, or issue a paid request
+- **AND** recovery MUST require a separate bounded manual procedure with durable snapshot and owned-state proof
+
+#### Scenario: Retry one classified infrastructure failure
+
+- **GIVEN** a paid attempt fails with HTTP 429, HTTP 503, timeout, or connection reset
+- **WHEN** no infrastructure retry has yet been consumed
+- **THEN** the rollout MAY retry once at the same stage, exact URL, and API surface
+- **AND** the global ledger SHALL contain no more than six attempts
+- **AND** an objective, instruction, factual, evaluator-format, schema/content, fallback, route, policy, usage, pricing, identity, absolute-SLO, unknown, or other semantic failure MUST NOT be retried
+- **AND** any second infrastructure failure MUST be terminal
+- **AND** real sync and stream HTTP adapters MUST raise one typed, content-free infrastructure exception for actual HTTP 429, HTTP 503, timeout, and connection reset outcomes
+- **AND** the production boundary MUST preserve that exact classification for the controller while all schema, semantic, objective, route, fallback, policy, usage, and pricing failures remain non-retryable
+
+#### Scenario: Restore during the planned rehearsal
+
+- **GIVEN** the planned 10% rollback rehearsal has started
+- **WHEN** exact prior state is being restored and verified
+- **THEN** no paid attempt SHALL start during that restoration
+- **AND** successful restoration MUST leave the paid gate available for the separately approved final sync and stream attempts
+
+#### Scenario: Permanently close paid gate on terminal rollback
+
+- **GIVEN** a terminal failure, signal, timeout, or guarded failure exit requires rollback
+- **WHEN** terminal rollback starts
+- **THEN** the rollout MUST atomically and permanently close the paid gate before any restore mutation
+- **AND** no paid attempt SHALL start during or after terminal rollback
+
+### Requirement: Cooperative lock and optimistic traffic concurrency
+
+The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL mutate traffic only with Cloud Run v2 optimistic concurrency.
+
+#### Scenario: Own and release the deployment lock
+
+- **WHEN** the rollout acquires `gs://tke-phi-privacy-engine_cloudbuild/rollout-locks/tke-phi-privacy-engine/us-central1/llm-council.lock`
+- **THEN** acquisition MUST use `--if-generation-match=0`
+- **AND** owner identity and the resulting object generation MUST be recorded
+- **AND** release MUST conditionally delete only the recorded generation
+- **AND** an existing or stale lock MUST NOT be stolen or auto-expired
+- **AND** an existing lock MUST produce explicit `stale_lock_recovery_required` status for manual recovery
+- **AND** malformed owner content, a missing generation, or an ownership mismatch MUST be rejected
+- **AND** acquisition MUST complete before any Cloud Run service read, build, deploy, or traffic mutation
+
+#### Scenario: Require a safe prior state
+
+- **GIVEN** the lock is held
+- **WHEN** initial Cloud Run v2 state is captured
+- **THEN** service UID, generation, observed generation, etag, exact canonical traffic/tags, prior image, and prior health identity MUST be recorded
+- **AND** initial `observedGeneration` MUST equal `generation` and `reconciling` MUST be false
+- **AND** exactly one resolved prior revision MUST own 100% traffic
+- **AND** malformed UID, etag, generation, observed generation, ownership, or any other prior traffic shape MUST stop before deploy
+
+#### Scenario: Patch and converge traffic
+
+- **GIVEN** the expected service etag and canonical prior state
+- **WHEN** traffic changes
+- **THEN** the rollout MUST PATCH only the Cloud Run v2 Service `traffic` field with that etag
+- **AND** it MUST poll the returned long-running operation to completion and then poll Service until `observedGeneration == generation`, `reconciling == false`, and canonical `trafficStatuses` exactly match
+- **AND** UID MUST remain stable, generation MUST progress as expected, and each accepted transition MUST expose a fresh etag
+- **AND** requested canonical traffic and tags MUST equal both accepted Service `traffic` and URI-normalized `trafficStatuses`
+- **AND** any malformed or error long-running operation, stale or unexpected UID, generation, observed generation, reconciling state, unchanged etag, ownership, canonical traffic, canonical tag, or `trafficStatuses` transition MUST independently fail closed
+- **AND** every PATCH body MUST preserve all unrelated traffic tags and remove only the rollout-owned shadow tag when required
+- **AND** an omitted long-running-operation `done` field MUST mean pending/false, while an explicitly present nonboolean `done` value MUST fail closed
+
+### Requirement: Authoritative traffic and diagnostic health
+
+Cloud Run control-plane state SHALL be authoritative for percentages while health samples diagnose reachable identity.
+
+#### Scenario: Diagnose a partial stage
+
+- **GIVEN** authoritative control-plane traffic is at 10% or 50%
+- **WHEN** service health is sampled
+- **THEN** every sample MUST match either the prior or candidate identity
+- **AND** observing only one of those known identities SHALL be allowed
+- **AND** identity counts MUST NOT be treated as measured traffic percentages
+
+#### Scenario: Require candidate at 100 percent
+
+- **GIVEN** authoritative control-plane traffic is at 100% candidate
+- **WHEN** service health is sampled
+- **THEN** every sample MUST match the candidate identity
+
+#### Scenario: Strictly bind candidate and final health to approval
+
+- **GIVEN** the candidate image was built from one approved full Forgejo SHA and resolved to one exact immutable image digest
+- **WHEN** shadow candidate health or final production service health is accepted
+- **THEN** the existing strict deploy-health verifier MUST independently require that approved full SHA and exact image digest
+- **AND** it MUST verify the exact roster, registry digest, projection digests, ordered routes and roles, and strict Vertex Fable policy
+- **AND** a health identity captured from the candidate itself MUST NOT serve as authority for either acceptance
+- **AND** final service health MUST rerun the strict verification against the same approved values rather than trusting the prior shadow result
+- **AND** final production service health MUST pass only after authoritative 100% convergence and before either final sync or final stream paid request
+
+### Requirement: Bounded staged observations
+
+The restarted 10% and 50% stages SHALL each receive a five-minute free observation window.
+
+#### Scenario: Record revision telemetry
+
+- **WHEN** either five-minute observation runs
+- **THEN** revision-attributed request count, 5xx, and latency telemetry MUST be recorded
+- **AND** zero organic requests MUST be reported as `no_evidence`, not success or failure
+- **AND** telemetry and telemetry-query failures SHALL be diagnostic only and MUST NOT implicitly pass or fail a promotion gate
+- **AND** control-plane convergence and synthetic health checks MUST still pass
+
+### Requirement: Deadline and signal-safe exact rollback
+
+Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHALL have a separate five-minute grace.
+
+#### Scenario: Propagate remaining promotion and rollback budget
+
+- **GIVEN** an injected monotonic clock established one 1800-second promotion deadline
+- **WHEN** token acquisition, REST access, GCS evidence access, build, deploy, operation polling, service convergence, observation, health, paid probes, telemetry, lock operations, retention work, or sleep starts
+- **THEN** it MUST receive no more than the remaining monotonic promotion budget
+- **AND** every repeated long-running-operation and Service poll MUST recalculate the remaining budget, so each later poll receives a strictly reduced value as the injected clock advances
+- **AND** every gcloud subprocess, secret lookup, HTTP request, and sleep MUST receive a timeout no greater than the then-remaining budget
+- **AND** multi-step production adapters MUST reduce one shared adapter budget between their internal operations rather than reuse the original timeout
+- **AND** the independent rollback grace MUST be propagated under the same rules to rollback token, REST, poll, health, lock, subprocess, and sleep operations
+- **AND** exhaustion MUST prevent every subsequent build, deploy, service access, traffic transition, observation, health check, and paid request
+- **AND** every outer execution timeout MUST exceed 2100 seconds
+
+#### Scenario: Roll back on every terminal path
+
+- **GIVEN** mutation has begun and final verification is incomplete
+- **WHEN** `ERR`, `TERM`, `INT`, `HUP`, or guarded `EXIT` occurs
+- **THEN** rollback MUST remain armed and receive up to five minutes independent of the promotion deadline
+- **AND** proof MUST require exact canonical traffic/tag equality, exact prior health identity, stable UID, converged generation, and fresh etag progression
+- **AND** canonical traffic, canonical tags, URI-normalized `trafficStatuses`, prior health identity, UID, observed/generation equality, `reconciling == false`, fresh etag, successful LRO shape, and continued lock ownership MUST each be independently necessary proof dimensions
+- **AND** independent negative proof MUST reject UID replacement; etags that fail to progress from either snapshot or mutation-owner state; generation rollback or observed-generation mismatch; reconciliation still in progress; and malformed or error LRO completion
+- **AND** the owned lock MUST remain held until all rollback proof succeeds
+- **AND** rollback MUST issue no paid council request
+- **AND** the rollout MUST stop rather than begin a second deployment attempt
+
+#### Scenario: Exit after lock acquisition but before owned mutation
+
+- **GIVEN** the controller owns the recorded lock generation but has not begun any owned service mutation
+- **WHEN** `TERM`, `INT`, `HUP`, `ERR`, promotion timeout, or guarded failure `EXIT` occurs before snapshot or after snapshot but before mutation
+- **THEN** it MUST generation-conditionally release only its recorded lock generation
+- **AND** it MUST NOT read service state solely for cleanup, PATCH traffic, run rollback, or issue a paid request
+
+#### Scenario: Restore exactly on signal or promotion timeout
+
+- **GIVEN** an exact canonical snapshot and owned lock were captured before mutation
+- **WHEN** `TERM`, `INT`, `HUP`, `ERR`, promotion timeout, or guarded failure `EXIT` interrupts any mutated state
+- **THEN** terminal rollback MUST permanently close the paid gate, PATCH the exact snapshot with optimistic concurrency, and prove canonical traffic/tag equality plus prior identity within rollback grace
+- **AND** rollback operation polling, service convergence, and health proof MUST each receive only the remaining independent 300-second rollback grace
+- **AND** if the promotion deadline expires after one real controller poll returns but before its next poll, the controller MUST issue no next promotion poll or operation and terminal rollback MUST begin with a fresh independent grace
+- **AND** signal and timeout handling MUST not weaken etag, UID, generation, or lock-generation checks
+- **AND** immediately before rollback PATCH, current UID, exact canonical state, etag, generation, convergence, and rollout-owned last accepted state MUST all prove mutation ownership
+- **AND** each successful rollout mutation MUST replace the tracked rollout-owned converged state used by that next ownership check
+- **AND** any unexpected concurrent transition MUST refuse rollback mutation rather than overwrite it
+
+#### Scenario: Recover an ambiguous shadow deploy outcome without guessing ownership
+
+- **GIVEN** exact pre-deploy Service state and a rollout-specific expected revision name, suffix, approved SHA, and immutable image digest were persisted before deploy
+- **WHEN** deploy times out or errors after server mutation, or deploy succeeds but the immediate Service read fails
+- **THEN** terminal rollback MUST use only its independent rollback grace to retry Service GET
+- **AND** an exact same-UID, one-generation-advanced, fresh-etag, nonconverged/reconciling state whose latest-created revision, template revision, image, approved revision environment value, image-digest environment value, expected suffix, and unchanged prior traffic/tags/statuses all match the rollout intent MUST be treated only as an intermediate state and polled again within rollback grace
+- **AND** ownership MUST be established only after that exact state converges with the expected latest-created and latest-ready revision, `observedGeneration == generation`, and `reconciling == false`
+- **AND** absent, malformed, contradictory, or externally transitioned evidence MUST retain the lock and refuse mutation rather than claim or overwrite ambiguous external state
+- **AND** rollback-grace exhaustion before exact owned convergence MUST return `recovery_required`, retain the lock, and perform no rollback mutation or paid request
+- **AND** after exact ownership is established, rollback MUST restore and prove the prior snapshot under the normal terminal rollback contract
+
+#### Scenario: Poll rollback until exact convergence
+
+- **GIVEN** rollback PATCH returned a valid pending or completed long-running operation
+- **WHEN** operation or Service reads show exact rollout-owned intermediate reconciliation
+- **THEN** rollback MUST repeatedly poll both the long-running operation and Service as applicable until generation equals observed generation, `reconciling` is false, exact snapshot traffic/tags/statuses are present, prior identity passes, and every other rollback proof dimension passes
+- **AND** valid intermediate reconciling states MUST continue polling rather than fail immediately
+- **AND** rollback-grace exhaustion MUST fail closed, retain the lock, and perform no paid request
+
+### Requirement: Exact terminal cleanup and retention
+
+Success SHALL preserve state not owned by the rollout and retain rollback capacity.
+
+#### Scenario: Complete successful rollout
+
+- **GIVEN** final sync and stream probes pass through the production URL
+- **WHEN** cleanup completes
+- **THEN** candidate MUST own 100% untagged traffic with exact candidate identity and digests
+- **AND** only the rollout-created shadow tag MUST be removed
+- **AND** unrelated tags MUST be preserved
+- **AND** service generation MUST be converged before traffic rollback mutation is disarmed
+- **AND** terminal ordering MUST be final canonical/candidate verification, durable retention obligation creation, rollback-mutation disarm, generation-conditioned owned-lock release, then guarded exit
+- **AND** guarded exit MUST perform no service or traffic mutation after lock release
+- **AND** the prior revision MUST be retained for at least 24 hours without any revision delete
+- **AND** a durable content-free GCS retention obligation MUST record the rollout ID, prior revision, and `retain_until` timestamp derived no earlier than the injected current UTC clock plus 24 hours
+- **AND** deployment runtime MUST NOT execute `bd` or create a Bead
+- **AND** after successful deployment, the orchestrator MUST create the time-blocked follow-up Bead from the durable GCS obligation; it SHALL NOT block deployment success
+
+#### Scenario: Complete failed rollout
+
+- **WHEN** exact rollback proof passes after a failure
+- **THEN** the rollout-created shadow tag MUST be absent
+- **AND** unrelated prior tags and canonical traffic MUST exactly match the snapshot
+- **AND** the prior revision and evidence required for investigation MUST be retained
+- **AND** no rollout path SHALL delete a revision
+- **AND** no second rollout SHALL start without new explicit operator instruction
+
+### Requirement: Complete shared-checkout landing
+
+Completion SHALL be claimed only from a validated checkout synchronized with the authoritative remote.
+
+#### Scenario: Claim completion
+
+- **GIVEN** Forgejo has merged and GitHub has mirrored the release without auto-deployment
 - **WHEN** completion is claimed
-- **THEN** the user's shared checkout matches the authoritative remote
-- **AND** generated registry files and promoted IDs exist in that checkout
-- **AND** validation has run from the shared checkout
+- **THEN** the user's shared checkout MUST match the authoritative remote
+- **AND** generated registry files and promoted IDs MUST exist in that checkout
+- **AND** validation MUST have run from the shared checkout

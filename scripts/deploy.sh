@@ -1,44 +1,31 @@
 #!/usr/bin/env bash
-# Manual deploy to Cloud Run (bypasses GitHub Actions)
-# Usage: ./scripts/deploy.sh
+# Sole local production entry point for the bounded rollout.
 set -euo pipefail
 
-PROJECT="tke-phi-privacy-engine"
-REGION="us-central1"
-SERVICE="llm-council"
-REGISTRY="us-central1-docker.pkg.dev/${PROJECT}/llm-council/llm-council"
-TAG=$(git rev-parse --short HEAD)
-DEPLOY_REVISION=$(git rev-parse HEAD)
+mode="${DEPLOY_ENTRYPOINT_MODE:-local}"
+[[ -z "$(git status --porcelain)" ]] || { printf '%s\n' 'Refusing dirty worktree' >&2; exit 2; }
 
-echo "Deploying llm-council @ ${TAG} to Cloud Run..."
+if [[ "${mode}" == github ]]; then
+  git fetch forgejo master
+  remote_ref=forgejo/master
+else
+  if git fetch forgejo master; then remote_ref=forgejo/master; else git fetch origin master; remote_ref=origin/master; fi
+fi
 
-# Build remotely on Cloud Build (builds amd64 image)
-gcloud builds submit \
-  --project="${PROJECT}" \
-  --region="${REGION}" \
-  --tag="${REGISTRY}:${TAG}" \
-  --quiet
+head_sha=$(git rev-parse HEAD)
+forgejo_sha=$(git rev-parse "${remote_ref}")
+[[ "${head_sha}" =~ ^[0-9a-f]{40}$ && "${head_sha}" == "${forgejo_sha}" ]] || {
+  printf '%s\n' 'Refusing source that is not exact Forgejo master' >&2; exit 2;
+}
 
-DIGEST=$(gcloud artifacts docker images describe "${REGISTRY}:${TAG}" \
-  --project="${PROJECT}" --format='value(image_summary.digest)')
-IMAGE_DIGEST="${REGISTRY}@${DIGEST}"
-ROLLOUT_OBSERVATION_SECONDS="${ROLLOUT_OBSERVATION_SECONDS:-30}"
-ROLLOUT_HEALTH_SAMPLES="${ROLLOUT_HEALTH_SAMPLES:-1}"
-ROLLOUT_SERVICE_HEALTH_SAMPLES="${ROLLOUT_SERVICE_HEALTH_SAMPLES:-50}"
-ROLLOUT_SMOKE_SAMPLES="${ROLLOUT_SMOKE_SAMPLES:-5}"
-ROLLOUT_STREAM_SMOKE_SAMPLES="${ROLLOUT_STREAM_SMOKE_SAMPLES:-5}"
-COUNCIL_MAX_LATENCY_SECONDS="${COUNCIL_MAX_LATENCY_SECONDS:-480}"
-COUNCIL_MAX_TOKENS="${COUNCIL_MAX_TOKENS:-60000}"
-COUNCIL_MAX_COST_USD="${COUNCIL_MAX_COST_USD:-1.50}"
-COUNCIL_MAX_ERROR_RATE="${COUNCIL_MAX_ERROR_RATE:-0}"
-COUNCIL_MAX_QUALITY_DROP="${COUNCIL_MAX_QUALITY_DROP:-3}"
-COUNCIL_MAX_LATENCY_RATIO="${COUNCIL_MAX_LATENCY_RATIO:-1.20}"
-COUNCIL_MAX_COST_RATIO="${COUNCIL_MAX_COST_RATIO:-1.25}"
-COUNCIL_MIN_ROUTE_SUCCESS="${COUNCIL_MIN_ROUTE_SUCCESS:-0.99}"
-export PROJECT REGION SERVICE IMAGE_DIGEST DEPLOY_REVISION ROLLOUT_OBSERVATION_SECONDS
-export ROLLOUT_HEALTH_SAMPLES ROLLOUT_SERVICE_HEALTH_SAMPLES ROLLOUT_SMOKE_SAMPLES ROLLOUT_STREAM_SMOKE_SAMPLES
-export COUNCIL_MAX_LATENCY_SECONDS
-export COUNCIL_MAX_TOKENS COUNCIL_MAX_COST_USD COUNCIL_MAX_ERROR_RATE COUNCIL_MAX_QUALITY_DROP
-export COUNCIL_MAX_LATENCY_RATIO COUNCIL_MAX_COST_RATIO COUNCIL_MIN_ROUTE_SUCCESS
-scripts/cloud_run_semantic_rollout.sh
-echo "Deployed immutable image digest"
+if [[ "${mode}" == github ]]; then
+  approved="${APPROVED_FORGEJO_SHA:-}"
+  [[ "${approved}" =~ ^[0-9a-f]{40}$ && "${approved}" == "${head_sha}" && "${GITHUB_SHA:-}" == "${head_sha}" ]] || {
+    printf '%s\n' 'Refusing unapproved GitHub mirror SHA' >&2; exit 2;
+  }
+else
+  approved="${head_sha}"
+fi
+
+export APPROVED_FORGEJO_SHA="${approved}"
+exec python -m scripts.bounded_rollout --approved-sha "${approved}"

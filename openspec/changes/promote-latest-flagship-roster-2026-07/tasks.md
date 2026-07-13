@@ -9,5 +9,15 @@
 - [x] Regenerate backend, frontend, and MCP projections and update documentation/deployment checks.
 - [x] Run full local tests, lint, builds, registry drift, OpenSpec strict validation, and architecture/security review.
 - [x] Run exact-route no-fallback probes and paired/public benchmark plus full-council seat-ablation evidence.
-- [ ] Deploy zero-traffic shadow, 10% and 50% canaries, rehearse rollback, and promote production with pinned digests.
+- [x] Correct the approved prospective deployment contract for manual ownership, honest benchmark/image binding, the five-call/six-attempt bound, lock/etag concurrency, exact rollback, deadlines, observations, and terminal cleanup.
+- [x] Correct RED tests after Oracle phase review: separate planned restoration from terminal rollback, replace paired/eight-call/clear-tags expectations, and exercise injected safety boundaries.
+- [x] Specify immutable generation-0 GCS attempt objects, full approved Forgejo SHA binding, diagnostic-only telemetry, terminal disarm/release ordering, and durable retention evidence.
+- [x] Finalize contracts for controller-owned sequencing, stale-lock manual-recovery refusal, entry-point delegation, realistic Cloud Run v2 operation convergence, monotonic budget propagation, exact rollback proof, strict initial-state refusal, and clock-derived retention.
+- [x] Close final Phase 1 gaps for executable pre-controller source binding, explicit stale-lock recovery-required refusal, independent v2/LRO/rollback dimensions, top-level retention ordering, repeated decreasing poll budgets, deadline exhaustion, and independent rollback grace.
+- [x] Close the three Oracle P1 RED gaps: exact repeated completion metadata with per-field mismatch negatives, independent rollback-proof negatives for control-plane ownership/LRO dimensions, and actual between-poll deadline expiry with fresh rollback grace.
+- [x] Replace the legacy paired/multi-sample rollout with the exact five-call wiring-probe state machine and immutable content-free pre-request attempt ledger.
+- [x] Make GitHub deploy manual-only with approved full-SHA binding; add the GCS generation-0 lock, prior-state precondition, Cloud Run v2 etag PATCH/convergence, monotonic deadline, signal-safe rollback grace, diagnostic telemetry observations, and exact terminal cleanup.
+- [x] Create the durable 24-hour GCS retention obligation without runtime `bd` execution; orchestrator creates the follow-up verification Bead after success; do not delete the prior revision.
+- [x] Close final Oracle P1s for ambiguous deploy ownership recovery, repeated rollback convergence, and exact bounded smoke semantic classifications.
+- [ ] Deploy one zero-traffic shadow, run bounded 10%/rollback/10%/50%/100% progression, and stop after the first failure or verified success.
 - [ ] Land Forgejo PR after CI, mirror GitHub, update shared checkout, archive this change, close Bead, and store non-sensitive memory.
