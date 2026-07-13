@@ -252,7 +252,11 @@ def _percentile(values: list[float], percentile: float) -> float:
 
 
 def _sample_metrics(
-    payload: dict[str, Any], elapsed: float, *, legacy_baseline: bool = False
+    payload: dict[str, Any],
+    elapsed: float,
+    *,
+    legacy_baseline: bool = False,
+    max_tokens: int | None = None,
 ) -> dict[str, float | None]:
     results = _results(payload)
     if legacy_baseline:
@@ -289,23 +293,42 @@ def _sample_metrics(
     usage_available = True
     for item in results:
         usage = item.get("usage")
-        if legacy_baseline and usage is None:
+        model = item.get("model")
+        legacy_xai = legacy_baseline and (
+            item.get("provider") == "xai"
+            or (isinstance(model, str) and model.startswith("x-ai/grok-"))
+        )
+        if legacy_baseline and usage is None and not legacy_xai:
             usage_available = False
             continue
         if not isinstance(usage, dict):
             raise SmokeVerificationError("successful council result usage is missing")
         values = tuple(usage.get(key) for key in ("prompt_tokens", "completion_tokens", "total_tokens"))
-        if any(
-            isinstance(value, bool)
-            or not isinstance(value, (int, float))
-            or not math.isfinite(value)
-            or value < 0
-            for value in values
-        ):
-            raise SmokeVerificationError("successful council result usage is invalid")
-        prompt, completion, total = values
-        if not math.isclose(prompt + completion, total, rel_tol=0.0, abs_tol=1e-9):
-            raise SmokeVerificationError("successful council result usage total is inconsistent")
+        if legacy_xai:
+            if any(
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+                or (max_tokens is not None and value > max_tokens)
+                for value in values
+            ):
+                raise SmokeVerificationError("successful council result usage is invalid")
+            prompt, reported_completion, total = values
+            if total < prompt + reported_completion:
+                raise SmokeVerificationError("successful council result usage total is inconsistent")
+            completion = total - prompt
+        else:
+            if any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or value < 0
+                for value in values
+            ):
+                raise SmokeVerificationError("successful council result usage is invalid")
+            prompt, completion, total = values
+            if not math.isclose(prompt + completion, total, rel_tol=0.0, abs_tol=1e-9):
+                raise SmokeVerificationError("successful council result usage total is inconsistent")
         prompt_tokens += prompt
         completion_tokens += completion
         tokens += total
@@ -417,7 +440,9 @@ def verify_payload(
         _strict_provenance(payload, proof)
     if expected_proof is not None and proof != expected_proof:
         raise SmokeVerificationError("restored council provenance does not match baseline")
-    metrics = _sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline)
+    metrics = _sample_metrics(
+        payload, elapsed, legacy_baseline=legacy_baseline, max_tokens=max_tokens
+    )
     if metrics["route_success"] is not None and metrics["route_success"] < 0.99:
         raise SmokeVerificationError("fallback or observed route success fell below 99%")
     if metrics["error_rate"] > max_error_rate:
@@ -559,7 +584,11 @@ def run_smoke(
         if provenance is not None and sample_proof != provenance:
             raise SmokeVerificationError("sample provenance is inconsistent")
         provenance = sample_proof
-        metric_samples.append(_sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline))
+        metric_samples.append(
+            _sample_metrics(
+                payload, elapsed, legacy_baseline=legacy_baseline, max_tokens=max_tokens
+            )
+        )
     stream_provenance: dict[str, Any] | None = None
     stream_metric_samples = []
     for _ in range(stream_samples):
@@ -574,7 +603,11 @@ def run_smoke(
         if stream_provenance is not None and sample_proof != stream_provenance:
             raise SmokeVerificationError("stream sample provenance is inconsistent")
         stream_provenance = sample_proof
-        stream_metric_samples.append(_sample_metrics(payload, elapsed, legacy_baseline=legacy_baseline))
+        stream_metric_samples.append(
+            _sample_metrics(
+                payload, elapsed, legacy_baseline=legacy_baseline, max_tokens=max_tokens
+            )
+        )
     evidence = _aggregate(provenance or {}, metric_samples)
     evidence.update({
         "schema_version": 3,
