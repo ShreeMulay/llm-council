@@ -7,6 +7,7 @@ import pytest
 
 from backend.model_dispatcher import DispatchRequest, ModelDispatcher
 from backend.model_registry import load_registry
+from backend.provider_errors import XAIInvalidUsageError
 
 MESSAGES = [{"role": "user", "content": "hello"}]
 
@@ -492,6 +493,41 @@ async def test_captured_no_fallback_operation_stays_single_route():
     operation = dispatcher.capture(DispatchRequest("legacy/model", MESSAGES, provider="openrouter", allow_fallbacks=False))
     assert len(operation.routes) == 1
     assert replace(operation.settings, temperature=0.1).temperature == 0.1
+
+
+@pytest.mark.asyncio
+async def test_invalid_xai_usage_is_bounded_terminal_failure_without_fallback():
+    async def xai(*_args, **_kwargs):
+        raise XAIInvalidUsageError
+
+    async def openrouter(*_args, **_kwargs):
+        raise AssertionError("invalid usage must not fall back")
+
+    dispatcher = ModelDispatcher(
+        adapters={"xai": xai, "openrouter": openrouter}, sleep=lambda _: _done()
+    )
+    operation = dispatcher.capture(
+        DispatchRequest(
+            "x-ai/grok-4.5",
+            MESSAGES,
+            max_retries=1,
+            backoff_base=0,
+            allow_declared_route_failover=True,
+        )
+    )
+
+    result = await dispatcher.execute(operation)
+
+    assert result["terminal_status"] == "failed"
+    assert result["failure_reason"] == "invalid_usage"
+    assert result["error"] == {
+        "code": "invalid_usage",
+        "message": "Provider returned invalid usage metadata",
+    }
+    assert result["attempted_route_ids"] == ["xai:x-ai/grok-4.5"]
+    assert result["fallback_used"] is False
+    assert len(result["attempts"]) == 1
+    assert result["attempts"][0]["reason"] == "invalid_usage"
 
 
 async def _done():

@@ -1,10 +1,12 @@
 """xAI API client for direct queries to Grok models."""
 
 import logging
+from collections.abc import Mapping
 from typing import Any
 
 import httpx
 
+from .provider_errors import XAIInvalidUsageError
 from .secrets import GROK_API_KEY
 
 logger = logging.getLogger("llm-council.xai")
@@ -29,6 +31,31 @@ XAI_MODEL_MAP = {
 def get_xai_model_id(council_model_id: str) -> str:
     """Convert council model ID to xAI's model ID."""
     return XAI_MODEL_MAP.get(council_model_id, council_model_id.replace("x-ai/", ""))
+
+
+def normalize_xai_usage(usage: object) -> dict[str, Any]:
+    """Validate xAI usage and include hidden reasoning in billed completion."""
+    if not isinstance(usage, Mapping):
+        raise XAIInvalidUsageError
+
+    required = ("prompt_tokens", "completion_tokens", "total_tokens")
+    if any(key not in usage for key in required):
+        raise XAIInvalidUsageError
+
+    for key in required:
+        value = usage[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+            raise XAIInvalidUsageError
+
+    prompt_tokens = usage["prompt_tokens"]
+    completion_tokens = usage["completion_tokens"]
+    total_tokens = usage["total_tokens"]
+    if total_tokens < prompt_tokens + completion_tokens:
+        raise XAIInvalidUsageError
+
+    normalized = dict(usage)
+    normalized["completion_tokens"] = total_tokens - prompt_tokens
+    return normalized
 
 
 async def query_xai_model(
@@ -70,18 +97,26 @@ async def query_xai_model(
 
             return {
                 "content": data["choices"][0]["message"]["content"],
-                "usage": data.get("usage", {}),
+                "usage": normalize_xai_usage(data.get("usage")),
                 "model": model_id,
                 "provider": "xai",
             }
+        except XAIInvalidUsageError:
+            logger.error("xAI request failed category=invalid_usage model=%s", model_id)
+            raise
         except httpx.HTTPStatusError as e:
             logger.error(
-                "HTTP error querying xAI %s: %s - %s",
-                model_id,
+                "xAI request failed category=http_status status=%s model=%s",
                 e.response.status_code,
-                e.response.text[:200],
+                model_id,
             )
             return None
-        except Exception as e:
-            logger.error("Error querying xAI %s: %s", model_id, e)
+        except httpx.TimeoutException:
+            logger.error("xAI request failed category=timeout model=%s", model_id)
+            return None
+        except httpx.RequestError:
+            logger.error("xAI request failed category=transport_error model=%s", model_id)
+            return None
+        except Exception:
+            logger.error("xAI request failed category=unexpected_error model=%s", model_id)
             return None
