@@ -31,7 +31,7 @@ class CostBreakdown:
 def validate_usage(
     usage: object, *, allow_missing: bool = False
 ) -> dict[str, int] | None:
-    """Validate complete provider token usage without coercing invalid values."""
+    """Validate and conservatively normalize complete provider token usage."""
     if usage is None or (isinstance(usage, Mapping) and not usage):
         if allow_missing:
             return None
@@ -56,10 +56,36 @@ def validate_usage(
         ):
             raise ValueError(f"provider usage {key} must be a finite non-negative integer")
         validated[key] = int(value)
-    if validated["total_tokens"] != (
-        validated["prompt_tokens"] + validated["completion_tokens"]
-    ):
+
+    completion_details = usage.get("completion_tokens_details")
+    reasoning_tokens = 0
+    if completion_details is not None:
+        if not isinstance(completion_details, Mapping):
+            raise ValueError("provider usage completion_tokens_details must be a mapping")
+        if "reasoning_tokens" in completion_details:
+            reasoning_value = completion_details["reasoning_tokens"]
+            if (
+                isinstance(reasoning_value, bool)
+                or not isinstance(reasoning_value, Real)
+                or not math.isfinite(float(reasoning_value))
+                or reasoning_value < 0
+                or int(reasoning_value) != reasoning_value
+            ):
+                raise ValueError(
+                    "provider usage reasoning_tokens must be a finite non-negative integer"
+                )
+            reasoning_tokens = int(reasoning_value)
+
+    prompt_tokens = validated["prompt_tokens"]
+    reported_completion_tokens = validated["completion_tokens"]
+    total_tokens = validated["total_tokens"]
+    reported_sum = prompt_tokens + reported_completion_tokens
+    if total_tokens not in (reported_sum, reported_sum + reasoning_tokens):
         raise ValueError("provider usage total_tokens is inconsistent")
+
+    # Some providers exclude reasoning from completion_tokens while others include it.
+    # Billing total minus prompt is conservative in both representations.
+    validated["completion_tokens"] = total_tokens - prompt_tokens
     return validated
 
 

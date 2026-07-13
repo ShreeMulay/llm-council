@@ -259,6 +259,62 @@ def test_cost_math_uses_pricing_snapshot():
     assert cost.pricing_captured_at == "2026-06-20T00:00:00Z"
 
 
+@pytest.mark.parametrize(
+    ("usage", "effective_completion_tokens"),
+    [
+        (
+            {
+                "prompt_tokens": 195,
+                "completion_tokens": 2,
+                "total_tokens": 331,
+                "completion_tokens_details": {"reasoning_tokens": 134},
+            },
+            136,
+        ),
+        (
+            {
+                "prompt_tokens": 210,
+                "completion_tokens": 1,
+                "total_tokens": 232,
+                "completion_tokens_details": {"reasoning_tokens": 21},
+            },
+            22,
+        ),
+        (
+            {
+                "prompt_tokens": 195,
+                "completion_tokens": 136,
+                "total_tokens": 331,
+                "completion_tokens_details": {"reasoning_tokens": 134},
+            },
+            136,
+        ),
+    ],
+    ids=["xai-grok", "xai-grok-4.5", "openrouter-reasoning-already-included"],
+)
+def test_reasoning_usage_normalizes_to_conservative_effective_completion(
+    usage, effective_completion_tokens
+):
+    pricing = PricingSnapshot(
+        input_per_million_usd=2.0,
+        output_per_million_usd=10.0,
+        source="test-price-card",
+        captured_at="2026-07-13T00:00:00Z",
+    )
+
+    validated = validate_usage(usage)
+    cost = compute_cost(usage, pricing)
+
+    assert validated == {
+        "prompt_tokens": usage["prompt_tokens"],
+        "completion_tokens": effective_completion_tokens,
+        "total_tokens": usage["total_tokens"],
+    }
+    assert cost.completion_tokens == effective_completion_tokens
+    assert cost.total_tokens == usage["total_tokens"]
+    assert cost.output_cost_usd == pytest.approx(effective_completion_tokens * 10.0 / 1_000_000)
+
+
 def test_deterministic_mock_run_writes_expected_artifacts(tmp_path: Path):
     config = BenchmarkRunConfig(
         mode="mock",
@@ -1333,11 +1389,42 @@ def test_token_limit_changes_manifest_and_budget_reservation(tmp_path: Path):
         {"prompt_tokens": 1, "total_tokens": 1},
         {"prompt_tokens": 1, "completion_tokens": 1},
         {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 3},
+        {
+            "prompt_tokens": 1,
+            "completion_tokens": 1,
+            "total_tokens": 4,
+            "completion_tokens_details": {"reasoning_tokens": 1},
+        },
     ],
 )
 def test_strict_usage_validation_rejects_every_invalid_form(usage):
     with pytest.raises(ValueError, match="provider usage"):
         validate_usage(usage)
+
+
+@pytest.mark.parametrize(
+    "completion_details",
+    [
+        True,
+        [],
+        {"reasoning_tokens": True},
+        {"reasoning_tokens": -1},
+        {"reasoning_tokens": float("nan")},
+        {"reasoning_tokens": float("inf")},
+        {"reasoning_tokens": "1"},
+        {"reasoning_tokens": None},
+    ],
+)
+def test_usage_validation_rejects_malformed_completion_details(completion_details):
+    with pytest.raises(ValueError, match="provider usage"):
+        validate_usage(
+            {
+                "prompt_tokens": 1,
+                "completion_tokens": 1,
+                "total_tokens": 2,
+                "completion_tokens_details": completion_details,
+            }
+        )
 
 
 @pytest.mark.asyncio

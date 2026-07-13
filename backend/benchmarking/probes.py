@@ -10,7 +10,7 @@ from .budget import BudgetGuard
 from .costs import validate_usage
 
 PROBE_MAX_TOKENS = 16
-PROBE_PROJECTED_COST_USD = 0.002
+PROBE_PROJECTED_COST_USD = 0.05
 
 
 @dataclass(frozen=True)
