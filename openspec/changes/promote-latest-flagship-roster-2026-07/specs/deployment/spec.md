@@ -58,9 +58,9 @@ The prospective top-level `run_rollout` controller SHALL own the complete rollou
 #### Scenario: Controller owns the immutable sequence
 
 - **WHEN** any approved deployment entry point invokes `run_rollout`
-- **THEN** the controller MUST execute benchmark → lock → build → prior capture/stream → shadow deploy/health → shadow sync/stream → 10% → planned restore → restarted 10% → 50% → authoritative 100% convergence → strict approved production health verification → final sync/stream → terminal cleanup/verification → durable retention obligation → mutation disarm → lock release
+- **THEN** the controller MUST execute benchmark → lock → prior snapshot validation → build → prior stream → shadow deploy/health → shadow sync/stream → 10% → planned restore → restarted 10% → 50% → authoritative 100% convergence → strict approved production health verification → final sync/stream → terminal cleanup/verification → durable retention obligation → mutation disarm → lock release
 - **AND** benchmark verification MUST precede lock acquisition
-- **AND** lock acquisition MUST precede build and every Cloud Run service access
+- **AND** lock acquisition MUST precede every Cloud Run service access and initial snapshot validation MUST precede build
 - **AND** the public controller interface MUST NOT accept an attempt sequence
 
 #### Scenario: Execute the five expected attempts
@@ -133,8 +133,10 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **WHEN** initial Cloud Run v2 state is captured
 - **THEN** service UID, generation, observed generation, etag, exact canonical traffic/tags, prior image, and prior health identity MUST be recorded
 - **AND** initial `observedGeneration` MUST equal `generation` and `reconciling` MUST be false
+- **AND** canonical protobuf JSON omission of `reconciling` MUST normalize to false, while explicit boolean false/true retain their meanings and explicit null or any nonboolean value MUST fail closed
+- **AND** an absent traffic-target `percent` MUST normalize to zero, while every explicit `percent` MUST remain a nonboolean integer from 0 through 100
 - **AND** exactly one resolved prior revision MUST own 100% traffic
-- **AND** malformed UID, etag, generation, observed generation, ownership, or any other prior traffic shape MUST stop before deploy
+- **AND** malformed UID, etag, generation, observed generation, ownership, or any other prior traffic shape MUST release the owned lock and stop before build, deploy, mutation, or paid request
 
 #### Scenario: Patch and converge traffic
 
