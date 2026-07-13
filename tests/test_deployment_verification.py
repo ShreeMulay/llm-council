@@ -469,11 +469,15 @@ def test_legacy_baseline_preserves_available_provenance_without_inventing_route_
         strict_candidate=False, legacy_baseline=True,
     )
 
-    assert proof["provenance_contract"] == "legacy-unavailable"
+    assert proof["provenance_contract"] == "legacy-partial-terminal-provenance"
     assert proof["stage1"][0]["model"] == "openai/gpt-5.5"
     assert proof["stage1"][0]["provider"] is None
     assert proof["stage1"][0]["configured_route_id"] is None
     assert proof["stage1"][0]["observed_route_id"] is None
+    assert proof["stage1"][0]["fallback_used"] is None
+    assert proof["stage1"][0]["terminal_status"] is None
+    assert proof["stage1"][0]["allow_declared_route_failover"] is None
+    assert proof["stage1"][0]["allow_provider_substitution"] is None
     metrics = _sample_metrics(payload, 10, legacy_baseline=True)
     assert metrics["route_success"] is None
     assert metrics["token_count"] is None
@@ -483,23 +487,175 @@ def test_legacy_baseline_preserves_available_provenance_without_inventing_route_
     )
 
 
+def test_legacy_baseline_never_infers_route_success_from_complete_selected_routes():
+    payload = _make_objective_output(smoke_payload())
+
+    assert all(item["selected_route_id"] for item in [
+        *payload["stage1"], *payload["stage2"], payload["stage3"]
+    ])
+    assert _sample_metrics(payload, 10, legacy_baseline=True)["route_success"] is None
+
+
+def test_legacy_baseline_admits_historical_fallback_without_inferred_route_failure():
+    payload = legacy_smoke_payload()
+    payload["stage1"][0].update(
+        fallback_used=True,
+        provider="openrouter-fallback",
+    )
+
+    proof = verify_payload(
+        payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
+        strict_candidate=False, legacy_baseline=True,
+    )
+    metrics = _sample_metrics(payload, 10, legacy_baseline=True)
+
+    assert proof["stage1"][0]["fallback_used"] is True
+    assert proof["stage1"][0]["provider"] == "openrouter-fallback"
+    assert proof["stage1"][0]["observed_route_id"] is None
+    assert metrics["error_rate"] == 0
+    assert metrics["route_success"] is None
+
+
 @pytest.mark.parametrize(
-    "mutation",
+    ("mutation", "message"),
     [
-        lambda item: item.update(error={"code": "failed"}),
-        lambda item: item.update(fallback_used=True),
-        lambda item: item.update(terminal_status="failed"),
-        lambda item: item.update(response=""),
+        (lambda item: item.update(error={"code": "failed"}), "explicit error"),
+        (lambda item: item.update(fallback_used=True), "provider"),
+        (
+            lambda item: item.update(fallback_used=True, provider=""),
+            "provider",
+        ),
+        (
+            lambda item: item.update(fallback_used=True, provider="openrouter"),
+            "provider",
+        ),
+        (
+            lambda item: item.update(
+                fallback_used=True,
+                provider="openrouter-fallback",
+                terminal_status="failed",
+            ),
+            "explicit failure",
+        ),
+        (
+            lambda item: item.update(
+                fallback_used=True,
+                provider="openrouter-fallback",
+                error={"code": "failed"},
+            ),
+            "explicit error",
+        ),
+        (
+            lambda item: item.update(
+                fallback_used=True,
+                provider="openrouter-fallback",
+                response="",
+            ),
+            "content",
+        ),
     ],
 )
-def test_legacy_baseline_rejects_explicit_failure_fallback_error_or_missing_content(mutation):
+def test_legacy_baseline_rejects_invalid_fallback_or_unsuccessful_result(mutation, message):
     payload = legacy_smoke_payload()
     mutation(payload["stage1"][0])
-    with pytest.raises(SmokeVerificationError, match="legacy baseline"):
+    with pytest.raises(SmokeVerificationError, match=message):
         verify_payload(
             payload, 10, max_latency=100, max_tokens=60000, max_cost=2,
             strict_candidate=False, legacy_baseline=True,
         )
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda item: item.update(fallback_used=False),
+        lambda item: item.update(provider="different-provider"),
+        lambda item: item.update(model="different-model"),
+        lambda item: item.update(route_id="different-route"),
+    ],
+)
+def test_legacy_rollback_rejects_any_provenance_mutation(mutation):
+    baseline = legacy_smoke_payload()
+    baseline["stage1"][0].update(
+        fallback_used=True,
+        provider="openrouter-fallback",
+        route_id="configured-legacy-route",
+    )
+    proof = verify_payload(
+        baseline, 10, max_latency=100, max_tokens=60000, max_cost=2,
+        strict_candidate=False, legacy_baseline=True,
+    )
+    restored = copy.deepcopy(baseline)
+    mutation(restored["stage1"][0])
+
+    with pytest.raises(SmokeVerificationError, match="does not match baseline|provider"):
+        verify_payload(
+            restored, 10, max_latency=100, max_tokens=60000, max_cost=2,
+            expected_proof=proof, strict_candidate=False, legacy_baseline=True,
+        )
+
+
+def test_legacy_smoke_rejects_inconsistent_samples_and_sync_stream_proof():
+    baseline = legacy_smoke_payload()
+    baseline["stage1"][0].update(
+        fallback_used=True, provider="openrouter-fallback"
+    )
+    changed = copy.deepcopy(baseline)
+    changed["stage1"][0]["model"] = "changed-model"
+    calls = iter([baseline, changed])
+
+    with pytest.raises(SmokeVerificationError, match="inconsistent"):
+        run_smoke(
+            "https://legacy.example", "project", "secret", samples=5,
+            stream_samples=1, timeout=100, max_latency=100, max_tokens=60000,
+            max_cost=2, strict_candidate=False, legacy_baseline=True,
+            secret_loader=lambda *_args: "key",
+            poster=lambda *_args: (next(calls), 10),
+            stream_poster=lambda *_args: (baseline, 10),
+        )
+
+    streamed = copy.deepcopy(baseline)
+    streamed["stage1"][0]["model"] = "stream-model"
+    with pytest.raises(SmokeVerificationError, match="sync/stream"):
+        run_smoke(
+            "https://legacy.example", "project", "secret", samples=5,
+            stream_samples=1, timeout=100, max_latency=100, max_tokens=60000,
+            max_cost=2, strict_candidate=False, legacy_baseline=True,
+            secret_loader=lambda *_args: "key",
+            poster=lambda *_args: (baseline, 10),
+            stream_poster=lambda *_args: (streamed, 10),
+        )
+
+
+def test_legacy_fallback_baseline_and_exact_rollback_run_smoke_path():
+    baseline = legacy_smoke_payload()
+    baseline["stage1"][0].update(
+        fallback_used=True, provider="openrouter-fallback"
+    )
+    options = {
+        "samples": 5,
+        "stream_samples": 1,
+        "timeout": 100,
+        "max_latency": 100,
+        "max_tokens": 60000,
+        "max_cost": 2,
+        "strict_candidate": False,
+        "legacy_baseline": True,
+        "secret_loader": lambda *_args: "key",
+        "poster": lambda *_args: (copy.deepcopy(baseline), 10),
+        "stream_poster": lambda *_args: (copy.deepcopy(baseline), 10),
+    }
+
+    captured = run_smoke("https://legacy.example", "project", "secret", **options)
+    restored = run_smoke(
+        "https://legacy.example", "project", "secret",
+        expected_proof=captured["provenance"], **options,
+    )
+
+    assert captured["metrics"]["error_rate"] == 0
+    assert captured["metrics"]["route_success_rate"] is None
+    assert restored["provenance"] == captured["provenance"]
+    assert restored["stream_provenance"] == captured["provenance"]
 
 
 def test_modern_baseline_still_requires_observed_route_success():
@@ -587,6 +743,20 @@ def test_smoke_rejects_insufficient_samples_and_relative_regression():
         compare_evidence(evidence(quality_score=96.0), evidence())
     with pytest.raises(SmokeVerificationError, match="latency"):
         compare_evidence(evidence(p95_elapsed_latency_seconds=12.1), evidence())
+
+
+def test_candidate_fallback_and_low_route_success_fail_against_route_unknown_legacy():
+    legacy = evidence(route_success_rate=None)
+    with pytest.raises(SmokeVerificationError, match="route success"):
+        compare_evidence(evidence(route_success_rate=0.98), legacy)
+
+    candidate = _make_objective_output(smoke_payload())
+    candidate["stage1"][0]["fallback_used"] = True
+    candidate["stage1"][0]["provider"] = "openrouter-fallback"
+    with pytest.raises(SmokeVerificationError, match="fallback"):
+        verify_payload(
+            candidate, 10, max_latency=100, max_tokens=60000, max_cost=2
+        )
 
 
 def test_service_routing_requires_mixed_revisions_at_10_and_50_and_candidate_only_at_100():
@@ -700,7 +870,9 @@ if '--expected-identity' in args: json.loads(pathlib.Path(args[args.index('--exp
         """import json, os, pathlib, sys
 args=sys.argv[1:]
 with pathlib.Path(os.environ['FAKE_VERIFY_LOG']).open('a') as stream: stream.write('smoke ' + ' '.join(args) + '\\n')
-proof={'schema_version':2,'sample_count':5,'provenance':{'stage1':[['baseline','route']]},'metrics':{'quality_score':100,'objective_correct_rate':1,'factual_error_rate':0,'evaluator_format_success_rate':1,'route_success_rate':1,'error_rate':0,'p95_elapsed_latency_seconds':1,'p95_reported_latency_seconds':1,'mean_token_count':1,'mean_conservative_cost_usd':0.001}}
+legacy='--legacy-baseline' in args
+provenance={'stage1':[{'model':'legacy','provider':'openrouter-fallback','configured_route_id':'configured','observed_route_id':None,'fallback_used':True,'terminal_status':None,'allow_declared_route_failover':None,'allow_provider_substitution':None}],'provenance_contract':'legacy-partial-terminal-provenance'} if legacy else {'stage1':[['candidate','route']]}
+proof={'schema_version':2,'sample_count':5,'provenance':provenance,'metrics':{'quality_score':100,'objective_correct_rate':1,'factual_error_rate':0,'evaluator_format_success_rate':1,'route_success_rate':None if legacy else 1,'error_rate':0,'p95_elapsed_latency_seconds':1,'p95_reported_latency_seconds':1,'mean_token_count':1,'mean_conservative_cost_usd':0.001}}
 if '--proof-out' in args: pathlib.Path(args[args.index('--proof-out')+1]).write_text(json.dumps(proof))
 if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('--expected-proof')+1]).read_text()) == proof
 """
@@ -750,6 +922,8 @@ if '--expected-proof' in args: assert json.loads(pathlib.Path(args[args.index('-
     if legacy_baseline:
         baseline_calls = [line for line in verifier_calls if line.startswith("smoke https://service.example")]
         assert baseline_calls and all("--legacy-baseline" in line for line in baseline_calls)
+        assert any("--proof-out" in line for line in baseline_calls)
+        assert any("--expected-proof" in line for line in baseline_calls)
         assert any(
             line.startswith("health https://service.example")
             and "--expected-identity" in line
