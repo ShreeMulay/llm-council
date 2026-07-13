@@ -18,6 +18,28 @@ ENTRY_POINTS = (
     ROOT / "scripts/deploy.sh",
 )
 
+PRIOR_PAID_ATTEMPTS_INPUT = """      prior_paid_attempts:
+        description: Number of prior paid rollout attempts
+        required: true
+        default: "0"
+        type: choice
+        options:
+          - "0"
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
+"""
+
+
+def _assert_prior_paid_attempts_workflow_contract(workflow: str) -> None:
+    assert workflow.count(PRIOR_PAID_ATTEMPTS_INPUT) == 1
+    assert workflow.count(
+        "ROLLOUT_PRIOR_PAID_ATTEMPTS: ${{ inputs.prior_paid_attempts }}"
+    ) == 1
+
 
 def _write_executable(path: Path, body: str) -> None:
     path.write_text(body, encoding="utf-8")
@@ -34,6 +56,7 @@ def _run_deploy_entrypoint(
     approved=None,
     forgejo_available=True,
     origin_available=True,
+    prior_paid_attempts=None,
 ):
     """Execute the real shell entry point against recording command boundaries."""
     bin_dir = tmp_path / "bin"
@@ -90,6 +113,8 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
     if approved is not None:
         env["APPROVED_FORGEJO_SHA"] = approved
         env["GITHUB_SHA"] = head
+    if prior_paid_attempts is not None:
+        env["ROLLOUT_PRIOR_PAID_ATTEMPTS"] = prior_paid_attempts
     result = subprocess.run(
         [str(ROOT / "scripts/deploy.sh")],
         cwd=ROOT,
@@ -184,7 +209,7 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
     assert result.stderr == ""
     lines = log.read_text(encoding="utf-8").splitlines()
     controller_index = lines.index(
-        f"controller run python -m scripts.bounded_rollout --approved-sha {sha}"
+        f"controller run python -m scripts.bounded_rollout --approved-sha {sha} --prior-paid-attempts 0"
     )
     assert lines[:controller_index] == [
         "git status --porcelain",
@@ -193,6 +218,32 @@ printf 'controller %s\n' "$*" >> "$COMMAND_LOG"
         "git rev-parse HEAD",
         "git rev-parse origin/master",
     ]
+
+
+@pytest.mark.parametrize("value", ["0", "1", "6"])
+def test_deploy_entrypoint_forwards_exact_validated_prior_paid_attempts(tmp_path, value):
+    sha = "d" * 40
+    result, commands = _run_deploy_entrypoint(
+        tmp_path, mode="local", head=sha, remote=sha, prior_paid_attempts=value
+    )
+
+    assert result.returncode == 0
+    assert (
+        f"controller run python -m scripts.bounded_rollout --approved-sha {sha} "
+        f"--prior-paid-attempts {value}"
+    ) in commands.splitlines()
+
+
+@pytest.mark.parametrize("value", ["true", "-1", "7", "01", "1.0", ""])
+def test_deploy_entrypoint_rejects_invalid_prior_paid_attempts(tmp_path, value):
+    sha = "d" * 40
+    result, commands = _run_deploy_entrypoint(
+        tmp_path, mode="local", head=sha, remote=sha, prior_paid_attempts=value
+    )
+
+    assert result.returncode == 2
+    assert "invalid ROLLOUT_PRIOR_PAID_ATTEMPTS" in result.stderr
+    assert "controller " not in commands
 
 
 def test_local_entrypoint_preserves_origin_fallback_failure(tmp_path):
@@ -282,6 +333,30 @@ def test_github_mirror_has_manual_trigger_only():
 
     assert "workflow_dispatch:" in trigger
     assert "push:" not in trigger
+
+
+def test_github_workflow_constrains_and_forwards_prior_paid_attempts():
+    workflow = (ROOT / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
+
+    _assert_prior_paid_attempts_workflow_contract(workflow)
+    deploy_step = workflow[workflow.index("      - name: Execute sole bounded deployment entry point") :]
+    assert "ROLLOUT_PRIOR_PAID_ATTEMPTS: ${{ inputs.prior_paid_attempts }}" in deploy_step
+
+
+@pytest.mark.parametrize(
+    "invalid_workflow",
+    [
+        lambda workflow: workflow.replace(PRIOR_PAID_ATTEMPTS_INPUT, ""),
+        lambda workflow: workflow.replace("        type: choice\n", "        type: string\n", 1),
+        lambda workflow: workflow.replace('          - "6"\n', '          - "7"\n', 1),
+    ],
+    ids=["omitted", "unconstrained-type", "unconstrained-value"],
+)
+def test_github_workflow_contract_rejects_omitted_or_unconstrained_input(invalid_workflow):
+    workflow = (ROOT / ".github/workflows/deploy.yml").read_text(encoding="utf-8")
+
+    with pytest.raises(AssertionError):
+        _assert_prior_paid_attempts_workflow_contract(invalid_workflow(workflow))
 
 
 def test_ci_and_deploy_checkout_and_verify_the_identical_approved_full_sha():

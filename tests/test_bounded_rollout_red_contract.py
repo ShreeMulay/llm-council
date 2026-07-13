@@ -42,6 +42,7 @@ class Boundaries:
         self.service_polls = []
         self.health_identity = {"revision": "prior", "digest": "old"}
         self.lock_held = True
+        self.service_base_url = "https://live-service-abc-uc.a.run.app"
 
     def create_gcs(self, name, value, *, if_generation_match):
         self.events.append(("gcs-create", name, deepcopy(value), if_generation_match))
@@ -126,6 +127,13 @@ class FakeClock:
 
 
 class V2Boundaries(Boundaries):
+    def revision_resource_name(self, revision):
+        return revision
+
+    def revision_get(self, revision, *, timeout=None):
+        self.events.append(("revision-get", revision, timeout))
+        return candidate_revision_resource(revision)
+
     def service_patch(self, body, *, etag, timeout=None):
         self.events.append(("service-patch", deepcopy(body), etag, timeout))
         return v2_operation(done=False)
@@ -152,12 +160,14 @@ class PrematureLockReleaseBoundaries(V2Boundaries):
 
 def controller(boundaries, **kwargs):
     module = api()
-    return module.RolloutController(
+    rollout = module.RolloutController(
         boundaries=boundaries,
         rollout_id="rollout-123",
         approved_sha="a" * 40,
         **kwargs,
     )
+    rollout.prior_service_url = boundaries.service_base_url
+    return rollout
 
 
 def prior_state():
@@ -207,6 +217,7 @@ def v2_service(
             item["uri"] = f"https://{item['tag']}---service.example"
     return {
         "name": "projects/project/locations/us-central1/services/llm-council",
+        "uri": "https://live-service-abc-uc.a.run.app",
         "uid": uid,
         "generation": generation,
         "observedGeneration": observed_generation,
@@ -261,6 +272,60 @@ def ambiguous_deploy_state(*, converged):
     return state
 
 
+def candidate_revision_resource(name="llm-council-candidate"):
+    return {
+        "name": name,
+        "containers": [{
+            "image": "registry/image@sha256:candidate",
+            "env": [
+                {"name": "DEPLOY_REVISION", "value": "a" * 40},
+                {"name": "APP_IMAGE_DIGEST", "value": "registry/image@sha256:candidate"},
+            ],
+        }],
+        "conditions": [
+            {
+                "type": "Ready",
+                "state": "CONDITION_SUCCEEDED",
+                "revisionReason": "RETIRED",
+            },
+            {
+                "type": "Active",
+                "state": "CONDITION_FAILED",
+                "severity": "INFO",
+                "revisionReason": "RETIRED",
+            },
+            {
+                "type": "ResourcesAvailable",
+                "state": "CONDITION_RECONCILING",
+                "revisionReason": "RETIRED",
+            },
+            {"type": "ContainerReady", "state": "CONDITION_SUCCEEDED"},
+            {
+                "type": "MinInstancesProvisioned",
+                "state": "CONDITION_FAILED",
+                "severity": "INFO",
+                "revisionReason": "MIN_INSTANCES_NOT_PROVISIONED",
+            },
+        ],
+    }
+
+
+def candidate_condition(revision, kind):
+    return next(item for item in revision["conditions"] if item["type"] == kind)
+
+
+def retired_ready_deploy_state():
+    state = ambiguous_deploy_state(converged=True)
+    state["latestReadyRevision"] = "prior"
+    state["terminalCondition"] = {"type": "Ready", "state": "CONDITION_SUCCEEDED"}
+    state["conditions"] = [{
+        "type": "ConfigurationsReady",
+        "state": "CONDITION_SUCCEEDED",
+        "revisionReason": "RETIRED",
+    }]
+    return state
+
+
 def test_approved_full_forgejo_sha_and_clean_local_head_are_preconditions():
     boundaries = Boundaries()
     rollout = controller(boundaries)
@@ -306,6 +371,59 @@ def test_lock_is_acquired_before_service_read_build_or_paid_access():
     assert boundaries.events[0][3] == 0
     assert boundaries.events[1] == ("service-get",)
     assert not any(event[0] in {"build", "paid", "service-patch"} for event in boundaries.events[:2])
+
+
+def test_initial_capture_pins_exact_live_service_url_for_both_terminal_rollback_paths():
+    live_url = "https://exact-live-service-7xk-uc.a.run.app"
+    for already_restored in (False, True):
+        boundaries = V2Boundaries()
+        snapshot = v2_service()
+        snapshot["uri"] = live_url
+        rollout = controller(boundaries, clock=boundaries.clock)
+        rollout.prior_service_url = None
+        boundaries.state = deepcopy(snapshot)
+        rollout.capture_snapshot()
+        rollout.prior_identity = deepcopy(boundaries.health_identity)
+        rollout.lock_generation = "17"
+        rollout.mutation_armed = True
+
+        if already_restored:
+            current = v2_service(generation="42", observed_generation="42", etag="etag-42")
+            current["uri"] = live_url
+            boundaries.state = current
+            rollout.rollout_owned_state = deepcopy(current)
+        else:
+            owner = v2_service(
+                generation="43", observed_generation="43", etag="etag-43",
+                traffic=_candidate_traffic(), traffic_statuses=_candidate_traffic(),
+            )
+            owner["uri"] = live_url
+            restored = v2_service(generation="44", observed_generation="44", etag="etag-44")
+            restored["uri"] = live_url
+            boundaries.state = owner
+            boundaries.operation_polls = [v2_operation(done=True, response=restored)]
+            boundaries.service_polls = [restored]
+            rollout.rollout_owned_state = deepcopy(owner)
+
+        rollout.terminal_rollback(reason="proof")
+
+        health = [event for event in boundaries.events if event[0] == "health"]
+        assert health[-1][1] == live_url
+
+
+@pytest.mark.parametrize("uri", [None, "", "http://service.example", "https:///missing", "not-a-url"])
+def test_initial_capture_fails_closed_without_valid_live_service_url(uri):
+    boundaries = V2Boundaries()
+    boundaries.state = v2_service()
+    if uri is None:
+        boundaries.state.pop("uri")
+    else:
+        boundaries.state["uri"] = uri
+    rollout = controller(boundaries)
+    rollout.prior_service_url = None
+
+    with pytest.raises(api().InitialStateRefusal, match="service URI"):
+        rollout.capture_snapshot()
 
 
 def test_existing_or_malformed_lock_is_rejected_before_build_or_service_access():
@@ -561,6 +679,62 @@ def test_one_global_same_stage_infrastructure_retry_allows_at_most_six(classific
         rollout.run_paid_attempt(stage="extra", surface="sync", url="https://service.example")
 
 
+def test_prior_paid_attempt_carry_forward_allows_exactly_five_planned_attempts():
+    boundaries = Boundaries()
+    rollout = controller(boundaries, prior_paid_attempts=1)
+
+    rollout.execute_paid_plan()
+
+    assert rollout.attempt_count == 6
+    assert len([event for event in boundaries.events if event[0] == "paid"]) == 5
+    assert sorted(
+        int(name.rsplit("/", 1)[1].split("-", 1)[0])
+        for name in boundaries.objects
+    ) == [2, 2, 3, 3, 4, 4, 5, 5, 6, 6]
+
+
+def test_prior_paid_attempt_plus_retry_consumes_capacity_and_prevents_seventh_request():
+    boundaries = Boundaries()
+    boundaries.state = prior_state()
+    boundaries.network_outcomes = [
+        api().InfrastructureFailure("timeout"),
+        {"ok": True},
+        {"ok": True},
+        {"ok": True},
+        {"ok": True},
+    ]
+    rollout = controller(boundaries, prior_paid_attempts=1)
+    rollout.snapshot = prior_state()
+    rollout.rollout_owned_state = deepcopy(boundaries.state)
+    rollout.mutation_armed = True
+
+    with pytest.raises(api().PaidAttemptLimitError):
+        try:
+            rollout.execute_paid_plan()
+        except api().PaidAttemptLimitError:
+            rollout.handle_terminal("paid-cap")
+            raise
+
+    assert rollout.attempt_count == 6
+    assert len([event for event in boundaries.events if event[0] == "paid"]) == 5
+    assert rollout.paid_gate_state == "terminally_closed"
+    assert any(event[0] == "service-patch" for event in boundaries.events)
+
+
+def test_default_future_run_starts_paid_ledger_at_one_unchanged():
+    boundaries = Boundaries()
+    rollout = controller(boundaries)
+    rollout.run_paid_attempt(stage="prior", surface="stream", url="https://service.example")
+    assert rollout.attempt_count == 1
+    assert "rollout-evidence/rollout-123/attempts/0001-started.json" in boundaries.objects
+
+
+@pytest.mark.parametrize("value", [True, False, -1, 7, "-1", "7", "01", "1.0", "", None, object()])
+def test_prior_paid_attempt_input_rejects_bool_negative_over_max_and_malformed(value):
+    with pytest.raises(ValueError, match="prior paid attempts"):
+        api().validate_prior_paid_attempts(value)
+
+
 def test_second_infrastructure_failure_is_terminal_without_another_retry():
     module = api()
     boundaries = Boundaries()
@@ -671,11 +845,53 @@ def test_rollback_proves_exact_tags_health_uid_generation_etag_before_lock_relea
     assert restored["traffic"] == snapshot["traffic"]
 
 
+def test_already_restored_terminal_rollback_proves_health_and_cas_lock_without_patch():
+    boundaries = V2Boundaries()
+    current = v2_service(generation="42", observed_generation="42", etag="etag-42")
+    boundaries.state = current
+    rollout = controller(boundaries, clock=boundaries.clock)
+    rollout.snapshot = v2_service()
+    rollout.prior_identity = deepcopy(boundaries.health_identity)
+    rollout.lock_generation = "17"
+    rollout.mutation_armed = True
+    rollout.rollout_owned_state = deepcopy(current)
+
+    rollout.terminal_rollback(reason="deploy-retired")
+
+    assert not any(event[0] == "service-patch" for event in boundaries.events)
+    names = [event[0] for event in boundaries.events]
+    assert names.index("health") < names.index("lock-verify") < names.index("lock-release")
+    assert rollout.mutation_armed is False
+    assert rollout.lock_generation is None
+
+
+def test_already_restored_rollback_retains_lock_when_cas_lock_proof_fails():
+    boundaries = V2Boundaries()
+    current = v2_service(generation="42", observed_generation="42", etag="etag-42")
+    boundaries.state = current
+    boundaries.lock_held = False
+    rollout = controller(boundaries, clock=boundaries.clock)
+    rollout.snapshot = v2_service()
+    rollout.prior_identity = deepcopy(boundaries.health_identity)
+    rollout.lock_generation = "17"
+    rollout.mutation_armed = True
+    rollout.rollout_owned_state = deepcopy(current)
+
+    with pytest.raises(api().RollbackProofError):
+        rollout.terminal_rollback(reason="deploy-retired")
+
+    assert not any(event[0] in {"service-patch", "lock-release"} for event in boundaries.events)
+    assert rollout.mutation_armed is True
+
+
 def test_failed_rollback_proof_retains_lock_and_never_calls_paid_probe():
     boundaries = V2Boundaries()
     snapshot = v2_service()
     stale = v2_service(generation="44", observed_generation="43", etag="etag-44", reconciling=True)
-    boundaries.state = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries.state = v2_service(
+        generation="43", observed_generation="43", etag="etag-43",
+        traffic=_candidate_traffic(), traffic_statuses=_candidate_traffic(),
+    )
     boundaries.operation_polls = [v2_operation(done=True, response=stale)]
     boundaries.service_polls = [stale]
     boundaries.health_identity = {"revision": "candidate", "digest": "new"}
@@ -971,7 +1187,10 @@ def test_independent_rollback_proof_dimensions_retain_lock_on_failure(dimension)
         restored["observedGeneration"] = "43"
     elif dimension == "reconciling":
         restored["reconciling"] = True
-    boundaries.state = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries.state = v2_service(
+        generation="43", observed_generation="43", etag="etag-43",
+        traffic=_candidate_traffic(), traffic_statuses=_candidate_traffic(),
+    )
     if dimension == "malformed-lro":
         boundaries.operation_polls = [{"name": "rollback-operation", "done": True}]
     elif dimension == "error-lro":
@@ -1007,7 +1226,10 @@ def test_independent_rollback_proof_dimensions_retain_lock_on_failure(dimension)
 def test_rollback_polls_explicit_true_then_accepts_live_omitted_false():
     boundaries = V2Boundaries()
     snapshot = v2_service()
-    owner = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    owner = v2_service(
+        generation="43", observed_generation="43", etag="etag-43",
+        traffic=_candidate_traffic(), traffic_statuses=_candidate_traffic(),
+    )
     reconciling = v2_service(
         generation="44", observed_generation="43", etag="etag-44", reconciling=True
     )
@@ -1048,6 +1270,7 @@ def test_live_omission_and_explicit_values_drive_deploy_and_current_ownership():
     rollout.pre_deploy_state = deepcopy(rollout.snapshot)
     rollout.image_digest = "registry/image@sha256:candidate"
     rollout.expected_candidate_revision = "llm-council-candidate"
+    rollout.validate_candidate_revision(candidate_revision_resource())
 
     converged = ambiguous_deploy_state(converged=True)
     converged.pop("reconciling")
@@ -1072,6 +1295,212 @@ def test_live_omission_and_explicit_values_drive_deploy_and_current_ownership():
     malformed_owned["reconciling"] = None
     rollout.rollout_owned_state = malformed_owned
     assert rollout._current_state_is_owned(deepcopy(converged)) is False
+
+
+def test_live_retired_ready_revision_and_converged_service_are_exactly_owned():
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    rollout.pre_deploy_state = deepcopy(rollout.snapshot)
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+
+    rollout.fetch_candidate_revision()
+
+    assert rollout._deploy_state_ownership_status(retired_ready_deploy_state()) == "owned"
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value.update(name="other"),
+        lambda value: candidate_condition(value, "Ready").update(
+            state="CONDITION_FAILED"
+        ),
+        lambda value: candidate_condition(value, "ContainerReady").update(
+            state="CONDITION_FAILED"
+        ),
+        lambda value: candidate_condition(value, "Active").update(
+            state="CONDITION_SUCCEEDED"
+        ),
+        lambda value: candidate_condition(value, "Active").update(status="True"),
+        lambda value: value["containers"][0].update(image="registry/image@sha256:other"),
+        lambda value: value["containers"][0]["env"][0].update(value="b" * 40),
+    ],
+)
+def test_candidate_revision_resource_failures_are_rejected(mutation):
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    mutation(revision)
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
+def test_candidate_revision_accepts_only_omitted_resource_conditions():
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"] = [
+        condition
+        for condition in revision["conditions"]
+        if condition["type"]
+        not in {"ResourcesAvailable", "MinInstancesProvisioned"}
+    ]
+
+    assert rollout.validate_candidate_revision(revision) == revision
+
+
+def test_candidate_revision_rejects_missing_active_condition():
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"] = [
+        condition for condition in revision["conditions"] if condition["type"] != "Active"
+    ]
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
+@pytest.mark.parametrize(
+    ("kind", "field", "invalid"),
+    [
+        ("Ready", "revisionReason", "MIN_INSTANCES_NOT_PROVISIONED"),
+        ("Active", "revisionReason", "MIN_INSTANCES_NOT_PROVISIONED"),
+        ("ResourcesAvailable", "revisionReason", "MIN_INSTANCES_NOT_PROVISIONED"),
+        ("MinInstancesProvisioned", "revisionReason", "RETIRED"),
+        ("Active", "severity", "WARNING"),
+        ("ResourcesAvailable", "severity", "INFO"),
+        ("MinInstancesProvisioned", "severity", "WARNING"),
+        ("Ready", "state", "CONDITION_FAILED"),
+        ("Active", "state", "CONDITION_SUCCEEDED"),
+        ("ResourcesAvailable", "state", "CONDITION_SUCCEEDED"),
+        ("ContainerReady", "state", "CONDITION_FAILED"),
+        ("MinInstancesProvisioned", "state", "CONDITION_SUCCEEDED"),
+    ],
+)
+def test_candidate_revision_rejects_wrong_retired_condition_shape(kind, field, invalid):
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    candidate_condition(revision, kind)[field] = invalid
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
+@pytest.mark.parametrize(
+    "unexpected_condition",
+    [
+        {"type": "HealthCheck", "state": "CONDITION_SUCCEEDED"},
+        {"type": "HealthCheck"},
+    ],
+)
+def test_candidate_revision_rejects_unexpected_condition(unexpected_condition):
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"].append(unexpected_condition)
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
+def test_candidate_revision_rejects_unknown_condition_state():
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    candidate_condition(revision, "ContainerReady")["state"] = "CONDITION_UNKNOWN"
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value.update(latestCreatedRevision="other"),
+        lambda value: value["template"].update(revision="other"),
+        lambda value: value["template"]["containers"][0].update(image="other"),
+        lambda value: value["template"]["containers"][0]["env"][0].update(value="b" * 40),
+        lambda value: value["terminalCondition"].update(state="CONDITION_FAILED"),
+        lambda value: value["conditions"][0].update(revisionReason="FAILED"),
+        lambda value: value["traffic"][0].update(percent=99),
+    ],
+)
+def test_retired_deploy_ownership_mismatch_fails_closed(mutation):
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    rollout.pre_deploy_state = deepcopy(rollout.snapshot)
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    rollout.validate_candidate_revision(candidate_revision_resource())
+    service = retired_ready_deploy_state()
+    mutation(service)
+
+    assert rollout._deploy_state_ownership_status(service) == "contradictory"
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda value: value["conditions"].append(deepcopy(value["conditions"][0])),
+        lambda value: value["conditions"].append(
+            {"type": "Ready", "state": "CONDITION_FAILED", "reason": "Failed"}
+        ),
+        lambda value: value["conditions"].append(
+            {"type": "Ready", "state": "CONDITION_SUCCEEDED"}
+        ),
+        lambda value: value["conditions"].append(
+            {"type": "ContainerReady", "state": "CONDITION_FAILED", "reason": "Failed"}
+        ),
+        lambda value: value["conditions"].append(
+            {"type": "ContainerReady", "state": "CONDITION_SUCCEEDED"}
+        ),
+        lambda value: value["conditions"].append(
+            {"type": "RoutesReady", "state": "CONDITION_FAILED", "reason": "Failed"}
+        ),
+    ],
+)
+def test_retired_service_rejects_duplicate_or_contradictory_relevant_conditions(mutation):
+    rollout = controller(V2Boundaries())
+    rollout.snapshot = v2_service()
+    rollout.pre_deploy_state = deepcopy(rollout.snapshot)
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    rollout.validate_candidate_revision(candidate_revision_resource())
+    service = retired_ready_deploy_state()
+    mutation(service)
+
+    assert rollout._deploy_state_ownership_status(service) == "contradictory"
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "Ready",
+        "Active",
+        "ResourcesAvailable",
+        "ContainerReady",
+        "MinInstancesProvisioned",
+    ],
+)
+def test_candidate_revision_rejects_duplicate_relevant_conditions(kind):
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"].append(deepcopy(candidate_condition(revision, kind)))
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
 
 
 def test_monotonic_remaining_budget_reaches_every_promotion_boundary():
@@ -1202,7 +1631,10 @@ def test_actual_controller_stops_between_repeated_polls_then_rollback_gets_fresh
     boundaries = ExpiringBetweenPollsBoundaries()
     snapshot = v2_service()
     requested = _candidate_traffic()
-    boundaries.state = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries.state = v2_service(
+        generation="43", observed_generation="43", etag="etag-43",
+        traffic=requested, traffic_statuses=requested,
+    )
     boundaries.operation_polls = [v2_operation(done=False)]
     rollout = controller(
         boundaries,
@@ -1274,7 +1706,10 @@ def test_actual_terminal_rollback_polls_use_independent_decreasing_grace():
     boundaries = AdvancingV2Boundaries()
     snapshot = v2_service()
     restored = v2_service(generation="44", observed_generation="44", etag="etag-44")
-    boundaries.state = v2_service(generation="43", observed_generation="43", etag="etag-43")
+    boundaries.state = v2_service(
+        generation="43", observed_generation="43", etag="etag-43",
+        traffic=_candidate_traffic(), traffic_statuses=_candidate_traffic(),
+    )
     boundaries.operation_polls = [v2_operation(done=False), v2_operation(done=True, response=restored)]
     boundaries.service_polls = [restored]
     boundaries.health_identity = {"revision": "prior", "digest": "old"}
@@ -1476,7 +1911,8 @@ def test_ambiguous_deploy_recovery_polls_exact_reconciling_state_then_restores()
     rollout.terminal_rollback(reason="ambiguous-deploy")
 
     assert [event[0] for event in boundaries.events].count("service-get") == 2
-    assert any(event[0] == "service-patch" for event in boundaries.events)
+    assert not any(event[0] == "service-patch" for event in boundaries.events)
+    assert any(event[0] == "health" for event in boundaries.events)
     assert any(event[0] == "lock-release" for event in boundaries.events)
 
 

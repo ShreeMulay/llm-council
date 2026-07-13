@@ -28,4 +28,10 @@ else
 fi
 
 export APPROVED_FORGEJO_SHA="${approved}"
-exec uv run python -m scripts.bounded_rollout --approved-sha "${approved}"
+prior_paid_attempts="${ROLLOUT_PRIOR_PAID_ATTEMPTS-0}"
+[[ "${prior_paid_attempts}" =~ ^[0-6]$ ]] || {
+  printf '%s\n' 'Refusing invalid ROLLOUT_PRIOR_PAID_ATTEMPTS (expected 0 through 6)' >&2; exit 2;
+}
+exec uv run python -m scripts.bounded_rollout \
+  --approved-sha "${approved}" \
+  --prior-paid-attempts "${prior_paid_attempts}"

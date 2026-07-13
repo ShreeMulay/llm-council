@@ -105,6 +105,17 @@ The prospective top-level `run_rollout` controller SHALL own the complete rollou
 - **THEN** no paid attempt SHALL start during that restoration
 - **AND** successful restoration MUST leave the paid gate available for the separately approved final sync and stream attempts
 
+#### Scenario: Carry the absolute paid cap across incident invocations
+
+- **GIVEN** an earlier incident invocation already consumed paid attempts
+- **WHEN** an operator starts the explicitly approved continuation
+- **THEN** `ROLLOUT_PRIOR_PAID_ATTEMPTS` and `--prior-paid-attempts` MUST carry the cumulative consumed count, defaulting to `0`
+- **AND** the deploy entry point and controller MUST reject bool, negative, greater-than-six, noncanonical, or malformed values before controller execution
+- **AND** the controller MUST initialize cumulative attempt numbering from that value while retaining six as the absolute cross-run maximum
+- **AND** prior count `1` MUST permit exactly the five planned requests numbered `2` through `6`
+- **AND** any retry MUST consume one remaining number, prevent a seventh paid request, and cause terminal rollback when the remaining planned sequence cannot fit
+- **AND** a later independent rollout with no carry-forward input MUST retain the default count `0`
+
 #### Scenario: Permanently close paid gate on terminal rollback
 
 - **GIVEN** a terminal failure, signal, timeout, or guarded failure exit requires rollback
@@ -136,6 +147,8 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **AND** canonical protobuf JSON omission of `reconciling` MUST normalize to false, while explicit boolean false/true retain their meanings and explicit null or any nonboolean value MUST fail closed
 - **AND** an absent traffic-target `percent` MUST normalize to zero, while every explicit `percent` MUST remain a nonboolean integer from 0 through 100
 - **AND** exactly one resolved prior revision MUST own 100% traffic
+- **AND** the exact HTTPS service base URL MUST be captured from that same initial Service payload and retained as immutable rollout state
+- **AND** a missing or malformed service URL MUST fail closed before build or paid access
 - **AND** malformed UID, etag, generation, observed generation, ownership, or any other prior traffic shape MUST release the owned lock and stop before build, deploy, mutation, or paid request
 
 #### Scenario: Patch and converge traffic
@@ -258,6 +271,29 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 - **AND** absent, malformed, contradictory, or externally transitioned evidence MUST retain the lock and refuse mutation rather than claim or overwrite ambiguous external state
 - **AND** rollback-grace exhaustion before exact owned convergence MUST return `recovery_required`, retain the lock, and perform no rollback mutation or paid request
 - **AND** after exact ownership is established, rollback MUST restore and prove the prior snapshot under the normal terminal rollback contract
+
+#### Scenario: Accept the exact converged zero-traffic retired candidate
+
+- **GIVEN** no-traffic deployment converged while the prior tagged revision remains `latestReadyRevision`
+- **WHEN** deploy ownership is classified before progression
+- **THEN** the controller MUST fetch the exact named candidate Revision resource
+- **AND** it MUST require exact resource name; exactly one `Ready=CONDITION_SUCCEEDED`; exactly one `ContainerReady=CONDITION_SUCCEEDED`; exactly one `Active` with state `CONDITION_FAILED`, severity `INFO`, and revision reason `RETIRED`; no other terminal failure; exact immutable image digest; and exact approved-revision and image-digest environment markers
+- **AND** the condition-type allowlist MUST be exactly mandatory `Ready`, `ContainerReady`, and `Active`, plus optional `ResourcesAvailable` and `MinInstancesProvisioned`; every unexpected condition type MUST fail closed regardless of state
+- **AND** only `ResourcesAvailable` and `MinInstancesProvisioned` MAY be omitted, each MUST match its exact retired shape when present, every condition type MUST be unique, every present condition MUST have a known state, and any missing or unknown state or contradictory failed terminal or relevant condition MUST fail closed
+- **AND** the Service MUST retain the captured UID and exact snapshot traffic/statuses, advance exactly one generation with a fresh etag, converge observed generation with reconciliation false, name the candidate as latest-created and template revision, and expose successful terminal Ready and ConfigurationsReady conditions with revision reason `RETIRED`
+- **AND** that exact state MAY be treated as rollout-owned although `latestReadyRevision` remains prior
+- **AND** any mismatched latest-created revision, template revision, image, environment marker, condition, traffic, status, revision resource, UID, generation, or etag MUST fail closed
+- **AND** progression MUST use this combined Service ownership and Revision readiness proof rather than require Service `latestReadyRevision` to equal candidate
+
+#### Scenario: Avoid a redundant rollback traffic mutation
+
+- **GIVEN** terminal rollback owns the exact current Service state and canonical traffic plus URI-normalized statuses already equal the snapshot
+- **WHEN** rollback proof runs
+- **THEN** it MUST prove stable UID, converged generation, reconciliation false, exact prior health, and the exact owned lock generation
+- **AND** it MUST NOT issue a traffic PATCH or require a synthetic post-PATCH generation/etag progression
+- **AND** only after those proofs pass it MUST disarm mutation and generation-conditionally release the owned lock
+- **AND** traffic or status drift MUST retain the exact etag-conditioned PATCH, LRO, convergence, health, and lock-proof rollback path
+- **AND** both this no-PATCH proof and the PATCH rollback proof MUST use the exact service base URL captured during initial prior state capture, never a placeholder or rediscovered URL
 
 #### Scenario: Poll rollback until exact convergence
 

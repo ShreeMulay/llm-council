@@ -7,6 +7,19 @@ on:
         description: Full approved Forgejo master SHA
         required: true
         type: string
+      prior_paid_attempts:
+        description: Number of prior paid rollout attempts
+        required: true
+        default: "0"
+        type: choice
+        options:
+          - "0"
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
+          - "6"
 
 env:
   PROJECT_ID: tke-phi-privacy-engine
@@ -104,4 +117,5 @@ jobs:
         env:
           DEPLOY_ENTRYPOINT_MODE: github
           APPROVED_FORGEJO_SHA: ${{ inputs.approved_forgejo_sha }}
+          ROLLOUT_PRIOR_PAID_ATTEMPTS: ${{ inputs.prior_paid_attempts }}
         run: scripts/deploy.sh
