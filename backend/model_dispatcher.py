@@ -13,6 +13,7 @@ import httpx
 from . import config
 from .execution_planning import PlanOperation, RequestSettings, RetryPolicy, RouteResolution
 from .model_registry import ModelRoute, load_registry
+from .provider_errors import XAIInvalidUsageError
 
 logger = logging.getLogger("llm-council.dispatcher")
 Adapter = Callable[..., Awaitable[dict[str, Any] | None]]
@@ -109,6 +110,7 @@ class ModelDispatcher:
         attempts: list[_FrozenAttempt] = []
         failure_reason = "empty_response"
         primary_failure_reason: str | None = None
+        terminal_failure = False
         for route_index, route in enumerate(routes):
             attempted_route_ids.append(route.route_id)
             for attempt in range(operation.retry.max_retries + 1):
@@ -148,11 +150,16 @@ class ModelDispatcher:
                     status="failed",
                     reason=failure_reason,
                 ))
+                if failure_reason == "invalid_usage":
+                    terminal_failure = True
+                    break
                 if attempt < operation.retry.max_retries:
                     await self.sleep(operation.retry.backoff_base_seconds * (2**attempt))
+            if terminal_failure:
+                break
             if route_index == 0:
                 primary_failure_reason = failure_reason
-        route = routes[-1]
+        route = route if terminal_failure else routes[-1]
         return {
             "content": "",
             "usage": {},
@@ -169,8 +176,12 @@ class ModelDispatcher:
             "primary_failure_reason": primary_failure_reason,
             "failure_reason": failure_reason,
             "error": {
-                "code": "provider_exhausted",
-                "message": "All captured routes failed",
+                "code": "invalid_usage" if terminal_failure else "provider_exhausted",
+                "message": (
+                    "Provider returned invalid usage metadata"
+                    if terminal_failure
+                    else "All captured routes failed"
+                ),
             },
             "terminal_status": "failed",
         }
@@ -333,6 +344,8 @@ def _normalize(
 
 def _failure_category(error: Exception) -> str:
     """Map provider failures to bounded categories without retaining details."""
+    if isinstance(error, XAIInvalidUsageError):
+        return "invalid_usage"
     if isinstance(error, (TimeoutError, httpx.TimeoutException)):
         return "timeout"
     if isinstance(error, httpx.HTTPStatusError):
