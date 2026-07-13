@@ -451,14 +451,137 @@ def legacy_smoke_payload():
     payload = _make_objective_output(smoke_payload())
     payload["stage1"][0]["model"] = "openai/gpt-5.5"
     for item in [*payload["stage1"], *payload["stage2"], payload["stage3"]]:
+        usage = item.get("usage")
         for field in (
             "route_id", "selected_route_id", "fallback_used",
             "allow_declared_route_failover", "allow_provider_substitution",
             "terminal_status", "usage",
         ):
             item.pop(field, None)
+        if str(item.get("model", "")).startswith("x-ai/grok-"):
+            item["usage"] = usage
     payload.pop("metadata")
     return payload
+
+
+def legacy_xai_usage_payload(*, provider="xai", model="x-ai/grok-4.3"):
+    payload = _make_objective_output(smoke_payload())
+    payload["stage1"][0].update(provider=provider, model=model)
+    return payload
+
+
+def test_legacy_xai_hidden_reasoning_is_billed_as_completion_without_double_counting():
+    payload = legacy_xai_usage_payload(model="legacy/grok")
+    payload["stage1"][0]["usage"] = {
+        "prompt_tokens": 60,
+        "completion_tokens": 40,
+        "total_tokens": 125,
+    }
+
+    metrics = _sample_metrics(payload, 10, legacy_baseline=True)
+
+    assert metrics["token_count"] == 725
+    assert metrics["conservative_cost_usd"] == pytest.approx(
+        (
+            420 * PROMPT_COST_UPPER_BOUND_PER_MILLION
+            + 305 * COMPLETION_COST_UPPER_BOUND_PER_MILLION
+        )
+        / 1_000_000
+    )
+
+
+def test_legacy_xai_zero_hidden_reasoning_delta_keeps_reported_completion():
+    payload = legacy_xai_usage_payload(provider=None)
+
+    metrics = _sample_metrics(payload, 10, legacy_baseline=True)
+
+    assert metrics["token_count"] == 700
+    assert metrics["conservative_cost_usd"] == pytest.approx(
+        (
+            420 * PROMPT_COST_UPPER_BOUND_PER_MILLION
+            + 280 * COMPLETION_COST_UPPER_BOUND_PER_MILLION
+        )
+        / 1_000_000
+    )
+
+
+@pytest.mark.parametrize(
+    "usage",
+    [
+        {"prompt_tokens": 60, "completion_tokens": 40, "total_tokens": 99},
+        {"completion_tokens": 40, "total_tokens": 100},
+        {"prompt_tokens": 60, "total_tokens": 100},
+        {"prompt_tokens": 60, "completion_tokens": 40},
+        {"prompt_tokens": 60, "completion_tokens": None, "total_tokens": 100},
+        {"prompt_tokens": 60, "completion_tokens": "40", "total_tokens": 100},
+        {"prompt_tokens": 60.0, "completion_tokens": 40, "total_tokens": 100},
+        {"prompt_tokens": False, "completion_tokens": 40, "total_tokens": 100},
+        {"prompt_tokens": -1, "completion_tokens": 40, "total_tokens": 100},
+        {"prompt_tokens": 60, "completion_tokens": 40, "total_tokens": float("nan")},
+        {"prompt_tokens": 60, "completion_tokens": 40, "total_tokens": 60_001},
+        None,
+    ],
+)
+def test_legacy_xai_rejects_inconsistent_missing_malformed_or_oversized_usage(usage):
+    payload = legacy_xai_usage_payload()
+    payload["stage1"][0]["usage"] = usage
+
+    with pytest.raises(SmokeVerificationError, match="usage"):
+        verify_payload(
+            payload, 10, max_latency=100, max_tokens=60_000, max_cost=2,
+            strict_candidate=False, legacy_baseline=True,
+        )
+
+
+def test_non_xai_legacy_and_candidate_usage_still_require_exact_totals():
+    legacy = legacy_xai_usage_payload(provider="openrouter", model="openai/gpt-5.5")
+    legacy["stage1"][0]["usage"]["total_tokens"] = 101
+    with pytest.raises(SmokeVerificationError, match="usage"):
+        _sample_metrics(legacy, 10, legacy_baseline=True)
+
+    candidate = _make_objective_output(smoke_payload())
+    candidate["stage1"][0].update(provider="xai", model="x-ai/grok-4.5")
+    candidate["stage1"][0]["usage"]["total_tokens"] = 101
+    with pytest.raises(SmokeVerificationError, match="usage"):
+        _sample_metrics(candidate, 10)
+
+
+def test_legacy_xai_raw_usage_is_absent_from_provenance_proof():
+    payload = legacy_xai_usage_payload()
+    payload["stage1"][0]["usage"]["total_tokens"] = 125
+
+    proof = verify_payload(
+        payload, 10, max_latency=100, max_tokens=60_000, max_cost=2,
+        strict_candidate=False, legacy_baseline=True,
+    )
+
+    assert "usage" not in json.dumps(proof)
+
+
+def test_legacy_xai_normalization_is_identical_for_sync_and_stream_metrics():
+    payload = legacy_xai_usage_payload()
+    payload["stage1"][0]["usage"]["total_tokens"] = 125
+    options = {
+        "samples": 5,
+        "stream_samples": 1,
+        "timeout": 100,
+        "max_latency": 100,
+        "max_tokens": 60_000,
+        "max_cost": 2,
+        "strict_candidate": False,
+        "legacy_baseline": True,
+        "secret_loader": lambda *_args: "key",
+        "poster": lambda *_args: (copy.deepcopy(payload), 10),
+        "stream_poster": lambda *_args: (copy.deepcopy(payload), 10),
+    }
+
+    evidence = run_smoke("https://legacy.example", "project", "secret", **options)
+
+    assert evidence["metrics"]["mean_token_count"] == 725
+    assert evidence["stream_metrics"]["mean_token_count"] == 725
+    assert evidence["metrics"]["mean_conservative_cost_usd"] == pytest.approx(
+        evidence["stream_metrics"]["mean_conservative_cost_usd"]
+    )
 
 
 def test_legacy_baseline_preserves_available_provenance_without_inventing_route_success():
