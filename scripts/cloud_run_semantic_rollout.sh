@@ -2,6 +2,7 @@
 # Build-independent semantic Cloud Run rollout of one immutable image digest.
 set -Eeuo pipefail
 
+REPO_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 PROJECT="${PROJECT:-${PROJECT_ID:-}}"
 : "${PROJECT:?PROJECT or PROJECT_ID is required}"
 : "${REGION:?REGION is required}"
@@ -54,7 +55,7 @@ service_url() {
 
 smoke() {
   local url=$1; shift
-  python3 "${SMOKE_VERIFIER}" "${url}" --project "${PROJECT}" \
+  PYTHONPATH="${REPO_ROOT}${PYTHONPATH:+:${PYTHONPATH}}" python3 "${SMOKE_VERIFIER}" "${url}" --project "${PROJECT}" \
     --secret "${COUNCIL_API_KEY_SECRET}" --max-latency-seconds "${COUNCIL_MAX_LATENCY_SECONDS}" \
     --max-tokens "${COUNCIL_MAX_TOKENS}" --max-cost-usd "${COUNCIL_MAX_COST_USD}" \
     --max-error-rate "${COUNCIL_MAX_ERROR_RATE}" --samples "${ROLLOUT_SMOKE_SAMPLES}" \
