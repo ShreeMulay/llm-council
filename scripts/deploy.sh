@@ -9,7 +9,7 @@ if [[ "${mode}" == github ]]; then
   git fetch forgejo master
   remote_ref=forgejo/master
 else
-  if git fetch forgejo master; then remote_ref=forgejo/master; else git fetch origin master; remote_ref=origin/master; fi
+  if git fetch forgejo master 2>/dev/null; then remote_ref=forgejo/master; else git fetch origin master; remote_ref=origin/master; fi
 fi
 
 head_sha=$(git rev-parse HEAD)
@@ -28,4 +28,4 @@ else
 fi
 
 export APPROVED_FORGEJO_SHA="${approved}"
-exec python -m scripts.bounded_rollout --approved-sha "${approved}"
+exec uv run python -m scripts.bounded_rollout --approved-sha "${approved}"
