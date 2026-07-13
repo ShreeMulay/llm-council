@@ -2133,6 +2133,54 @@ def test_candidate_revision_accepts_only_omitted_resource_conditions():
     assert rollout.validate_candidate_revision(revision) == revision
 
 
+def test_candidate_revision_accepts_live_retired_container_healthy_condition():
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"].append({
+        "type": "ContainerHealthy",
+        "state": "CONDITION_SUCCEEDED",
+    })
+
+    assert rollout.validate_candidate_revision(revision) == revision
+
+
+@pytest.mark.parametrize(
+    "container_healthy",
+    [
+        {"type": "ContainerHealthy", "state": "CONDITION_FAILED"},
+        {"type": "ContainerHealthy", "state": "CONDITION_RECONCILING"},
+        {
+            "type": "ContainerHealthy",
+            "state": "CONDITION_SUCCEEDED",
+            "reason": "ContainerHealthCheckFailed",
+        },
+        {
+            "type": "ContainerHealthy",
+            "state": "CONDITION_SUCCEEDED",
+            "revisionReason": "HEALTH_CHECK_CONTAINER_ERROR",
+        },
+        {
+            "type": "ContainerHealthy",
+            "state": "CONDITION_SUCCEEDED",
+            "severity": "ERROR",
+        },
+    ],
+)
+def test_candidate_revision_rejects_nonhealthy_container_healthy_condition(
+    container_healthy,
+):
+    rollout = controller(V2Boundaries())
+    rollout.image_digest = "registry/image@sha256:candidate"
+    rollout.expected_candidate_revision = "llm-council-candidate"
+    revision = candidate_revision_resource()
+    revision["conditions"].append(container_healthy)
+
+    with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
+        rollout.validate_candidate_revision(revision)
+
+
 def test_candidate_revision_rejects_missing_active_condition():
     rollout = controller(V2Boundaries())
     rollout.image_digest = "registry/image@sha256:candidate"
@@ -2269,6 +2317,7 @@ def test_retired_service_rejects_duplicate_or_contradictory_relevant_conditions(
         "Active",
         "ResourcesAvailable",
         "ContainerReady",
+        "ContainerHealthy",
         "MinInstancesProvisioned",
     ],
 )
@@ -2277,6 +2326,11 @@ def test_candidate_revision_rejects_duplicate_relevant_conditions(kind):
     rollout.image_digest = "registry/image@sha256:candidate"
     rollout.expected_candidate_revision = "llm-council-candidate"
     revision = candidate_revision_resource()
+    if kind == "ContainerHealthy":
+        revision["conditions"].append({
+            "type": "ContainerHealthy",
+            "state": "CONDITION_SUCCEEDED",
+        })
     revision["conditions"].append(deepcopy(candidate_condition(revision, kind)))
 
     with pytest.raises(api().ConcurrencyRefusal, match="revision resource"):
