@@ -298,6 +298,15 @@ def _traffic_equal(left: Any, right: Any) -> bool:
     return _normalized_traffic(left) == _normalized_traffic(right)
 
 
+def _expected_traffic_statuses(traffic: Any) -> list[dict[str, Any]]:
+    """Project config traffic to the exact targets emitted in trafficStatuses."""
+    return [
+        item
+        for item in _normalized_traffic(traffic)
+        if item["percent"] != 0 or "tag" in item
+    ]
+
+
 def _traffic_sha256(items: Any) -> str:
     """Hash complete traffic semantics in canonical order."""
     return _canonical_sha256(_normalized_traffic(items))
@@ -317,7 +326,7 @@ def validate_initial_service(state: Any) -> dict[str, Any]:
             raise ValueError
         traffic = _normalized_traffic(state.get("traffic"))
         statuses = _normalized_traffic(state.get("trafficStatuses"))
-        if not _traffic_equal(traffic, statuses):
+        if statuses != _expected_traffic_statuses(traffic):
             raise ValueError
         resolved = [item for item in traffic if item["percent"] > 0]
         if len(resolved) != 1 or resolved[0]["percent"] != 100:
@@ -1196,7 +1205,7 @@ class RolloutController:
                     raise ValueError
                 return False
             statuses = _normalized_traffic(state.get("trafficStatuses"))
-            if not _traffic_equal(statuses, traffic):
+            if statuses != _expected_traffic_statuses(traffic):
                 raise ValueError
             return True
         except (TypeError, ValueError) as exc:
@@ -1339,9 +1348,8 @@ class RolloutController:
                 == _integer(current.get("generation"))
                 and not _normalized_reconciling(current)
                 and _traffic_equal(current.get("traffic"), snapshot.get("traffic"))
-                and _traffic_equal(
-                    current.get("trafficStatuses"), snapshot.get("trafficStatuses")
-                )
+                and _normalized_traffic(current.get("trafficStatuses"))
+                == _expected_traffic_statuses(snapshot.get("traffic"))
             )
         except (KeyError, TypeError, ValueError):
             return False
@@ -1382,7 +1390,10 @@ class RolloutController:
                 raise ValueError
             reconciling = _normalized_reconciling(restored)
             if observed == generation and not reconciling:
-                if not _traffic_equal(restored.get("trafficStatuses"), expected):
+                if (
+                    _normalized_traffic(restored.get("trafficStatuses"))
+                    != _expected_traffic_statuses(expected)
+                ):
                     raise ValueError
                 return True
             if observed < generation and reconciling:
@@ -1485,10 +1496,8 @@ class RolloutController:
                     current.get("traffic"),
                     _deploy_traffic(snapshot),
                 )
-                and _traffic_equal(
-                    current.get("trafficStatuses"),
-                    _deploy_traffic(snapshot),
-                )
+                and _normalized_traffic(current.get("trafficStatuses"))
+                == _expected_traffic_statuses(_deploy_traffic(snapshot))
             )
             if not exact_rollout_intent:
                 return "contradictory"
@@ -1575,8 +1584,14 @@ class RolloutController:
                 and _traffic_equal(current.get("traffic"), owned.get("traffic"))
                 and (
                     "trafficStatuses" not in owned
-                    or _traffic_equal(
-                        current.get("trafficStatuses"), owned.get("trafficStatuses")
+                    or (
+                        _normalized_traffic(current.get("trafficStatuses"))
+                        == _expected_traffic_statuses(current.get("traffic"))
+                        and _normalized_traffic(owned.get("trafficStatuses"))
+                        == _expected_traffic_statuses(owned.get("traffic"))
+                        and _traffic_equal(
+                            current.get("trafficStatuses"), owned.get("trafficStatuses")
+                        )
                     )
                 )
                 and (

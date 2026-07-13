@@ -180,17 +180,19 @@ The rollout SHALL serialize operators with a generation-safe GCS lock and SHALL 
 - **GIVEN** the expected service etag and canonical prior state
 - **WHEN** traffic changes
 - **THEN** the rollout MUST PATCH only the Cloud Run v2 Service `traffic` field with that etag
-- **AND** it MUST poll the returned long-running operation to completion and then poll Service until `observedGeneration == generation`, `reconciling == false`, and canonical `trafficStatuses` exactly match
+- **AND** it MUST poll the returned long-running operation to completion and then poll Service until `observedGeneration == generation`, `reconciling == false`, and canonical `trafficStatuses` exactly match the strict expected-status projection
 - **AND** UID MUST remain stable, generation MUST progress as expected, and each accepted transition MUST expose a fresh etag
-- **AND** requested canonical traffic and tags MUST equal both accepted Service `traffic` and URI-normalized `trafficStatuses`
+- **AND** requested canonical traffic and tags MUST equal accepted Service `traffic`, while URI-normalized `trafficStatuses` MUST equal the expected-status projection of that traffic
 - **AND** complete traffic targets MUST be strictly type-normalized and sorted by exact routing fields before comparison or hashing, without merging targets, dropping tags, or depending on API response order
+- **AND** expected-status projection MUST first apply that strict canonical normalization and then remove only targets whose normalized percent is zero and whose tag is absent; tagged zero-percent targets, every positive target, and all distinct entries MUST remain unchanged
+- **AND** projection MUST NOT hide unknown fields, malformed values, duplicates, invalid allocations, omitted positive targets, missing tagged targets, extra statuses, or wrong revision/tag/percent values; strict normalization or exact projected comparison MUST reject them
 - **AND** target identity MUST be the exact `(revision, tag)` pair, where an absent tag is distinct from every tagged target; identities and nonempty tags MUST each be unique and every complete allocation MUST sum to exactly 100%
 - **AND** each stage MUST transform the snapshot's sole positive prior target in place to the remaining percentage, preserving its exact revision, tag presence, and tag value rather than adding a second prior target
-- **AND** immediately after `gcloud run deploy --no-traffic`, Service `traffic` and URI-normalized `trafficStatuses` MUST equal the exact canonical snapshot with no candidate target
+- **AND** immediately after `gcloud run deploy --no-traffic`, Service `traffic` MUST equal the exact canonical snapshot with no candidate target and URI-normalized `trafficStatuses` MUST equal its exact expected-status projection
 - **AND** a tagged stage MUST preserve both the automatic untagged candidate target at 0% and a separate tagged candidate target at the requested percentage; final untagged 100% MUST contain exactly one candidate target at 100%
-- **AND** deploy ownership MUST reject any candidate traffic target before the tagged PATCH, while tagged-stage convergence MUST reject either candidate target being absent
+- **AND** deploy ownership MUST reject any candidate traffic target before the tagged PATCH; tagged-stage Service `traffic` MUST retain both candidate targets, while projected statuses MAY omit only the untagged zero-percent candidate and MUST retain the tagged candidate target
 - **AND** a generated shadow tag colliding with any snapshot tag MUST fail before build, deploy, traffic PATCH, or paid request
-- **AND** planned and terminal restoration MUST restore the exact snapshot and thereby remove both rollout-owned candidate targets
+- **AND** planned and terminal restoration MUST restore the exact snapshot traffic and its exact expected-status projection and thereby remove both rollout-owned candidate targets
 - **AND** any malformed or error long-running operation, stale or unexpected UID, generation, observed generation, reconciling state, unchanged etag, ownership, canonical traffic, canonical tag, or `trafficStatuses` transition MUST independently fail closed
 - **AND** every PATCH body MUST preserve all unrelated traffic tags and remove only the rollout-owned shadow tag when required
 - **AND** an omitted long-running-operation `done` field MUST mean pending/false, while an explicitly present nonboolean `done` value MUST fail closed
@@ -267,7 +269,7 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 - **GIVEN** mutation has begun and final verification is incomplete
 - **WHEN** `ERR`, `TERM`, `INT`, `HUP`, or guarded `EXIT` occurs
 - **THEN** rollback MUST remain armed and receive up to five minutes independent of the promotion deadline
-- **AND** proof MUST require exact canonical traffic/tag equality, exact prior health identity, stable UID, converged generation, and fresh etag progression
+- **AND** proof MUST require exact canonical traffic/tag equality, exact expected-status projection, exact prior health identity, stable UID, converged generation, and fresh etag progression
 - **AND** canonical traffic, canonical tags, URI-normalized `trafficStatuses`, prior health identity, UID, observed/generation equality, `reconciling == false`, fresh etag, successful LRO shape, and continued lock ownership MUST each be independently necessary proof dimensions
 - **AND** independent negative proof MUST reject UID replacement; etags that fail to progress from either snapshot or mutation-owner state; generation rollback or observed-generation mismatch; reconciliation still in progress; and malformed or error LRO completion
 - **AND** the owned lock MUST remain held until all rollback proof succeeds
@@ -312,14 +314,14 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 - **AND** it MUST require exact resource name; exactly one `Ready=CONDITION_SUCCEEDED`; exactly one `ContainerReady=CONDITION_SUCCEEDED`; exactly one `Active` with state `CONDITION_FAILED`, severity `INFO`, and revision reason `RETIRED`; no other terminal failure; exact immutable image digest; and exact approved-revision and image-digest environment markers
 - **AND** the condition-type allowlist MUST be exactly mandatory `Ready`, `ContainerReady`, and `Active`, plus optional `ResourcesAvailable` and `MinInstancesProvisioned`; every unexpected condition type MUST fail closed regardless of state
 - **AND** only `ResourcesAvailable` and `MinInstancesProvisioned` MAY be omitted, each MUST match its exact retired shape when present, every condition type MUST be unique, every present condition MUST have a known state, and any missing or unknown state or contradictory failed terminal or relevant condition MUST fail closed
-- **AND** the Service MUST retain the captured UID and exact canonical snapshot traffic/statuses with no candidate target, advance exactly one generation with a fresh etag, converge observed generation with reconciliation false, name the candidate as latest-created and template revision, and expose successful terminal Ready and ConfigurationsReady conditions with revision reason `RETIRED`
+- **AND** the Service MUST retain the captured UID, exact canonical snapshot traffic, and exact expected-status projection with no candidate target; advance exactly one generation with a fresh etag; converge observed generation with reconciliation false; name the candidate as latest-created and template revision; and expose successful terminal Ready and ConfigurationsReady conditions with revision reason `RETIRED`
 - **AND** that exact state MAY be treated as rollout-owned although `latestReadyRevision` remains prior
 - **AND** any mismatched latest-created revision, template revision, image, environment marker, condition, traffic, status, revision resource, UID, generation, or etag MUST fail closed
 - **AND** progression MUST use this combined Service ownership and Revision readiness proof rather than require Service `latestReadyRevision` to equal candidate
 
 #### Scenario: Avoid a redundant rollback traffic mutation
 
-- **GIVEN** terminal rollback owns the exact current Service state and canonical traffic plus URI-normalized statuses already equal the snapshot
+- **GIVEN** terminal rollback owns the exact current Service state and canonical traffic plus URI-normalized statuses already equal the snapshot traffic and its expected-status projection
 - **WHEN** rollback proof runs
 - **THEN** it MUST prove stable UID, converged generation, reconciliation false, exact prior health, and the exact owned lock generation
 - **AND** it MUST NOT issue a traffic PATCH or require a synthetic post-PATCH generation/etag progression
@@ -332,7 +334,7 @@ Promotion SHALL be bounded by one monotonic 30-minute deadline and rollback SHAL
 
 - **GIVEN** rollback PATCH returned a valid pending or completed long-running operation
 - **WHEN** operation or Service reads show exact rollout-owned intermediate reconciliation
-- **THEN** rollback MUST repeatedly poll both the long-running operation and Service as applicable until generation equals observed generation, `reconciling` is false, exact snapshot traffic/tags/statuses are present, prior identity passes, and every other rollback proof dimension passes
+- **THEN** rollback MUST repeatedly poll both the long-running operation and Service as applicable until generation equals observed generation, `reconciling` is false, exact snapshot traffic/tags and its exact expected-status projection are present, prior identity passes, and every other rollback proof dimension passes
 - **AND** valid intermediate reconciling states MUST continue polling rather than fail immediately
 - **AND** rollback-grace exhaustion MUST fail closed, retain the lock, and perform no paid request
 
@@ -345,6 +347,7 @@ Success SHALL preserve state not owned by the rollout and retain rollback capaci
 - **GIVEN** final sync and stream probes pass through the production URL
 - **WHEN** cleanup completes
 - **THEN** candidate MUST own 100% untagged traffic with exact candidate identity and digests
+- **AND** final URI-normalized statuses MUST exactly equal the final traffic's expected-status projection, retaining the positive candidate target and omitting no positive or tagged target
 - **AND** only the rollout-created shadow tag MUST be removed
 - **AND** unrelated tags MUST be preserved
 - **AND** service generation MUST be converged before traffic rollback mutation is disarmed
