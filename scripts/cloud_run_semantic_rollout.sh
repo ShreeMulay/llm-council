@@ -16,6 +16,7 @@ ROLLOUT_OBSERVATION_SECONDS="${ROLLOUT_OBSERVATION_SECONDS:-30}"
 ROLLOUT_HEALTH_SAMPLES="${ROLLOUT_HEALTH_SAMPLES:-1}"
 ROLLOUT_SERVICE_HEALTH_SAMPLES="${ROLLOUT_SERVICE_HEALTH_SAMPLES:-50}"
 ROLLOUT_SMOKE_SAMPLES="${ROLLOUT_SMOKE_SAMPLES:-5}"
+ROLLOUT_STREAM_SMOKE_SAMPLES="${ROLLOUT_STREAM_SMOKE_SAMPLES:-5}"
 COUNCIL_MAX_LATENCY_SECONDS="${COUNCIL_MAX_LATENCY_SECONDS:-480}"
 COUNCIL_MAX_TOKENS="${COUNCIL_MAX_TOKENS:-60000}"
 COUNCIL_MAX_COST_USD="${COUNCIL_MAX_COST_USD:-1.50}"
@@ -30,10 +31,10 @@ HEALTH_VERIFIER="${HEALTH_VERIFIER:-scripts/verify_deploy_health.py}"
 SMOKE_VERIFIER="${SMOKE_VERIFIER:-scripts/verify_council_smoke.py}"
 ROUTING_VERIFIER="${ROUTING_VERIFIER:-scripts/verify_service_routing.py}"
 
-python3 - "${ROLLOUT_OBSERVATION_SECONDS}" "${ROLLOUT_HEALTH_SAMPLES}" "${ROLLOUT_SERVICE_HEALTH_SAMPLES}" "${ROLLOUT_SMOKE_SAMPLES}" <<'PY'
+python3 - "${ROLLOUT_OBSERVATION_SECONDS}" "${ROLLOUT_HEALTH_SAMPLES}" "${ROLLOUT_SERVICE_HEALTH_SAMPLES}" "${ROLLOUT_SMOKE_SAMPLES}" "${ROLLOUT_STREAM_SMOKE_SAMPLES}" <<'PY'
 import sys
-observation, health, service_health, smoke = map(int, sys.argv[1:])
-if not 0 <= observation <= 600 or not 1 <= health <= 5 or not 5 <= service_health <= 200 or not 5 <= smoke <= 20:
+observation, health, service_health, smoke, stream_smoke = map(int, sys.argv[1:])
+if not 0 <= observation <= 600 or not 1 <= health <= 5 or not 5 <= service_health <= 200 or not 5 <= smoke <= 20 or not 1 <= stream_smoke <= 5:
     raise SystemExit("rollout thresholds are outside safe bounds")
 PY
 
@@ -59,6 +60,7 @@ smoke() {
     --secret "${COUNCIL_API_KEY_SECRET}" --max-latency-seconds "${COUNCIL_MAX_LATENCY_SECONDS}" \
     --max-tokens "${COUNCIL_MAX_TOKENS}" --max-cost-usd "${COUNCIL_MAX_COST_USD}" \
     --max-error-rate "${COUNCIL_MAX_ERROR_RATE}" --samples "${ROLLOUT_SMOKE_SAMPLES}" \
+    --stream-samples "${ROLLOUT_STREAM_SMOKE_SAMPLES}" \
     --max-quality-drop "${COUNCIL_MAX_QUALITY_DROP}" --max-latency-ratio "${COUNCIL_MAX_LATENCY_RATIO}" \
     --max-cost-ratio "${COUNCIL_MAX_COST_RATIO}" --min-route-success "${COUNCIL_MIN_ROUTE_SUCCESS}" "$@"
 }
