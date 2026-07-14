@@ -21,4 +21,4 @@
 - [x] Close final Oracle P1s for ambiguous deploy ownership recovery, repeated rollback convergence, and exact bounded smoke semantic classifications.
 - [x] Canonicalize traffic comparison/hash order, preserve automatic and tagged candidate targets, and bind source attestations to the corrected target SHA.
 - [x] Deploy one zero-traffic shadow, run bounded 10%/rollback/10%/50%/100% progression, and stop after the first failure or verified success.
-- [ ] Land Forgejo PR after CI, mirror GitHub, update shared checkout, archive this change, close Bead, and store non-sensitive memory.
+- [x] Land Forgejo PR after CI, mirror GitHub, update shared checkout, archive this change, close Bead, and store non-sensitive memory.
