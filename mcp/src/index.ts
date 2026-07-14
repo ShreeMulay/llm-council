@@ -5,17 +5,16 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import importedModelRegistry from "./generated/model-registry.json" with { type: "json" };
 import { execFileSync, spawn } from "child_process";
 import { readFileSync, writeFileSync, unlinkSync, existsSync, openSync, mkdirSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createRequire } from "module";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const require = createRequire(import.meta.url);
-const modelRegistry = require("./generated/model-registry.json") as {
+const modelRegistry = importedModelRegistry as {
   default_roster: string[];
   compact_roster: string[];
   chairman: string;

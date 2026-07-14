@@ -7,12 +7,18 @@
   "bin": {
     "llm-council-mcp": "dist/index.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsc",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "test": "cd .. && uv run pytest tests/test_model_registry.py -q",
+    "test:package": "node --test tests/package-startup.test.mjs",
+    "prepack": "npm run build",
     "generate:models": "cd .. && uv run python -m backend.model_registry"
   },
   "dependencies": {
@@ -21,9 +27,9 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "5.9.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=22.12.0"
   }
 }

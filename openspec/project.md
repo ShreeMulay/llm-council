@@ -38,7 +38,7 @@ When users query the system, it proceeds in 3 stages:
 - **Package Manager**: uv
 
 ### MCP Server
-- **Runtime**: Node.js 18+
+- **Runtime**: Node.js 22.12+
 - **Language**: TypeScript
 - **SDK**: @modelcontextprotocol/sdk
 
