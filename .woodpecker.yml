@@ -47,12 +47,14 @@ steps:
       - event: manual
 
   - name: mcp-quality
-    image: node:22-bookworm
+    image: node:22.17.1-bookworm
     commands:
       - cd mcp
       - npm ci
       - npm run typecheck
+      - npm run clean
       - npm run build
+      - npm run test:package
     when:
       - evaluate: 'CI_PIPELINE_EVENT == "push" && CI_COMMIT_BRANCH != "pages"'
       - event: pull_request
